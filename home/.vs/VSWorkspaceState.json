@@ -1,0 +1,14 @@
+{
+  "ExpandedNodes": [
+    "",
+    "\\config",
+    "\\src",
+    "\\src\\locales",
+    "\\src\\locales\\en-US",
+    "\\src\\pages",
+    "\\src\\pages\\User",
+    "\\src\\pages\\User\\Login"
+  ],
+  "SelectedNode": "\\src\\locales\\en-US\\pages.ts",
+  "PreviewInSolutionExplorer": false
+}
