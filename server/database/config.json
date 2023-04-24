@@ -1,0 +1,30 @@
+{
+  "development": {
+    "username": "dms",
+    "password": "zsdmsdmm@123456",
+    "database": "dms_development",
+    "host": "woke.qinqinwater.cn",
+    "dialect": "mssql",
+    "dialectOptions": {
+      "options": {
+        "encrypt": false,
+        "enableArithAbort": false
+      }
+    }
+
+    },
+    "test": {
+      "username": "sa",
+      "password": "zswaterdmm@123456",
+      "database": "dms_test",
+      "host": "woke.qinqinwater.cn",
+      "dialect": "mssql"
+    },
+    "production": {
+      "username": "sa",
+      "password": "zswaterdmm@123456",
+      "database": "dms_production",
+      "host": "woke.qinqinwater.cn",
+      "dialect": "mssql"
+    }
+  }
