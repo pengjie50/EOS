@@ -53,6 +53,7 @@
     "@azure/msal-react": "^1.5.5",
     "@umijs/route-utils": "^2.2.2",
     "antd": "^5.2.2",
+    "antd-mobile": "^5.29.1",
     "classnames": "^2.3.2",
     "file-saver": "^2.0.5",
     "json2csv": "^6.0.0-alpha.2",

@@ -1,5 +1,5 @@
 import { addAlert, removeAlert, alert, updateAlert } from './service';
-import { PlusOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { PlusOutlined, SearchOutlined , ExclamationCircleOutlined } from '@ant-design/icons';
 import type { ActionType, ProColumns, ProDescriptionsItemProps } from '@ant-design/pro-components';
 import { AlertList, AlertListItem } from './data.d';
 import { flow } from '../system/flow/service';
@@ -15,6 +15,8 @@ import {
   ProDescriptions,
   ProFormText,
   ProFormTextArea,
+  ProFormInstance,
+  Search,
   ProTable,
 } from '@ant-design/pro-components';
 import { FormattedMessage, useIntl } from '@umijs/max';
@@ -22,8 +24,10 @@ import { Button, Drawer, Input, message, Modal } from 'antd';
 import React, { useRef, useState, useEffect } from 'react';
 import CreateForm from './components/CreateForm';
 import UpdateForm from './components/UpdateForm';
-import { tree } from "@/utils/utils";
-
+import { tree,isPC } from "@/utils/utils";
+//MP
+import { InfiniteScroll, List, NavBar, Space, DotLoading } from 'antd-mobile'
+import { before } from 'lodash';
 const { confirm } = Modal;
 
 /**
@@ -100,6 +104,107 @@ const TableList: React.FC = () => {
    * @zh-CN 国际化配置
    * */
   const intl = useIntl();
+
+
+  //--MP start
+  const MPSearchFormRef = useRef<ProFormInstance>();
+
+  const [showMPSearch, setShowMPSearch] = useState<boolean>(false);
+  const [isMP, setIsMP] = useState<boolean>(!isPC());
+
+  const right = (
+    <div style={{ fontSize: 24 }}>
+      <Space style={{ '--gap': '16px' }}>
+        <SearchOutlined onClick={e => { setShowMPSearch(!showMPSearch) }} />
+
+      </Space>
+    </div>
+  )
+
+  const onFormSearchSubmit = (a) => {
+
+
+    setData([]);
+    delete a._timestamp;
+    setMPfilter(a)
+    setShowMPSearch(!showMPSearch)
+    setCurrentPage(1)
+
+    getData(1, a)
+  }
+  const InfiniteScrollContent = ({ hasMore }: { hasMore?: boolean }) => {
+    return (
+      <>
+        {hasMore ? (
+          <>
+            <span>Loading</span>
+            <DotLoading />
+          </>
+        ) : (
+          <span>--- There's no more ---</span>
+        )}
+      </>
+    )
+  }
+  const back = () => { }
+  const [data, setData] = useState<string[]>([])
+  const [hasMore, setHasMore] = useState(true)
+  const [currentPage, setCurrentPage] = useState<number>(1)
+  const [MPfilter, setMPfilter] = useState<any>({})
+
+  async function getData(page, filter) {
+    const append1 = await alert({
+      ...{
+        "current": page,
+        "pageSize": 10
+        
+      }, ...filter
+    })
+
+    const append=beforeList(append1)
+    console.log(append)
+    setData(val => [...val, ...append.data])
+    setHasMore(10 * (page - 1) + append.data.length < append.total)
+  }
+  async function loadMore(isRetry: boolean) {
+    await getData(currentPage, MPfilter)
+    setCurrentPage(currentPage + 1)
+  }
+
+  const beforeList = (list) => {
+    var map = new Map()
+    list.data.forEach((al) => {
+
+      var a = map.get(al.transaction_id)
+      if (!a) {
+        a = al
+        a.red = []
+        a.amber = []
+
+      }
+
+
+      if (al['type'] == 0) {
+        a.amber.push({ flow_id: al['a.flow_id'], flow_id_to: al['a.flow_id_to'] })
+
+      } else {
+        a.red.push({ flow_id: al['a.flow_id'], flow_id_to: al['a.flow_id_to'] })
+
+      }
+      map.set(al.transaction_id, a)
+
+    })
+    var arr = []
+
+    console.log(map)
+    for (let [k, v] of map) {
+      arr.push(v)
+    }
+
+    var b = { success: true, total: arr.length, data: arr }
+
+    return b
+  }
   useEffect(() => {
 
     flow({ pageSize: 300, current: 1, sorter: { sort: 'ascend' } }).then((res) => {
@@ -348,13 +453,13 @@ const TableList: React.FC = () => {
       ],
     },*/
   ];
-
+ 
   return (
     <PageContainer header={{
       title: '',
       breadcrumb: {},
     }}>
-      <ProTable<AlertListItem, API.PageParams>
+      {!isMP && ( <ProTable<AlertListItem, API.PageParams>
         headerTitle={intl.formatMessage({
           id: 'pages.transactions.alert',
           defaultMessage: 'Alerts of all transactions',
@@ -369,40 +474,10 @@ const TableList: React.FC = () => {
          
         ]}
         request={async (params, sorter) => {
-          var map = new Map()
+         
           var list =await alert({ ...params, sorter })
-          console.log(list)
-          list.data.forEach((al) => {
-            
-            var a=map.get(al.transaction_id)
-            if (!a) {
-              a = al
-              a.red = []
-              a.amber = []
-              
-            }
-
-           
-            if (al['type'] == 0) {
-              a.amber.push({ flow_id: al['a.flow_id'], flow_id_to: al['a.flow_id_to'] })
-
-            } else {
-              a.red.push({ flow_id: al['a.flow_id'], flow_id_to: al['a.flow_id_to'] })
-
-            }
-            map.set(al.transaction_id, a)
-
-          })
-          var arr = []
-
-          console.log(map)
-          for(let [k,v] of map) {
-            arr.push(v)
-          }
-
-          var b = { success: true, total: arr.length, data: arr }
-
-          return b
+        
+          return beforeList(list)
         }}
         columns={columns}
         rowSelection={{
@@ -410,7 +485,58 @@ const TableList: React.FC = () => {
             setSelectedRows(selectedRows);
           },
         }}
-      />
+      />)}
+
+      {isMP && (<>
+
+        <NavBar backArrow={false} right={right} onBack={back}>
+          {intl.formatMessage({
+            id: 'pages.alert.title',
+            defaultMessage: 'Alerts of all transactions',
+          })}
+        </NavBar>
+
+        <div style={{ padding: '20px', backgroundColor: "#5187c4", display: showMPSearch ? 'block' : 'none' }}>
+          <Search columns={columns.filter(a => !a.hasOwnProperty('hideInSearch'))} action={actionRef} loading={false}
+
+            onFormSearchSubmit={onFormSearchSubmit}
+
+            dateFormatter={'string'}
+            formRef={MPSearchFormRef}
+            type={'form'}
+            cardBordered={true}
+            form={{}}
+
+            search={{}}
+            manualRequest={true}
+          />
+        </div>
+        <List>
+          {data.map((item, index) => (
+            <List.Item key={index}>
+
+              <ProDescriptions<any>
+                bordered={true}
+                size="small"
+                layout="horizontal"
+                column={1}
+                title={""}
+                request={async () => ({
+                  data: item || {},
+                })}
+                params={{
+                  id: item?.id,
+                }}
+                columns={columns as ProDescriptionsItemProps<any>[]}
+              />
+
+            </List.Item>
+          ))}
+        </List>
+        <InfiniteScroll loadMore={loadMore} hasMore={hasMore}>
+          <InfiniteScrollContent hasMore={hasMore} />
+        </InfiniteScroll>
+      </>)}
       {selectedRowsState?.length > 0 && (
         <FooterToolbar
           extra={
@@ -490,17 +616,17 @@ const TableList: React.FC = () => {
       />
 
       <Drawer
-        width={600}
+        width={isMP ? '100%' : 600}
         open={showDetail}
         onClose={() => {
           setCurrentRow(undefined);
           setShowDetail(false);
         }}
-        closable={false}
+        closable={isMP ? true : false}
       >
         {currentRow?.name && (
           <ProDescriptions<AlertListItem>
-            column={2}
+            column={isMP ? 1 : 2}
             title={currentRow?.name}
             request={async () => ({
               data: currentRow || {},

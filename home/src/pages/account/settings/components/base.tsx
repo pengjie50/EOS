@@ -7,6 +7,7 @@ import  {
   ProFormFieldSet,
   ProFormSelect,
   ProFormText,
+  PageContainer,
   ProFormTextArea,
   ProForm
 } from '@ant-design/pro-components';
@@ -14,7 +15,7 @@ import { useRequest } from 'umi';
 import { queryCurrent } from '../service';
 import { queryProvince, queryCity } from '../service';
 
-import { updateUser, uploadFile } from '../../../system/user/service';
+import { updateUser, uploadFile, checkEmail } from '../../../system/user/service';
 
 import styles from './BaseView.less';
 
@@ -42,11 +43,11 @@ const handleBeforeUpload = (file) => {
   const isLt2M = file.size / 1024 / 1024 < 1;
   if (!(isJPG || isJPEG || isPNG)) {
     Modal.error({
-      title: '只能上传JPG、JPEG、PNG格式的图片~',
+      title: 'Only images in JPG, JPEG, and PNG formats can be uploaded~',
     });
   } else if (!isLt2M) {
     Modal.error({
-      title: '图片超过1M限制，不允许上传~',
+      title: 'The image exceeds the 1M limit and cannot be uploaded~',
     });
   }
   return (isJPG || isJPEG || isPNG) && isLt2M;
@@ -174,7 +175,27 @@ const BaseView: React.FC = () => {
   });
   const intl = useIntl();
   
-  
+  const emailCheck = (rule: any, value: any, callback: (arg0: string | undefined) => void) => {
+
+    if (currentUser?.email == value) {
+      callback(undefined);
+    }
+    checkEmail({ email: value }).then((res) => {
+      if (res.data == true) {
+
+        callback(intl.formatMessage({
+          id: 'pages.user.emailIsUse',
+          defaultMessage: 'This email is already in use',
+        }))
+      } else {
+        callback(undefined); // 必须返回一个callback
+      }
+    });
+
+
+
+
+  }
 
   const handleFinish = async (values: { [key: string]: any; } | undefined) => {
     if (values) {
@@ -189,11 +210,14 @@ const BaseView: React.FC = () => {
    // message.success('更新基本信息成功');
   };
   return (
+    <PageContainer>
     <div className={styles.baseView}>
       {loading ? null : (
         <>
           <div className={styles.left}>
             <ProForm
+              autoFocusFirstInput={false}
+              validateTrigger={['onBlur']}
               layout="vertical"
               onFinish={handleFinish}
               submitter={{
@@ -213,7 +237,7 @@ const BaseView: React.FC = () => {
             >
              
               <ProFormText
-                width="md"
+                width="lg"
                 name="nickname"
                 label={<FormattedMessage
                   id="pages.user.nickname"
@@ -230,7 +254,8 @@ const BaseView: React.FC = () => {
                 ]}
               />
               <ProFormTextArea
-                name="profile"
+                  name="profile"
+                  width="lg"
                 label={<FormattedMessage
                   id="pages.user.profile"
                   defaultMessage="Profile"
@@ -238,8 +263,20 @@ const BaseView: React.FC = () => {
               
               />
               <ProFormText
-                width="md"
+                  width="lg"
                 name="email"
+                rules={[
+                
+                  {
+                    pattern: /^[A-Za-z\d]+([-_.][A-Za-z\d]+)*@([A-Za-z\d]+[-.])+[A-Za-z\d]{2,4}$/, message: (
+                      <FormattedMessage
+                        id="pages.user.rules.incorrectEmailFormat"
+                        defaultMessage="Incorrect email format"
+                      />
+                    )
+                  },
+                  { validator: emailCheck }
+                ]}
                 label={<FormattedMessage
                   id="pages.user.email"
                   defaultMessage="Email"
@@ -247,7 +284,7 @@ const BaseView: React.FC = () => {
 
               />
               <ProFormText
-                width="md"
+                  width="lg"
                 name="phone"
                 label={<FormattedMessage
                   id="pages.user.phone"
@@ -263,7 +300,8 @@ const BaseView: React.FC = () => {
           </div>
         </>
       )}
-    </div>
+      </div>
+      </PageContainer>
   );
 };
 

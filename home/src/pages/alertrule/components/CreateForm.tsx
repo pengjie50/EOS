@@ -17,10 +17,11 @@ import { AlertruleListItem } from '../data.d';
 import { FormattedMessage, useIntl } from '@umijs/max';
 import { Modal, Form } from 'antd';
 import { flow } from '../../system/flow/service';
-import { tree } from "@/utils/utils";
+import { tree, isPC } from "@/utils/utils";
 import React, { useRef, useState, useEffect } from 'react';
 import { PlusCircleOutlined, MinusCircleOutlined } from '@ant-design/icons';
 import { SvgIcon } from '@/components' // 自定义组件
+
 export type UpdateFormProps = {
   onCancel: (flag?: boolean, formVals?: Partial<AlertruleListItem>) => void;
   onSubmit: (values: Partial<AlertruleListItem>) => Promise<void>;
@@ -35,6 +36,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
   const intl = useIntl();
   const [flowConf, setFlowConf] = useState<any>({});
   const [flowList, setFlowList] = useState<any>([]);
+  const [isMP, setIsMP] = useState<boolean>(!isPC());
   const {
     onSubmit,
     onCancel,
@@ -112,8 +114,29 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         <div style={{  fontWeight: "bold" }}>Input applicable condition(s) for threshold to be applied</div>
         <span style={{fontSize:"12px"} }>If no conditions are input, threshold defined will be applied to all transactions</span>
       </div>
+
+      
+
       <ProFormGroup>
-        <ProFormDigit label={<FormattedMessage
+        <ProFormSelect
+          name="from_to"
+          width="lg"
+          label={intl.formatMessage({
+            id: 'pages.alertrule.sizeOfVessel',
+            defaultMessage: 'Size of vessel',
+          })}
+
+          initialValue={"0-25"}
+          valueEnum={{
+            "0-25": "1. GP (General Purpose): Less than 24.99 DWT",
+            "25-45": "2. MR (Medium Range): 25 to 44.99 DWT",
+            "45-80": "3. LR1 (Long Range 1): 45 to 79.99 DWT",
+            "80-120": "4. AFRA (AFRAMAX): 80 to 119.99 DWT",
+            "120-160": "5. LR2 (Long Range 2): 120 to 159.99 DWT",
+            "160-320": "6. VLCC (Very Large Crude Carrier): 160 to 319.99 DWT",
+            "320-1000000": "7. ULCC (Ultra-Large Crude Carrier): More than 320 DWT",
+          }} />
+        {/* <ProFormDigit label={<FormattedMessage
           id="pages.alertrule.from"
           defaultMessage="Size of vessel From"
         />}
@@ -125,7 +148,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           defaultMessage="To"
         />}
 
-          name="size_of_vessel_to" width="sm" min={1} max={10000000} />
+          name="size_of_vessel_to" width="sm" min={1} max={10000000} />*/ }
       </ProFormGroup>
       <ProFormGroup>
         <ProFormDigit label={<FormattedMessage
@@ -206,58 +229,122 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         />
       </ProFormGroup>
     
-      
+      {!isMP && (
 
-      <ProFormDependency name={['flow_id']}>
-        {({ flow_id }) => {
-          if (flow_id?.length > 0) {
-            var arr=flow_id.map((a) => {
-              return (<ProFormGroup>
-                <span style={{ lineHeight: '80px', height: 80, width: 120, display: "inline-block" }}>{a.label}</span>
-                <ProFormDigit initialValue="2" label={<FormattedMessage
-                  id="pages.alertrule.hours"
-                  defaultMessage="Size of vessel From"
-                />} name={a.value + "_amber_" + 'hours'} width="xs" min={0} max={1000}/>
+        <ProFormDependency name={['flow_id']}>
+          {({ flow_id }) => {
+            if (flow_id?.length > 0) {
+              var arr = flow_id.map((a) => {
+                return (<ProFormGroup>
+                  <span style={{ lineHeight: '80px', height: 80, width: 120, display: "inline-block" }}>{a.label}</span>
+                  <ProFormDigit initialValue="2" label={<FormattedMessage
+                    id="pages.alertrule.hours"
+                    defaultMessage="Size of vessel From"
+                  />} name={a.value + "_amber_" + 'hours'} width={50} min={0} max={1000} />
 
-                <ProFormDigit initialValue="15" label={<FormattedMessage
-                  id="pages.alertrule.mins"
-                  defaultMessage="To"
-                />} name={a.value + "_amber_" + 'mins'} width="xs" min={0} max={60} />
-             
+                  <ProFormDigit initialValue="15" label={<FormattedMessage
+                    id="pages.alertrule.mins"
+                    defaultMessage="To"
+                  />} name={a.value + "_amber_" + 'mins'} width={50} min={0} max={60} />
 
-                <ProFormDigit initialValue="2" label={<FormattedMessage
-                  id="pages.alertrule.hours"
-                  defaultMessage="Size of vessel From"
-                />} name={a.value + "_red_" + 'hours'} width="xs" min={0} max={1000} />
 
-                <ProFormDigit initialValue="30" label={<FormattedMessage
-                  id="pages.alertrule.mins"
-                  defaultMessage="To"
-                />} name={a.value + "_red_" + 'mins'} width="xs" min={0} max={60}  />
-              </ProFormGroup>
-              )
-            })
-            arr.unshift(<div style={{ width: '100%' }}>
-              <div style={{ float: 'left', width: '25%', display: "block", fontWeight: "bold" }}>
-               Process
-              </div>
-              <div style={{ float: 'left', width: '35%', fontWeight: "bold", color:"#DE8205" }}>
-                <SvgIcon style={{ color: "#DE8205" }} type="icon-yuan" /> Amber
-              </div>
-              <div style={{ float: 'left', width: '30%', fontWeight: "bold", color: "red" }}>
-                <SvgIcon style={{ color: "red" }} type="icon-yuan" /> Red
-              </div>
-             
-            </div>)
-            return arr
-          }
-          
-          
-         
-        }}
+                  <ProFormDigit initialValue="2" label={<FormattedMessage
+                    id="pages.alertrule.hours"
+                    defaultMessage="Size of vessel From"
+                  />} name={a.value + "_red_" + 'hours'} width={50} min={0} max={1000} />
 
-       
-      </ProFormDependency>
+                  <ProFormDigit initialValue="30" label={<FormattedMessage
+                    id="pages.alertrule.mins"
+                    defaultMessage="To"
+                  />} name={a.value + "_red_" + 'mins'} width={50} min={0} max={60} />
+                </ProFormGroup>
+                )
+              })
+              arr.unshift(<div style={{ width: '100%' }}>
+                <div style={{ float: 'left', width: '25%', display: "block", fontWeight: "bold" }}>
+                  Process
+                </div>
+                <div style={{ float: 'left', width: '35%', fontWeight: "bold", color: "#DE8205" }}>
+                  <SvgIcon style={{ color: "#DE8205" }} type="icon-yuan" /> Amber
+                </div>
+                <div style={{ float: 'left', width: '30%', fontWeight: "bold", color: "red" }}>
+                  <SvgIcon style={{ color: "red" }} type="icon-yuan" /> Red
+                </div>
+
+              </div>)
+              return arr
+            }
+
+
+
+          }}
+
+
+        </ProFormDependency>
+
+
+        )}
+
+      {isMP && (
+
+        <ProFormDependency name={['flow_id']}>
+          {({ flow_id }) => {
+            if (flow_id?.length > 0) {
+              var arr = flow_id.map((a) => {
+                return (<ProFormGroup>
+                  <span style={{ lineHeight: '80px', height: 80, width: 120, display: "inline-block" }}>{a.label}</span>
+                  <ProFormGroup>
+                    <SvgIcon style={{ color: "#DE8205" }} type="icon-yuan" />
+                  <ProFormDigit initialValue="2" label={<FormattedMessage
+                    id="pages.alertrule.hours"
+                    defaultMessage="Size of vessel From"
+                    />} name={a.value + "_amber_" + 'hours'} width={50} min={0} max={1000} />
+
+                  <ProFormDigit initialValue="15" label={<FormattedMessage
+                    id="pages.alertrule.mins"
+                    defaultMessage="To"
+                    />} name={a.value + "_amber_" + 'mins'} width={50} min={0} max={60} />
+
+                  </ProFormGroup>
+                  <ProFormGroup>
+                    <SvgIcon style={{ color: "red" }} type="icon-yuan" />
+                    <ProFormDigit initialValue="2" label={<FormattedMessage
+                      id="pages.alertrule.hours"
+                      defaultMessage="Size of vessel From"
+                    />} name={a.value + "_red_" + 'hours'} width={50} min={0} max={1000} />
+
+                  <ProFormDigit initialValue="30" label={<FormattedMessage
+                    id="pages.alertrule.mins"
+                    defaultMessage="To"
+                    />} name={a.value + "_red_" + 'mins'} width={50} min={0} max={60} />
+                  </ProFormGroup>
+                </ProFormGroup>
+                )
+              })
+              arr.unshift(<div style={{ width: '100%' }}>
+                <div style={{ float: 'left', width: '25%', display: "block", fontWeight: "bold" }}>
+                  Process
+                </div>
+                <div style={{ float: 'left', width: '35%', fontWeight: "bold", color: "#DE8205" }}>
+                  <SvgIcon style={{ color: "#DE8205" }} type="icon-yuan" /> Amber
+                </div>
+                <div style={{ float: 'left', width: '30%', fontWeight: "bold", color: "red" }}>
+                  <SvgIcon style={{ color: "red" }} type="icon-yuan" /> Red
+                </div>
+
+              </div>)
+              return arr
+            }
+
+
+
+          }}
+
+
+        </ProFormDependency>
+
+
+      )}
 
       <div style={{ float: 'left', width: '100%', display: "block",marginBottom:'10px' }}>
         Threshold Settings between two events
@@ -350,34 +437,67 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                 />
                 </ProFormGroup>
 
-                <ProFormGroup>
+                {!isMP && (<ProFormGroup>
                   <SvgIcon style={{ color: "#DE8205" }} type="icon-yuan" />
-                <ProFormDigit initialValue="2" label={<FormattedMessage
-                  id="pages.alertrule.hours"
-                  defaultMessage="Size of vessel From"
-                />} name={a + "_amber_" + 'hours'} width="xs" min={0} max={1000} />
+                  <ProFormDigit initialValue="2" label={<FormattedMessage
+                    id="pages.alertrule.hours"
+                    defaultMessage="Size of vessel From"
+                  />} name={a + "_amber_" + 'hours'} width={50} min={0} max={1000} />
 
-                <ProFormDigit initialValue="15" label={<FormattedMessage
-                  id="pages.alertrule.mins"
-                  defaultMessage="To"
-                />} name={a + "_amber_" + 'mins'} width="xs" min={0} max={60} />
+                  <ProFormDigit initialValue="15" label={<FormattedMessage
+                    id="pages.alertrule.mins"
+                    defaultMessage="To"
+                  />} name={a + "_amber_" + 'mins'} width={50} min={0} max={60} />
 
                   <SvgIcon style={{ color: "red" }} type="icon-yuan" />
-                <ProFormDigit initialValue="2" label={<FormattedMessage
-                  id="pages.alertrule.hours"
-                  defaultMessage="Size of vessel From"
-                />} name={a + "_red_" + 'hours'} width="xs" min={0} max={1000} />
+                  <ProFormDigit initialValue="2" label={<FormattedMessage
+                    id="pages.alertrule.hours"
+                    defaultMessage="Size of vessel From"
+                  />} name={a + "_red_" + 'hours'} width={50} min={0} max={1000} />
 
-                <ProFormDigit initialValue="30" label={<FormattedMessage
-                  id="pages.alertrule.mins"
-                  defaultMessage="To"
-                />} name={a + "_red_" + 'mins'} width="xs" min={0} max={60}/>
-                < MinusCircleOutlined onClick={() => {
-                  var arr = restFormRef?.current?.getFieldValue('events')
-                  arr.splice(index, 1)
-                  restFormRef?.current?.setFieldsValue({ events: arr })
-                }} />
-              </ProFormGroup></>
+                  <ProFormDigit initialValue="30" label={<FormattedMessage
+                    id="pages.alertrule.mins"
+                    defaultMessage="To"
+                  />} name={a + "_red_" + 'mins'} width={50} min={0} max={60} />
+                  < MinusCircleOutlined onClick={() => {
+                    var arr = restFormRef?.current?.getFieldValue('events')
+                    arr.splice(index, 1)
+                    restFormRef?.current?.setFieldsValue({ events: arr })
+                  }} />
+                </ProFormGroup>)}
+                {isMP && (<ProFormGroup>
+                  <ProFormGroup>
+                  <SvgIcon style={{ color: "#DE8205" }} type="icon-yuan" />
+                  <ProFormDigit initialValue="2" label={<FormattedMessage
+                    id="pages.alertrule.hours"
+                    defaultMessage="Size of vessel From"
+                  />} name={a + "_amber_" + 'hours'} width={50} min={0} max={1000} />
+
+                  <ProFormDigit initialValue="15" label={<FormattedMessage
+                    id="pages.alertrule.mins"
+                    defaultMessage="To"
+                  />} name={a + "_amber_" + 'mins'} width={50} min={0} max={60} />
+                  </ProFormGroup>
+                  <ProFormGroup>
+                  <SvgIcon style={{ color: "red" }} type="icon-yuan" />
+                  <ProFormDigit initialValue="2" label={<FormattedMessage
+                    id="pages.alertrule.hours"
+                    defaultMessage="Size of vessel From"
+                  />} name={a + "_red_" + 'hours'} width={50} min={0} max={1000} />
+
+                  <ProFormDigit initialValue="30" label={<FormattedMessage
+                    id="pages.alertrule.mins"
+                    defaultMessage="To"
+                  />} name={a + "_red_" + 'mins'} width={50} min={0} max={60} />
+                  < MinusCircleOutlined onClick={() => {
+                    var arr = restFormRef?.current?.getFieldValue('events')
+                    arr.splice(index, 1)
+                    restFormRef?.current?.setFieldsValue({ events: arr })
+                  }} />
+                  </ProFormGroup>
+                </ProFormGroup>)}
+
+                </>
               )
             })
             

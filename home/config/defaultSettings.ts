@@ -18,7 +18,7 @@ const Settings: ProLayoutProps & {
   colorWeak: false,
   title: 'EOS',
   pwa: true,
-  logo: 'http://122.114.57.35:7001/logo.png',
+  logo: '/logo.png',
   iconfontUrl: '',
   token: {
     // 参见ts声明，demo 见文档，通过token 修改样式

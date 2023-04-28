@@ -121,14 +121,14 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           defaultMessage="Size of vessel From"
         />}
 
-          name="size_of_vessel_from" width="sm" min={1} max={10000000} />
+          name="size_of_vessel_from" width="sm" min={0} max={10000000} />
 
         <ProFormDigit label={<FormattedMessage
           id="pages.alertrule.to"
           defaultMessage="To"
         />}
 
-          name="size_of_vessel_to" width="sm" min={1} max={10000000} />
+          name="size_of_vessel_to" width="sm" min={0} max={10000000} />
       </ProFormGroup>
       <ProFormGroup>
         <ProFormDigit label={<FormattedMessage

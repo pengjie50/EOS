@@ -1,9 +1,12 @@
 import { addAlertrule, removeAlertrule, alertrule, updateAlertrule } from './service';
-import { PlusOutlined, FormOutlined, DeleteOutlined, InfoCircleOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
-import type { ActionType, ProColumns, ProDescriptionsItemProps } from '@ant-design/pro-components';
+import { PlusOutlined, SearchOutlined, MoreOutlined, FormOutlined, DeleteOutlined, InfoCircleOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import type { ActionType, ProColumns, ProDescriptionsItemProps, ProTableProps } from '@ant-design/pro-components';
 import { AlertruleList, AlertruleListItem } from './data.d';
 import { GridContent } from '@ant-design/pro-layout';
 import { flow } from '../system/flow/service';
+
+//MP
+import { InfiniteScroll, List, NavBar, Space, DotLoading } from 'antd-mobile'
 
 import { SvgIcon } from '@/components' // 自定义组件
 import {
@@ -15,14 +18,18 @@ import {
   ProFormTextArea,
   ProFormTreeSelect,
   ProTable,
+ 
+  ProFormInstance,
+  Search
 } from '@ant-design/pro-components';
+
 import { FormattedMessage, useIntl, formatMessage } from '@umijs/max';
 import { Button, Drawer, Input, message, TreeSelect, Modal } from 'antd';
 import React, { useRef, useState, useEffect } from 'react';
 import CreateForm from './components/CreateForm';
 import UpdateForm from './components/UpdateForm';
 import { useAccess, Access } from 'umi';
-import { tree } from "@/utils/utils";
+import { tree,isPC } from "@/utils/utils";
 
 import { event } from '../../.umi/plugin-locale/localeExports';
 const { confirm } = Modal;
@@ -44,7 +51,16 @@ const handleAdd = async (fields: AlertruleListItem) => {
     delete d.total_nominated_quantity_from_m
     delete d.total_nominated_quantity_to_m
   }
+  if (d.from_to) {
+    d.size_of_vessel_from = Number(d.from_to.split("-")[0])
+    d.size_of_vessel_to = Number(d.from_to.split("-")[1])
+  }
+ 
+  
+  Number(d.from_to.split("-")[0])
+
   delete d.total_nominated_quantity_unit
+  delete d.from_to
   try {
     await addAlertrule(d);
     hide();
@@ -159,7 +175,77 @@ const TableList: React.FC = () => {
   const [flowConf, setFlowConf] = useState<any>({});
   const [flowTree, setFlowTree] = useState<any>([]);
   const [processes, setProcesses] = useState<any>([]);
+  const restFormRef = useRef<ProFormInstance>();
 
+  //--MP start
+  const MPSearchFormRef = useRef<ProFormInstance>();
+
+  const [showMPSearch, setShowMPSearch] = useState<boolean>(false);
+  const [isMP, setIsMP] = useState<boolean>(!isPC());
+
+  const right = (
+    <div style={{ fontSize: 24 }}>
+      <Space style={{ '--gap': '16px' }}>
+        <SearchOutlined onClick={e => { setShowMPSearch(!showMPSearch) }} />
+        <PlusOutlined onClick={() => { handleModalOpen(true) }} />
+
+      </Space>
+    </div>
+  )
+
+  const onFormSearchSubmit = (a) => {
+
+   
+    setData([]);
+    delete a._timestamp;
+    setMPfilter(a)
+    setShowMPSearch(!showMPSearch)
+    setCurrentPage(1)
+   
+    getData(1, a)
+  }
+  const InfiniteScrollContent = ({ hasMore }: { hasMore?: boolean }) => {
+    return (
+      <>
+        {hasMore ? (
+          <>
+            <span>Loading</span>
+            <DotLoading />
+          </>
+        ) : (
+            <span>--- There's no more ---</span>
+        )}
+      </>
+    )
+  }
+  const back = () => { }
+  const [data, setData] = useState<string[]>([])
+  const [hasMore, setHasMore] = useState(true)
+  const [currentPage, setCurrentPage] = useState<number>(1)
+  const [MPfilter, setMPfilter] = useState<any>({})
+
+  async function getData(page, filter) {
+    const append = await alertrule({
+      ...{
+        "current": page,
+        "pageSize": 10,
+        "sorter": {
+          "type": "ascend"
+        }
+      }, ...filter
+    })
+
+
+    console.log(append)
+    setData(val => [...val, ...append.data])
+    setHasMore(10 * (page - 1) + append.data.length < append.total)
+  }
+  async function loadMore(isRetry: boolean) {
+  
+    await getData(currentPage , MPfilter)
+    setCurrentPage(currentPage + 1)
+  }
+  //--MP end
   const [events, setEvents] = useState<any>([]);
   useEffect(() => {
     
@@ -211,7 +297,7 @@ const TableList: React.FC = () => {
       title: <FormattedMessage id="pages.alertrule.type" defaultMessage="Threshold Type" />,
       dataIndex: 'type',
       sorter: true,
-      hideInSearch:true,
+      hideInSearch: true,
       defaultSortOrder: 'ascend',
       valueEnum: {
         0: { text: <FormattedMessage id="pages.alertrule.ForOneProcess" defaultMessage="For one process" /> },
@@ -300,7 +386,7 @@ const TableList: React.FC = () => {
         />
       ),
       dataIndex: 'flow_id',
-      hideInSearch:true,
+      hideInSearch: true,
       valueEnum: flowConf ,
       tip: '',
       
@@ -320,7 +406,8 @@ const TableList: React.FC = () => {
       hideInSearch: true,
       valueType: 'text',
       render: (dom, entity) => {
-        if (entity.size_of_vessel_from   && entity.size_of_vessel_to ) {
+        if (entity.size_of_vessel_from !=null && entity.size_of_vessel_to) {
+
           return (entity.size_of_vessel_from + "").replace(/\B(?=(\d{3})+(?!\d))/g, ',') + " - " + (entity.size_of_vessel_to + "").replace(/\B(?=(\d{3})+(?!\d))/g, ',');
         } 
         
@@ -379,7 +466,7 @@ const TableList: React.FC = () => {
         return dom;
       },
     },
-    ,
+    
     {
       title: <FormattedMessage id="pages.searchTable.titleOption" defaultMessage="Operating" />,
       dataIndex: 'option',
@@ -392,6 +479,7 @@ const TableList: React.FC = () => {
             key="config"
             onClick={() => {
               handleUpdateModalOpen(true);
+             
               try {
                 record.send_email_select = record.send_email_select.split(",")
               } catch (e) {
@@ -408,7 +496,7 @@ const TableList: React.FC = () => {
         ,
         <Access accessible={access.canAlertruleMod()} fallback={<div></div>}>
           <a
-            title={formatMessage({ id: "pages.details", defaultMessage: "Details" })}
+            title={formatMessage({ id: "pages.delete", defaultMessage: "Delete" })}
             key="config"
             onClick={() => {
               setCurrentRow(record);
@@ -452,13 +540,13 @@ const TableList: React.FC = () => {
       ],
     },
   ];
-
-  return (
+ 
+  return  (
     <PageContainer header={{
       title: '',
       breadcrumb: {},
     }}>
-      <ProTable<AlertruleListItem, API.PageParams>
+      {!isMP && (<ProTable<AlertruleListItem, API.PageParams>
         headerTitle={intl.formatMessage({
           id: 'pages.alertrule.title',
           defaultMessage: 'Threshold Limits - Summry',
@@ -471,17 +559,17 @@ const TableList: React.FC = () => {
           searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
         }}
         toolBarRender={() => [<Access accessible={access.canAlertruleAdd()} fallback={<div></div>}>
-            <Button
+          <Button
 
-              type="primary"
-              key="primary"
-              onClick={() => {
-                handleModalOpen(true);
-              }}
-            >
-              <PlusOutlined /> <FormattedMessage id="pages.searchTable.new" defaultMessage="New" />
-            </Button>
-            </Access>]
+            type="primary"
+            key="primary"
+            onClick={() => {
+              handleModalOpen(true);
+            }}
+          >
+            <PlusOutlined /> <FormattedMessage id="pages.searchTable.new" defaultMessage="New" />
+          </Button>
+        </Access>]
 
         }
         request={(params, sorter) => alertrule({ ...params, sorter })}
@@ -491,7 +579,58 @@ const TableList: React.FC = () => {
             setSelectedRows(selectedRows);
           },
         }}
-      />
+      />)}
+
+      {isMP && (<>
+       
+        <NavBar backArrow={false} right={right} onBack={back}>
+          {intl.formatMessage({
+            id: 'pages.alertrule.title',
+            defaultMessage: 'Threshold Limits - Summry',
+          })}
+        </NavBar>
+
+        <div style={{ padding: '20px', backgroundColor: "#5187c4", display: showMPSearch ? 'block' : 'none' }}>
+          <Search columns={columns.filter(a => !a.hasOwnProperty('hideInSearch'))} action={actionRef} loading={false}
+
+            onFormSearchSubmit={onFormSearchSubmit}
+
+            dateFormatter={'string'}
+            formRef={MPSearchFormRef}
+            type={'form'}
+            cardBordered={true}
+            form={{}}
+
+            search={{}}
+            manualRequest={true}
+          />
+        </div>
+        <List>
+          {data.map((item, index) => (
+            <List.Item key={index}>
+
+              <ProDescriptions<AlertruleListItem>
+                bordered={true}
+                size="small"
+                layout="horizontal"
+                column={1}
+                title={item?.process_name}
+                request={async () => ({
+                  data: item || {},
+                })}
+                params={{
+                  id: item?.id,
+                }}
+                columns={columns as ProDescriptionsItemProps<AlertruleListItem>[]}
+              />
+
+            </List.Item>
+          ))}
+        </List>
+        <InfiniteScroll loadMore={loadMore} hasMore={hasMore}>
+          <InfiniteScrollContent hasMore={hasMore} />
+        </InfiniteScroll>
+      </>)}
       {selectedRowsState?.length > 0 && (
         <FooterToolbar
           extra={
@@ -575,17 +714,17 @@ const TableList: React.FC = () => {
       />
 
       <Drawer
-        width={600}
+        width={isMP ? '100%':600}
         open={showDetail}
         onClose={() => {
           setCurrentRow(undefined);
           setShowDetail(false);
         }}
-        closable={false}
+        closable={isMP?true:false}
       >
         {currentRow?.id && (
           <ProDescriptions<AlertruleListItem>
-            column={2}
+            column={isMP ? 1 : 2}
             title={currentRow?.process_name}
             request={async () => ({
               data: currentRow || {},
@@ -598,7 +737,7 @@ const TableList: React.FC = () => {
         )}
       </Drawer>
     </PageContainer>
-  );
+  )
 };
 
 export default TableList;

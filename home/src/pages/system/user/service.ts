@@ -13,29 +13,34 @@ export async function user(params?: UserListParams) {
   });
 }
 
-
+export async function checkEmail(options?: { [key: string]: any }) {
+  return request<any>('/api/user/checkEmail', {
+    method: 'POST',
+    data: options || {}
+  });
+}
 export async function uploadFile(options?: { [key: string]: any }) {
-  return request<UserListItem>('/api/upload/avatar', {
+  return request<any>('/api/upload/avatar', {
     method: 'POST',
     data: options || {}
   });
 }
 export async function updateUser(options?: { [key: string]: any }) {
-  return request <UserListItem>('/api/user/mod', {
+  return request<any>('/api/user/mod', {
     method: 'POST',
     data: options || {}
   });
 }
 
 export async function modifyPassword(options?: { [key: string]: any }) {
-  return request<UserListItem>('/api/user/modifyPassword', {
+  return request<any>('/api/user/modifyPassword', {
     method: 'POST',
     data: options || {}
   });
 }
 
 export async function addUser(options?: { [key: string]: any }) {
-  return request<UserListItem>('/api/user/add', {
+  return request<any>('/api/user/add', {
     method: 'POST',
     data:options || {}
     

@@ -1,5 +1,5 @@
 import React, { useRef, useState, useEffect,useCallback } from 'react';
-import { PageContainer, ProCard, ProColumns, ProDescriptions, ProFormGroup, ProFormSelect } from '@ant-design/pro-components';
+import { PageContainer, ProCard, ProColumns, ProDescriptions, ProFormGroup, ProFormSelect, ProDescriptionsItemProps } from '@ant-design/pro-components';
 import { AlertOutlined,SafetyCertificateOutlined  } from '@ant-design/icons'; 
 import ProTable from '@ant-design/pro-table';
 import { FormattedMessage, useIntl, useLocation, useModel } from '@umijs/max';
@@ -10,7 +10,7 @@ import { flow } from '../../system/flow/service';
 import { filterOfTimestamps, addFilterOfTimestamps, updateFilterOfTimestamps } from '../../account/filterOfTimestamps/service';
 import { getAlertBytransactionId } from '../../alert/service';
 import { SvgIcon } from '@/components' // 自定义组件
-import { tree } from "@/utils/utils";
+import { tree,isPC } from "@/utils/utils";
 import FilterForm from '../../account/filterOfTimestamps/components/FilterForm';
 import { rearg } from 'lodash';
 import { terminal } from '../../system/terminal/service';
@@ -101,7 +101,7 @@ const Detail: React.FC<any> = (props) => {
   const [isAdd, setIsAdd] = useState<boolean>(false);
 
   const [flowConf, setFlowConf] = useState<any>({});
-  
+  const [isMP, setIsMP] = useState<boolean>(!isPC());
   const columns: ProColumns<TransactionListItem>[] = [
     {
       title: (
@@ -557,7 +557,7 @@ const Detail: React.FC<any> = (props) => {
         createModalOpen={createModalOpen}
         values={currentFilter || {}}
       />
-      <ProTable<any>
+      {!isMP && (<ProTable<any>
         columns={columns}
         dataSource={currentRow?[currentRow]:[]}
         rowKey="key"
@@ -566,7 +566,24 @@ const Detail: React.FC<any> = (props) => {
         toolBarRender={false}
         bordered size="small"
 
-      />
+      />)}
+
+      {isMP && (<> <ProDescriptions<any>
+        bordered={true}
+        size="small"
+        layout="horizontal"
+        column={1}
+        title={currentRow?.process_name}
+        request={async () => ({
+          data: currentRow || {},
+        })}
+        params={{
+          id: currentRow?.id,
+        }}
+        columns={columns as ProDescriptionsItemProps<any>[]}
+      /></>)
+
+        }
 
       <ProCard layout="center" bordered>
         <Steps
@@ -622,7 +639,7 @@ const Detail: React.FC<any> = (props) => {
         <Steps
           direction={'vertical'}
           size="default"
-          style={{ width: '100%',marginLeft:'150px' }}
+          style={{ width: '100%',marginLeft:isMP?'0px':'150px' }}
         >
 
           {flowTree.map(e => {
@@ -697,7 +714,7 @@ const Detail: React.FC<any> = (props) => {
                         }
                       >
 
-                        <ProDescriptions column={3}>
+                        <ProDescriptions column={isMP ? 1 : 3}>
                           <ProDescriptions.Item label="Work order ID" valueType="text">
                             {te?.work_order_id}
                           </ProDescriptions.Item>

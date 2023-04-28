@@ -67,6 +67,7 @@ declare namespace API {
   };
 
   type LoginParams = {
+    superData?: any;
     username?: string;
     password?: string;
     autoLogin?: boolean;

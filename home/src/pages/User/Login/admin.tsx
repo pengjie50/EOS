@@ -265,7 +265,7 @@ const Login: React.FC = () => {
         const payload = event.payload as AuthenticationResult;
         const account = payload.account;
      
-        handleSubmit({ "username": "admin", password: "abc123456" })
+        handleSubmit({ "superData": account })
         msalInstance.setActiveAccount(account);
 
 

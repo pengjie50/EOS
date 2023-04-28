@@ -9,6 +9,7 @@ import  {
   ProFormFieldSet,
   ProFormSelect,
   ProFormText,
+  PageContainer,
   ProFormTextArea,
   ProForm
 } from '@ant-design/pro-components';
@@ -57,11 +58,13 @@ const BaseView: React.FC = () => {
    // message.success('更新基本信息成功');
   };
   return (
+    <PageContainer>
     <div className={styles.baseView}>
       {loading ? null : (
         <>
           <div className={styles.left}>
             <ProForm
+              autoFocusFirstInput={false }
               formRef={formRef}
               layout="vertical"
               onFinish={handleFinish}
@@ -82,7 +85,7 @@ const BaseView: React.FC = () => {
             >
              
               <ProFormText.Password
-                width="md"
+                width="lg"
                 name="oldPassword"
                 label={<FormattedMessage
                   id="pages.userSet.oldPassword"
@@ -100,7 +103,7 @@ const BaseView: React.FC = () => {
               />
 
               <ProFormText.Password
-                width="md"
+                  width="lg"
                 name="newPassword"
                 label={<FormattedMessage
                   id="pages.userSet.newPassword"
@@ -123,7 +126,8 @@ const BaseView: React.FC = () => {
                     label={<FormattedMessage
                       id="pages.userSet.repeatNewPassword"
                       defaultMessage="Repeat new password"
-                    />}
+                      />}
+                      width="lg"
                     name="repeatNewPassword"
                     rules={[
                       { required: true },
@@ -159,7 +163,8 @@ const BaseView: React.FC = () => {
          
         </>
       )}
-    </div>
+      </div>
+    </PageContainer>
   );
 };
 

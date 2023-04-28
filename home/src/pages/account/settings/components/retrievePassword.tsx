@@ -58,6 +58,7 @@ const BaseView: React.FC = () => {
     />);
     // message.success('更新基本信息成功');
   };
+  
   return (
     <>
       <ProCard
@@ -70,6 +71,7 @@ const BaseView: React.FC = () => {
    
             <ProForm
               formRef={formRef}
+              validateTrigger={['onBlur']}
               layout="vertical"
               onFinish={handleFinish}
               submitter={{

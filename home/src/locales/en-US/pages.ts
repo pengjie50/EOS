@@ -67,6 +67,7 @@ export default {
   'pages.searchTable.batchApproval': 'batch approval',
   'pages.reset': 'Reset',
   'pages.update': 'Modify',
+  'pages.delete': 'Delete',
   'pages.details': 'Details',
   'pages.adding': 'Adding',
   'pages.print': 'Print',
@@ -105,15 +106,17 @@ export default {
   'pages.user.status': 'Status',
   'pages.user.disable': 'Disable',
   'pages.user.normal': 'Normal',
+  'pages.user.emailIsUse': 'This email is already in use',
+  
   'pages.user.onlineStatus': 'Online Status',
   'pages.user.online': 'Online',
   'pages.user.forceLogout': 'Force Logout',
   
   'pages.user.offline': 'Offline',
-  
+  'pages.user.rules.password': 'Please enter a password!',
   'pages.user.rules.username': 'Please enter a user name!',
   'pages.user.rules.nickname': 'Please enter a nickname!',
-  'pages.user.rules.password': 'Please enter a password!',
+  'pages.user.rules.incorrectEmailFormat': 'Incorrect email format!',
   'pages.user.phone': 'Phone',
   'pages.user.email': 'Email',
   'pages.userSet.basicSettings': 'Basic Settings',

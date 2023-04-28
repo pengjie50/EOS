@@ -1,5 +1,5 @@
 import { outLogin } from '@/services/ant-design-pro/api';
-import { LogoutOutlined, SettingOutlined, UserOutlined } from '@ant-design/icons';
+import { LogoutOutlined, SettingOutlined, UserOutlined, KeyOutlined } from '@ant-design/icons';
 import { useEmotionCss } from '@ant-design/use-emotion-css';
 import { history, useModel } from '@umijs/max';
 import { Spin } from 'antd';
@@ -127,11 +127,16 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu, childre
             key: 'center',
             icon: <UserOutlined />,
           label: 'Personal Center',
-          },
+        },
+        {
+          key: 'baseSettings',
+          icon: <SettingOutlined />,
+          label: 'Personal Basic Settings',
+        },
           {
-            key: 'settings',
-            icon: <SettingOutlined />,
-          label: 'Personal settings',
+            key: 'modPassword',
+            icon: <KeyOutlined />,
+            label: 'Modify account password',
           },
           {
             type: 'divider' as const,

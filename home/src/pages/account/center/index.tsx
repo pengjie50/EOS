@@ -158,7 +158,7 @@ const Center: React.FC<RouteChildrenProps> = () => {
   return (
     <GridContent>
       <Row gutter={24}>
-        <Col lg={7} md={24}>
+        <Col lg={7} md={24} xs={24 }>
           <Card bordered={false} style={{ marginBottom: 24 }} loading={loading}>
             {!loading && currentUser && (
               <div>

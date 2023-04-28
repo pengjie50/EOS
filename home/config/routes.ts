@@ -24,7 +24,7 @@ export default [
       {
         name: 'adminlogin',
         path: '/user/adminlogin',
-        component: './User/Login/admin',
+        component: './User/Login',
       }
     ],
   },
@@ -58,7 +58,7 @@ export default [
         redirect: '/threshold/alert',
       },
       {
-        name: 'View alert rules',
+        name: 'Summary/Create New',
         access: 'canAlertruleList',
         icon: 'ControlOutlined',
         path: '/threshold/alertRule',
@@ -122,6 +122,18 @@ export default [
         component: './system/flow',
       },
       {
+        name: 'Product Type',
+        icon: 'table',
+        path: '/IdentityAccessManagement/producttype',
+        component: './system/producttype',
+      },
+      {
+        name: 'Terminal',
+        icon: 'solution',
+        path: '/IdentityAccessManagement/terminal',
+        component: './system/terminal',
+      },
+      {
         name: 'Login log',
         icon: 'bars',
         path: '/IdentityAccessManagement/loginlog',
@@ -153,18 +165,7 @@ export default [
         path: '/InformationPage',
         redirect: '/IdentityAccessManagement/jetty',
       },
-      {
-        name: 'Product Type',
-        icon: 'table',
-        path: '/InformationPage/producttype',
-        component: './system/producttype',
-      },
-      {
-        name: 'Terminal',
-        icon: 'solution',
-        path: '/InformationPage/terminal',
-        component: './system/terminal',
-      },
+     
       {
         name: 'Jetty',
         icon: 'idcard',
@@ -188,16 +189,15 @@ export default [
 
       },
       {
-        name: 'Personal settings',
-        path: '/account/settings',
-        component: './account/settings'
-        
+        name: 'Personal Basic Settings',
+        path: '/account/baseSettings',
+        component: './account/settings/components/base'
+
       },
-      
       {
-        name: 'Filter Of Timestamps',
-        path: '/account/filterOfTimestamps',
-        component: './account/filterOfTimestamps'
+        name: 'Modify account password',
+        path: '/account/modPassword',
+        component: './account/settings/components/modPassword'
       
       },
 

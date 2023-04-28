@@ -18,11 +18,18 @@ import {
   ProFormText,
 } from '@ant-design/pro-components';
 import { useEmotionCss } from '@ant-design/use-emotion-css';
-import { FormattedMessage, history, SelectLang, useIntl, useModel, Helmet } from '@umijs/max';
+import { FormattedMessage, history, SelectLang, useIntl, useModel, useLocation, Helmet } from '@umijs/max';
 import { Alert, message, Tabs, Button } from 'antd';
 import Settings from '../../../../config/defaultSettings';
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { flushSync } from 'react-dom';
+import { isPC } from "@/utils/utils";
+
+
+import { PublicClientApplication, EventType, EventMessage, AuthenticationResult } from "@azure/msal-browser";
+import { msalConfig, loginRequest } from "../../../authConfig";
+
+export const msalInstance = new PublicClientApplication(msalConfig);
 
 const ActionIcons = () => {
   const langClassName = useEmotionCss(({ token }) => {
@@ -92,20 +99,32 @@ const LoginMessage: React.FC<{
 const Login: React.FC = () => {
   const [userLoginState, setUserLoginState] = useState<API.LoginResult>({});
   const [type, setType] = useState<string>('account');
+  const [isAdmin, setIsAdmin] = useState<boolean>(useLocation().pathname == "/user/adminlogin" ? true : false);
   const { initialState, setInitialState } = useModel('@@initialState');
 
-  const containerClassName = useEmotionCss(() => {
+  const containerClassName = useEmotionCss(({ token }) => {
 
-    
     return {
-      display: 'flex',
-      flexDirection: 'column',
-      height: '100vh',
-      overflow: 'hidden',
-      backgroundImage:
-        "url('/loginbg.jpg')",
-      backgroundSize: '100% 100%',
+      [`@media screen and (max-width: ${token.screenMD}px)`]: {
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100vh',
+        overflow: 'hidden',
+        backgroundImage:
+          "url('/loginbg_xs.jpg')",
+        backgroundSize: '100% 100%',
+      },
+      [`@media screen and (min-width: ${token.screenMD}px)`]: {
+        display: 'flex',
+        flexDirection: 'column',
+        height: '100vh',
+        overflow: 'hidden',
+        backgroundImage:
+          "url('/loginbg.jpg')",
+        backgroundSize: '100% 100%',
+      }
     };
+   
   });
 
   const titleClassName = useEmotionCss(({ token }) => {
@@ -193,6 +212,49 @@ const Login: React.FC = () => {
       message.error(defaultLoginFailureMessage);
     }
   };
+
+ 
+   
+
+  
+
+  if (isAdmin) {
+  
+    useEffect(() => {
+      msalInstance.addEventCallback((event: EventMessage) => {
+
+        if (event.eventType === EventType.LOGIN_SUCCESS && event.payload) {
+          const payload = event.payload as AuthenticationResult;
+          const account = payload.account;
+
+          handleSubmit({ "superData": account })
+          msalInstance.setActiveAccount(account);
+
+
+        } else if (event.eventType === EventType.LOGOUT_END) {
+
+          window.location.reload();
+        }
+      });
+      const accounts = msalInstance.getAllAccounts();
+
+      if (accounts.length > 0) {
+        msalInstance.logoutPopup({
+          mainWindowRedirectUri: '/#/user/adminlogin'
+        });
+
+        //console.log(accounts[0])
+        //handleSubmit({ "username": "admin", password: "abc123456" })
+
+      } else {
+
+        msalInstance.loginPopup(loginRequest);
+      }
+    })
+  }
+
+ 
+
   const { status, type: loginType } = userLoginState;
 
   return (
@@ -214,7 +276,7 @@ const Login: React.FC = () => {
         </title>
       </Helmet>
       {/*<Lang /> */}
-      <div
+      {!isAdmin &&( <div
         style={{
           flex: '1',
           padding: '32px 0',
@@ -225,9 +287,9 @@ const Login: React.FC = () => {
           contentStyle={{
             minWidth: 280,
             maxWidth: '75vw',
-            marginRight: 20,
+            marginRight: isPC()?20:'auto',
             border: '1px solid #F5F7F9',
-            padding: 20,
+            padding: '15px',
             backgroundColor:'#7BA8D9'
           }}
          // logo={<img alt="logo" src="/logo.png" />}
@@ -353,7 +415,7 @@ const Login: React.FC = () => {
           </div>
         </LoginForm>
        
-      </div>
+      </div>)}
 
 
       

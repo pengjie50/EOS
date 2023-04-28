@@ -2,7 +2,8 @@ export interface UserListItem  {
   id: string;
   username: string;
   nickname: string;
-  description: string;
+  email: string;
+
 };
 
 export interface UserList  {
