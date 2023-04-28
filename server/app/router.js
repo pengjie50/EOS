@@ -6,7 +6,7 @@
 module.exports = app => {
     const { router, controller } = app;
     app.beforeStart(async () => {
-       await app.model.User.sync({ alter: true });//force  false 为不覆盖 true会删除再创建; alter true可以 添加或删除字段;
+       //await app.model.User.sync({ alter: true });//force  false 为不覆盖 true会删除再创建; alter true可以 添加或删除字段;
     });
     
     router.get('/', controller.home.index);
@@ -19,6 +19,8 @@ module.exports = app => {
     router.post('/api/user/list', controller.user.list);
     router.post('/api/user/retrievePassword', controller.user.retrievePassword);
     router.post('/api/user/modifyPassword', controller.user.modifyPassword);
+    router.post('/api/user/checkEmail', controller.user.checkEmail);
+
     
     //router.post('/system/verify', controller.system.verify);
 

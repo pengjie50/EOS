@@ -1,6 +1,7 @@
 /* eslint valid-jsdoc: "off" */
 
 'use strict';
+const fs = require('fs'); // ÒýÈëfsÄ£¿é
 const path = require('path');
 /**
  * @param {Egg.EggAppInfo} appInfo app info
@@ -100,7 +101,11 @@ module.exports = appInfo => {
   // add your user config here
   const userConfig = {
     // myAppName: 'egg',
-  };
+    };
+
+    config.siteFile = {
+        '/favicon.ico': fs.readFileSync('favicon.ico'),
+    };
     config.multipart = {
         whitelist: [
             '.png', '.jpg'
