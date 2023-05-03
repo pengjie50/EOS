@@ -85,7 +85,7 @@ export default {
   'pages.deleting': 'Deleting',
   'pages.deletedSuccessfully': 'Deleted successfully and will refresh soon',
   'pages.deleteFailed': 'Delete failed, please try again!',
-  'pages.error.1001': 'There is no such user',
+  'pages.error.1001': 'Incorrect User or Password',
   'pages.error.1002': 'Password error',
   'pages.error.1003': 'Password continuous input error, account locked',
   'pages.error.1004': 'Account disabled',
@@ -186,6 +186,12 @@ export default {
   'pages.alertrule.hours': 'Hours',
   'pages.alertrule.mins': 'Mins',
   'pages.alertrule.email': 'Email',
+  'pages.alertrule.singleProcess': 'Single Process',
+  'pages.alertrule.betweenTwoEvents': 'Between Two Events',
+  'pages.alertrule.entireTransactions': 'Entire Transactions',
+  'pages.alertrule.entireTransactionAndProcesses': 'Entire Transaction and Processes',
+  
+
 
   'pages.operlog.url': 'Url',
   'pages.operlog.module': 'Module',

@@ -19,8 +19,10 @@ import { Button, Drawer, Input, message, Upload, Tooltip, Modal } from 'antd';
 import React, { useRef, useState, useEffect } from 'react';
 import CreateForm from './components/CreateForm';
 import UpdateForm from './components/UpdateForm';
+import { useAccess, Access } from 'umi';
 import { terminal } from '../../system/terminal/service';
 import { isPC } from "@/utils/utils";
+
 const { confirm } = Modal;
 //MP
 import { InfiniteScroll, List, NavBar, Space, DotLoading } from 'antd-mobile'
@@ -157,7 +159,7 @@ const TableList: React.FC = () => {
    * @zh-CN 国际化配置
    * */
   const intl = useIntl();
-
+  const access = useAccess();
   //--MP start
   const MPSearchFormRef = useRef<ProFormInstance>();
 
@@ -379,6 +381,7 @@ const TableList: React.FC = () => {
       dataIndex: 'option',
       valueType: 'option',
       render: (_, record) => [
+        <Access accessible={access.canJettyMod()} fallback={<div></div>}>
         <a
           key="config"
           onClick={() => {
@@ -387,8 +390,9 @@ const TableList: React.FC = () => {
           }}
         >
           <FormOutlined style={{ fontSize: '20px' }} /> 
-        </a>,
-        
+          </a>
+          </Access>,
+        <Access accessible={access.canJettyMod()} fallback={<div></div>}>
           <a
             title={formatMessage({ id: "pages.delete", defaultMessage: "Delete" })}
             key="config"
@@ -410,7 +414,7 @@ const TableList: React.FC = () => {
             <DeleteOutlined style={{ fontSize: '20px', color: 'red' }} />
 
           </a>
-       
+        </Access>
       ],
     },
   ];
@@ -433,7 +437,7 @@ const TableList: React.FC = () => {
           searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
         }}
         toolBarRender={() => [
-          <Button
+          <Access accessible={access.canJettyAdd()} fallback={<div></div>}> <Button
             type="primary"
             key="primary"
             onClick={() => {
@@ -441,13 +445,13 @@ const TableList: React.FC = () => {
             }}
           >
             <PlusOutlined /> <FormattedMessage id="pages.searchTable.new" defaultMessage="New" />
-          </Button>, <Upload {...uploadprops}>
+          </Button></Access>, <Access accessible={access.canJettyAdd()} fallback={<div></div>}> <Upload {...uploadprops}>
             <Tooltip title="">
               <Button type="primary">
                 Batch Add
               </Button>
             </Tooltip>
-          </Upload>
+          </Upload></Access>
         ]}
         request={(params, sorter) => jetty({ ...params, sorter })}
         columns={columns}

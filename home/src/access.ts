@@ -5,6 +5,27 @@ export default function access(initialState: { currentUser?: API.CurrentUser } |
   const { currentUser } = initialState ?? {};
   return {
     canAdmin: currentUser && currentUser.role_name === 'super',
+    canJettyAdd: () => {
+      return currentUser && currentUser.permissions.some((a) => {
+        return a == 'jetty_add'
+      }) || currentUser?.role_name === 'super'
+    },
+    canJettyList: () => {
+      return currentUser && currentUser.permissions.some((a) => {
+        return a == 'jetty_list'
+      }) || currentUser?.role_name === 'super'
+    },
+    canJettyDel: () => {
+      return currentUser && currentUser.permissions.some((a) => {
+        return a == 'jetty_del'
+      }) || currentUser?.role_name === 'super'
+    },
+
+    canJettyMod: () => {
+      return currentUser && currentUser.permissions.some((a) => {
+        return a == 'jetty_mod'
+      }) || currentUser?.role_name === 'super'
+    },
     canAlertruleAdd: () => {
       return currentUser && currentUser.permissions.some((a) => {
         return a == 'alertrule_add' 

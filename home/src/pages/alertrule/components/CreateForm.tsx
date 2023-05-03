@@ -50,7 +50,12 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
     } else {
       flow({ pageSize: 300, current: 1, type: 0, sorter: { sort: 'ascend' } }).then((res) => {
-        var b = {"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa":"Total Duration"}
+        var b = {
+          "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": intl.formatMessage({
+            id: 'pages.alertrule.entireTransactions',
+            defaultMessage: 'Entire Transactions',
+          })
+         }
         res.data.forEach((r) => {
           b[r.id] = r.name
         })

@@ -23,7 +23,7 @@ import {
   Search
 } from '@ant-design/pro-components';
 
-import { FormattedMessage, useIntl, formatMessage } from '@umijs/max';
+import { FormattedMessage, useIntl, useLocation, formatMessage } from '@umijs/max';
 import { Button, Drawer, Input, message, TreeSelect, Modal } from 'antd';
 import React, { useRef, useState, useEffect } from 'react';
 import CreateForm from './components/CreateForm';
@@ -245,15 +245,29 @@ const TableList: React.FC = () => {
     await getData(currentPage , MPfilter)
     setCurrentPage(currentPage + 1)
   }
+
+
+  var  pathname=useLocation().pathname
   //--MP end
   const [events, setEvents] = useState<any>([]);
   useEffect(() => {
-    
+    if (pathname == '/threshold/createAlertRule') {
+      if (!createModalOpen) {
+        handleModalOpen(true)
+      }
+    }
    
 
     flow({ pageSize: 300, current: 1, sorter: { sort: 'ascend' } }).then((res) => {
-      var b = { "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": "Total Duration" }
-      var p = { "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": "Total Duration" }
+      var b = { "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": intl.formatMessage({
+            id: 'pages.alertrule.entireTransactions',
+            defaultMessage: 'Entire Transactions',
+          }) }
+      var p = {
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": intl.formatMessage({
+          id: 'pages.alertrule.entireTransactions',
+          defaultMessage: 'Entire Transactions',
+        }) }
 
 
       res.data.forEach((r) => {
@@ -291,6 +305,7 @@ const TableList: React.FC = () => {
    * */
   const intl = useIntl();
   const access = useAccess();
+ 
   const columns: ProColumns<AlertruleListItem>[] = [
 
     {
@@ -300,9 +315,9 @@ const TableList: React.FC = () => {
       hideInSearch: true,
       defaultSortOrder: 'ascend',
       valueEnum: {
-        0: { text: <FormattedMessage id="pages.alertrule.ForOneProcess" defaultMessage="For one process" /> },
-        1: { text: <FormattedMessage id="pages.alertrule.ForBetweenTwoEvents" defaultMessage="For between two events" /> },
-        2: { text: <FormattedMessage id="pages.alertrule.ForTheEntireTransaction" defaultMessage="For the entire transaction" /> },
+        0: { text: <FormattedMessage id="pages.alertrule.singleProcess" defaultMessage="Single Process" /> },
+        1: { text: <FormattedMessage id="pages.alertrule.betweenTwoEvents" defaultMessage="Between Two Events" /> },
+        2: { text: <FormattedMessage id="pages.alertrule.entireTransactions" defaultMessage="Entire Transactions" /> },
       }
      
     },
@@ -310,8 +325,8 @@ const TableList: React.FC = () => {
     {
       title: (
         <FormattedMessage
-          id="pages.alertrule.eee"
-          defaultMessage="Entire transaction and processes"
+          id="pages.alertrule.entireTransactionAndProcesses"
+          defaultMessage="Entire Transaction and Processes"
         />
       ),
       dataIndex: 'flow_id',
@@ -330,8 +345,8 @@ const TableList: React.FC = () => {
     {
       title: (
         <FormattedMessage
-          id="pages.alertrule.eee"
-          defaultMessage="Between two events"
+          id="pages.alertrule.betweenTwoEvents"
+          defaultMessage="Between Two Events"
         />
       ),
       dataIndex: 'flow_id_to',
@@ -540,7 +555,7 @@ const TableList: React.FC = () => {
       ],
     },
   ];
- 
+  
   return  (
     <PageContainer header={{
       title: '',
@@ -549,11 +564,12 @@ const TableList: React.FC = () => {
       {!isMP && (<ProTable<AlertruleListItem, API.PageParams>
         headerTitle={intl.formatMessage({
           id: 'pages.alertrule.title',
-          defaultMessage: 'Threshold Limits - Summry',
+          defaultMessage: 'Threshold Limit List',
         })}
         actionRef={actionRef}
         rowKey="id"
         scroll={{ y: 300 }}
+        bordered size="small"
         search={{
           labelWidth: 210,
           searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />

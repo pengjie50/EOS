@@ -523,10 +523,12 @@ const TableList: React.FC = () => {
           id: 'pages.transaction.title',
           defaultMessage: 'Summary of all transactions ',
         })}
+        bordered size="small"
         actionRef={actionRef}
         rowKey="id"
         search={{
           labelWidth: 150,
+          searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
         }}
         toolBarRender={() => [
            /*<Button

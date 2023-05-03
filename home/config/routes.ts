@@ -58,13 +58,22 @@ export default [
         redirect: '/threshold/alert',
       },
       {
-        name: 'Summary/Create New',
+        name: 'Create New',
+        access: 'canAlertruleAdd',
+        icon: 'ControlOutlined',
+        path: '/threshold/createAlertRule',
+        component: './alertrule',
+      },
+      {
+        name: 'Summary',
+        key:'Summary',
         access: 'canAlertruleList',
         icon: 'ControlOutlined',
         path: '/threshold/alertRule',
         component: './alertrule',
       },
       {
+        key: 'View triggered alerts',
         name: 'View triggered alerts',
         access: 'canAlertList',
         icon: 'AlertOutlined',
@@ -157,6 +166,7 @@ export default [
   {
     path: '/InformationPage',
     name: 'Information Page',
+    access: 'canJettyList',
    // access: 'canAdmin',
     // icon: 'smile',
     //component: './IdentityAccessManagement',

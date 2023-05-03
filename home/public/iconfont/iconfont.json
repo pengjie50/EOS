@@ -6,6 +6,27 @@
   "description": "",
   "glyphs": [
     {
+      "icon_id": "32303230",
+      "name": "塔吊_画板 1",
+      "font_class": "a-tadiao_huaban1",
+      "unicode": "e808",
+      "unicode_decimal": 59400
+    },
+    {
+      "icon_id": "18170997",
+      "name": "地图连线竖,连接,连线",
+      "font_class": "map-link-full",
+      "unicode": "ea01",
+      "unicode_decimal": 59905
+    },
+    {
+      "icon_id": "18171000",
+      "name": "地图连线,连线,连接",
+      "font_class": "map-connect-full",
+      "unicode": "ea02",
+      "unicode_decimal": 59906
+    },
+    {
       "icon_id": "1250665",
       "name": "圆",
       "font_class": "yuan",
@@ -32,13 +53,6 @@
       "font_class": "matou1",
       "unicode": "e942",
       "unicode_decimal": 59714
-    },
-    {
-      "icon_id": "7764766",
-      "name": "轮船吊车",
-      "font_class": "lunchuandiaoche",
-      "unicode": "e61b",
-      "unicode_decimal": 58907
     },
     {
       "icon_id": "15628595",
