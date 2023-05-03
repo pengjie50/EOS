@@ -91,6 +91,11 @@ module.exports = app => {
             type: INTEGER,
             allowNull: true,
            defaultValue: null
+        },
+        bliockchain_hex_key: {
+            type: STRING(200),
+            allowNull: true,
+            defaultValue: ''
         }
     }, {
         indexes: [

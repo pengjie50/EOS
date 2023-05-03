@@ -132,11 +132,15 @@ class UserService extends Service {
           expiresIn:3600// 3600*24  //过期时间设置为60
         });
 
+        
         await service.user.mod({
             id: res.id,
-            login_time: parseInt((new Date).getTime() / 1000),
+            login_token: token,
+            login_time: parseInt((new Date).getTime() / 1000)
 })
         service.loginlog.add(loginlog)
+
+
         ctx.body = { type:'account', status:'ok',token:token}
         
     }
@@ -158,7 +162,7 @@ class UserService extends Service {
         ctx.body = { success: true, data: res?true:false } 
     }
     
-    async getLoginTime(user_id) {
+    async getUserInfo(user_id) {
         const ctx = this.ctx;
         var res = await ctx.model.User.findOne({
             where: {
@@ -167,7 +171,7 @@ class UserService extends Service {
             },
             raw: true
         });
-        return res.login_time
+        return res
     }
     async findOne(params){
         const ctx = this.ctx;

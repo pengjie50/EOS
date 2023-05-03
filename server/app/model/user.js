@@ -84,7 +84,11 @@ module.exports = app => {
             allowNull: false,
             defaultValue: 0
         }, 
-        
+        login_token: {
+            type: STRING(500),
+            allowNull: true,
+            defaultValue: ''
+        },
        
     }, {
         indexes: [
