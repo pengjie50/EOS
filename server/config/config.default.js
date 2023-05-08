@@ -104,26 +104,7 @@ module.exports = appInfo => {
     };
 
     config.siteFile = {
-       
-        '/gywm/': fs.readFileSync(path.join(appInfo.baseDir, '/public/dist/gywm/index.html')),
-        '/lxwm/': fs.readFileSync(path.join(appInfo.baseDir, '/public/dist/lxwm/index.html')),
-
-        '/yyzx/': fs.readFileSync(path.join(appInfo.baseDir, '/public/dist/yyzx/index.html')),
-        '/gsdt/': fs.readFileSync(path.join(appInfo.baseDir, '/public/dist/gsdt/index.html')),
-        '/cjwt/': fs.readFileSync(path.join(appInfo.baseDir, '/public/dist/cjwt/index.html')),
-        '/jgsp/': fs.readFileSync(path.join(appInfo.baseDir, '/public/dist/jgsp/index.html')),
-        '/jgsl/': fs.readFileSync(path.join(appInfo.baseDir, '/public/dist/jgsl/index.html')),
-        '/fbdz/': fs.readFileSync(path.join(appInfo.baseDir, '/public/dist/fbdz/index.html')),
-        '/jggl/': fs.readFileSync(path.join(appInfo.baseDir, '/public/dist/jggl/index.html')),
-        
-        
-        '/jgyp/': fs.readFileSync(path.join(appInfo.baseDir, '/public/dist/jgyp/index.html')),
-        '/wjcyjg/': fs.readFileSync(path.join(appInfo.baseDir, '/public/dist/wjcyjg/index.html')),
-        '/lsjjg/': fs.readFileSync(path.join(appInfo.baseDir, '/public/dist/lsjjg/index.html')),
-        '/bjjjg/': fs.readFileSync(path.join(appInfo.baseDir, '/public/dist/bjjjg/index.html')),
-        '/lwkjg/': fs.readFileSync(path.join(appInfo.baseDir, '/public/dist/lwkjg/index.html')),
-        '/cncjg/': fs.readFileSync(path.join(appInfo.baseDir, '/public/dist/cncjg/index.html')),
-        '/lhjyz/': fs.readFileSync(path.join(appInfo.baseDir, '/public/dist/lhjyz/index.html')),
+      
         
         
         '/favicon.ico': fs.readFileSync('favicon.ico'),
