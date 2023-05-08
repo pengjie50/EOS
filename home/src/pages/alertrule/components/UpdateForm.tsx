@@ -130,7 +130,8 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
           name="size_of_vessel_to" width="sm" min={0} max={10000000} />
       </ProFormGroup>
-      <ProFormGroup>
+
+      {values.total_nominated_quantity_from_m && values.total_nominated_quantity_to_m && (<ProFormGroup>
         <ProFormDigit label={<FormattedMessage
           id="pages.alertrule.from"
           defaultMessage="Total nominated quantity From"
@@ -159,8 +160,8 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
 
         />
-      </ProFormGroup>
-      <ProFormGroup>
+      </ProFormGroup>)}
+      {values.total_nominated_quantity_from_b && values.total_nominated_quantity_to_b && (<ProFormGroup>
         <ProFormDigit label={<FormattedMessage
           id="pages.alertrule.from"
           defaultMessage="Total nominated quantity From"
@@ -185,7 +186,9 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
           initialValue={"Barrels (Bal-60-F)"}
         />
-      </ProFormGroup>
+      </ProFormGroup>)
+      }
+      
 
 
      

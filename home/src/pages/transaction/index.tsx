@@ -531,7 +531,7 @@ const TableList: React.FC = () => {
           searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
         }}
         toolBarRender={() => [
-           /*<Button
+           <Button
             type="primary"
             key="primary"
             onClick={() => {
@@ -540,7 +540,7 @@ const TableList: React.FC = () => {
           >
             
             <PlusOutlined /> <FormattedMessage id="pages.searchTable.new" defaultMessage="New" />
-          </Button>,*/ <Button type="primary" key="print"
+          </Button>, <Button type="primary" key="print"
             onClick={() => handlePrintModalVisible(true)}
           ><PrinterOutlined /> <FormattedMessage id="pages.Print" defaultMessage="Print" />
           </Button>, <Button type="primary" key="out"

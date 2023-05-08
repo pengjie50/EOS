@@ -6,6 +6,41 @@
   "description": "",
   "glyphs": [
     {
+      "icon_id": "643732",
+      "name": "警告",
+      "font_class": "2",
+      "unicode": "e601",
+      "unicode_decimal": 58881
+    },
+    {
+      "icon_id": "5982568",
+      "name": "告警实心",
+      "font_class": "tixingshixin",
+      "unicode": "ec72",
+      "unicode_decimal": 60530
+    },
+    {
+      "icon_id": "1411025",
+      "name": "6运动轨迹",
+      "font_class": "yundongguiji",
+      "unicode": "e61c",
+      "unicode_decimal": 58908
+    },
+    {
+      "icon_id": "13547733",
+      "name": "倒计时",
+      "font_class": "daojishi",
+      "unicode": "e649",
+      "unicode_decimal": 58953
+    },
+    {
+      "icon_id": "2076226",
+      "name": " 水果",
+      "font_class": "shuiguo",
+      "unicode": "e882",
+      "unicode_decimal": 59522
+    },
+    {
       "icon_id": "32303230",
       "name": "塔吊_画板 1",
       "font_class": "a-tadiao_huaban1",

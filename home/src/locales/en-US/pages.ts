@@ -188,7 +188,7 @@ export default {
   'pages.alertrule.email': 'Email',
   'pages.alertrule.singleProcess': 'Single Process',
   'pages.alertrule.betweenTwoEvents': 'Between Two Events',
-  'pages.alertrule.entireTransactions': 'Entire Transactions',
+  'pages.alertrule.entireTransaction': 'Entire Transaction',
   'pages.alertrule.entireTransactionAndProcesses': 'Entire Transaction and Processes',
   
 

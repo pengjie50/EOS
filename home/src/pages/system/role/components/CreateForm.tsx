@@ -15,14 +15,14 @@ import React, { useRef } from 'react';
 
 
 
-export type UpdateFormProps = {
+export type CreateFormProps = {
   onCancel: (flag?: boolean, formVals?: Partial<RoleListItem>) => void;
   onSubmit: (values: Partial<RoleListItem>) => Promise<void>;
   createModalOpen: boolean;
-  values: Partial<RoleListItem>;
+ 
 };
 
-const UpdateForm: React.FC<UpdateFormProps> = (props) => {
+const UpdateForm: React.FC<CreateFormProps> = (props) => {
   const restFormRef = useRef<ProFormInstance>();
   const intl = useIntl();
  
@@ -30,7 +30,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
     onSubmit,
     onCancel,
     createModalOpen,
-    values,
+  
   } = props;
 
   
@@ -38,7 +38,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
    
     <ModalForm
       modalProps={{ destroyOnClose: true }}
-      initialValues={values}
+      
       onOpenChange={(vi) => {
         if (!vi) {
           props.onCancel();

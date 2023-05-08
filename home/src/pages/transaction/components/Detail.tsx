@@ -2,10 +2,10 @@ import React, { useRef, useState, useEffect,useCallback } from 'react';
 import { PageContainer, ProCard, ProColumns, ProDescriptions, ProFormGroup, ProFormSelect, ProDescriptionsItemProps } from '@ant-design/pro-components';
 import { AlertOutlined, SafetyCertificateOutlined, CheckOutlined  } from '@ant-design/icons'; 
 import ProTable from '@ant-design/pro-table';
-import { FormattedMessage, useIntl, useLocation, useModel } from '@umijs/max';
+import { FormattedMessage, useIntl, useLocation, useModel, history } from '@umijs/max';
 import { TransactionList, TransactionListItem } from '../data.d';
 import { transaction, transactionevent, addTransactionevent } from '../service';
-import { Button, Space, Steps, Icon, Select, message } from 'antd';
+import { Button, Space, Steps, Icon, Select, message, Spin } from 'antd';
 import { flow } from '../../system/flow/service';
 import { filterOfTimestamps, addFilterOfTimestamps, updateFilterOfTimestamps } from '../../account/filterOfTimestamps/service';
 import { getAlertBytransactionId } from '../../alert/service';
@@ -116,21 +116,8 @@ const Detail: React.FC<any> = (props) => {
           defaultMessage="EOS ID"
         />
       ),
-      dataIndex: 'id',
-      tip: 'The EOS ID is the unique key',
-      render: (dom, entity) => {
-        return (
-          <a
-            onClick={() => {
-              setCurrentRow(entity);
-              history.push(`/transaction/detail?transaction_id=` + entity.id);
-              // setShowDetail(true);
-            }}
-          >
-            {dom}
-          </a>
-        );
-      },
+      dataIndex: 'id'
+      
     },
 
     {
@@ -721,24 +708,35 @@ const Detail: React.FC<any> = (props) => {
           </div>
         </div>
 
-        <div style={{ position: 'relative', float: 'left', zIndex: 1, width:'140px', textAlign: 'center' }}>
+        <div style={{ position: 'relative', cursor: "pointer", float: 'left', zIndex: 1, width: '140px', textAlign: 'center' }} onClick={() => {
+
+          history.push(`/transaction/blockchainIntegration?transaction_id=` + currentRow.id);
+
+        } }>
 
           <div style={{ position: 'relative', zIndex: 1, fontSize: '14px', height: 30, color: "#333" }}></div>
           <div style={{ position: 'relative', zIndex: 1, height: '30px', }}>
-            <span style={{
-              display: "inline-block",
-              color: currentRow && currentRow.bliockchain_hex_key ? "#fff" :  "#A6A6A6",
-              width: '30px',
-              height: '30px',
-              fontSize: "20px",
-              backgroundColor: currentRow && currentRow.bliockchain_hex_key ?"#67C23A":"#E7E6E6",
-              borderRadius: '50%',
-              textAlign: 'center',
-              lineHeight: '30px'
-            }}>
 
-              <CheckOutlined />
-            </span>
+            {currentRow?.status == 1 && !currentRow?.bliockchain_hex_key ? (<Spin />) :
+
+              <span style={{
+                display: "inline-block",
+                color: currentRow && currentRow.bliockchain_hex_key ? "#fff" : "#A6A6A6",
+                width: '30px',
+                height: '30px',
+                fontSize: "20px",
+                backgroundColor: currentRow && currentRow.bliockchain_hex_key ? "#67C23A" : "#E7E6E6",
+                borderRadius: '50%',
+                textAlign: 'center',
+                lineHeight: '30px'
+              }}>
+
+                <CheckOutlined />
+
+              </span>
+
+              }
+            
           </div>
           <div style={{ fontSize: '10px', color: currentRow && currentRow.bliockchain_hex_key ? "#67C23A" : "#808080", width: "100%s" }}>
             Timestamps to be validated on blockchain
@@ -754,18 +752,18 @@ const Detail: React.FC<any> = (props) => {
 
 
       {isMP && (<div style={{ width: '100%', height: 'auto', overflow: 'auto', padding: "10px", backgroundColor: "#FFF" }}>
-        <div style={{ position: 'relative', float: 'left', zIndex: 1, textAlign: 'left', marginRight: 10 }}>
-          <div style={{ float: 'left', width: 40, height:40 }}>
+        <div style={{ position: 'relative', float: 'left', zIndex: 1, textAlign: 'left', marginRight: 10, width: '100%' }}>
+          <div style={{ float: 'left', width: 40, height: 40, width: '40px' }}>
             
           </div>
-          <div style={{ position: 'relative', zIndex: 1, fontSize: '14px', color: "#808080", marginLeft: 10, float: 'left', }}>Processes</div>
-          <div style={{ position: 'relative', zIndex: 1, height: '40px', float: 'left', marginLeft: 10 }}>
-
+          <div style={{ position: 'relative', zIndex: 1, marginLeft: 5, fontSize: '14px', color: "#808080", width: '30%', float: 'left' }}>
+            Processes
           </div>
-          <div style={{ fontSize: '14px', color: "#808080", float: 'left', marginLeft: 10 }}>
+         
+          <div style={{ fontSize: '14px', color: "#808080", float: 'left', width: '15%' }}>
             Duration
           </div>
-          <div style={{ fontSize: '10px', color: "#808080", float: 'left', marginLeft: 10 }}>
+          <div style={{ fontSize: '14px', color: "#808080", float: 'left', width: '40%', textAlign: 'center' }}>
             Threshold
           </div>
         </div>
@@ -774,7 +772,7 @@ const Detail: React.FC<any> = (props) => {
           var p = processMap.get(e.id)
           var ar = alertruleMap[e.id]
           return [
-            <div style={{ position: 'relative', float: 'left', zIndex: 1, textAlign: 'center', width: '100%' }}>
+            <div style={{ position: 'relative', float: 'left', zIndex: 1, textAlign: 'left', width: '100%' }}>
 
 
               <div style={{ position: 'relative', zIndex: 1, float: 'left' }}>
@@ -793,11 +791,11 @@ const Detail: React.FC<any> = (props) => {
                   <SvgIcon type={e.icon} />
                 </span>
               </div>
-              <div style={{ position: 'relative', marginLeft:10,height: '40px',lineHeight: '40px',zIndex: 1, float: 'left', fontSize: '14px', color: "#333", fontWeight: "bold" }}>{e.name}</div>
-              <div style={{ fontSize: '14px', float: 'left', marginLeft: 10, height: '40px',lineHeight: '40px', color: "#333" }}>
+              <div style={{ position: 'relative', marginLeft: 5, height: '40px', lineHeight: '40px', width: '30%', zIndex: 1, float: 'left', fontSize: '12px', color: "#333", fontWeight: "bold" }}>{e.name}</div>
+              <div style={{ fontSize: '12px', float: 'left', height: '40px', lineHeight: '40px', width: '15%', color: "#333" }}>
                 {p && p.event_count == e.children.length ? parseInt((p.duration / 3600) + "") + " h " + parseInt((p.duration % 3600) / 60) + " m" : ""}
               </div>
-              <div style={{ fontSize: '10px', height: '40px', lineHeight: '40px', marginLeft: 10, display: "inline-block" }}>
+              <div style={{ fontSize: '10px', height: '40px', lineHeight: '40px', textAlign: 'center', width: '40%', display: "inline-block", float:'right'  }}>
                 {ar && (<SvgIcon style={{ color: "#DE8205" }} type="icon-yuan" />)} {ar ? ar.amber_hours + "h " + ar.amber_mins + "m" : ""} {ar && (<SvgIcon style={{ color: "red" }} type="icon-yuan" />)} {ar ? ar.red_hours + "h " + ar.red_mins + "m" : ""}
               </div>
             </div>,
@@ -837,46 +835,51 @@ const Detail: React.FC<any> = (props) => {
               lineHeight: '25px'
             }}>
 
-              11h 55m
+              {totalDuration > 0 ? parseInt((totalDuration / 3600) + "") + " h " + parseInt((totalDuration % 3600) / 60) + " m" : ""}
             </span>
           </div>
-          <div style={{ position: 'relative', marginLeft: 10, height: '40px', lineHeight: '40px', zIndex: 1, float: 'left', fontSize: '14px', color: "#333", fontWeight: "bold" }}>{'Current/Total Duration'}</div>
-          <div style={{ fontSize: '14px', float: 'left', marginLeft: 10, height: '40px', lineHeight: '40px', color: "#333" }}>
-            
-          </div>
-          <div style={{ fontSize: '10px', height: '40px', lineHeight: '40px', marginLeft: 10 }}>
+          <div style={{
+            position: 'relative', marginLeft:5, height: '20px', width: '30%', textAlign: "left", lineHeight: '20px', zIndex: 1, float: 'left', fontSize: '12px', color: "#333", fontWeight: "bold"
+          }}>{'Current/Total Duration'}</div>
+        
+          <div style={{ fontSize: '10px', height: '40px', lineHeight: '40px', width: '40%' ,float: 'right', }}>
             <SvgIcon style={{ color: "#DE8205" }} type="icon-yuan" /> 1h 30m  <SvgIcon style={{ color: "red" }} type="icon-yuan" /> 1h 30m
           </div>
         </div>
 
 
-        {currentRow && currentRow.bliockchain_hex_key && (<div style={{ position: 'relative', float: 'left', zIndex: 1, textAlign: 'center', width: '100%' }}>
+        <div style={{ position: 'relative', float: 'left', zIndex: 1, textAlign: 'center', width: '100%' }} onClick={() => {
+
+          history.push(`/transaction/blockchainIntegration?transaction_id=` + currentRow.id);
+
+        }}>
 
 
           <div style={{ position: 'relative', zIndex: 1, float: 'left', marginLeft: '5px' }}>
-            <span style={{
-              display: "inline-block",
-              color: currentRow && currentRow.bliockchain_hex_key ? "#fff" : "#A6A6A6",
-              width: '30px',
-              height: '30px',
-              fontSize: "20px",
-              backgroundColor: currentRow && currentRow.bliockchain_hex_key ? "#67C23A" : "#E7E6E6",
-              borderRadius: '50%',
-              textAlign: 'center',
-              lineHeight: '30px'
-            }}>
+            {currentRow?.status == 1 && !currentRow?.bliockchain_hex_key ? (<Spin size="large" />) :
+              <span style={{
+                display: "inline-block",
+                color: currentRow && currentRow.bliockchain_hex_key ? "#fff" : "#A6A6A6",
+                width: '30px',
+                height: '30px',
+                fontSize: "20px",
+                backgroundColor: currentRow && currentRow.bliockchain_hex_key ? "#67C23A" : "#E7E6E6",
+                borderRadius: '50%',
+                textAlign: 'center',
+                lineHeight: '30px'
+              }}>
 
-              <CheckOutlined />
-            </span>
+                <CheckOutlined />
+              </span>}
           </div>
-          <div style={{ position: 'relative', marginLeft: 10, height: '40px', lineHeight: '40px', zIndex: 1, float: 'left', fontSize: '14px', color: "#333", fontWeight: "bold" }}>{''}</div>
-          <div style={{ fontSize: '14px', float: 'left', marginLeft: 10, height: '40px', lineHeight: '40px', color: "#333" }}>
+          <div style={{ position: 'relative', height: '40px', lineHeight: '40px', zIndex: 1, float: 'left', fontSize: '14px', color: "#333", fontWeight: "bold" }}>{''}</div>
+          <div style={{ fontSize: '14px', float: 'left', height: '40px', lineHeight: '40px', color: "#333" }}>
 
           </div>
-          <div style={{ fontSize: '10px',color: currentRow && currentRow.bliockchain_hex_key ? "#67C23A" : "#808080", height: '40px', lineHeight: '40px', marginLeft: 10 }}>
+          <div style={{ fontSize: '10px', float: 'left', color: currentRow && currentRow.bliockchain_hex_key ? "#67C23A" : "#808080", height: '40px', marginLeft:'5px', textAlign: "left", lineHeight: '40px'}}>
             Timestamps to be validated on blockchain
           </div>
-        </div>)}
+        </div>
 
      
 

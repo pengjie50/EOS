@@ -18,14 +18,14 @@ import React, { useRef, useState, useEffect } from 'react';
 
 
 
-export type UpdateFormProps = {
+export type CreateFormProps = {
   onCancel: (flag?: boolean, formVals?: Partial<UserListItem>) => void;
   onSubmit: (values: Partial<UserListItem>) => Promise<void>;
   createModalOpen: boolean;
-  values: Partial<UserListItem>;
+  
 };
 
-const UpdateForm: React.FC<UpdateFormProps> = (props) => {
+const UpdateForm: React.FC<CreateFormProps> = (props) => {
   const restFormRef = useRef<ProFormInstance>();
   const intl = useIntl();
   const [roleConf, setRoleConf] = useState<any>({});
@@ -34,8 +34,8 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
   const {
     onSubmit,
     onCancel,
-    createModalOpen,
-    values,
+    createModalOpen
+   
   } = props;
 
   useEffect(() => {
@@ -66,7 +66,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
    
     <ModalForm
       modalProps={{ destroyOnClose: true }}
-      initialValues={values}
+     
       onOpenChange={(vi) => {
         if (!vi) {
           props.onCancel();

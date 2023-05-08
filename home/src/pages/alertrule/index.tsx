@@ -38,12 +38,62 @@ const { confirm } = Modal;
  * @zh-CN 添加节点
  * @param fields
  */
-const handleAdd = async (fields: AlertruleListItem) => {
+const handleAdd = async (fields: any) => {
+ 
+  var d = { ...fields }
+  console.log(d)
+  if ((d.hasOwnProperty('flow_id') && d.flow_id.length > 0) || (d.hasOwnProperty('events') && d.events.length >0)) {
+    var is = false
+    for (var i in d) {
+      if ((d.hasOwnProperty('flow_id') && d.flow_id.length > 0)) {
+
+        var a = d.flow_id[0].key
+        if (d.hasOwnProperty(a + "_amber_hours") || d.hasOwnProperty(a + "_amber_mins") || d.hasOwnProperty(a + "_red_hours") || d.hasOwnProperty(a + "_red_mins")) {
+
+          is = true
+        }
+        
+        
+      }
+
+
+     
+      if ((d.hasOwnProperty('events') && d.events.length > 0)) {
+        d.events.forEach((a) => {
+          if (d.hasOwnProperty(a + "_amber_hours") || d.hasOwnProperty(a + "_amber_mins") || d.hasOwnProperty(a + "_red_hours") || d.hasOwnProperty(a + "_red_mins")) {
+
+            is = true
+          }
+
+        })
+       
+      }
+
+      
+    }
+    if (!is) {
+      message.error(<FormattedMessage
+        id="pages.aaa"
+        defaultMessage="Adding failed, Please fill in the amber or red time correctly!"
+      />);
+      return
+    }
+
+
+  } else {
+    message.error(<FormattedMessage
+      id="pages.aaa"
+      defaultMessage="Adding failed, Please define threshold duration!"
+    />);
+    return
+  }
+  
+  
+
   const hide = message.loading(<FormattedMessage
     id="pages.adding"
     defaultMessage="Adding"
   />);
- var d= { ...fields }
   if (d.total_nominated_quantity_unit=='b') {
     d.total_nominated_quantity_from_b = d.total_nominated_quantity_from_m
     d.total_nominated_quantity_to_b = d.total_nominated_quantity_to_m
@@ -51,6 +101,7 @@ const handleAdd = async (fields: AlertruleListItem) => {
     delete d.total_nominated_quantity_from_m
     delete d.total_nominated_quantity_to_m
   }
+  
   if (d.from_to) {
     d.size_of_vessel_from = Number(d.from_to.split("-")[0])
     d.size_of_vessel_to = Number(d.from_to.split("-")[1])
@@ -85,7 +136,38 @@ const handleAdd = async (fields: AlertruleListItem) => {
  *
  * @param fields
  */
-const handleUpdate = async (fields: Partial<AlertruleListItem> ) => {
+const handleUpdate = async (fields: Partial<AlertruleListItem>) => {
+  var d = { ...fields }
+  
+    var is = false
+    
+     
+
+
+
+     
+      
+          if (d.hasOwnProperty( "amber_hours") || d.hasOwnProperty( "amber_mins") || d.hasOwnProperty("red_hours") || d.hasOwnProperty("red_mins")) {
+
+            is = true
+          }
+
+        
+
+      
+
+
+    
+    if (!is) {
+      message.error(<FormattedMessage
+        id="pages.aaa"
+        defaultMessage="Adding failed, Please fill in the amber or red time correctly!"
+      />);
+      return
+    }
+
+
+  
   const hide = message.loading(<FormattedMessage
     id="pages.modifying"
     defaultMessage="Modifying"
@@ -260,13 +342,13 @@ const TableList: React.FC = () => {
 
     flow({ pageSize: 300, current: 1, sorter: { sort: 'ascend' } }).then((res) => {
       var b = { "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": intl.formatMessage({
-            id: 'pages.alertrule.entireTransactions',
-            defaultMessage: 'Entire Transactions',
+            id: 'pages.alertrule.entireTransaction',
+            defaultMessage: 'Entire Transaction',
           }) }
       var p = {
         "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": intl.formatMessage({
-          id: 'pages.alertrule.entireTransactions',
-          defaultMessage: 'Entire Transactions',
+          id: 'pages.alertrule.entireTransaction',
+          defaultMessage: 'Entire Transaction',
         }) }
 
 
@@ -317,7 +399,7 @@ const TableList: React.FC = () => {
       valueEnum: {
         0: { text: <FormattedMessage id="pages.alertrule.singleProcess" defaultMessage="Single Process" /> },
         1: { text: <FormattedMessage id="pages.alertrule.betweenTwoEvents" defaultMessage="Between Two Events" /> },
-        2: { text: <FormattedMessage id="pages.alertrule.entireTransactions" defaultMessage="Entire Transactions" /> },
+        2: { text: <FormattedMessage id="pages.alertrule.entireTransaction" defaultMessage="Entire Transaction" /> },
       }
      
     },
@@ -514,14 +596,11 @@ const TableList: React.FC = () => {
             title={formatMessage({ id: "pages.delete", defaultMessage: "Delete" })}
             key="config"
             onClick={() => {
-              setCurrentRow(record);
+             
               handleRemove([record], (success) => {
                 if (success) {
-                  handleUpdateModalOpen(false);
-                  setCurrentRow(undefined);
-                  if (actionRef.current) {
-                    actionRef.current.reload();
-                  }
+                 
+                  actionRef.current?.reloadAndRest?.();
                 }
               });
               
@@ -670,9 +749,11 @@ const TableList: React.FC = () => {
           <Access accessible={access.canAlertruleDel()} fallback={<div></div>}>
             <Button
               onClick={async () => {
-                await handleRemove(selectedRowsState);
-                setSelectedRows([]);
-                actionRef.current?.reloadAndRest?.();
+                await handleRemove(selectedRowsState, () => {
+                  setSelectedRows([]);
+                  actionRef.current?.reloadAndRest?.();
+                });
+                
               }}
             >
               <FormattedMessage
@@ -688,7 +769,7 @@ const TableList: React.FC = () => {
       
       <CreateForm
         onSubmit={async (value) => {
-          value.id = currentRow?.id
+         
           const success = await handleAdd(value as AlertruleListItem);
           if (success) {
             handleModalOpen(false);
@@ -705,7 +786,7 @@ const TableList: React.FC = () => {
           }
         }}
         createModalOpen={createModalOpen}
-        values={currentRow || {}}
+        //values={currentRow || {}}
       />
       <UpdateForm
         onSubmit={async (value) => {

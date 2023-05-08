@@ -42,6 +42,12 @@ export default [
     component: './transaction',
   },
   {
+    path: '/transaction/blockchainIntegration',
+    component: './transaction/components/BlockchainIntegration',
+    hideInMenu: true
+  },
+  
+  {
     path: '/transaction/detail',
     component: './transaction/components/Detail',
     hideInMenu: true

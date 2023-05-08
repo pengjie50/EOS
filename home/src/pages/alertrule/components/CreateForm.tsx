@@ -22,14 +22,14 @@ import React, { useRef, useState, useEffect } from 'react';
 import { PlusCircleOutlined, MinusCircleOutlined } from '@ant-design/icons';
 import { SvgIcon } from '@/components' // 自定义组件
 
-export type UpdateFormProps = {
+export type CreateFormProps = {
   onCancel: (flag?: boolean, formVals?: Partial<AlertruleListItem>) => void;
   onSubmit: (values: Partial<AlertruleListItem>) => Promise<void>;
   createModalOpen: boolean;
-  values: Partial<AlertruleListItem>;
+ 
 };
 
-const UpdateForm: React.FC<UpdateFormProps> = (props) => {
+const UpdateForm: React.FC<CreateFormProps> = (props) => {
   const restFormRef = useRef<ProFormInstance>();
 
   restFormRef?.current?.setFieldsValue({ events: [] })
@@ -41,7 +41,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
     onSubmit,
     onCancel,
     createModalOpen,
-    values,
+  
   } = props;
 
   useEffect(() => {
@@ -52,8 +52,8 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
       flow({ pageSize: 300, current: 1, type: 0, sorter: { sort: 'ascend' } }).then((res) => {
         var b = {
           "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": intl.formatMessage({
-            id: 'pages.alertrule.entireTransactions',
-            defaultMessage: 'Entire Transactions',
+            id: 'pages.alertrule.entireTransaction',
+            defaultMessage: 'Entire Transaction',
           })
          }
         res.data.forEach((r) => {
@@ -83,7 +83,6 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
    
     <ModalForm
       modalProps={{ destroyOnClose: true }}
-      initialValues={values}
       onOpenChange={(vi) => {
         if (!vi) {
           props.onCancel();
@@ -130,7 +129,17 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
             id: 'pages.alertrule.sizeOfVessel',
             defaultMessage: 'Size of vessel',
           })}
-
+          rules={[
+            {
+              required: true,
+              message: (
+                <FormattedMessage
+                  id="pages.rules.required"
+                  defaultMessage="This field cannot be empty！"
+                />
+              ),
+            },
+          ]}
           initialValue={"0-25"}
           valueEnum={{
             "0-25": "1. GP (General Purpose): Less than 24.99 DWT",
@@ -157,9 +166,21 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
       </ProFormGroup>
       <ProFormGroup>
         <ProFormDigit label={<FormattedMessage
+         
           id="pages.alertrule.from"
           defaultMessage="Total nominated quantity From"
         />}
+          rules={[
+            {
+              required: true,
+              message: (
+                <FormattedMessage
+                  id="pages.rules.required"
+                  defaultMessage="This field cannot be empty！"
+                />
+              ),
+            },
+          ]}
           name="total_nominated_quantity_from_m" width="sm" min={1} max={10000000}
 
         />
@@ -168,12 +189,33 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           id="pages.alertrule.to"
           defaultMessage="To"
         />}
-
+          rules={[
+            {
+              required: true,
+              message: (
+                <FormattedMessage
+                  id="pages.rules.required"
+                  defaultMessage="This field cannot be empty！"
+                />
+              ),
+            },
+          ]}
           name="total_nominated_quantity_to_m" width="sm" min={1} max={10000000} />
 
         <ProFormSelect
           name="total_nominated_quantity_unit"
           width="sm"
+          rules={[
+            {
+              required: true,
+              message: (
+                <FormattedMessage
+                  id="pages.rules.required"
+                  defaultMessage="This field cannot be empty！"
+                />
+              ),
+            },
+          ]}
           label={intl.formatMessage({
             id: 'pages.alertrule.unitOfMeasurement',
             defaultMessage: 'Unit of Measurement (UOM)',

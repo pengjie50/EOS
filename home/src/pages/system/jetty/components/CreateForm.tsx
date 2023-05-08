@@ -15,14 +15,14 @@ import React, { useRef, useState, useEffect } from 'react';
 import { terminal } from '../../../system/terminal/service';
 
 
-export type UpdateFormProps = {
+export type CreateFormProps = {
   onCancel: (flag?: boolean, formVals?: Partial<JettyListItem>) => void;
   onSubmit: (values: Partial<JettyListItem>) => Promise<void>;
   createModalOpen: boolean;
-  values: Partial<JettyListItem>;
+  
 };
 
-const UpdateForm: React.FC<UpdateFormProps> = (props) => {
+const UpdateForm: React.FC<CreateFormProps> = (props) => {
   const restFormRef = useRef<ProFormInstance>();
   const intl = useIntl();
   const [terminalList, setTerminalList] = useState<any>({});
@@ -48,7 +48,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
     onSubmit,
     onCancel,
     createModalOpen,
-    values,
+
   } = props;
 
   
@@ -56,7 +56,6 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
    
     <ModalForm
       modalProps={{ destroyOnClose: true }}
-      initialValues={values}
       onOpenChange={(vi) => {
         if (!vi) {
           props.onCancel();

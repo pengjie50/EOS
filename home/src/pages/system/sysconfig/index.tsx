@@ -13,7 +13,7 @@ import {
   ProFormTextArea,
   ProTable,
 } from '@ant-design/pro-components';
-import { FormattedMessage, useIntl } from '@umijs/max';
+import { FormattedMessage, useIntl, formatMessage } from '@umijs/max';
 import { Button, Drawer, Input, message, Modal } from 'antd';
 import React, { useRef, useState } from 'react';
 import CreateForm from './components/CreateForm';
@@ -274,8 +274,28 @@ const TableList: React.FC = () => {
             setCurrentRow(record);
           }}
         >
-          <FormattedMessage id="pages.update" defaultMessage="Modify" />
+          <FormOutlined style={{ fontSize: '20px' }} />
         </a>,
+
+        <a
+          title={formatMessage({ id: "pages.delete", defaultMessage: "Delete" })}
+          key="config"
+          onClick={() => {
+            setCurrentRow(record);
+            handleRemove([record], (success) => {
+              if (success) {
+
+                actionRef.current?.reloadAndRest?.();
+              }
+            });
+
+
+          }}
+        >
+          <DeleteOutlined style={{ fontSize: '20px', color: 'red' }} />
+
+        </a>,
+
        
       ],
     },
@@ -388,9 +408,13 @@ const TableList: React.FC = () => {
         >
           <Button
             onClick={async () => {
-              await handleRemove(selectedRowsState);
-              setSelectedRows([]);
-              actionRef.current?.reloadAndRest?.();
+              await handleRemove(selectedRowsState, (success) => {
+                if (success) {
+                  setSelectedRows([]);
+                  actionRef.current?.reloadAndRest?.();
+                }
+
+              });
             }}
           >
             <FormattedMessage
@@ -421,7 +445,7 @@ const TableList: React.FC = () => {
           }
         }}
         createModalOpen={createModalOpen}
-        values={currentRow || {}}
+       
       />
       <UpdateForm
         onSubmit={async (value) => {
