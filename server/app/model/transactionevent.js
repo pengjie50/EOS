@@ -17,39 +17,16 @@ module.exports = app => {
         transaction_id: UUID,
         flow_id: UUID,
         flow_pid: UUID,
-        user_id: UUID,
         event_time: {
             type: DATE,
             allowNull: false,
             defaultValue: ''
         },
-        work_order_id: {
+        bliockchain_hex_key: {
             type: STRING(200),
             allowNull: true,
             defaultValue: ''
-        },
-        product_type: {
-            type: STRING(100),
-            allowNull: true,
-            defaultValue: ''
-        },
-
-        volume_of_product: {
-            type: INTEGER,
-            allowNull: true,
-            defaultValue: 0
-        },
-        unit_of_measurement: {
-            type: STRING(100),
-            allowNull: true,
-            defaultValue: 'MT'
-        },
-        
-        tank_id: {
-            type: STRING(200),
-            allowNull: true,
-            defaultValue: ''
-        },
+        }
        
     }, {
         indexes: [
@@ -58,7 +35,7 @@ module.exports = app => {
                 fields: ['flow_id', 'transaction_id']
             },
             {
-                fields: [ 'flow_pid', 'event_time','user_id']
+                fields: [ 'flow_pid', 'event_time']
             }],
           charset: 'utf8mb4',
         collate: 'utf8mb4_general_ci',
