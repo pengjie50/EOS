@@ -24,7 +24,7 @@ class AlertService extends Service {
         let obj={}  
 
         if(params.where){
-           // obj.where = params.where
+           obj.where = params.where
         }
         if(params.order){
             obj.order = params.order
@@ -33,28 +33,11 @@ class AlertService extends Service {
             obj.offset = parseInt((params.page - 1)) * parseInt(params.limit)
             obj.limit = parseInt(params.limit)
         }
-        var f=null
-        if (params.where) {
-            if (params.where.flow_id || params.where.flow_id_to ) {
-                f = {}
-                if (params.where.flow_id) {
-                    f.flow_id = params.where.flow_id
-                }
-
-                if (params.where.flow_id_to) {
-                    f.flow_id_to = params.where.flow_id_to
-                }
-            }
-        }
-        console.log(f)
+        
         obj.include = [{
             as: 't',
             model: ctx.model.Transaction,
             where: params.where && params.where['t.terminal_id'] ? { terminal_id: params.where['t.terminal_id'] } :null
-        }, {
-            as: 'a',
-            model: ctx.model.Alertrule,
-            where:f
         }]
 
         obj.raw = true

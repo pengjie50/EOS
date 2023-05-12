@@ -19,10 +19,20 @@ module.exports = app => {
           allowNull: false,
           defaultValue: ''
         },
-        alert_rule_id: {
+        flow_id: {
             type: UUID,
             allowNull: false,
             defaultValue: ''
+        },
+        flow_id_to: {
+            type: UUID,
+            allowNull: true,
+            defaultValue: ''
+        },
+        alertrule_type: {
+            type: TINYINT,
+            allowNull: false,
+            defaultValue: 0
         },
         type: {
             type: TINYINT,
@@ -45,7 +55,7 @@ module.exports = app => {
     });
     Model.associate = function () {
         app.model.Alert.belongsTo(app.model.Transaction, { foreignKey: 'transaction_id', as: 't' });
-        app.model.Alert.belongsTo(app.model.Alertrule, { foreignKey: 'alert_rule_id', as: 'a' });
+        
     };
     return Model;
 };

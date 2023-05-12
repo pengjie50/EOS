@@ -35,12 +35,21 @@ module.exports = app => {
             allowNull: true,
             defaultValue: null
         },
-      
-        product_type_id: {
-            type: UUID,
+        product_type: {
+            type: STRING(200),
             allowNull: false,
             defaultValue: ''
         },
+        /*product_type_id: {
+             type: UUID,
+             allowNull: false,
+             defaultValue: ''
+         },*/
+        /*product_type_id: {
+            type: UUID,
+            allowNull: false,
+            defaultValue: ''
+        },*/
         product_of_volume: {
             type: INTEGER,
             allowNull: false,
@@ -79,7 +88,7 @@ module.exports = app => {
         total_duration: {
             type: INTEGER,
             allowNull: true,
-            defaultValue: null
+            defaultValue: 0
         },
         
         total_nominated_quantity_b: {

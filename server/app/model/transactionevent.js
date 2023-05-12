@@ -22,6 +22,31 @@ module.exports = app => {
             allowNull: false,
             defaultValue: ''
         },
+        work_order_id: {
+            type: STRING(50),
+            allowNull: true,
+            defaultValue: ''
+        },
+        product_type: {
+            type: STRING(100),
+            allowNull: true,
+            defaultValue: ''
+        },
+        tank_id: {
+            type: STRING(50),
+            allowNull: true,
+            defaultValue: ''
+        },
+        volume: {
+            type: INTEGER,
+            allowNull: true,
+            defaultValue: 0
+        },
+        unit_of_Measurement: {
+            type: STRING(20),
+            allowNull: true,
+            defaultValue: ''
+        },
         bliockchain_hex_key: {
             type: STRING(200),
             allowNull: true,

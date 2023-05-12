@@ -32,14 +32,31 @@ class TransactionController extends Controller {
     const result = await service.transaction.add(params);
       this.addOperlog()
   }
-  
+  async statistics() {
+      const { ctx, service, app } = this;
+      var params = ctx.request.body;
+    const res = await service.transaction.statistics(params);
+
+ }
+
   async mod() {
     const {ctx, service} = this;
     const params = ctx.request.body;
       const result = await service.transaction.mod(params);
       this.addOperlog()
   }
-
+ async writetoBC() {
+    const { ctx, service } = this;
+    const params = ctx.request.body;
+    const result = await service.transaction.writetoBC(params);
+    //this.addOperlog()
+}
+    async validateBC() {
+        const { ctx, service } = this;
+        const params = ctx.request.body;
+        const result = await service.transaction.validateBC(params);
+        //this.addOperlog()
+    }
   async del() {
     const {ctx, service} = this;
     const params = ctx.request.body;

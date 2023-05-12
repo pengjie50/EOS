@@ -99,7 +99,9 @@ module.exports = appInfo => {
         },
     };
   // add your user config here
-  const userConfig = {
+    const userConfig = {
+        writetoBCUrl: "http://165.232.172.190:3010/eos/batch-WritetoBCV2",
+        validateBCUrl: "http://165.232.172.190:3010/eos/batch-ValidateBCV2"
     // myAppName: 'egg',
     };
 
@@ -115,6 +117,11 @@ module.exports = appInfo => {
         ],
         mode: 'file',
         fileSize: '100mb'
+    };
+   
+
+    config.logger = {
+        level: 'DEBUG',
     };
   return {
     ...config,

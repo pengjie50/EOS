@@ -101,6 +101,25 @@ class TransactioneventService extends Service {
         
     }
     
+    async mod(params) {
+
+        const ctx = this.ctx;
+        const user = await ctx.model.Transactionevent.findByPk(params.id);
+
+        if (!user) {
+            ctx.status = 404;
+            ctx.body = { success: false, errorCode: 1000 };
+            return;
+        }
+
+        const res = await user.update(params);
+        if (res) {
+            ctx.body = { success: true, data: res };
+        } else {
+            ctx.body = { success: false, errorCode: 1000 };
+        }
+
+    }
 
     async del(params) {
 

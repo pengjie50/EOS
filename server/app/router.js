@@ -101,12 +101,17 @@ module.exports = app => {
     router.post('/api/transaction/add', controller.transaction.add);
     router.post('/api/transaction/mod', controller.transaction.mod);
     router.post('/api/transaction/del', controller.transaction.del);
-
+    router.post('/api/transaction/statistics', controller.transaction.statistics);
+    router.post('/api/transaction/writetoBC', controller.transaction.writetoBC);
+    router.post('/api/transaction/validateBC', controller.transaction.validateBC);
+    
     router.post('/api/transactionevent/list', controller.transactionevent.list);
     router.post('/api/transactionevent/add', controller.transactionevent.add);
+    router.post('/api/transactionevent/mod', controller.transactionevent.mod);
+    router.post('/api/transaction/statistics', controller.transaction.statistics);
 
-   
-
+  
+    
 
     
 };

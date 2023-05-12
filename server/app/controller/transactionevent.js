@@ -16,7 +16,12 @@ class TransactioneventController extends Controller {
     const params = ctx.request.body;
     const result = await service.transactionevent.add(params);
   }
-
+async mod() {
+    const { ctx, service } = this;
+    const params = ctx.request.body;
+    const result = await service.transactionevent.mod(params);
+        
+}
   async del() {
     const {ctx, service} = this;
     const params = ctx.request.body;
