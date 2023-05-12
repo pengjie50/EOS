@@ -226,7 +226,7 @@ const TableList: React.FC = () => {
         />
       ),
       dataIndex: 'username',
-      tip: 'The user name is the unique key',
+      
       render: (dom, entity) => {
         return (
           <a
@@ -241,32 +241,32 @@ const TableList: React.FC = () => {
       },
     },
     {
-      title: <FormattedMessage id="pages.user.nickname" defaultMessage="昵称" />,
+      title: <FormattedMessage id="pages.user.nickname" defaultMessage="Nickname" />,
       dataIndex: 'nickname',
       valueType: 'text',
     },
     {
-      title: <FormattedMessage id="pages.user.email" defaultMessage="邮箱" />,
+      title: <FormattedMessage id="pages.user.email" defaultMessage="Email" />,
       dataIndex: 'email',
       valueType: 'text',
     },
     {
-      title: <FormattedMessage id="pages.user.phone" defaultMessage="手机号" />,
+      title: <FormattedMessage id="pages.user.phone" defaultMessage="Phone" />,
       dataIndex: 'phone',
       valueType: 'text',
     },
     {
-      title: <FormattedMessage id="pages.user.company" defaultMessage="公司" />,
+      title: <FormattedMessage id="pages.user.company" defaultMessage="Company" />,
       dataIndex: 'company_name',
       valueType: 'text',
     },
     {
-      title: <FormattedMessage id="pages.user.role" defaultMessage="角色" />,
+      title: <FormattedMessage id="pages.user.role" defaultMessage="Role" />,
       dataIndex: 'role_name',
       valueType: 'text',
     },
     {
-      title: <FormattedMessage id="pages.user.status" defaultMessage="状态" />,
+      title: <FormattedMessage id="pages.user.status" defaultMessage="Status" />,
       dataIndex: 'status',
       valueEnum: {
         0: { text: <FormattedMessage id="pages.user.normal" defaultMessage="Normal" />, status: 'Success' },
@@ -274,7 +274,7 @@ const TableList: React.FC = () => {
       },
     },
     {
-      title: <FormattedMessage id="pages.user.onlineStatus" defaultMessage="在线状态" />,
+      title: <FormattedMessage id="pages.user.onlineStatus" defaultMessage="Online Status" />,
       dataIndex: 'online_status',
       valueEnum: {
         0: { text: <FormattedMessage id="pages.user.online" defaultMessage="Online" />, status: 'Success' },
@@ -295,7 +295,7 @@ const TableList: React.FC = () => {
 
     },
     {
-      title: <FormattedMessage id="pages.searchTable.titleOption" defaultMessage="操作" />,
+      title: <FormattedMessage id="pages.searchTable.titleOption" defaultMessage="Option" />,
       dataIndex: 'option',
       valueType: 'option',
       render: (_, record) => [
@@ -433,7 +433,7 @@ const TableList: React.FC = () => {
             <div>
               <FormattedMessage id="pages.searchTable.chosen" defaultMessage="Chosen" />{' '}
               <a style={{ fontWeight: 600 }}>{selectedRowsState.length}</a>{' '}
-              <FormattedMessage id="pages.searchTable.item" defaultMessage="项" />
+              <FormattedMessage id="pages.searchTable.item" defaultMessage="Item" />
               &nbsp;&nbsp;
               <span>
                 <FormattedMessage
@@ -441,7 +441,7 @@ const TableList: React.FC = () => {
                   defaultMessage="Total number of service calls"
                 />{' '}
                 {selectedRowsState.reduce((pre, item) => pre , 0)}{' '}
-                <FormattedMessage id="pages.searchTable.tenThousand" defaultMessage="万" />
+                <FormattedMessage id="pages.searchTable.tenThousand" defaultMessage="tenThousand" />
               </span>
             </div>
           }

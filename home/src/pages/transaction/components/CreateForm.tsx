@@ -11,26 +11,51 @@ import {
 import { TransactionListItem } from '../data.d';
 import { FormattedMessage, useIntl } from '@umijs/max';
 import { Modal, Form } from 'antd';
-import React, { useRef } from 'react';
-
-
+import React, { useRef, useEffect, useState } from 'react';
+import { terminal } from '../../system/terminal/service';
+import { jetty } from '../../system/jetty/service';
 
 export type UpdateFormProps = {
   onCancel: (flag?: boolean, formVals?: Partial<TransactionListItem>) => void;
   onSubmit: (values: Partial<TransactionListItem>) => Promise<void>;
   createModalOpen: boolean;
-  values: Partial<TransactionListItem>;
+  
 };
 
 const UpdateForm: React.FC<UpdateFormProps> = (props) => {
   const restFormRef = useRef<ProFormInstance>();
   const intl = useIntl();
- 
+  const [terminalList, setTerminalList] = useState<any>({});
+  const [jettyList, setJettyList] = useState<any>({});
+  useEffect(() => {
+
+
+    terminal({ pageSize: 3000, current: 1, sorter: { name: 'ascend' } }).then((res) => {
+      var b = {}
+      res.data.forEach((r) => {
+        b[r.id] = r.name
+      })
+      setTerminalList(b)
+
+    });
+    jetty({ pageSize: 3000, current: 1, sorter: { name: 'ascend' } }).then((res) => {
+      var b = {}
+      res.data.forEach((r) => {
+        b[r.id] = r.name
+      })
+      setJettyList(b)
+
+    });
+
+
+
+
+  }, [true]);
   const {
     onSubmit,
     onCancel,
     createModalOpen,
-    values,
+    
   } = props;
 
   
@@ -38,7 +63,6 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
    
     <ModalForm
       modalProps={{ destroyOnClose: true }}
-      initialValues={values}
       onOpenChange={(vi) => {
         if (!vi) {
           props.onCancel();
@@ -86,7 +110,19 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           width="md"
           
       />
-      
+      <ProFormSelect
+        name="status"
+        label={intl.formatMessage({
+          id: 'pages.transaction.status',
+          defaultMessage: 'Status',
+        })}
+        width="md"
+        valueEnum={{
+          0: { text: <FormattedMessage id="pages.transaction.active" defaultMessage="Active" /> },
+          1: { text: <FormattedMessage id="pages.transaction.closed" defaultMessage="Closed" /> },
+          2: { text: <FormattedMessage id="pages.transaction.cancelled" defaultMessage="Cancelled" /> }
+        }}
+      />
      
       <ProFormText
         name="arrival_id"
@@ -106,25 +142,6 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         width="md"
 
       />
-     
-      <ProFormText
-        name="jetty_name"
-        label={intl.formatMessage({
-          id: 'pages.transaction.name',
-          defaultMessage: 'jetty name',
-        })}
-        width="md"
-
-      />
-      <ProFormText
-        name="vessel_name"
-        label={intl.formatMessage({
-          id: 'pages.transaction.name',
-          defaultMessage: 'Vessel Name',
-        })}
-        width="md"
-
-      />
       <ProFormText
         name="imo_number"
         label={intl.formatMessage({
@@ -134,6 +151,55 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         width="md"
 
       />
+      <ProFormSelect
+        name="terminal_id"
+        label={intl.formatMessage({
+          id: 'pages.transaction.terminals',
+          defaultMessage: 'Terminal',
+        })}
+        width="md"
+        valueEnum={terminalList}
+      />
+      <ProFormSelect
+        name="jetty_id"
+        label={intl.formatMessage({
+          id: 'pages.transaction.jetty',
+          defaultMessage: 'Jetty Name',
+        })}
+        width="md"
+        valueEnum={jettyList}
+      />
+     
+      <ProFormText
+        name="vessel_name"
+        label={intl.formatMessage({
+          id: 'pages.transaction.name',
+          defaultMessage: 'Vessel Name',
+        })}
+        width="md"
+
+      />
+
+
+      <ProFormText
+        name="total_nominated_quantity_m"
+        label={intl.formatMessage({
+          id: 'pages.alertrule.totalNominatedQuantityM',
+          defaultMessage: 'Total nominated quantity (MT)',
+        })}
+        width="md"
+
+      />
+      <ProFormText
+        name="total_nominated_quantity_b"
+        label={intl.formatMessage({
+          id: 'pages.alertrule.totalNominatedQuantityB',
+          defaultMessage: 'Total nominated quantity (Bal-60-F)',
+        })}
+        width="md"
+
+      />
+     
       <ProFormText
         name="total_duration"
         label={intl.formatMessage({

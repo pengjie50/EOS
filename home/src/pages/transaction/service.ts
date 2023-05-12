@@ -8,7 +8,39 @@ export async function transaction(params?: { [key: string]: any }) {
     method: 'POST',
     data: {
       ...params,
-      hasFilters:true
+      hasFilters: true
+    },
+  });
+}
+
+
+  export async function statistics(params?: { [key: string]: any }) {
+    console.log(params)
+    return request('/api/transaction/statistics', {
+      method: 'POST',
+      data: {
+        ...params,
+        hasFilters: true
+      },
+    });
+  }
+export async function writetoBC(params?: { [key: string]: any }) {
+  console.log(params)
+  return request('/api/transaction/writetoBC', {
+    method: 'POST',
+    data: {
+      ...params
+     
+    },
+  });
+}
+export async function validateBC(params?: { [key: string]: any }) {
+  console.log(params)
+  return request('/api/transaction/validateBC', {
+    method: 'POST',
+    data: {
+      ...params
+
     },
   });
 }
@@ -31,7 +63,13 @@ export async function addTransactionevent(options?: { [key: string]: any }) {
 
   });
 }
+export async function updateTransactionevent(options?: { [key: string]: any }) {
+  return request('/api/transactionevent/mod', {
+    method: 'POST',
+    data: options || {}
 
+  });
+}
 
 export async function updateTransaction(options?: { [key: string]: any }) {
   return request <TransactionListItem>('/api/transaction/mod', {

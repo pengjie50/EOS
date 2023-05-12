@@ -135,13 +135,13 @@ export default [
         icon: 'ApartmentOutlined',
         path: '/IdentityAccessManagement/flow',
         component: './system/flow',
-      },
+      }/*,
       {
         name: 'Product Type',
         icon: 'table',
         path: '/IdentityAccessManagement/producttype',
         component: './system/producttype',
-      },
+      }*/,
       {
         name: 'Terminal',
         icon: 'solution',
@@ -216,6 +216,12 @@ export default [
         component: './account/settings/components/modPassword'
       
       },
+      {
+        name: 'Filter Of Timestamps',
+        path: '/account/filterOfTimestamps',
+        component: './account/filterOfTimestamps'
+
+      }
 
     ]
   },

@@ -238,7 +238,7 @@ const TableList: React.FC = () => {
       ),
       sorter: true,
       dataIndex: 'name',
-      tip: 'The role name is the unique key',
+     
       render: (dom, entity) => {
         return (
           <a

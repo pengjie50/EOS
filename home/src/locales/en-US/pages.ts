@@ -67,6 +67,8 @@ export default {
   'pages.searchTable.batchApproval': 'batch approval',
   'pages.reset': 'Reset',
   'pages.update': 'Modify',
+  'pages.loading': 'Loading',
+  
   'pages.delete': 'Delete',
   'pages.details': 'Details',
   'pages.adding': 'Adding',
@@ -94,6 +96,7 @@ export default {
   'pages.error.1007': 'Incorrect old password',
   'pages.error.1008': 'There is no account bound to this email',
   'pages.error.1009': 'Legality check failed',
+  'pages.error.1010': 'Failed to verify blockchain data',
   
   'pages.user.add': 'New User',
   'pages.user.mod': 'Update User',

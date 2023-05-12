@@ -231,7 +231,7 @@ const TableList: React.FC = () => {
       ),
       dataIndex: 'name',
       sorter: true,
-      tip: 'The flow name is the unique key',
+      
       render: (dom, entity) => {
         return (
           <a

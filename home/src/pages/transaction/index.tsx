@@ -6,6 +6,8 @@ import FrPrint from "../../components/FrPrint";
 import FileSaver from "file-saver";
 import { history } from '@umijs/max';
 import { GridContent } from '@ant-design/pro-layout';
+import numeral from 'numeral';
+import { useAccess, Access } from 'umi';
 const Json2csvParser = require("json2csv").Parser;
 import {
   FooterToolbar,
@@ -24,7 +26,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import CreateForm from './components/CreateForm';
 import UpdateForm from './components/UpdateForm';
 import { flow } from '../system/flow/service';
-
+import { alertrule } from '../alertrule/service';
 import { terminal } from '../system/terminal/service';
 import { producttype } from '../system/producttype/service';
 import { jetty } from '../system/jetty/service';
@@ -154,7 +156,8 @@ const TableList: React.FC = () => {
   const [jettyList, setJettyList] = useState<any>({});
   const [producttypeList, setProducttypeList] = useState<any>({});
   const [sumRow, setSumRow] = useState<TransactionListItem>();
-
+  const [processes, setProcesses] = useState<any>([]);
+  const [events, setEvents] = useState<any>([]);
   //--MP start
   const MPSearchFormRef = useRef<ProFormInstance>();
 
@@ -226,13 +229,33 @@ const TableList: React.FC = () => {
 
   useEffect(() => {
 
-    flow({ pageSize: 300, current: 1,type:0, sorter: { sort: 'ascend' } }).then((res) => {
+    flow({ pageSize: 300, current: 1, sorter: { sort: 'ascend' } }).then((res) => {
       var b = {}
+      var p = { "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": "Total Duration" }
       res.data.forEach((r) => {
+        if (r.type == 0) {
+
+          p[r.id] = r.name
+        }
         b[r.id] = r.name
       })
       setFlowConf(b)
+      setProcesses(p)
 
+      alertrule({ pageSize: 300, current: 1, type: 1 }).then((res2) => {
+        var d = {}
+
+
+
+        res2.data.forEach((r) => {
+         
+          console.log(b)
+          d[r.flow_id + "_" + r.flow_id_to] = b[r.flow_id] + " - " + b[r.flow_id_to]
+        })
+
+        setEvents(d)
+
+      });
     });
 
     jetty({ pageSize: 3000, current: 1, sorter: { name: 'ascend' } }).then((res) => {
@@ -271,7 +294,7 @@ const TableList: React.FC = () => {
    * @zh-CN 国际化配置
    * */
   const intl = useIntl();
-
+  const access = useAccess();
   const columns: ProColumns<TransactionListItem>[] = [
     {
       title: (
@@ -281,17 +304,18 @@ const TableList: React.FC = () => {
         />
       ),
       dataIndex: 'id',
-      tip: 'The EOS ID is the unique key',
+      hideInSearch:true,
       render: (dom, entity) => {
         return (
           <a
+            title={entity.id }
             onClick={() => {
               setCurrentRow(entity);
               history.push(`/transaction/detail?transaction_id=` + entity.id);
               // setShowDetail(true);
             }}
           >
-            {dom}
+            {entity.id.substr(0, 8) + "..."}
           </a>
         );
       },
@@ -325,22 +349,22 @@ const TableList: React.FC = () => {
     {
       title: <FormattedMessage id="pages.transaction.startOfTransaction" defaultMessage="Start of transaction" />,
       dataIndex: 'start_of_transaction',
-      valueType: 'dateTime',
+      valueType: 'date',
       hideInSearch: true,
     },
     {
       title: <FormattedMessage id="pages.transaction.endOfTransaction" defaultMessage="End of transaction" />,
       dataIndex: 'end_of_transaction',
-      valueType: 'dateTime',
+      valueType: 'date',
       hideInSearch: true,
     },
     {
       title: <FormattedMessage id="pages.transaction.status" defaultMessage="Status" />,
       dataIndex: 'status',
       valueEnum: {
-        0: {text: <FormattedMessage id="pages.transaction.active" defaultMessage="Active" />, status: 'Success' },
-        1: { text: <FormattedMessage id="pages.transaction.closed" defaultMessage="Closed" />, status: 'Default' },
-        2: { text: <FormattedMessage id="pages.transaction.cancelled" defaultMessage="Cancelled" />, status:'Default' }
+        0: {text: <FormattedMessage id="pages.transaction.active" defaultMessage="Active" /> },
+        1: { text: <FormattedMessage id="pages.transaction.closed" defaultMessage="Closed" /> },
+        2: { text: <FormattedMessage id="pages.transaction.cancelled" defaultMessage="Cancelled" /> }
       },
     },
     {
@@ -350,10 +374,11 @@ const TableList: React.FC = () => {
     },
     
     {
+     
       title: <FormattedMessage id="pages.transaction.currentProcess" defaultMessage="Current Process" />,
       dataIndex: 'flow_id',
-      valueEnum: flowConf
-     
+      valueEnum: flowConf,
+      hideInSearch: true,
     },
     /*
     {
@@ -385,7 +410,6 @@ const TableList: React.FC = () => {
     {
       title: <FormattedMessage id="pages.transaction.imoNumber" defaultMessage="IMO Number" />,
       dataIndex: 'imo_number',
-      hideInSearch:true,
       valueType: 'text',
     },
     {
@@ -404,26 +428,15 @@ const TableList: React.FC = () => {
       dataIndex: 'jetty_id',
       valueEnum: jettyList
     },
-    {
-      title: <FormattedMessage id="pages.alertrule.vesselSizeLimit" defaultMessage="Vessel Size Limit (DWT)" />,
-      dataIndex: 'size_of_vessel',
-      hideInSearch: true,
-      valueType: 'text',
-      render: (dom, entity) => {
-        if (dom) {
-          return (dom + "").replace(/\B(?=(\d{3})+(?!\d))/g, ',') ;
-        }
-
-      },
-    },
+    
    
     {
       title: <FormattedMessage id="pages.transaction.productType" defaultMessage="Product Type" />,
-      dataIndex: 'product_type_id',
-      valueEnum: producttypeList,
+      dataIndex: 'product_type',
+     // valueEnum: producttypeList,
     },
     {
-      title: <FormattedMessage id="pages.alertrule.throughputVolume1" defaultMessage="Total nominated quantity (MT)" />,
+      title: <FormattedMessage id="pages.alertrule.totalNominatedQuantityM" defaultMessage="Total nominated quantity (MT)" />,
       dataIndex: 'total_nominated_quantity_m',
       hideInSearch: true,
       valueType: "text",
@@ -431,37 +444,80 @@ const TableList: React.FC = () => {
         if (dom ) {
 
 
-          return (dom + "").replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+          return numeral(dom).format('0,0') 
         }
 
       },
     },
     {
-      title: <FormattedMessage id="pages.alertrule.throughputVolume1" defaultMessage="Total nominated quantity (Bal-60-F)" />,
+      title: <FormattedMessage id="pages.alertrule.totalNominatedQuantityB" defaultMessage="Total nominated quantity (Bal-60-F)" />,
       dataIndex: 'total_nominated_quantity_b',
       hideInSearch: true,
       valueType: 'text',
       render: (dom, entity) => {
         if (dom) {
-          return (dom + "").replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+          return numeral(dom).format('0,0') 
         }
 
       },
     },
 
     {
-      title: <FormattedMessage id="pages.transaction.totalDuration" defaultMessage="Total Duration" />,
+      title: <FormattedMessage id="pages.transaction.totalDuration" defaultMessage="Total Duration (Till Date)" />,
       dataIndex: 'total_duration',
       hideInSearch: true,
       renderText: (val: Number) => {
         if (val>0) {
-          return parseInt(val / 60) + " Hours " + (val % 60) + " Mins"
+          return parseInt(val / 60) + " h " + (val % 60) + " m"
         }
         
 
       },
       valueType: 'text',
-    }/*,
+    },
+    {
+      title: (
+        <FormattedMessage
+          id="pages.alertrule.eee"
+          defaultMessage="Entire transaction and processes"
+        />
+      ),
+      dataIndex: 'flow_id',
+      hideInTable: true,
+      hideInDescriptions: true,
+      valueEnum: processes,
+      fieldProps: {
+
+        width: '300px',
+        mode: 'multiple',
+        showSearch: true,
+        multiple: true
+
+      }
+    },
+    {
+      title: (
+        <FormattedMessage
+          id="pages.alertrule.eee"
+          defaultMessage="Between two events"
+        />
+      ),
+      dataIndex: 'flow_id_to',
+      hideInTable: true,
+      width: 200,
+      hideInDescriptions: true,
+      valueEnum: events,
+      fieldProps: {
+        dropdownMatchSelectWidth: false,
+        width: '300px',
+        mode: 'multiple',
+        showSearch: true,
+        multiple: true
+
+      }
+
+
+    },/*,
     {
       title: <FormattedMessage id="pages.transaction.durationPerVolume" defaultMessage="Duration per Volume (B) / (A)" />,
       dataIndex: 'duration_per_volume',
@@ -527,11 +583,12 @@ const TableList: React.FC = () => {
         actionRef={actionRef}
         rowKey="id"
         search={{
-          labelWidth: 150,
+          labelWidth: 210,
+          span:8,
           searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
         }}
         toolBarRender={() => [
-           <Button
+          <Access accessible={access.canAdmin} fallback={<div></div>}><Button
             type="primary"
             key="primary"
             onClick={() => {
@@ -540,7 +597,7 @@ const TableList: React.FC = () => {
           >
             
             <PlusOutlined /> <FormattedMessage id="pages.searchTable.new" defaultMessage="New" />
-          </Button>, <Button type="primary" key="print"
+          </Button> </Access>, <Button type="primary" key="print"
             onClick={() => handlePrintModalVisible(true)}
           ><PrinterOutlined /> <FormattedMessage id="pages.Print" defaultMessage="Print" />
           </Button>, <Button type="primary" key="out"

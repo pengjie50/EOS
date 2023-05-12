@@ -4,13 +4,14 @@ import { AlertOutlined, SafetyCertificateOutlined, CheckOutlined, CloseOutlined 
 import ProTable from '@ant-design/pro-table';
 import { FormattedMessage, useIntl, useLocation, useModel, history } from '@umijs/max';
 import { TransactionList, TransactionListItem } from '../data.d';
-import { transaction, transactionevent, addTransactionevent } from '../service';
+import { transaction, transactionevent, addTransactionevent, writetoBC, validateBC } from '../service';
 import { Button, Space, Steps, Icon, Select, message, Spin } from 'antd';
 import { flow } from '../../system/flow/service';
 import { filterOfTimestamps, addFilterOfTimestamps, updateFilterOfTimestamps } from '../../account/filterOfTimestamps/service';
 import { getAlertBytransactionId } from '../../alert/service';
 import { SvgIcon } from '@/components' // 自定义组件
 import { tree, isPC } from "@/utils/utils";
+import { useAccess, Access } from 'umi';
 import FilterForm from '../../account/filterOfTimestamps/components/FilterForm';
 import { rearg } from 'lodash';
 import { terminal } from '../../system/terminal/service';
@@ -18,7 +19,7 @@ import { producttype } from '../../system/producttype/service';
 import { jetty } from '../../system/jetty/service';
 import { alertrule } from '../../alertrule/service';
 import { InfiniteScroll, List, NavBar, DotLoading } from 'antd-mobile'
-
+import numeral from 'numeral';
 var moment = require('moment');
 const { Step } = Steps;
 
@@ -82,12 +83,7 @@ const Detail: React.FC<any> = (props) => {
   const [currentFilter, setCurrentFilter] = useState<any>();
   const [currentRow, setCurrentRow] = useState<TransactionListItem>();
   const [blockchainRow, setBlockchainRowRow] = useState<any>([
-    {
-      stage: 'Berthing', time_stamp: '2 Apr 2023 1.10pm', activity: 'Pilot Confirmed Service Time', validated: 1
-    },
-    {
-      stage: 'Berthing', time_stamp: '2 Apr 2023 1.10pm', activity: 'Vessel All Fast', validated: 1
-    }
+    
   ]);
   
   const [flowTree, setFlowTree] = useState<any>([]);
@@ -110,7 +106,16 @@ const Detail: React.FC<any> = (props) => {
   const { initialState } = useModel('@@initialState');
   const { currentUser } = initialState || {};
   const [show, setShow] = useState<any>({});
+  const access = useAccess();
   var transaction_id = useLocation().search.split("=")[1]
+  var m = {}
+
+
+  useLocation().state.validateData.forEach((v) => {
+    m[v.EventSubStage] = v.Stored
+
+  })
+  const [validateData, setValidateData] = useState<any>(m);
   const [createModalOpen, handleModalOpen] = useState<boolean>(false);
   const [isAdd, setIsAdd] = useState<boolean>(false);
 
@@ -129,9 +134,9 @@ const Detail: React.FC<any> = (props) => {
       dataIndex: 'id',
        render: (dom, entity) => {
         if (entity.validated) {
-          return <div><div>{dom}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
+          return <div><div style={{ height: isMP ? 'auto' : '60px' }}>{dom}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
         } else {
-          return <div><div>{dom}</div><div><CloseOutlined style={{ color: 'red' }} /></div></div>
+          return <div><div style={{ height: isMP ? 'auto' : '60px' }}>{dom}</div><div><CloseOutlined style={{ color: 'red' }} /></div></div>
         }
 
       },
@@ -145,9 +150,9 @@ const Detail: React.FC<any> = (props) => {
       hideInSearch: true,
       render: (dom, entity) => {
         if (entity.validated) {
-          return <div><div>{dom}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
+          return <div><div style={{ height: isMP?'auto': '60px' }}>{dom}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
         } else {
-          return <div><div>{dom}</div><div><CloseOutlined style={{ color: 'red' }} /></div></div>
+          return <div><div style={{ height: isMP?'auto': '60px' }}>{dom}</div><div><CloseOutlined style={{ color: 'red' }} /></div></div>
         }
        
       },
@@ -159,9 +164,9 @@ const Detail: React.FC<any> = (props) => {
       hideInSearch: true,
       render: (dom, entity) => {
         if (entity.validated) {
-          return <div><div>{dom}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
+          return <div><div style={{ height: isMP?'auto': '60px' }}>{dom}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
         } else {
-          return <div><div>{dom}</div><div><CloseOutlined style={{ color: 'red' }} /></div></div>
+          return <div><div style={{ height: isMP?'auto': '60px' }}>{dom}</div><div><CloseOutlined style={{ color: 'red' }} /></div></div>
         }
 
       },
@@ -170,15 +175,15 @@ const Detail: React.FC<any> = (props) => {
       title: <FormattedMessage id="pages.transaction.status" defaultMessage="Status" />,
       dataIndex: 'status',
       valueEnum: {
-        0: { text: <FormattedMessage id="pages.transaction.active" defaultMessage="Active" />, status: 'Success' },
-        1: { text: <FormattedMessage id="pages.transaction.closed" defaultMessage="Closed" />, status: 'Default' },
-        2: { text: <FormattedMessage id="pages.transaction.cancelled" defaultMessage="Cancelled" />, status: 'Default' }
+        0: { text: <FormattedMessage id="pages.transaction.active" defaultMessage="Active" /> },
+        1: { text: <FormattedMessage id="pages.transaction.closed" defaultMessage="Closed" /> },
+        2: { text: <FormattedMessage id="pages.transaction.cancelled" defaultMessage="Cancelled" /> }
       },
       render: (dom, entity) => {
         if (entity.validated) {
-          return <div><div>{dom}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
+          return <div><div style={{ height: isMP?'auto': '60px' }}>{dom}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
         } else {
-          return <div><div>{dom}</div><div><CloseOutlined style={{ color: 'red' }} /></div></div>
+          return <div><div style={{ height: isMP?'auto': '60px' }}>{dom}</div><div><CloseOutlined style={{ color: 'red' }} /></div></div>
         }
 
       },
@@ -189,9 +194,9 @@ const Detail: React.FC<any> = (props) => {
       hideInSearch: true,
       render: (dom, entity) => {
         if (entity.validated) {
-          return <div><div>{dom}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
+          return <div><div style={{ height: isMP?'auto': '60px' }}>{dom}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
         } else {
-          return <div><div>{dom}</div><div><CloseOutlined style={{ color: 'red' }} /></div></div>
+          return <div><div style={{ height: isMP?'auto': '60px' }}>{dom}</div><div><CloseOutlined style={{ color: 'red' }} /></div></div>
         }
 
       },
@@ -200,12 +205,12 @@ const Detail: React.FC<any> = (props) => {
     {
       title: <FormattedMessage id="pages.transaction.currentProcess" defaultMessage="Current Process" />,
       dataIndex: 'flow_id',
-      valueEnum: flowConf,
+     // valueEnum: flowConf,
       render: (dom, entity) => {
         if (entity.validated) {
-          return <div><div>{dom}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
+          return <div><div style={{ height: isMP?'auto': '60px' }}>{flowConf[dom]}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
         } else {
-          return <div><div>{dom}</div><div><CloseOutlined style={{ color: 'red' }} /></div></div>
+          return <div><div style={{ height: isMP?'auto': '60px' }}>{flowConf[dom]}</div><div><CloseOutlined style={{ color: 'red' }} /></div></div>
         }
 
       },
@@ -220,9 +225,9 @@ const Detail: React.FC<any> = (props) => {
       valueType: 'text',
       render: (dom, entity) => {
         if (entity.validated) {
-          return <div><div>{dom}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
+          return <div><div style={{ height: isMP?'auto': '60px' }}>{dom}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
         } else {
-          return <div><div>{dom}</div><div><CloseOutlined style={{ color: 'red' }} /></div></div>
+          return <div><div style={{ height: isMP?'auto': '60px' }}>{dom}</div><div><CloseOutlined style={{ color: 'red' }} /></div></div>
         }
 
       },
@@ -233,9 +238,9 @@ const Detail: React.FC<any> = (props) => {
       valueType: 'text',
       render: (dom, entity) => {
         if (entity.validated) {
-          return <div><div>{dom}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
+          return <div><div style={{ height: isMP?'auto': '60px' }}>{dom}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
         } else {
-          return <div><div>{dom}</div><div><CloseOutlined style={{ color: 'red' }} /></div></div>
+          return <div><div style={{ height: isMP?'auto': '60px' }}>{dom}</div><div><CloseOutlined style={{ color: 'red' }} /></div></div>
         }
 
       },
@@ -243,12 +248,12 @@ const Detail: React.FC<any> = (props) => {
     {
       title: <FormattedMessage id="pages.transaction.terminalName" defaultMessage="Terminal Name" />,
       dataIndex: 'terminal_id',
-      valueEnum: terminalList,
+     // valueEnum: terminalList,
       render: (dom, entity) => {
         if (entity.validated) {
-          return <div><div>{terminalList[dom]}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
+          return <div><div style={{ height: isMP?'auto': '60px' }}>{terminalList[dom]}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
         } else {
-          return <div><div>{terminalList[dom]}</div><div><CloseOutlined style={{ color: 'red' }} /></div></div>
+          return <div><div style={{ height: isMP?'auto': '60px' }}>{terminalList[dom]}</div><div><CloseOutlined style={{ color: 'red' }} /></div></div>
         }
 
       },
@@ -256,12 +261,12 @@ const Detail: React.FC<any> = (props) => {
     {
       title: <FormattedMessage id="pages.transaction.jettyName" defaultMessage="Jetty Name" />,
       dataIndex: 'jetty_id',
-      valueEnum: jettyList,
+      //valueEnum: jettyList,
       render: (dom, entity) => {
         if (entity.validated) {
-          return <div><div>{jettyList[dom]}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
+          return <div><div style={{ height: isMP?'auto': '60px' }}>{jettyList[dom]}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
         } else {
-          return <div><div>{jettyList[dom]}</div><div><CloseOutlined style={{ color: 'red' }} /></div></div>
+          return <div><div style={{ height: isMP?'auto': '60px' }}>{jettyList[dom]}</div><div><CloseOutlined style={{ color: 'red' }} /></div></div>
         }
 
       },
@@ -270,13 +275,13 @@ const Detail: React.FC<any> = (props) => {
 
     {
       title: <FormattedMessage id="pages.transaction.productType" defaultMessage="Product Type" />,
-      dataIndex: 'product_type_id',
-      valueEnum: producttypeList,
+      dataIndex: 'product_type',
+     // valueEnum: producttypeList,
       render: (dom, entity) => {
         if (entity.validated) {
-          return <div><div>{producttypeList[dom]}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
+          return <div><div style={{ height: isMP?'auto': '60px' }}>{dom}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
         } else {
-          return <div><div>{producttypeList[dom]}</div><div><CloseOutlined style={{ color: 'red' }} /></div></div>
+          return <div><div style={{ height: isMP?'auto': '60px' }}>{dom}</div><div><CloseOutlined style={{ color: 'red' }} /></div></div>
         }
 
       },
@@ -286,14 +291,23 @@ const Detail: React.FC<any> = (props) => {
       dataIndex: 'total_nominated_quantity_m',
       hideInSearch: true,
       valueType: "text",
+
       render: (dom, entity) => {
-        if (entity.total_nominated_quantity_m) {
-
-
-          return (entity.total_nominated_quantity_m + "").replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+      
+        if (dom) {
+          dom = numeral(dom).format('0,0')
+        } else {
+          dom = ''
+        }
+        if (entity.validated) {
+          return <div><div style={{ height: isMP?'auto': '60px' }}>{dom}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
+        } else {
+          return <div><div style={{ height: isMP?'auto': '60px' }}>{dom}</div><div><CloseOutlined style={{ color: 'red' }} /></div></div>
         }
 
       },
+
+      
     },
     {
       title: <FormattedMessage id="pages.alertrule.throughputVolume1" defaultMessage="Total nominated quantity (Bal-60-F)" />,
@@ -301,24 +315,41 @@ const Detail: React.FC<any> = (props) => {
       hideInSearch: true,
       valueType: 'text',
       render: (dom, entity) => {
-        if (entity.total_nominated_quantity_b) {
-          return (entity.total_nominated_quantity_b + "").replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        if (dom) {
+          dom = numeral(dom).format('0,0')
+        } else {
+          dom=''
+        }
+        if (entity.validated) {
+          return <div><div style={{ height: isMP?'auto': '60px' }}>{dom}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
+        } else {
+          return <div><div style={{ height: isMP?'auto': '60px' }}>{dom}</div><div><CloseOutlined style={{ color: 'red' }} /></div></div>
         }
 
-      },
+      }
+      
     },
 
     {
-      title: <FormattedMessage id="pages.transaction.totalDuration" defaultMessage="Total Duration" />,
+      title: <FormattedMessage id="pages.transaction.totalDuration" defaultMessage="Total Duration (Till Date)" />,
       dataIndex: 'total_duration',
       hideInSearch: true,
-      renderText: (val: Number) => {
-        if (val > 0) {
-          return parseInt(val / 60) + " Hours " + (val % 60) + " Mins"
+      render: (dom, entity) => {
+
+         
+        if (dom > 0) {
+          dom = parseInt(dom / 60) + " h " + (dom % 60) + " m"
+         
         }
 
+        if (entity.validated) {
+          return <div><div style={{ height: isMP?'auto': '60px' }}>{dom}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
+        } else {
+          return <div><div style={{ height: isMP?'auto': '60px' }}>{dom}</div><div><CloseOutlined style={{ color: 'red' }} /></div></div>
+        }
 
       },
+      
       valueType: 'text',
     }
   ];
@@ -328,7 +359,7 @@ const Detail: React.FC<any> = (props) => {
     {
       title: <FormattedMessage id="pages.blockchainIntegration.stage" defaultMessage="Stage" />,
       dataIndex: 'stage',
-      valueType: 'dateTime',
+      valueEnum:flowConf,
       hideInSearch: true,
     },
     {
@@ -340,13 +371,16 @@ const Detail: React.FC<any> = (props) => {
     {
       title: <FormattedMessage id="pages.blockchainIntegration.activity" defaultMessage="Activity" />,
       dataIndex: 'activity',
+      valueEnum: flowConf,
       hideInSearch: true
     },
     {
       title: <FormattedMessage id="pages.blockchainIntegration.validated" defaultMessage="Validated ( with Blockchain)" />,
       dataIndex: 'validated',
       render: (dom, entity) => {
-        if (dom == 1) {
+
+
+        if (validateData[entity.activity] === 'True') {
           return <span><CheckOutlined style={{ color:'green' }} /></span>
         } else {
           return <span><CloseOutlined style={{ color: 'red' }} /></span>
@@ -436,6 +470,25 @@ const Detail: React.FC<any> = (props) => {
         setFlowTree(res.data)
 
 
+        transactionevent({
+          pageSize: 1000, current: 1, transaction_id: transaction_id, sorter: { event_time: 'ascend' }
+        }).then((res) => {
+
+
+          setTransactioneventList(res.data)
+
+          var blockchainRow = res.data.map((a) => {
+            var b = {
+              stage: a.flow_pid, time_stamp: a.event_time, activity: a.flow_id, validated: a.bliockchain_hex_key ? 1 : 0
+            }
+            return b
+          })
+
+          setBlockchainRowRow(blockchainRow)
+
+        });
+
+
         getAlertBytransactionId({ pageSize: 300, current: 1, transaction_id: transaction_id }).then((res) => {
           var map = new Map()
           res.data.forEach((a) => {
@@ -467,82 +520,8 @@ const Detail: React.FC<any> = (props) => {
     handlegetFlow([])
 
 
-    transactionevent({
-      pageSize: 1000, current: 1, transaction_id: transaction_id, sorter: { event_time: 'ascend' }
-    }).then((res) => {
-      var processMap = new Map()
-      try {
-        setTotalDuration(parseInt(((new Date(res.data[res.data.length - 1].event_time)).getTime() - (new Date(res.data[0].event_time)).getTime()) / 1000 + ""))
-      } catch (e) {
-
-      }
-
-      res.data = res.data.map((a, index) => {
-
-
-
-
-
-        var obj = processMap.get(a.flow_pid)
-        if (!obj) {
-          obj = { duration: 0, process_duration: 0, status: 0, event_count: 0 }
-        }
-        var next = res.data[index + 1]
-        if (next) {
-
-          if (next.flow_pid != a.flow_pid) {
-
-            obj.process_duration = parseInt(((new Date(res.data[index + 1].event_time)).getTime() - (new Date(a.event_time)).getTime()) / 1000 + "")
-          }
-
-          var val = parseInt(((new Date(next.event_time)).getTime() - (new Date(a.event_time)).getTime()) / 1000 + "")
-          obj.duration += val
-
-          a.duration = parseInt((val / 3600) + "") + " Hours " + parseInt((val % 3600) / 60) + " Mins"
-
-        }
-
-        obj.event_count++
-
-        processMap.set(a.flow_pid, obj)
-
-        transactioneventMap.set(a.flow_id, a);
-
-
-
-
-        return a
-
-      })
-      setProcessMap(processMap)
-      setTransactioneventList(res.data)
-
-
-
-
-    });
-    const getFilterOfTimestamps = async () => {
-
-      filterOfTimestamps({ pageSize: 300, current: 1, user_id: currentUser?.id, type: 0 }).then((res) => {
-
-        var m = new Map()
-        res.data = res.data.map((b) => {
-
-          m.set(b.id, b)
-          var a = {}
-          a.value = b.id
-          a.label = b.name
-          return a
-        })
-        res.data.push({ value: 'add', label: 'Add new template' })
-        setFilterOfTimestampsList(res.data)
-        setFilterOfTimestampsMap(m)
-
-      });
-    }
-    handleget = getFilterOfTimestamps
-    getFilterOfTimestamps()
-
+    
+    
     transaction({ pageSize: 1, current: 1, id: transaction_id }).then((res) => {
 
      
@@ -586,7 +565,8 @@ const Detail: React.FC<any> = (props) => {
         rowKey="key"
         pagination={false}
         search={false}
-       
+        options={false }
+        
         bordered size="small"
 
       />)}
@@ -610,13 +590,32 @@ const Detail: React.FC<any> = (props) => {
 
 
       {!isMP && (<ProTable<any>
+
+        toolBarRender={() => [
+          <Access accessible={access.canAdmin} fallback={<div></div>}> <Button
+            type="primary"
+            key="primary"
+            onClick={() => {
+              
+              writetoBC({ id: currentRow?.id }).then((res) => {
+                
+              })
+            }}
+          >
+            WritetoBC
+          </Button></Access>
+         
+          ,
+        ]}
+
+
         headerTitle={"Transaction Stages and Activities"}
         columns={columnsBlockchain}
         dataSource={blockchainRow ? blockchainRow : []}
         rowKey="key"
         pagination={false}
         search={false}
-       
+        options={false}
         bordered size="small"
 
       />)}

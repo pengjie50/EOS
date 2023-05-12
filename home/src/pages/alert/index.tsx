@@ -185,10 +185,10 @@ const TableList: React.FC = () => {
 
 
       if (al['type'] == 0) {
-        a.amber.push({ flow_id: al['a.flow_id'], flow_id_to: al['a.flow_id_to'] })
+        a.amber.push({ flow_id: al['flow_id'], flow_id_to: al['flow_id_to'] })
 
       } else {
-        a.red.push({ flow_id: al['a.flow_id'], flow_id_to: al['a.flow_id_to'] })
+        a.red.push({ flow_id: al['flow_id'], flow_id_to: al['flow_id_to'] })
 
       }
       map.set(al.transaction_id, a)
@@ -317,7 +317,7 @@ const TableList: React.FC = () => {
       ),
       dataIndex: 'transaction_id',
       hideInSearch:true,
-      tip: 'The transaction Id is the unique key',
+      
       render: (dom, entity) => {
         return (
           <a
@@ -468,6 +468,7 @@ const TableList: React.FC = () => {
         rowKey="id"
         search={{
           labelWidth: 210,
+          span: 8,
           searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
         }}
         toolBarRender={() => [

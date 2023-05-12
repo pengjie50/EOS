@@ -175,7 +175,7 @@ const TableList: React.FC = () => {
         />
       ),
       dataIndex: 'username',
-      tip: 'The Login usename is the unique key',
+    
       render: (dom, entity) => {
         return (
           <a

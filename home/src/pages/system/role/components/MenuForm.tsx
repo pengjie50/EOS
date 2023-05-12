@@ -109,13 +109,7 @@ const UpdateRoleForm: React.FC<MenuFormProps> = (props) => {
   const renderContent = () => {
     return (
       <>
-        <FormItem
-          name="id"
-          label="主键"
-          hidden
-        >
-          <Input id="update-id" placeholder="请输入主键" />
-        </FormItem>
+        
         <Tree
           checkable
           defaultExpandAll={true}
@@ -133,7 +127,7 @@ const UpdateRoleForm: React.FC<MenuFormProps> = (props) => {
   };
 
 
-  const modalFooter = { okText: '保存', onOk: handleSubmit, onCancel };
+  const modalFooter = { okText: 'Save', onOk: handleSubmit, onCancel };
 
   return (
     <Modal

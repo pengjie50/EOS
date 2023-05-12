@@ -21,6 +21,7 @@ export type UpdateFormProps = {
   onCancel: (flag?: boolean, formVals?: Partial<FilterOfTimestampsListItem>) => void;
   onSubmit: (values: Partial<FilterOfTimestampsListItem>) => Promise<void>;
   onApply: (values: Partial<any>) => Promise<void>;
+  onDelete: (values: Partial<any>) => Promise<void>;
   createModalOpen: boolean;
   values: Partial<FilterOfTimestampsListItem>;
 };
@@ -54,6 +55,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
     onSubmit,
     onCancel,
     onApply,
+    onDelete,
     createModalOpen,
     values
   } = props;
@@ -127,6 +129,16 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
             >
               Apply
             </Button>,
+            <Button
+              key="delete"
+              type="primary"
+              danger
+              onClick={() => {
+                onDelete(props.form?.getFieldsValue());
+              }}
+            >
+              Delete
+            </Button>
           ];
         },
       }}

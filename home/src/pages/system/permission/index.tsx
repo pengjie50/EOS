@@ -232,7 +232,7 @@ const TableList: React.FC = () => {
       sorter: true,
       defaultSortOrder: 'ascend',
       dataIndex: 'name',
-      tip: 'The permission name is the unique key',
+     
       render: (dom, entity) => {
         return (
           <a

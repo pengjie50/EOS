@@ -651,6 +651,7 @@ const TableList: React.FC = () => {
         bordered size="small"
         search={{
           labelWidth: 210,
+          span: 8,
           searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
         }}
         toolBarRender={() => [<Access accessible={access.canAlertruleAdd()} fallback={<div></div>}>

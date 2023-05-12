@@ -286,11 +286,8 @@ const TableList: React.FC = () => {
             setCurrentRow(record);
             handleRemove([record], (success) => {
               if (success) {
-                handleUpdateModalOpen(false);
-                setCurrentRow(undefined);
-                if (actionRef.current) {
-                  actionRef.current.reload();
-                }
+               
+                actionRef.current?.reloadAndRest?.();
               }
             });
 
@@ -411,9 +408,15 @@ const TableList: React.FC = () => {
         >
           <Button
             onClick={async () => {
-              await handleRemove(selectedRowsState);
-              setSelectedRows([]);
-              actionRef.current?.reloadAndRest?.();
+              await handleRemove(selectedRowsState, (success) => {
+                if (success) {
+                  setSelectedRows([]);
+                  actionRef.current?.reloadAndRest?.();
+                }
+               
+
+              });
+              
             }}
           >
             <FormattedMessage
@@ -444,7 +447,7 @@ const TableList: React.FC = () => {
           }
         }}
         createModalOpen={createModalOpen}
-        values={currentRow || {}}
+      
       />
       <UpdateForm
         onSubmit={async (value) => {

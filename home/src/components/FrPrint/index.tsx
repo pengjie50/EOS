@@ -44,7 +44,7 @@ const FrPrint: React.FC<UpdateFrPrintProps> = (props) => {
       destroyOnClose
       title={false}
       visible={props.printModalVisible}
-      okText="打印"
+      okText="Print"
       onCancel={() => {
         props.onCancel();
       }}
