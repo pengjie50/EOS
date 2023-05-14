@@ -173,7 +173,9 @@ class UserService extends Service {
         });
         return res
     }
-    async findOne(params){
+    async findOne(params) {
+
+      
         const ctx = this.ctx;
         var res = await ctx.model.User.findOne({
             attributes: [[ctx.model.col('r.name'), 'role_name'],'user.*'],

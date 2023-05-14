@@ -24,6 +24,11 @@ module.exports = app => {
             allowNull: false,
             defaultValue: ''
         },
+        user_id: {
+            type: UUID,
+            allowNull: false,
+            defaultValue: ''
+        },
         flow_id_to: {
             type: UUID,
             allowNull: true,

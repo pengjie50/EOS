@@ -10,7 +10,7 @@ const Service = require('egg').Service;
 const uuid = require('uuid');
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
-var request = require('request');
+
 class TransactionService extends Service {
     
     async findOne(params){
@@ -282,12 +282,12 @@ class TransactionService extends Service {
         });
 
         
-
+       
 
         if (result.status==201) {
             ctx.body = { success: true, data: result.data[0] };
         } else {
-            ctx.body = { success: false, errorCode: 1010 };
+            ctx.body = { success: true, data: [] };
         }
 
         console.log(result.data)

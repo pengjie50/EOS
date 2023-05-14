@@ -7,12 +7,17 @@
 'use strict'
 module.exports = app => {
     const { DATE, STRING, INTEGER, UUID, TEXT, TINYINT } = app.Sequelize;
-    const Model = app.model.define('alert_rule', {
+    const Model = app.model.define('alert_rule_transaction', {
         id: {
             type: UUID,
             primaryKey: true,
             allowNull: false
            
+        },
+       transaction_id: {
+            type: UUID,
+            allowNull: true,
+            defaultValue: ''
         },
         user_id: {
             type: UUID,
@@ -104,7 +109,7 @@ module.exports = app => {
         }],
         
         timestamps: false,
-        tableName: 'alert_rule'
+        tableName: 'alert_rule_transaction'
         
     });
    /* Model.associate = function () {

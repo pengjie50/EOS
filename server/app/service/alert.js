@@ -33,6 +33,13 @@ class AlertService extends Service {
             obj.offset = parseInt((params.page - 1)) * parseInt(params.limit)
             obj.limit = parseInt(params.limit)
         }
+        if (!ctx.user.isAdmin) {
+            if (obj.where) {
+                obj.where.user_id = ctx.user.user_id
+            } else {
+                obj.where = { user_id: ctx.user.user_id }
+            }
+        }
         
         obj.include = [{
             as: 't',

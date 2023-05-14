@@ -18,10 +18,18 @@ module.exports = (options, app) => {
                     return
                 }
                 console.log(decoded)        // 验证token是否过期
-                ctx.user = decoded
+               
 
                 var token_timeout = parseInt(await ctx.service.sysconfig.getValueByKey("token_timeout"));
                 var login_user = await ctx.service.user.getUserInfo(decoded.user_id)
+              
+                ctx.user = login_user
+                ctx.user.user_id = login_user.id
+                if (login_user.role_id =='rrrrrrrr-rrrr-rrrr-rrrr-rrrrrrrrrrrr') {
+                    ctx.user.isAdmin=true
+                }
+
+
                 var login_time = login_user['login_time']
                 var login_token = login_user['login_token']
                

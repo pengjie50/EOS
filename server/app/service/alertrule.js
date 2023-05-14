@@ -28,11 +28,26 @@ class AlertruleService extends Service {
         if(params.order){
             obj.order = params.order
         }
+
+        if (!ctx.user.isAdmin) {
+            if (obj.where) {
+                obj.where.user_id = ctx.user.user_id
+            } else {
+                obj.where = { user_id: ctx.user.user_id }
+            }
+        }
         if(params.page && params.limit){
             obj.offset = parseInt((params.page - 1)) * parseInt(params.limit)
             obj.limit = parseInt(params.limit)
         }
-        
+        var alertrule = ctx.model.Alertrule
+
+        if (obj.where.transaction_id) {
+            alertrule = ctx.model.Alertruletransaction
+        }
+
+
+
         const list = await ctx.model.Alertrule.findAndCountAll(obj)
 
         ctx.status = 200;
@@ -58,7 +73,8 @@ class AlertruleService extends Service {
              params.flow_id.forEach((b) => {
                 var a = b.value
                  arr.push({
-                    id: uuid.v1(),
+                     id: uuid.v1(),
+                     user_id: ctx.user.user_id,
                      total_nominated_quantity_from_m: params.total_nominated_quantity_from_m,
                      total_nominated_quantity_to_m: params.total_nominated_quantity_to_m,
                      total_nominated_quantity_from_b: params.total_nominated_quantity_from_b,
@@ -82,6 +98,7 @@ class AlertruleService extends Service {
                   var a = b
                 arr.push( {
                     id: uuid.v1(),
+                    user_id: ctx.user.user_id,
                     total_nominated_quantity_from_m: params.total_nominated_quantity_from_m,
                     total_nominated_quantity_to_m: params.total_nominated_quantity_to_m,
                     total_nominated_quantity_from_b: params.total_nominated_quantity_from_b,
