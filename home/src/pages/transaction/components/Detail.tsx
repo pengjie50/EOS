@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect,useCallback } from 'react';
 import { PageContainer, ProCard, ProColumns, ProDescriptions, ProFormGroup, ProFormSelect, ProDescriptionsItemProps } from '@ant-design/pro-components';
-import { AlertOutlined, SafetyCertificateOutlined, CheckOutlined, EyeOutlined, ExclamationCircleOutlined } from '@ant-design/icons'; 
+import { AlertOutlined, SafetyCertificateOutlined, FormOutlined,CheckOutlined, EyeOutlined, ExclamationCircleOutlined } from '@ant-design/icons'; 
 import ProTable from '@ant-design/pro-table';
 import { FormattedMessage, useIntl, useLocation, useModel, history } from '@umijs/max';
 import { TransactionList, TransactionListItem } from '../data.d';
@@ -143,7 +143,7 @@ const Detail: React.FC<any> = (props) => {
 
   const [alertruleProcessMap, setAlertruleProcessMap] = useState<any>({});
 
-  const [alertruleMap, setAlertruleMap] = useState<any>({});
+  const [alertruleEventList, setAlertruleEventList] = useState<any>([]);
   const [collapsed, setCollapsed] = useState(true);
   const { initialState } = useModel('@@initialState');
   const { currentUser } = initialState || {};
@@ -159,8 +159,8 @@ const Detail: React.FC<any> = (props) => {
 
   const [validateStatus, setValidateStatus] = useState<any>(0);
   const [validateData, setValidateData] = useState<any>([]);
+  const [selectValue, setSelectValue] = useState<any>(null);
   
-
   const getTimeStr=(time)=>{
     return parseInt((time / 3600) + "") + "h " + parseInt((time % 3600) / 60) + "m"
   }
@@ -325,9 +325,11 @@ const Detail: React.FC<any> = (props) => {
       title: <FormattedMessage id="pages.transaction.totalDuration" defaultMessage="Total Duration (Till Date)" />,
       dataIndex: 'total_duration',
       hideInSearch: true,
-      renderText: (val: Number) => {
-        if (val > 0) {
-          return getTimeStr(val)
+      render: (dom, entity) => {
+        if (dom > 0 && entity.status == 1) {
+          return getTimeStr(dom)
+        } else {
+          return '-'
         }
 
 
@@ -381,7 +383,15 @@ const Detail: React.FC<any> = (props) => {
     },*/
   ];
 
+  const getTimeByTwoEvent = (flow_id, flow_id_to) => {
+    try {
+      return getTimeStr((new Date(transactioneventMap.get(flow_id_to).event_time).getTime() - new Date(transactioneventMap.get(flow_id).event_time).getTime()) / 1000)
+    } catch (e) {
+      return "-"
+    }
 
+    
+  }
   useEffect(() => {
     jetty({ pageSize: 3000, current: 1, sorter: { name: 'ascend' } }).then((res) => {
       var b = {}
@@ -394,62 +404,64 @@ const Detail: React.FC<any> = (props) => {
 
     alertrule({ pageSize: 3000, current: 1}).then((res) => {
       var b = {}
-      var c = {}
+      var c = []
       res.data.forEach((r) => {
-        if (r.type==0) {
+        if (r.type != 1) {
           b[r.flow_id] = r
+        } else {
+          setCollapsed(false)
+          c.push(r)
         }
-        c[r.id] = r
+        
       })
       setAlertruleProcessMap(b)
-      setAlertruleMap(c)
+      setAlertruleEventList(c)
 
-     
-      getAlertBytransactionId({ pageSize: 300, current: 1, transaction_id: transaction_id }).then((res) => {
-        var map = {}
 
-      
-        res.data.forEach((a) => {
-        
-          if (a.alertrule_type != 1) {
-            if (!map[a.flow_id]) {
-              map[a.flow_id] = { amber: 0, red: 0 }
-            }
-            if (a.type == 0) {
-              map[a.flow_id].amber++
-            } else {
-              map[a.flow_id].red++
-            }
+    });
 
-          }else {
-            if (!map['b2e']) {
-              setCollapsed(false)
-              map['b2e'] = []
-            }
+
+    getAlertBytransactionId({ pageSize: 300, current: 1, transaction_id: transaction_id }).then((res) => {
+      var map = {}
+
+
+      res.data.forEach((a) => {
+
+        if (a.alertrule_type != 1) {
+          if (!map[a.flow_id]) {
+            map[a.flow_id] = { amber: 0, red: 0 }
+          }
+          if (a.type == 0) {
+            map[a.flow_id].amber++
+          } else {
+            map[a.flow_id].red++
+          }
+
+        } else {
+          if (!map['b2e']) {
            
-            map['b2e'].push(a)
+            map['b2e'] = {}
           }
 
-
-        })
-        setTransactionAlert(map)
-
-
-        /*setSummaryList(flowTree.map((a, index) => {
-          return {
-            no: index + 1,
-            process: a.name,
-            noOfActivities: 1,
-            totalDuration: 1,
-            thresholdBreach: transactionAlert.get(a.id),
-            blockchainVerified: 0
-
-          }
-        }))*/
-
-      });
+          map['b2e'][a.flow_id + "_" + a.flow_id_to]=a
+        }
 
 
+      })
+      setTransactionAlert(map)
+
+
+      /*setSummaryList(flowTree.map((a, index) => {
+        return {
+          no: index + 1,
+          process: a.name,
+          noOfActivities: 1,
+          totalDuration: 1,
+          thresholdBreach: transactionAlert.get(a.id),
+          blockchainVerified: 0
+
+        }
+      }))*/
 
     });
 
@@ -471,9 +483,18 @@ const Detail: React.FC<any> = (props) => {
     });
     //setTransaction_id(transaction_id)
     handlegetFlow = (f: any) => {
+
+     // f.push("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+      var currentRow_
+      setCurrentRow((currentRow) => {
+        currentRow_ = currentRow
+        return currentRow
+      })
       var fidMap = {}
       flow({ pageSize: 300, current: 1, sorter: { sort: 'ascend' } }).then((res) => {
-
+       
+        res.data.push({
+          name: currentRow_?.status == 1 ? 'Total Duration' : 'Current Duration', icon: 'icon-daojishi', pid: '                                    ', id: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' })
         var b = {}
         res.data.forEach((r) => {
           b[r.id] = r.name
@@ -507,10 +528,13 @@ const Detail: React.FC<any> = (props) => {
               return a.id == b
             })
           })
+
+          res.data.push({
+            name: currentRow_?.status == 1 ? 'Total Duration' : 'Current Duration', icon: 'icon-daojishi', pid: '                                    ', id: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' })
         }
         console.log("dddddddddd",res.data)
 
-
+      
         setFlowList(res.data)
         res.data = tree(res.data, "                                    ", 'pid')
         setFlowTree(res.data)
@@ -522,24 +546,20 @@ const Detail: React.FC<any> = (props) => {
      }
     
 
-    handlegetFlow([])
+    
     
     
     transactionevent({ pageSize: 1000, current: 1, transaction_id: transaction_id,sorter: { event_time: 'ascend' }
     }).then((res) => {
-  var processMap = new Map()
-  try {
-    setTotalDuration(parseInt(((new Date(res.data[res.data.length - 1].event_time)).getTime() - (new Date(res.data[0].event_time)).getTime()) / 1000 + ""))
-  } catch (e) {
+      var processMap = new Map()
+      try {
+        setTotalDuration(parseInt(((new Date(res.data[res.data.length - 1].event_time)).getTime() - (new Date(res.data[0].event_time)).getTime()) / 1000 + ""))
+      } catch (e) {
 
-  }
+      }
   
-  res.data = res.data.map((a, index) => {
+      res.data = res.data.map((a, index) => {
 
-   
-        
-
-       
         var obj=processMap.get(a.flow_pid)
         if (!obj) {
           obj = { duration: 0, process_duration:0, status:0,event_count:0 }
@@ -548,12 +568,14 @@ const Detail: React.FC<any> = (props) => {
           if (next) {
            
             if (next.flow_pid != a.flow_pid) {
-             
-              obj.process_duration=parseInt(((new Date(res.data[index + 1].event_time)).getTime() - (new Date(a.event_time)).getTime()) / 1000 + "")
+
+              obj.process_duration = parseInt(((new Date(res.data[index + 1].event_time)).getTime() - (new Date(a.event_time)).getTime()) / 1000 + "")
+            } else {
+              var val = parseInt(((new Date(next.event_time)).getTime() - (new Date(a.event_time)).getTime()) / 1000 + "")
+              obj.duration += val
             }
 
-            var val = parseInt(((new Date(next.event_time)).getTime() - (new Date(a.event_time)).getTime()) / 1000 + "")
-            obj.duration += val
+           
 
             a.duration = getTimeStr(val) 
             
@@ -588,7 +610,10 @@ const Detail: React.FC<any> = (props) => {
           m.set(b.id, b)
           var a = {}
           a.value = b.id
-          a.label = b.name
+          a.label = <span><FormOutlined onClick={() => {
+            handleModalOpen(true);
+
+          }} /> {b.name} </span>
           return a
         })
         res.data.push({ value: 'add', label: 'Add new template' })
@@ -604,13 +629,18 @@ const Detail: React.FC<any> = (props) => {
 
 
       setCurrentRow(res.data[0])
-
+      handlegetFlow([])
       if (res.data[0].status == 1) {
         setValidateStatus(1)
         validateBC({ id: res.data[0].id }).then((res) => {
-        
-          setValidateStatus(2)
-          setValidateData(res.data)
+          if (res.data.length==0) {
+            setValidateStatus(0)
+            setValidateData([])
+          } else {
+            setValidateStatus(2)
+            setValidateData(res.data)
+          }
+         
          // console.log(res.data)
         })
       }
@@ -629,7 +659,8 @@ const Detail: React.FC<any> = (props) => {
     'icon-matou': '#70AD47',
     'icon-a-tadiao_huaban1': '#70AD47',
     'icon-zhuanyunche': '#70AD47',
-    'icon-matou1': '#70AD47'
+    'icon-matou1': '#70AD47',
+    'icon-daojishi': '#70AD47'
   }
  
   return (<div
@@ -681,6 +712,7 @@ const Detail: React.FC<any> = (props) => {
           handleRemove([currentFilter], (success) => {
             if (success) {
               handleModalOpen(false);
+              setSelectValue(null)
               handleget()
             }
             
@@ -746,23 +778,46 @@ const Detail: React.FC<any> = (props) => {
             <div style={{ position: 'relative', float: 'left', zIndex: 1, textAlign: 'center', width: '10%' }}>
 
 
-              <div style={{ position: 'absolute', zIndex: 0, top: 40, left: i == 0 ? '50%' : 0, width: i == 0 ? '50%' : '100%', height: 2, backgroundColor: '#8aabe5', overflow: 'hidden', }}></div>
+              <div style={{ position: 'absolute', zIndex: 0, top: 40, left: i == 0 ? '50%' : 0, width: (i == 0 || i==5)? '50%' : '100%', height: 2, backgroundColor: '#8aabe5', overflow: 'hidden', }}></div>
               <div style={{ position: 'relative', zIndex: 1, fontSize: '14px', color: "#333", fontWeight: "bold" }}>{e.name}</div>
               <div style={{ position: 'relative', zIndex: 1 }}>
-                <span style={{
+                {e.id != "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" && (<span style={{
                   display: "inline-block",
                   color: "#fff",
                   width: '40px',
                   height: '40px',
                   fontSize: "30px",
-                  backgroundColor: p ? (p.event_count > 0 ? transactionAlert[e.id] ? (transactionAlert[e.id].red > 0 ? "red" :"#DE8205"): color[e.icon] : "#595959") : "#595959" ,
+                  backgroundColor: p ? (p.event_count > 0 ? transactionAlert[e.id] ? (transactionAlert[e.id].red > 0 ? "red" : "#DE8205") : color[e.icon] : "#595959") : "#595959",
                   borderRadius: '50%',
                   textAlign: 'center',
                   lineHeight: '40px'
                 }}>
 
                   <SvgIcon type={e.icon} />
-                </span>
+                </span>)
+                }
+
+
+                {e.id == "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" && (
+
+                  <span style={{
+                    marginTop: 7,
+                    display: "inline-block",
+                    color: "#fff",
+                    width: '80px',
+                    height: '25px',
+                    fontSize: "14px",
+                    backgroundColor: currentRow?.status == 1 ? (transactionAlert[e.id] ? (transactionAlert[e.id].red > 0 ? "red" : "#DE8205") : color[e.icon]):"#595959",      
+                    borderRadius: '50%',
+                    textAlign: 'center',
+                    lineHeight: '25px'
+                  }}>
+
+                    {totalDuration > 0 ? getTimeStr(totalDuration) : ""}
+                  </span>
+
+                  )} 
+
               </div>
               <div style={{ fontSize: '14px', color: "#333", height: 20, lineHeight: "20px" }}>
                 {p && p.event_count == e.children.length ? getTimeStr(p.duration) : ""}
@@ -772,8 +827,9 @@ const Detail: React.FC<any> = (props) => {
               </div>
             </div>,
 
-
-            <div style={{ width:  '4.5%', position: 'relative', float: 'left', textAlign: 'center', display: i == e.children.length ? "none" : "block" }}>
+            
+              e.id != "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"?
+                (<div style={{ width: '4.5%', position: 'relative', float: 'left', textAlign: 'center', display: i >= flowTreeAll.length-2 ? "none" : "block" }}>
               <div style={{ position: 'absolute', zIndex: 0, top: 40, width: '100%', height: 2, backgroundColor: '#8aabe5', overflow: 'hidden', }}></div>
               <div style={{ position: 'relative', marginTop: '35px', fontSize: "20px", zIndex: 1 }}>
 
@@ -783,7 +839,7 @@ const Detail: React.FC<any> = (props) => {
               <div style={{ fontSize: '10px' }}>
                 {p && p.process_duration > 0 ? getTimeStr(p.process_duration):"" }
               </div>
-            </div>
+            </div>):null
 
 
           ]
@@ -794,34 +850,6 @@ const Detail: React.FC<any> = (props) => {
 
 
 
-        <div style={{ position: 'relative', float: 'left', zIndex: 1, textAlign: 'center' }}>
-          <div style={{ position: 'absolute', zIndex: 0, top: 40, width: '50%', height: 2, backgroundColor: '#8aabe5', overflow: 'hidden', }}></div>
-          <div style={{ position: 'relative', zIndex: 1, fontSize: '14px', color: "#333", fontWeight: "bold" }}>{'Current/Total Duration'}</div>
-          <div style={{ position: 'relative', zIndex: 1 }}>
-            <span style={{
-              marginTop: 7,
-              display: "inline-block",
-              color: "#fff",
-              width: '80px',
-              height: '25px',
-              fontSize: "14px",
-              backgroundColor: transactionAlert["aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"] ? (transactionAlert["aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"].red > 0 ? "red" : "#DE8205") : '#70AD47',
-              borderRadius: '50%',
-              textAlign: 'center',
-              lineHeight: '25px'
-            }}>
-
-              {totalDuration > 0 ? getTimeStr(totalDuration):""}
-            </span>
-
-          </div>
-          <div style={{ fontSize: '14px', color: "#333", height: 25, lineHeight: "25px" }}>
-
-          </div>
-          <div style={{ fontSize: '10px' }}>
-            <SvgIcon style={{ color: "#DE8205" }} type="icon-yuan" /> 1h 30m  <SvgIcon style={{ color: "red" }} type="icon-yuan" /> 1h 30m
-          </div>
-        </div>
 
         <div style={{ position: 'relative', cursor: "pointer", float: 'left', zIndex: 1, width: '140px', textAlign: 'center' }} onClick={() => {
 
@@ -829,7 +857,7 @@ const Detail: React.FC<any> = (props) => {
         
         } }>
 
-          <div style={{ position: 'relative', zIndex: 1, fontSize: '14px', height: 30, color: "#333" }}></div>
+          <div style={{ position: 'relative', zIndex: 1, fontSize: '14px', height: 25, color: "#333" }}></div>
           <div style={{ position: 'relative', zIndex: 1, height: '30px', }}>
 
             {validateStatus == 1 ? (<Spin />) :
@@ -891,32 +919,55 @@ const Detail: React.FC<any> = (props) => {
 
 
               <div style={{ position: 'relative', zIndex: 1, float: 'left' }}>
-                <span style={{
-                  display: "inline-block",
-                  color: "#fff",
-                  width: '40px',
-                  height: '40px',
-                  fontSize: "30px",
-                  backgroundColor: p ? (p.event_count > 0 ? transactionAlert[e.id] ? (transactionAlert[e.id].red > 0 ? "red" : "#DE8205") : color[e.icon] : "#595959") : "#595959",
-                  borderRadius: '50%',
-                  textAlign: 'center',
-                  lineHeight: '40px'
-                }}>
 
-                  <SvgIcon type={e.icon} />
-                </span>
+                {e.id != "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" && (
+                  <span style={{
+                    display: "inline-block",
+                    color: "#fff",
+                    width: '40px',
+                    height: '40px',
+                    fontSize: "30px",
+                    backgroundColor: p ? (p.event_count > 0 ? transactionAlert[e.id] ? (transactionAlert[e.id].red > 0 ? "red" : "#DE8205") : color[e.icon] : "#595959") : "#595959",
+                    borderRadius: '50%',
+                    textAlign: 'center',
+                    lineHeight: '40px'
+                  }}>
+
+                    <SvgIcon type={e.icon} />
+                  </span>)}
+
+
+                {e.id == "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" && (
+                  <span style={{
+                    marginTop: 5,
+                    display: "inline-block",
+                    color: "#fff",
+                    width: '70px',
+                    height: '25px',
+                    fontSize: "14px",
+                    backgroundColor: currentRow?.status == 1 ? (transactionAlert[e.id] ? (transactionAlert[e.id].red > 0 ? "red" : "#DE8205") : color[e.icon]) : "#595959",
+                    borderRadius: '50%',
+                    textAlign: 'center',
+                    lineHeight: '25px'
+                  }}>
+
+                    {totalDuration > 0 ? getTimeStr(totalDuration) : ""}
+                  </span>
+
+                  )}
               </div>
               <div style={{ position: 'relative', marginLeft: 5, height: '40px', lineHeight: '40px', width: '30%', zIndex: 1, float: 'left', fontSize: '12px', color: "#333", fontWeight: "bold" }}>{e.name}</div>
-              <div style={{ fontSize: '12px', float: 'left', height: '40px', lineHeight: '40px', width: '15%', color: "#333" }}>
-                {p && p.event_count == e.children.length ? getTimeStr(p.duration) : ""}
-              </div>
+              {e.id != "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" && (
+                <div style={{ fontSize: '12px', float: 'left', height: '40px', lineHeight: '40px', width: '15%', color: "#333" }}>
+                  {p && p.event_count == e.children.length ? getTimeStr(p.duration) : ""}
+                </div>)}
               <div style={{ fontSize: '10px', height: '40px', lineHeight: '40px', textAlign: 'center', width: '40%', display: "inline-block", float:'right'  }}>
                 {ar && (<SvgIcon style={{ color: "#DE8205" }} type="icon-yuan" />)} {ar ? ar.amber_hours + "h " + ar.amber_mins + "m" : ""} {ar && (<SvgIcon style={{ color: "red" }} type="icon-yuan" />)} {ar ? ar.red_hours + "h " + ar.red_mins + "m" : ""}
               </div>
             </div>,
 
-
-            <div style={{ height: '30px', position: 'relative', float: 'left', textAlign: 'center', display: i == e.children.length ? "none" : "block" }}>
+            e.id != "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" ?(
+            <div style={{ height: '30px', position: 'relative', float: 'left', textAlign: 'center' }}>
               <div style={{ position: 'absolute', zIndex: 0, left: 20, height: '100%', width: 2, backgroundColor: '#8aabe5', overflow: 'hidden', }}></div>
               <div style={{ position: 'relative', marginLeft: '19px', fontSize: "14px", height: 20, lineHeight: '20px', zIndex: 1 }}>
                 {p && p.process_duration > 0 && (<SvgIcon type={'icon-map-connect-full'} />)}
@@ -924,7 +975,7 @@ const Detail: React.FC<any> = (props) => {
                 <span style={{ display: 'inline-block', height: 20, marginLeft: 5, lineHeight: '20px', fontSize: "14px" }}>  {p && p.process_duration > 0 ? getTimeStr(p.process_duration) : ""}</span>
               </div>
              
-            </div>
+            </div>):null
 
 
           ]
@@ -933,34 +984,7 @@ const Detail: React.FC<any> = (props) => {
         })
         }
 
-        <div style={{ position: 'relative', float: 'left', zIndex: 1, textAlign: 'center', width: '100%' }}>
-
-
-          <div style={{ position: 'relative', zIndex: 1, float: 'left' }}>
-            <span style={{
-              marginTop: 10,
-              display: "inline-block",
-              color: "#fff",
-              width: '70px',
-              height: '25px',
-              fontSize: "14px",
-              backgroundColor: '#70AD47',
-              borderRadius: '50%',
-              textAlign: 'center',
-              lineHeight: '25px'
-            }}>
-
-              {totalDuration > 0 ? getTimeStr(totalDuration) : ""}
-            </span>
-          </div>
-          <div style={{
-            position: 'relative', marginLeft:5, height: '20px', width: '30%', textAlign: "left", lineHeight: '20px', zIndex: 1, float: 'left', fontSize: '12px', color: "#333", fontWeight: "bold"
-          }}>{'Current/Total Duration'}</div>
-        
-          <div style={{ fontSize: '10px', height: '40px', lineHeight: '40px', width: '40%' ,float: 'right', }}>
-            <SvgIcon style={{ color: "#DE8205" }} type="icon-yuan" /> 1h 30m  <SvgIcon style={{ color: "red" }} type="icon-yuan" /> 1h 30m
-          </div>
-        </div>
+       
 
 
         <div style={{ position: 'relative', float: 'left', zIndex: 1, textAlign: 'center', width: '100%' }} onClick={() => {
@@ -1004,45 +1028,75 @@ const Detail: React.FC<any> = (props) => {
         setCollapsed(!collapsed);
       }} style={{ fontWeight: 'normal', fontSize: 14 }} />} bordered headerBordered>
 
-        {!transactionAlert['b2e'] && (<Empty />) } 
+        {alertruleEventList.length==0 && (<Empty />)}
 
-        {transactionAlert['b2e']?.map((ta) => {
 
+        {alertruleEventList.map((ta) => {
+          var tb=transactionAlert?.b2e?.[ta.flow_id + "_" + ta.flow_id_to]
           return (
-            <ProCard ghost={true} colSpan={isMP ? 24 : 12} >
+            <ProCard ghost={true} colSpan={isMP ? 24 : 12} 
+              collapsibleIconRender={({
+                collapsed: buildInCollapsed,
+              }: {
+                collapsed: boolean;
+              }) => (buildInCollapsed ? <span> </span> : <span> </span>)}
+              style={{ marginBlockStart: 5 }}
+              headStyle={{ padding: 0, fontWeight: 'normal', fontSize:'14px'}}
+              bodyStyle={{paddingLeft:25} }
+              collapsible
+              defaultCollapsed
+              onClick={(e) => {
+                handlegetFlow([ta.flow_id, ta.flow_id_to])
+              } }
+              title={(<div style={{ position: 'relative', height: 30, lineHeight: '30px', marginBottom: "10px" }}>
 
-              <div style={{ position: 'relative', height: 30, lineHeight: '30px', marginBottom: "10px" }}>
-
-                <div style={{ float: "left", paddingLeft: '10px' }}>
+                <div style={{ float: "left",  paddingLeft: '10px' }}>
                   <span style={{
                     display: "inline-block",
                     color: "#fff",
                     width: '100px',
                     height: '25px',
                     fontSize: "14px",
-                    backgroundColor: ta.type == 0 ? "#DE8205" : "red",
+                    backgroundColor: tb ? tb.type == 0 ? "#DE8205" : "red" : (getTimeByTwoEvent(ta.flow_id, ta.flow_id_to) == '-' ? "#595959" : "#67C23A"),
                     borderRadius: '50%',
                     textAlign: 'center',
                     lineHeight: '25px'
                   }}>
 
-                    11h 55m
+                    {getTimeByTwoEvent(ta.flow_id, ta.flow_id_to)}
                   </span>
                 </div>
-                <div style={{ float: "left", paddingLeft: '10px' }}>
-                  {flowConf[ta.flow_id]}<span style={{ color: ta.type == 0 ? "#DE8205" : "red" }}>{' -> '}</span>{flowConf[ta.flow_id_to]}
+                <div style={{ float: "left", paddingLeft: '10px', fontWeight: 'normal', fontSize: '14px' }}>
+                  {flowConf[ta.flow_id]}<span >{' -> '}</span>{flowConf[ta.flow_id_to]}
                 </div>
 
-              </div>
+              </div>) }
 
-              
+            >
+
+             
+              <ProDescriptions
+                column={isMP ? 1 : 2} >
+                <ProDescriptions.Item label="Threshold" valueType="text" style={{fontSize:'14px'} } >
+                  <SvgIcon style={{ color: "#DE8205" }} type="icon-yuan" /> {ta.amber_hours + "h " + ta.amber_mins + "m "} <SvgIcon style={{ color: "red", marginLeft: 5 }}  type="icon-yuan" />  {ta.red_hours + "h " + ta.red_mins + "m "} 
+                </ProDescriptions.Item>
+               
+               
+
+
+              </ProDescriptions>
+
             </ProCard>
           )
 
 
 
-        
+
         })}
+
+        
+
+       
 
 
       </ProCard>
@@ -1051,13 +1105,21 @@ const Detail: React.FC<any> = (props) => {
       <ProCard  style={{ marginBlockStart: 16 }} title={'Detailed Timestamps' }
         bordered headerBordered
         extra={<Select
-          style={{ width:200 }}
+          style={{ width: 200 }}
+          allowClear={true}
+          value={selectValue}
+          onClear={() => {
+            setCurrentFilter(null);
+            setIsAdd(false)
+            handlegetFlow("")
+          } }
           dropdownMatchSelectWidth={ false}
           onSelect={(a) => {
-
+            setSelectValue(a)
             if (a == "add") {
               setCurrentFilter(null);
               setIsAdd(true)
+              handleModalOpen(true);
             }
             else {
               setCurrentFilter(filterOfTimestampsMap.get(a));
@@ -1066,10 +1128,10 @@ const Detail: React.FC<any> = (props) => {
             }
            
             
-            handleModalOpen(true);
+            
           }}
           placeholder={'Filter By: Timestamps'}
-
+          
           options={filterOfTimestampsList}
         />}
       >
@@ -1094,7 +1156,7 @@ const Detail: React.FC<any> = (props) => {
             flowTreeAll.forEach((nn) => {
               if (nn.id == e.id) {
 
-                e.children_length = nn.children.length
+                e.children_length = nn.children?.length
 
                 console.log(e.children_length)
               }
@@ -1116,7 +1178,7 @@ const Detail: React.FC<any> = (props) => {
                   color: "#fff",
                   width: '35px',
                   height: '35px',
-                  backgroundColor: p ? (p.event_count > 0 ? transactionAlert[e.id] ? (transactionAlert[e.id].red > 0 ? "red" : "#DE8205") : color[e.icon] : "#595959") : "#595959",
+                  backgroundColor: e.id == 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' ? "#fff" : (p ? (p.event_count > 0 ? transactionAlert[e.id] ? (transactionAlert[e.id].red > 0 ? "red" : "#DE8205") : color[e.icon] : "#595959") : "#595959"),
                   borderRadius: '50%',
                   textAlign: 'center',
                   lineHeight: '35px'
@@ -1126,14 +1188,14 @@ const Detail: React.FC<any> = (props) => {
 
 
 
-              } title={<div onClick={() => {
+              } title={<div style={{ color: e.id == 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' ? "#fff":"none" }} onClick={() => {
                 show[e.id] = !show[e.id]
                 setShow({ ...show })
                 console.log(show)
                 }}> <span style={{ paddingRight: '20px', width: 135, display: "inline-block", textAlign: "left", fontSize: "16px", lineHeight: "20px", height: 20 }}>{e.name}</span>
                 <span style={{ paddingLeft: '20px', display: "inline-block", textAlign: "left", fontSize: "14px", lineHeight: "20px", height: 20 }}>{p && p.event_count == e.children_length ? getTimeStr(p.duration) : ""}</span></div>} description={<div >{
 
-                  e.children.map(c => {
+                  e.children?.map(c => {
                     if (!show[e.id]) {
 
                       return

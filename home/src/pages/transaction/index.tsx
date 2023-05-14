@@ -7,6 +7,7 @@ import FileSaver from "file-saver";
 import { history } from '@umijs/max';
 import { GridContent } from '@ant-design/pro-layout';
 import numeral from 'numeral';
+import moment from 'moment'
 import { useAccess, Access } from 'umi';
 const Json2csvParser = require("json2csv").Parser;
 import {
@@ -122,9 +123,112 @@ const handleRemove = async (selectedRows: TransactionListItem[]) => {
     return false;
   }
 };
-const exportCSV=(data, filename = `${Date.now()}.csv`) =>{
+
+
+
+
+/*var keysArr = new Array("key0", "key1", "key2");
+
+function TableToJson(tableid){//tableid是你要转化的表的表名，是一个字符串，如"example"
+
+  var rows = document.getElementById(tableid).rows.length;//获得行数(包括thead)
+
+  var colums = document.getElementById(tableid).rows[0].cells.length;//获得列数
+
+  var json = "[";
+
+  var tdValue;
+
+  for (var i = 1; i < rows; i++) {//每行
+
+    json += "{";
+
+    for (var j = 0; j < colums; j++) {
+
+      tdName = keysArr[j];//Json数据的键
+
+      json += "\"";//加上一个双引号
+
+      json += tdName;
+
+      json += "\"";
+
+      json += ":";
+
+      tdValue = document.getElementById(tableid).rows[i].cells[j].innerHTML;//Json数据的值
+
+      if (j === 1) {//第1列是日期格式，需要按照json要求做如下添加
+
+        tdValue = "\/Date(" + tdValue + ")\/";
+
+      }
+
+      json += "\"";
+
+      json += tdValue;
+
+      json += "\"";
+
+      json += ",";
+
+    }
+
+    json = json.substring(0, json.length - 1);
+
+    json += "}";
+
+    json += ",";
+
+  }
+
+  json = json.substring(0, json.length - 1);
+
+  json += "]";
+
+  return json;
+
+}*/
+
+const exportCSV = (data, columns, filename = `${"Summary of all transactions"+moment(Date.now()).format(' YYYY-MM-DD HH:mm:ss') }.csv`) => {
+
+  if (data.length==0) {
+    message.error(<FormattedMessage
+      id="pages.selectDataFirst"
+      defaultMessage="Please select data first!"
+    />);
+    return false;
+  }
+  var newData = []
+  var map = {}
+  columns.forEach((a) => {
+
+    map[a.dataIndex] = a
+  })
+  data = data.forEach((s) => {
+    var n = {}
+    
+    for (var k in s) {
+     
+      var c = map[k]
+      if (c && !c.hideInTable) {
+        if (c.valueType == 'date') {
+          n[c.title.props.defaultMessage] = s[k] ? moment(s[k]).format('YYYY/MM/DD') : ""
+        } else if (c.render && k!='id') {
+          n[c.title.props.defaultMessage] = c.render(s[k],s)
+        } else {
+          n[c.title.props.defaultMessage] = c.valueEnum ? (typeof c.valueEnum[s[k]] == 'string' ? c.valueEnum[s[k]] : c.valueEnum[s[k]].text.props.defaultMessage) : s[k]
+        }
+        
+        
+      }
+     
+    }
+    newData.push(n)
+   
+  })
+
   const parser = new Json2csvParser();
-  const csvData = parser.parse(data);
+  const csvData = parser.parse(newData);
   const blob = new Blob(["\uFEFF" + csvData], {
     type: "text/plain;charset=utf-8;",
   });
@@ -349,6 +453,8 @@ const TableList: React.FC = () => {
     {
       title: <FormattedMessage id="pages.transaction.startOfTransaction" defaultMessage="Start of transaction" />,
       dataIndex: 'start_of_transaction',
+      sorter: true,
+      defaultSortOrder:'descend',
       valueType: 'date',
       hideInSearch: true,
     },
@@ -362,7 +468,8 @@ const TableList: React.FC = () => {
       title: <FormattedMessage id="pages.transaction.status" defaultMessage="Status" />,
       dataIndex: 'status',
       valueEnum: {
-        0: {text: <FormattedMessage id="pages.transaction.active" defaultMessage="Active" /> },
+        0: {
+          text: <FormattedMessage id="pages.transaction.active" defaultMessage="Active" /> },
         1: { text: <FormattedMessage id="pages.transaction.closed" defaultMessage="Closed" /> },
         2: { text: <FormattedMessage id="pages.transaction.cancelled" defaultMessage="Cancelled" /> }
       },
@@ -466,9 +573,11 @@ const TableList: React.FC = () => {
       title: <FormattedMessage id="pages.transaction.totalDuration" defaultMessage="Total Duration (Till Date)" />,
       dataIndex: 'total_duration',
       hideInSearch: true,
-      renderText: (val: Number) => {
-        if (val>0) {
-          return parseInt(val / 60) + " h " + (val % 60) + " m"
+      render: (dom, entity) => {
+        if (dom > 0 && entity.status == 1) {
+          return parseInt((dom / 3600) + "") + "h " + parseInt((dom % 3600) / 60) + "m"
+        } else {
+          return '-'
         }
         
 
@@ -598,10 +707,19 @@ const TableList: React.FC = () => {
             
             <PlusOutlined /> <FormattedMessage id="pages.searchTable.new" defaultMessage="New" />
           </Button> </Access>, <Button type="primary" key="print"
-            onClick={() => handlePrintModalVisible(true)}
+            onClick={() => {
+              if (selectedRowsState.length == 0) {
+                message.error(<FormattedMessage
+                  id="pages.selectDataFirst"
+                  defaultMessage="Please select data first!"
+                />);
+                return false;
+              }
+              handlePrintModalVisible(true)
+            }}
           ><PrinterOutlined /> <FormattedMessage id="pages.Print" defaultMessage="Print" />
           </Button>, <Button type="primary" key="out"
-            onClick={() => exportCSV(selectedRowsState)}
+            onClick={() => exportCSV(selectedRowsState,columns)}
           ><FileExcelOutlined /> <FormattedMessage id="pages.CSV" defaultMessage="CSV" />
           </Button>
 

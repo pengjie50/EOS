@@ -119,37 +119,57 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
         <span style={{fontSize:"12px"} }>If no conditions are input, threshold defined will be applied to all transactions</span>
       </div>
 
-      
-
+     
+       
       <ProFormGroup>
-        <ProFormSelect
-          name="from_to"
-          width="lg"
-          label={intl.formatMessage({
-            id: 'pages.alertrule.sizeOfVessel',
-            defaultMessage: 'Size of vessel',
-          })}
-          rules={[
-            {
-              required: true,
-              message: (
-                <FormattedMessage
-                  id="pages.rules.required"
-                  defaultMessage="This field cannot be empty！"
-                />
-              ),
-            },
-          ]}
-          initialValue={"0-25"}
-          valueEnum={{
-            "0-25": "1. GP (General Purpose): Less than 24.99 DWT",
-            "25-45": "2. MR (Medium Range): 25 to 44.99 DWT",
-            "45-80": "3. LR1 (Long Range 1): 45 to 79.99 DWT",
-            "80-120": "4. AFRA (AFRAMAX): 80 to 119.99 DWT",
-            "120-160": "5. LR2 (Long Range 2): 120 to 159.99 DWT",
-            "160-320": "6. VLCC (Very Large Crude Carrier): 160 to 319.99 DWT",
-            "320-1000000": "7. ULCC (Ultra-Large Crude Carrier): More than 320 DWT",
-          }} />
+
+        <ProFormCheckbox
+          initialValue={true }
+          name="is_show_from_to"
+            label=" "
+           
+          />
+        <ProFormDependency name={['is_show_from_to']}>
+          {({ is_show_from_to }) => {
+            if (is_show_from_to) {
+
+              return (<ProFormSelect
+                name="from_to"
+                width="lg"
+                label={intl.formatMessage({
+                  id: 'pages.alertrule.sizeOfVessel',
+                  defaultMessage: 'Size of vessel',
+                })}
+                rules={[
+                  {
+                    required: true,
+                    message: (
+                      <FormattedMessage
+                        id="pages.rules.required"
+                        defaultMessage="This field cannot be empty！"
+                      />
+                    ),
+                  },
+                ]}
+                initialValue={"0-25"}
+                valueEnum={{
+                  "0-25": "1. GP (General Purpose): Less than 24.99 DWT",
+                  "25-45": "2. MR (Medium Range): 25 to 44.99 DWT",
+                  "45-80": "3. LR1 (Long Range 1): 45 to 79.99 DWT",
+                  "80-120": "4. AFRA (AFRAMAX): 80 to 119.99 DWT",
+                  "120-160": "5. LR2 (Long Range 2): 120 to 159.99 DWT",
+                  "160-320": "6. VLCC (Very Large Crude Carrier): 160 to 319.99 DWT",
+                  "320-1000000": "7. ULCC (Ultra-Large Crude Carrier): More than 320 DWT",
+                }} />)
+
+            }
+
+
+
+          }}
+
+
+        </ProFormDependency>
         {/* <ProFormDigit label={<FormattedMessage
           id="pages.alertrule.from"
           defaultMessage="Size of vessel From"
@@ -165,8 +185,20 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
           name="size_of_vessel_to" width="sm" min={1} max={10000000} />*/ }
       </ProFormGroup>
       <ProFormGroup>
-        <ProFormDigit label={<FormattedMessage
-         
+
+        <ProFormCheckbox
+          name="is_show_total_nominated_quantity"
+          label=" "
+          initialValue={true}
+        />
+
+
+        <ProFormDependency name={['is_show_total_nominated_quantity']}>
+          {({ is_show_total_nominated_quantity }) => {
+            if (is_show_total_nominated_quantity) {
+
+              return (<ProFormGroup><ProFormDigit  label={<FormattedMessage
+          
           id="pages.alertrule.from"
           defaultMessage="Total nominated quantity From"
         />}
@@ -204,7 +236,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
 
         <ProFormSelect
           name="total_nominated_quantity_unit"
-          width="sm"
+          width={180}
           rules={[
             {
               required: true,
@@ -226,7 +258,19 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
 
 
         />
+              </ProFormGroup>)
+
+            }
+
+
+
+          }}
+
+
+        </ProFormDependency>
+
       </ProFormGroup>
+       
       {/*<ProFormGroup>
         <ProFormDigit label={<FormattedMessage
           id="pages.alertrule.from"

@@ -268,6 +268,9 @@ const TableList: React.FC = () => {
       title: <FormattedMessage id="pages.flow.description" defaultMessage="Description" />,
       dataIndex: 'description',
       valueType: 'textarea',
+      render: (dom, entity) => {
+        return entity.id
+      }
     },
     {
       title: <FormattedMessage id="pages.searchTable.titleOption" defaultMessage="Operating" />,

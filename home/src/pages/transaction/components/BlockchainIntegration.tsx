@@ -337,9 +337,11 @@ const Detail: React.FC<any> = (props) => {
       render: (dom, entity) => {
 
          
-        if (dom > 0) {
-          dom = parseInt(dom / 60) + " h " + (dom % 60) + " m"
-         
+        if (dom > 0 && entity.status == 1) {
+          dom = parseInt((dom / 3600) + "") + "h " + parseInt((dom % 3600) / 60) + "m"
+
+        } else {
+          dom='-'
         }
 
         if (entity.validated) {

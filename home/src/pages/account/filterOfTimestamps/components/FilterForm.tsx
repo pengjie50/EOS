@@ -129,7 +129,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
             >
               Apply
             </Button>,
-            <Button
+            values.hasOwnProperty("name")? <Button
               key="delete"
               type="primary"
               danger
@@ -138,7 +138,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
               }}
             >
               Delete
-            </Button>
+            </Button>:null
           ];
         },
       }}

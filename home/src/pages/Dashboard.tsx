@@ -1,4 +1,4 @@
-import { GridContent, ProFormSelect, ProFormDateRangePicker, ProCard } from '@ant-design/pro-components';
+import { GridContent, ProFormSelect, ProFormDateRangePicker, ProCard, ProFormDatePicker } from '@ant-design/pro-components';
 import { useModel } from '@umijs/max';
 import { EyeOutlined } from '@ant-design/icons';
 import { Card, theme, Progress, Statistic, Badge, message } from 'antd';
@@ -13,6 +13,7 @@ import { terminal } from './system/terminal/service';
 import { transaction, transactionevent, statistics } from './transaction/service';
 import { SvgIcon } from '@/components' // 自定义组件
 import { isPC, tree } from "@/utils/utils";
+import { Calendar } from 'antd-mobile'
 import { history, FormattedMessage } from '@umijs/max';
 import numeral from 'numeral';
 
@@ -44,7 +45,9 @@ const Welcome: React.FC = () => {
 
 
   const [terminal_id, setTerminal_id] = useState<any>("");
-  const [dateArr, setDateArr] = useState<any>(['','']);
+  const [dateArr, setDateArr] = useState<any>(['', '']);
+
+  const [dateMPArr, setDateMPArr] = useState<any>(['', '']);
 
  // const [terminal_id, setTerminal_id] = useState(false);
 
@@ -53,6 +56,12 @@ const Welcome: React.FC = () => {
   const [statisticsObj, setStatisticsObj] = useState<any>([]);
   useEffect(() => {
 
+    if (dateArr[0] && !dateArr[1]) {
+      return
+    }
+    if (!dateArr[0] && dateArr[1]) {
+      return
+    }
     const hide = message.loading(<FormattedMessage
       id="pages.loading"
       defaultMessage="Loading"
@@ -63,13 +72,15 @@ const Welcome: React.FC = () => {
     if (terminal_id) {
       p.terminal_id = terminal_id
     }
-
-    if (dateArr[0] && dateArr[1]) {
-     
-      p.start_of_transaction__gt = dateArr[0]
    
+    if (dateArr[0] && dateArr[1]) {
+
+
+
+      p.start_of_transaction__gt = dateArr[0]
+
       p.start_of_transaction__lt = dateArr[1]
-    }
+    } 
 
 
     statistics(p).then((res) => {
@@ -295,15 +306,48 @@ const Welcome: React.FC = () => {
 
             />
           </ProCard>
-          <ProCard ghost={true} colSpan={{ xs: 24, md: 6 }} bodyStyle={{ paddingLeft: 10 }} >
-            <ProFormDateRangePicker name="dateRange" onChange={(a, b) => {
-             
-            
+          <ProCard ghost={true}  colSpan={{ xs: 24, md: 6 }} bodyStyle={{ paddingLeft: isMP?0:10 }} >
+
+            {
+              isMP && (
+                [<ProCard ghost={true} colSpan={11} key="2"> <ProFormDatePicker onChange={(a, b) => {
+                  
+                 
+                  setDateArr((preDateArr) => {
+                    preDateArr[0] = b
+                    return [...preDateArr]
+                  })
+
+
+                }} name="date" label="" /> </ProCard>,
+                  <ProCard ghost={true} bodyStyle={{ textAlign: 'center' }}   colSpan={2}>to</ProCard>,
+                  <ProCard ghost={true} colSpan={11} key="2"><ProFormDatePicker onChange={(a, b) => {
+
+                  
+                   
+
+                    setDateArr((preDateArr) => {
+                      preDateArr[1] = b
+                      return [...preDateArr]
+                    })
+
+                  
+
+                  }} name="date" label="" /></ProCard>]
+
+              )
+            }
+            {
+              !isMP && (<ProFormDateRangePicker name="dateRange" onChange={(a, b) => {
+
+
                 setDateArr(b)
-              
-              
-             
-            } } />
+
+
+
+              }} />)
+            }
+            
           </ProCard>
         </ProCard>
 
