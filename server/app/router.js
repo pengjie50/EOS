@@ -6,7 +6,7 @@
 module.exports = app => {
     const { router, controller } = app;
     app.beforeStart(async () => {
-        //await app.model.Alertrule.sync({ alter: true });//force  false 为不覆盖 true会删除再创建; alter true可以 添加或删除字段;
+        await app.model.Report.sync({ alter: true });//force  false 为不覆盖 true会删除再创建; alter true可以 添加或删除字段;
     });
     
     router.get('/', controller.home.index);
@@ -20,6 +20,8 @@ module.exports = app => {
     router.post('/api/user/retrievePassword', controller.user.retrievePassword);
     router.post('/api/user/modifyPassword', controller.user.modifyPassword);
     router.post('/api/user/checkEmail', controller.user.checkEmail);
+    router.post('/api/user/checkUsername', controller.user.checkUsername);
+    
 
     
     //router.post('/system/verify', controller.system.verify);
@@ -95,6 +97,13 @@ module.exports = app => {
     router.post('/api/flow/add', controller.flow.add);
     router.post('/api/flow/mod', controller.flow.mod);
     router.post('/api/flow/del', controller.flow.del);
+
+
+
+    router.post('/api/report/list', controller.report.list);
+    router.post('/api/report/add', controller.report.add);
+    router.post('/api/report/mod', controller.report.mod);
+    router.post('/api/report/del', controller.report.del);
 
 
     router.post('/api/transaction/list', controller.transaction.list);

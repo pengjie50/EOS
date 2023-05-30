@@ -7,7 +7,7 @@
 'use strict'
 module.exports = app => {
     const { DATE, STRING, INTEGER, UUID, TEXT, DataTypes } = app.Sequelize;
-    const Model = app.model.define('sys_config', {
+    const Model = app.model.define('report', {
         id: {
             type: UUID,
             primaryKey: true,
@@ -17,33 +17,34 @@ module.exports = app => {
         },
         name: {
           type: STRING(100)
-         
-        },
-        config_key: {
-            type: STRING(100)
           
         },
-        value: {
-            type: STRING(500)
-          
+        company_id: {
+          type: UUID
+        
         },
         description: {
           type: TEXT
         
         }
-        
-        
        
     }, {
         indexes: [
         {
           fields: ['name']
         }],
-        
-        timestamps: false,
-        tableName: 'sys_config'
-        
+        timestamps: true,
+        paranoid: false,
+        tableName: 'report',
+       
     });
 
+     Model.associate = function () {
+       
+       
+         app.model.Report.belongsTo(app.model.Company, {foreignKey: 'company_id',as:'c'});
+        
+    };
+    
     return Model;
 };

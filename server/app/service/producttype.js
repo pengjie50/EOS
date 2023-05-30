@@ -50,7 +50,7 @@ class ProducttypeService extends Service {
      
  
         const {ctx} = this;
-        params.id=uuid.v1()//.replace(/-/g,"");
+       // params.id=uuid.v1()//.replace(/-/g,"");
         const res = await ctx.model.Producttype.create(params);
         if(res){
             ctx.body = { success: true,data:res};

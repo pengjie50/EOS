@@ -50,7 +50,7 @@ class LoginlogService extends Service {
     async add(params) {
 
         const {ctx} = this;
-        params.id = uuid.v1()//.replace(/-/g, "");
+       
         const res = await ctx.model.Loginlog.create(params);
         if(res){
             ctx.body = {success:true,data:res};

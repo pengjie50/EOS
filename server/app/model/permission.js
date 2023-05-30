@@ -6,23 +6,22 @@
 */
 'use strict'
 module.exports = app => {
-    const { DATE, STRING, INTEGER,UUID,TEXT } = app.Sequelize;
+    const { DATE, STRING, INTEGER, UUID, TEXT, DataTypes } = app.Sequelize;
     const Model = app.model.define('permission', {
         id: {
             type: UUID,
             primaryKey: true,
-            allowNull: false
-           
+            allowNull: false,
+            defaultValue: DataTypes.UUIDV4
+
         },
         name: {
-          type: STRING(100),
-          allowNull: false,
-          defaultValue: ''
+          type: STRING(100)
+        
         },
         description: {
-          type: TEXT,
-          allowNull: false,
-          defaultValue: ''
+          type: TEXT
+        
         }
         
         

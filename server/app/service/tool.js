@@ -8,23 +8,27 @@ const nodemailer = require('nodemailer');
 const user_email = '504475705@qq.com';// 账号
 const auth_code = 'adiclzwfzscxbggi';// 授权码
 // 封装发送者信息
-const transporter = nodemailer.createTransport({
-    service: 'qq',// 调用qq服务器
-    secureConnection: true,// 启动SSL
-    port: 465,// 端口就是465
-    auth: {
-        user: user_email, // 账号
-        pass: auth_code, // 授权码
 
-    },
-});
 
 class ToolService extends Service {
-
+   
     async sendMail(email, subject, html) {
+
+        const { ctx, service, app } = this;
+        const transporter = nodemailer.createTransport({
+            service: 'qq',// 调用qq服务器
+            secureConnection: true,// 启动SSL
+            port: 465,// 端口就是465
+            auth: {
+                user: app.config.user_email, // 账号
+                pass: app.config.auth_code, // 授权码
+
+            },
+        });
+       
         // 邮件参数及内容
         const mailOptions = {
-            from: user_email, // 发送者,与上面的user一致
+            from: app.config.user_email, // 发送者,与上面的user一致
             to: email,   // 接收者,可以同时发送多个,以逗号隔开
             subject,   // 标题
             html,

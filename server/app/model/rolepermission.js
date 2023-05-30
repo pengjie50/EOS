@@ -6,24 +6,22 @@
 */
 'use strict'
 module.exports = app => {
-    const { DATE, STRING, INTEGER,UUID } = app.Sequelize;
+    const { DATE, STRING, INTEGER, UUID, DataTypes } = app.Sequelize;
     const Model = app.model.define('role_permission', {
         id: {
-            type: INTEGER,
+            type: UUID,
             primaryKey: true,
             allowNull: false,
-            autoIncrement: true
+            defaultValue: DataTypes.UUIDV4
+
         },
         role_id: UUID,
         permission_id:UUID
        
     }, {
-          charset: 'utf8mb4',
-        collate: 'utf8mb4_general_ci',
-        freezeTableName: true,
         timestamps: false,
         tableName: 'role_permission',
-        underscored: true,
+      
     });
     Model.associate = function () {
        

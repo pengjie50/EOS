@@ -6,43 +6,47 @@
 */
 'use strict'
 module.exports = app => {
-    const { DATE, STRING, INTEGER, UUID, TEXT, TINYINT } = app.Sequelize;
+    const { DATE, STRING, INTEGER, UUID, TEXT, TINYINT, DataTypes } = app.Sequelize;
     const Model = app.model.define('alert', {
         id: {
             type: UUID,
             primaryKey: true,
-            allowNull: false
+            allowNull: false,
+            defaultValue: DataTypes.UUIDV4
            
         },
-        transaction_id: {
-          type: STRING(100),
-          allowNull: false,
-          defaultValue: ''
+        company_id: {
+            type: UUID
+
         },
+        transaction_id: {
+            type: UUID
+             
+        },
+        alert_rule_transaction_id: {
+            type: UUID
+
+        },
+        
         flow_id: {
             type: UUID,
-            allowNull: false,
-            defaultValue: ''
+          
         },
         user_id: {
-            type: UUID,
-            allowNull: false,
-            defaultValue: ''
+            type: UUID
+           
         },
         flow_id_to: {
-            type: UUID,
-            allowNull: true,
-            defaultValue: ''
+            type: UUID
+           
         },
         alertrule_type: {
-            type: TINYINT,
-            allowNull: false,
-            defaultValue: 0
+            type: TINYINT
+           
         },
         type: {
-            type: TINYINT,
-            allowNull: false,
-            defaultValue: 0
+            type: TINYINT
+          
         },
 
         
@@ -50,8 +54,8 @@ module.exports = app => {
     }, {
         indexes: [
             {
-                unique: true,
-                fields: ['transaction_id', 'alert_rule_id']
+                
+                fields: ['transaction_id', 'user_id', 'company_id','type']
         }],
         
         timestamps: false,

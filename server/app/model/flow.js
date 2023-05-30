@@ -7,42 +7,37 @@
 'use strict'
 module.exports = app => {
     
-    const { DATE, STRING, INTEGER,UUID,TEXT,TINYINT } = app.Sequelize;
+    const { DATE, STRING, INTEGER, UUID, TEXT, TINYINT, DataTypes } = app.Sequelize;
     const Model = app.model.define('flow', {
         id: {
             type: UUID,
             primaryKey: true,
-            allowNull: false
+            allowNull: false,
+            defaultValue: DataTypes.UUIDV4
         },
         name: {
-          type: STRING(100),
-          allowNull: false,
-          defaultValue: ''
+          type: STRING(100)
+         
         },
         icon: {
-            type: STRING(100),
-            allowNull: false,
-            defaultValue: ''
+            type: STRING(100)
+          
         },
         type: {
-            type: TINYINT,
-            allowNull: false,
-            defaultValue: 0
+            type: TINYINT
+         
         },
         sort: {
-            type: INTEGER,
-            allowNull: false,
-            defaultValue: 0
+            type: INTEGER
+          
         },
         pid: {
-          type: UUID,
-          allowNull: false,
-          defaultValue: ''
+          type: UUID
+          
         },
         description: {
-          type: TEXT,
-          allowNull: false,
-          defaultValue: ''
+          type: TEXT
+         
         }
     }, {
         indexes: [

@@ -6,24 +6,22 @@
 */
 'use strict'
 module.exports = app => {
-    const { DATE, STRING, INTEGER, UUID, TEXT, TINYINT } = app.Sequelize;
+    const { DATE, STRING, INTEGER, UUID, TEXT, TINYINT, DataTypes } = app.Sequelize;
     const Model = app.model.define('alert_user_read', {
         id: {
-            type: INTEGER,
+            type: UUID,
             primaryKey: true,
             allowNull: false,
-            autoIncrement: true
-           
+            defaultValue: DataTypes.UUIDV4
+
         },
         user_id: {
-            type: UUID,
-            allowNull: false,
-            defaultValue: ''
+            type: UUID
+           
         },
         alert_id: {
-            type: UUID,
-            allowNull: false,
-            defaultValue: ''
+            type: UUID
+        
         }
        
     }, {

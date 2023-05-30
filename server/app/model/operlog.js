@@ -6,85 +6,73 @@
 */
 'use strict'
 module.exports = app => {
-    const { DATE, STRING, INTEGER, UUID, TINYINT } = app.Sequelize;
+    const { DATE, STRING, INTEGER, UUID, TINYINT, DataTypes } = app.Sequelize;
     const Model = app.model.define('oper_log', {
         id: {
             type: UUID,
             primaryKey: true,
-            allowNull: false
-            
+            allowNull: false,
+            defaultValue: DataTypes.UUIDV4
+
         },
         request_method: {
-            type: STRING(10),
-            allowNull: false,
-            defaultValue: ''
+            type: STRING(10)
+          
         },
         type: {
-            type: STRING(10),
-            allowNull: false,
-            defaultValue: ''
+            type: STRING(10)
+         
         },
         param: {
-          type: STRING(2000),
-          allowNull: false,
-          defaultValue: ''
+          type: STRING(2000)
+         
         },
         result: {
-            type: STRING(2000),
-            allowNull: false,
-            defaultValue: ''
+            type: STRING(2000)
+           
         },
         module: {
-            type: STRING(50),
-            allowNull: false,
-            defaultValue: ''
+            type: STRING(50)
+           
         },
         action: {
-            type: STRING(50),
-            allowNull: false,
-            defaultValue: ''
+            type: STRING(50)
+           
         },
         url: {
-          type: STRING(255),
-          allowNull: false,
-          defaultValue: ''
+          type: STRING(255)
+          
         },
         ip: {
-          type: STRING(128),
-          allowNull: false,
-          defaultValue: ''
+          type: STRING(128)
+        
         },
         user_id: {
-            type: UUID,
-            allowNull: false,
-            defaultValue: ''
+            type: UUID
+          
         },
         
         status: {
-            type: TINYINT,
-            allowNull: false,
-            defaultValue: 0
+            type: TINYINT
+           
         },
         err_code: {
-            type: INTEGER,
-            allowNull: false,
-            defaultValue: 0
+            type: INTEGER
+           
         },
         username: {
-            type: STRING(100),
-            allowNull: false,
-            defaultValue: ''
+            type: STRING(100)
+           
         },
         oper_time: {
-            type: DATE,
-            allowNull: false,
-            defaultValue: ''
+            type: DATE
+           
         }
 
     }, {
         indexes: [
         {
-                fields: ['type', 'oper_time', 'status']
+                fields: ['type', 'oper_time', 'status', 'user_id', 'module','action']
         }],
         timestamps: false,
         tableName: 'oper_log',

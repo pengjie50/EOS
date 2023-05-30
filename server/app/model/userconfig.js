@@ -6,33 +6,34 @@
 */
 'use strict'
 module.exports = app => {
-    const { DATE, STRING, INTEGER,TINYINT,UUID,TEXT } = app.Sequelize;
+    const { DATE, STRING, INTEGER, TINYINT, UUID, TEXT, DataTypes } = app.Sequelize;
     const Model = app.model.define('user_config', {
         id: {
             type: UUID,
             primaryKey: true,
-            allowNull: false
-           
+            allowNull: false,
+            defaultValue: DataTypes.UUIDV4
+
         },
         name: {
-          type: STRING(100),
-          allowNull: false,
-          defaultValue: ''
+          type: STRING(100)
+         
+        },
+        company_id: {
+            type: UUID
+
         },
         user_id: {
-            type: UUID,
-            allowNull: false,
-            defaultValue: ''
+            type: UUID
+          
         },
         type: {
-            type: TINYINT,
-            allowNull: false,
-            defaultValue: 0
+            type: TINYINT
+          
         },
         value: {
-          type: TEXT,
-          allowNull: false,
-          defaultValue: ''
+          type: TEXT
+         
         }
         
         

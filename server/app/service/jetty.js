@@ -52,10 +52,7 @@ class JettyService extends Service {
         const { ctx } = this;
 
         if (params.batch_data) {
-             params.batch_data=params.batch_data.map((a) => {
-                 a.id = uuid.v1()
-                 return a
-             })
+           
             const res = await ctx.model.Jetty.bulkCreate(params.batch_data);
             ctx.body = { success: true, data: res };
             return
@@ -63,11 +60,11 @@ class JettyService extends Service {
         }
 
 
-        params.id = uuid.v1()//.replace(/-/g,"");
+       
 
 
 
-
+        params.company_id= ctx.user.company_id
         const res = await ctx.model.Jetty.create(params);
         if(res){
             ctx.body = { success: true,data:res};

@@ -34,7 +34,7 @@ class UploadController extends Controller {
     async avatar() {
      const { ctx } = this;
    // console.log(ctx.request.body)
-     console.log(ctx.request)
+     
      const params = ctx.request.body;
 
         let file = ctx.request.files[0]; // file包含了文件名，文件类型，大小，路径等信息，可以自己打印下看看

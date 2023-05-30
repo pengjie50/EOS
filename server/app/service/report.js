@@ -10,12 +10,12 @@ const Service = require('egg').Service;
 const uuid = require('uuid');
 
 
-class TerminalService extends Service {
+class ReportService extends Service {
     
     async findOne(params){
         const ctx = this.ctx;
-        var res=await ctx.model.Terminal.findByPk(params.id);
-        ctx.body ={success:true,data:res} 
+        var res=await ctx.model.Report.findByPk(params.id);
+        ctx.body = { success: true,data:res} 
     }
     async list(params) {
         const {ctx} = this;
@@ -32,8 +32,14 @@ class TerminalService extends Service {
             obj.offset = parseInt((params.page - 1)) * parseInt(params.limit)
             obj.limit = parseInt(params.limit)
         }
-        
-        const list = await ctx.model.Terminal.findAndCountAll(obj)
+        obj.attributes= [[ctx.model.col('c.name'),'company_name'],'report.*']
+        obj.include=[{
+            as:'c',
+            model: ctx.model.Company
+          
+        }]
+        obj.raw=true
+        const list = await ctx.model.Report.findAndCountAll(obj)
 
         ctx.status = 200;
         ctx.body = {
@@ -51,7 +57,8 @@ class TerminalService extends Service {
  
         const {ctx} = this;
        
-        const res = await ctx.model.Terminal.create(params);
+        params.company_id ='cccccccc-cccc-cccc-cccc-cccccccccccc'
+        const res = await ctx.model.Report.create(params);
         if(res){
             ctx.body = { success: true,data:res};
         }else{
@@ -66,7 +73,7 @@ class TerminalService extends Service {
     async del(params) {
 
         const ctx = this.ctx;
-        let res = await ctx.model.Terminal.destroy({
+        let res = await ctx.model.Report.destroy({
             where: {
                 id: params.id
             }
@@ -78,7 +85,7 @@ class TerminalService extends Service {
     async mod(params) {
 
         const ctx = this.ctx;
-        const user = await ctx.model.Terminal.findByPk(params.id);
+        const user = await ctx.model.Report.findByPk(params.id);
 
         if (!user) {
           ctx.status = 404;
@@ -90,12 +97,12 @@ class TerminalService extends Service {
         if(res){
             ctx.body = { success: true,data:res};
         }else{
-            ctx.body = { success:false,errorCode:1000};
+            ctx.body = { success: false, errorCode:1000};
         }
        
     }
     
 }
 
-module.exports = TerminalService;
+module.exports = ReportService;
 

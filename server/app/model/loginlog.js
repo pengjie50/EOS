@@ -6,59 +6,52 @@
 */
 'use strict'
 module.exports = app => {
-    const { DATE, STRING, INTEGER, UUID, TINYINT } = app.Sequelize;
+    const { DATE, STRING, INTEGER, UUID, TINYINT, DataTypes } = app.Sequelize;
     const Model = app.model.define('login_log', {
         id: {
             type: UUID,
             primaryKey: true,
-            allowNull: false
-            
+            allowNull: false,
+            defaultValue: DataTypes.UUIDV4
+
         },
         user_id: {
-            type: UUID,
-            allowNull: true,
-            defaultValue: ''
+            type: UUID
+           
         },
         username: {
-          type: STRING(100),
-          allowNull: false,
-          defaultValue: ''
+          type: STRING(100)
+         
         },
         ip: {
-            type: STRING(128),
-            allowNull: false,
-            defaultValue: ''
+            type: STRING(128)
+           
         },
         browser: {
-            type: STRING(50),
-            allowNull: true,
-            defaultValue: ''
+            type: STRING(50)
+           
         },
         os: {
-            type: STRING(50),
-            allowNull: true,
-            defaultValue: ''
+            type: STRING(50)
+          
         },
         status: {
-            type: TINYINT,
-            allowNull: false,
-            defaultValue: 0
+            type: TINYINT
+           
         },
         err_code: {
-            type: INTEGER,
-            allowNull: false,
-            defaultValue: 0
+            type: INTEGER
+           
         },
         login_time: {
-            type: DATE,
-            allowNull: false,
-            defaultValue: ''
+            type: DATE
+           
         }
    
     }, {
         indexes: [
         {
-                fields: ['username', 'login_time', 'status']
+                fields: ['username', 'login_time', 'status','user_id']
         }],
         timestamps: false,
         tableName: 'login_log'

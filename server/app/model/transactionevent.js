@@ -6,51 +6,45 @@
 */
 'use strict'
 module.exports = app => {
-    const { DATE, STRING, INTEGER,UUID } = app.Sequelize;
+    const { DATE, STRING, INTEGER, UUID, DataTypes } = app.Sequelize;
     const Model = app.model.define('transaction_event', {
         id: {
-            type: INTEGER,
+            type: UUID,
             primaryKey: true,
             allowNull: false,
-            autoIncrement: true
+            defaultValue: DataTypes.UUIDV4
+
         },
         transaction_id: UUID,
         flow_id: UUID,
         flow_pid: UUID,
         event_time: {
-            type: DATE,
-            allowNull: false,
-            defaultValue: ''
+            type: DATE
+          
         },
         work_order_id: {
-            type: STRING(50),
-            allowNull: true,
-            defaultValue: ''
+            type: STRING(50)
+           
         },
         product_type: {
-            type: STRING(100),
-            allowNull: true,
-            defaultValue: ''
+            type: STRING(100)
+         
         },
         tank_id: {
-            type: STRING(50),
-            allowNull: true,
-            defaultValue: ''
+            type: STRING(50)
+           
         },
         volume: {
-            type: INTEGER,
-            allowNull: true,
-            defaultValue: 0
+            type: INTEGER
+           
         },
         unit_of_Measurement: {
-            type: STRING(20),
-            allowNull: true,
-            defaultValue: ''
+            type: STRING(20)
+           
         },
         bliockchain_hex_key: {
-            type: STRING(200),
-            allowNull: true,
-            defaultValue: ''
+            type: STRING(200)
+           
         }
        
     }, {
@@ -60,14 +54,16 @@ module.exports = app => {
                 fields: ['flow_id', 'transaction_id']
             },
             {
-                fields: [ 'flow_pid', 'event_time']
-            }],
-          charset: 'utf8mb4',
-        collate: 'utf8mb4_general_ci',
-        freezeTableName: true,
+                fields: [ 'flow_pid']
+            },
+            {
+                fields: [ 'event_time']
+            }
+        ],
+       
         timestamps: false,
         tableName: 'transaction_event',
-        underscored: true,
+      
     });
     Model.associate = function () {
        

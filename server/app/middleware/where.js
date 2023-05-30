@@ -83,12 +83,24 @@ module.exports = (options, app) => {
         	let where={}
 
         	if(ctx.user && ctx.user.company_id && (ctx.request.url.indexOf('list')>-1 || ctx.request.url.indexOf('/user/count')>-1 ||  ctx.request.url.indexOf('detail')>-1)){
-				if (ctx.request.url == '/api/filterOfTimestamps/list' || ctx.request.url == '/api/transactionevent/list' || ctx.request.url == '/api/transaction/list' || ctx.request.url == '/api/flow/list' || ctx.request.url == '/api/alert/list' || ctx.request.url == '/api/alertrule/list' || ctx.request.url == '/api/sysconfig/list' || ctx.request.url == '/api/operlog/list' || ctx.request.url == '/api/loginlog/list' || ctx.request.url == '/api/permission/list'
+				if (
+
+					
+					 ctx.request.url == '/api/transactionevent/list'
+					|| ctx.request.url == '/api/transaction/list'
+					|| ctx.request.url == '/api/flow/list'
+					//|| ctx.request.url == '/api/alert/list'
+					//|| ctx.request.url == '/api/alertrule/list'
+					|| ctx.request.url == '/api/sysconfig/list'
+					|| ctx.request.url == '/api/operlog/list'
+					|| ctx.request.url == '/api/loginlog/list'
+					|| ctx.request.url == '/api/permission/list'
 
 					|| ctx.request.url == '/api/rolepermission/list'
-					|| ctx.request.url == '/api/jetty/list'
+					//|| ctx.request.url == '/api/jetty/list'
 					|| ctx.request.url == '/api/producttype/list'
 					|| ctx.request.url == '/api/terminal/list'
+					// || ctx.request.url == '/api/filterOfTimestamps/list'
 				) {
 
 				} else {
@@ -126,6 +138,7 @@ module.exports = (options, app) => {
 			      				}
 			      				
 			      			}
+						    
 			      			where[rule.field][Op[rule.op]]=rule.data
 			      		})
 	      			}else if(filter['groupOp']=='OR'){

@@ -33,12 +33,12 @@ class CompanyService extends Service {
             obj.offset = parseInt((params.page - 1)) * parseInt(params.limit)
             obj.limit = parseInt(params.limit)
         }
-        obj.attributes= [[ctx.model.col('pc.name'),'company_name'],'company.*']
+       /* obj.attributes= [[ctx.model.col('pc.name'),'company_name'],'company.*']
         obj.include=[{
             as:'pc',
             model: ctx.model.Company
           
-        }]
+        }]*/
         obj.raw=true
         const list = await ctx.model.Company.findAndCountAll(obj)
 
@@ -57,8 +57,8 @@ class CompanyService extends Service {
     async add(params) {
 
         const {ctx} = this;
-        params.id=uuid.v1();
-        params.pid = "1111"
+       
+        //params.pid = "cccccccc-cccc-cccc-cccc-cccccccccccc"
         console.log(params)
         const res = await ctx.model.Company.create(params);
 

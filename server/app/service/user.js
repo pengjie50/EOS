@@ -54,12 +54,12 @@ class UserService extends Service {
                         "host": "10.1.1.1"
     }*/
 
-        const salt2 = uuid.v1();
+        const salt2 = uuid.v4();
        var password = salt2+ "&" + md5("123456" + salt2)
         console.log("" + password)
        
         var loginlog = {}
-        loginlog.id = uuid.v1();
+        loginlog.id = uuid.v4();
         console.log("cccccccccccc", ctx.request)
         loginlog.username = params.username
         var arr = ctx.request.header['user-agent'].split(" ")
@@ -161,7 +161,17 @@ class UserService extends Service {
         });
         ctx.body = { success: true, data: res?true:false } 
     }
-    
+    async checkUsername(username) {
+        const ctx = this.ctx;
+        var res = await ctx.model.User.findOne({
+            where: {
+
+                username: username,
+            },
+            raw: true
+        });
+        ctx.body = { success: true, data: res ? true : false }
+    }
     async getUserInfo(user_id) {
         const ctx = this.ctx;
         var res = await ctx.model.User.findOne({
@@ -206,7 +216,7 @@ class UserService extends Service {
         res.permissions=list.map((p)=>{
             return p.name
         })
-        console.log(ctx.request.header.origin)
+       
        
         if (!res.avatar) {
             res.avatar ='avatar_1.jpeg'
@@ -303,7 +313,7 @@ class UserService extends Service {
             return;
         }
         if (params.newPassword) {
-            const salt = uuid.v1();
+            const salt = uuid.v4();
             params.password = salt + "&" + md5(params.newPassword + salt)
         }
 
@@ -321,9 +331,9 @@ class UserService extends Service {
      
  
         const { ctx } = this;
-        const salt = uuid.v1();
+        const salt = uuid.v4();
         params.password = salt+"&"+ md5(params.password + salt)
-        params.id=uuid.v1();
+       
         const res = await ctx.model.User.create(params);
         if(res){
             ctx.body = { success: true,data:res};
@@ -357,7 +367,8 @@ class UserService extends Service {
         var token_timeout = parseInt(await this.service.sysconfig.getValueByKey("token_timeout"));
         var login_time =parseInt( (new Date(((new Date).getTime() - token_timeout * 1000))).getTime()/1000)
         console.log("params=========", login_time)
-        const res = await user.update({ login_time: login_time } );
+        const res = await user.update({ login_time: login_time });
+        ctx.body = { success: true };
         ctx.status = 200;
 
     }
@@ -367,7 +378,7 @@ class UserService extends Service {
         const ctx = this.ctx;
         const user = await ctx.model.User.findByPk(params.id);
         if(params.password){
-            const salt = uuid.v1();
+            const salt = uuid.v4();
             params.password = salt + "&" + md5(params.password + salt)
         }else{
             delete params.password
@@ -379,7 +390,7 @@ class UserService extends Service {
                 ctx.body = { success: false, errorCode: 1007 };
                 return;
             }
-            const salt = uuid.v1();
+            const salt = uuid.v4();
             params.password = salt + "&" + md5(params.newPassword + salt)
             delete params.oldPassword
             delete params.repeatNewPassword

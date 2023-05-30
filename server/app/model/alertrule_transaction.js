@@ -6,115 +6,124 @@
 */
 'use strict'
 module.exports = app => {
-    const { DATE, STRING, INTEGER, UUID, TEXT, TINYINT } = app.Sequelize;
-    const Model = app.model.define('alert_rule_transaction', {
+    const { DATE, STRING, INTEGER, UUID, TEXT, TINYINT, DataTypes } = app.Sequelize;
+    const Model = app.model.define('AlertruleTransaction', {
         id: {
             type: UUID,
             primaryKey: true,
-            allowNull: false
-           
+            allowNull: false,
+            defaultValue: DataTypes.UUIDV4
+
         },
-       transaction_id: {
-            type: UUID,
-            allowNull: true,
-            defaultValue: ''
+        company_id: {
+            type: UUID
+
+        },
+        transaction_id: {
+            type: UUID
+
+        },
+        alert_type: {
+            type: TINYINT
+
+
+        },
+        alert_rule_id: {
+            type: UUID
+
         },
         user_id: {
-            type: UUID,
-            allowNull: false,
-            defaultValue: ''
+            type: UUID
+
         },
         flow_id: {
-            type: UUID,
-            allowNull: false,
-            defaultValue: ''
+            type: UUID
+
         },
         flow_id_to: {
-            type: UUID,
-            allowNull: true,
-            defaultValue: ''
+            type: UUID
+
         },
         total_nominated_quantity_from_m: {
             type: INTEGER,
-            allowNull: true,
-            defaultValue: null
+
         },
         total_nominated_quantity_to_m: {
             type: INTEGER,
-            allowNull: true,
-            defaultValue: null
+
         },
         total_nominated_quantity_from_b: {
             type: INTEGER,
-            allowNull: true,
-            defaultValue: null
+
         },
         total_nominated_quantity_to_b: {
             type: INTEGER,
-            allowNull: true,
-            defaultValue: null
+
         },
-        
+
         size_of_vessel_from: {
             type: INTEGER,
-            allowNull: true,
-            defaultValue: null
+
         },
         size_of_vessel_to: {
             type: INTEGER,
-            allowNull: true,
-            defaultValue: null
+
         },
         amber_hours: {
             type: INTEGER,
-            allowNull: false,
-            defaultValue: ''
+
         },
         amber_mins: {
             type: INTEGER,
-            allowNull: false,
-            defaultValue: ''
+
         },
         red_hours: {
             type: INTEGER,
-            allowNull: false,
-            defaultValue: ''
+
         },
         red_mins: {
             type: INTEGER,
-            allowNull: false,
-            defaultValue: ''
+
         },
         email: {
             type: STRING(2000),
-            allowNull: true,
-            defaultValue: ''
+
         },
         send_email_select: {
             type: STRING(100),
-            allowNull: true,
-            defaultValue: ''
+
         },
+
         type: {
-            type: TINYINT,
-            allowNull: false,
-            defaultValue: 0
-        }, 
-        
-       
+            type: TINYINT
+
+
+        },
+
+
     }, {
         indexes: [
-        {
-                fields: ['flow_id']
-        }],
-        
-        timestamps: false,
+            {
+                fields: ['transaction_id', 'alert_rule_id']
+            },
+            
+            {
+                fields: ['flow_id', 'type', 'user_id', 'size_of_vessel_from', 'size_of_vessel_to']
+            },
+            {
+                fields: ['total_nominated_quantity_from_m', 'total_nominated_quantity_to_m']
+            },
+            {
+                fields: ['total_nominated_quantity_from_b', 'total_nominated_quantity_to_b']
+            }
+
+        ],
+
+        timestamps: true,
+        paranoid: false,
         tableName: 'alert_rule_transaction'
         
     });
-   /* Model.associate = function () {
-        app.model.User.belongsTo(app.model.Role, { foreignKey: 'role_id', as: 'r' });
-        app.model.User.belongsTo(app.model.Company, { foreignKey: 'company_id', as: 'c' });
-    };*/
+   
     return Model;
 };

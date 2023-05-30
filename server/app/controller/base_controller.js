@@ -13,7 +13,7 @@ class BaseController extends Controller {
     const {ctx, service} = this;
       var params = ctx.request.body;
       var operlog = {}
-      operlog .id = uuid.v1();
+      
       operlog.ip = ctx.request.ip
       operlog.url = ctx.request.url
       operlog.param = JSON.stringify(params)
@@ -21,10 +21,12 @@ class BaseController extends Controller {
       if (!ctx.body.success) {
           operlog.status = 1
           operlog.err_code = ctx.body.errorCode
-          var arr=operlog.url.split("/")
-          operlog.module =  arr[2]
-          operlog.action = arr[3]
+          
       }
+
+      var arr = operlog.url.split("/")
+      operlog.module = arr[2]
+      operlog.action = arr[3]
       operlog.request_method = ctx.request.method
       operlog.username = ctx.user.username
       operlog.user_id = ctx.user.user_id

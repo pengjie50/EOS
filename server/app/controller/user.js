@@ -29,7 +29,15 @@ class UserController extends Controller {
        
 
     }
-    
+    async checkUsername() {
+        const { ctx, service } = this;
+
+        const params = ctx.request.body;
+        await service.user.checkUsername(params.username);
+        // this.addOperlog()
+
+
+    }
     async modifyPassword() {
         const { ctx, service } = this;
 

@@ -54,8 +54,8 @@ class UserconfigService extends Service {
      
  
         const {ctx} = this;
-        params.id = uuid.v1()//.replace(/-/g,"");
-        
+       // params.id = uuid.v1()//.replace(/-/g,"");
+        params.company_id = ctx.user.company_id
         const res = await ctx.model.Userconfig.create(params);
         if(res){
             ctx.body = { success: true,data:res};

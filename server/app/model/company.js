@@ -7,54 +7,49 @@
 'use strict'
 module.exports = app => {
     
-    const { DATE, STRING, INTEGER,UUID,TEXT,TINYINT } = app.Sequelize;
+    const { DATE, STRING, INTEGER, UUID, TEXT, TINYINT, DataTypes } = app.Sequelize;
     const Model = app.model.define('company', {
         id: {
             type: UUID,
             primaryKey: true,
-            allowNull: false
+            allowNull: false,
+            defaultValue: DataTypes.UUIDV4
         },
         name: {
-          type: STRING(100),
-          allowNull: false,
-          defaultValue: ''
+          type: STRING(100)
+         
         },
         contacts: {
-          type: STRING(100),
-          allowNull: false,
-          defaultValue: ''
+          type: STRING(100)
+        
         },
         email: {
-          type: STRING(100),
-          allowNull: false,
-          defaultValue: ''
+          type: STRING(100)
+         
         },
         phone: {
-          type: STRING(12),
-          allowNull: false,
-          defaultValue: ''
+          type: STRING(12)
+       
         },
         pid: {
-          type: UUID,
-          allowNull: false,
-          defaultValue: ''
+          type: UUID
+       
         },
         description: {
-          type: TEXT,
-          allowNull: false,
-          defaultValue: ''
+          type: TEXT
+         
         }
     }, {
         indexes: [
         {
-          fields: ['name','phone']
+                fields: ['name', 'phone','email']
         }],
         tableName: 'company'
     });
 
     Model.associate = function () {
        
-        app.model.Company.belongsTo(app.model.Company, {foreignKey: 'pid',as:'pc'});
+       // app.model.Company.belongsTo(app.model.Company, {foreignKey: 'pid',as:'pc'});
        
         
     };

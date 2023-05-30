@@ -6,27 +6,26 @@
 */
 'use strict'
 module.exports = app => {
-    const { DATE, STRING, INTEGER,UUID,TEXT } = app.Sequelize;
+    const { DATE, STRING, INTEGER, UUID, TEXT, DataTypes } = app.Sequelize;
     const Model = app.model.define('role', {
         id: {
             type: UUID,
             primaryKey: true,
-            allowNull: false
+            allowNull: false,
+            defaultValue: DataTypes.UUIDV4
+
         },
         name: {
-          type: STRING(100),
-          allowNull: false,
-          defaultValue: ''
+          type: STRING(100)
+          
         },
         company_id: {
-          type: UUID,
-          allowNull: false,
-          defaultValue: ''
+          type: UUID
+        
         },
         description: {
-          type: TEXT,
-          allowNull: false,
-          defaultValue: ''
+          type: TEXT
+        
         }
        
     }, {
@@ -34,12 +33,9 @@ module.exports = app => {
         {
           fields: ['name']
         }],
-          charset: 'utf8mb4',
-        collate: 'utf8mb4_general_ci',
-        freezeTableName: true,
         timestamps: false,
         tableName: 'role',
-        underscored: true,
+       
     });
 
      Model.associate = function () {

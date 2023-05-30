@@ -33,12 +33,13 @@ module.exports = (options, app) => {
                 var login_time = login_user['login_time']
                 var login_token = login_user['login_token']
                
+              
                 if (ctx.request.url != '/api/user/logout' && login_token != Authorization) {
-
-                    ctx.body = { success: false, errorCode: 1005, errorMessage: "Login status has expired", showType: 2, data: {} }
+                   
+                    ctx.body = { success: false, errorCode: 1011, errorMessage: "Account logged in on another device, you have been logged out", showType: 2, data: {} }
 
                     return
-                }
+                } 
                
                 if (ctx.request.url != '/api/user/logout' && decoded && (login_time + token_timeout) <= ((new Date()).getTime()) / 1000) {
                     ctx.body = { success: false, errorCode: 1005, errorMessage: "Login status has expired", showType: 2, data: {} }

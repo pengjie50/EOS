@@ -33,20 +33,28 @@ class AlertService extends Service {
             obj.offset = parseInt((params.page - 1)) * parseInt(params.limit)
             obj.limit = parseInt(params.limit)
         }
-        if (!ctx.user.isAdmin) {
-            if (obj.where) {
-                obj.where.user_id = ctx.user.user_id
-            } else {
-                obj.where = { user_id: ctx.user.user_id }
+       
+           
+        var t_where = null
+        for (var i in obj.where) {
+            if (i.indexOf("t.")>-1) {
+                if (!t_where) {
+                    t_where = {}
+                }
+                t_where[i.replace("t.", "")] = obj.where[i]
+
+                delete obj.where[i]
             }
+            
         }
         
         obj.include = [{
             as: 't',
             model: ctx.model.Transaction,
-            where: params.where && params.where['t.terminal_id'] ? { terminal_id: params.where['t.terminal_id'] } :null
+            where: t_where
         }]
-
+        
+        
         obj.raw = true
 
         const list = await ctx.model.Alert.findAndCountAll(obj)
@@ -95,7 +103,7 @@ class AlertService extends Service {
      
  
         const {ctx} = this;
-        params.id=uuid.v1()//.replace(/-/g,"");
+        
         const res = await ctx.model.Alert.create(params);
         if(res){
             ctx.body = { success: true,data:res};

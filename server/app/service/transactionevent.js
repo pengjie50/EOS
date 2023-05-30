@@ -62,7 +62,11 @@ class TransactioneventService extends Service {
         
         const { ctx } = this;
         params.user_id = ctx.user.user_id//.replace(/-/g,"");
-        params.event_time = "2023-03-01 08:03:11"
+
+
+
+        var transaction = await ctx.model.Transaction.findOne({ where: { id: params.transaction_id } })
+        params.event_time = transaction.start_of_transaction
 
         var flow = await ctx.model.Flow.findOne({ where: { id: params.flow_id } })
         params.flow_pid = flow.pid
@@ -91,7 +95,7 @@ class TransactioneventService extends Service {
         } else {
 
 
-            var transaction = await ctx.model.Transaction.findOne({ where: { id: params.transaction_id } })
+            
             var last = events[events.length - 1].event_time
             var total_duration = (new Date(params.event_time)).getTime() / 1000 - (new Date(transaction.start_of_transaction)).getTime() / 1000
 
@@ -101,17 +105,17 @@ class TransactioneventService extends Service {
 
 
         if (events && events.length > 0) {
-            var duration=  params.event_time.getTime() / 1000- (new Date(events[0].event_time)).getTime() / 1000
+            /*var duration=  params.event_time.getTime() / 1000- (new Date(events[0].event_time)).getTime() / 1000
             var alertrule = await  ctx.model.Alertrule.findOne({ where: { flow_id: flow.pid } })
             if (alertrule) {
                 if (duration > alertrule.hours * 3600 + alertrule.mins * 60) {
                     //±¨¾¯
 
                     await ctx.model.Alert.create({
-                        id: uuid.v1(),flow_id: flow.pid, transaction_id: params.transaction_id })
+                        flow_id: flow.pid, transaction_id: params.transaction_id })
 
                 }
-            }
+            }*/
 
         }
         const res = await ctx.model.Transactionevent.create(params);
@@ -119,7 +123,7 @@ class TransactioneventService extends Service {
         
         if (params.flow_id == '66ba5680-d912-11ed-a7e5-47842df0d9cc') {
 
-            var transaction = await ctx.model.Transaction.findOne({ where: { id: params.transaction_id } })
+           
             await ctx.model.Transaction.update({ flow_id: "", end_of_transaction: new Date(), status: 1 }, { where: { id: params.transaction_id } });
         } else {
             await ctx.model.Transaction.update({ flow_id: params.flow_pid }, { where: { id: params.transaction_id } });

@@ -56,8 +56,8 @@ class RoleService extends Service {
      
  
         const {ctx} = this;
-        params.id = uuid.v1()//.replace(/-/g, "");
-        params.company_id ='1111'
+       
+        params.company_id ='cccccccc-cccc-cccc-cccc-cccccccccccc'
         const res = await ctx.model.Role.create(params);
         if(res){
             ctx.body = { success: true,data:res};

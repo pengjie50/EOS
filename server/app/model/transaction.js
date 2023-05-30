@@ -6,110 +6,98 @@
 */
 'use strict'
 module.exports = app => {
-    const { DATE, STRING, INTEGER, TINYINT,UUID,TEXT } = app.Sequelize;
+    const { DATE, STRING, INTEGER, TINYINT, UUID, TEXT, DataTypes } = app.Sequelize;
     const Model = app.model.define('transaction', {
         id: {
             type: UUID,
             primaryKey: true,
-            allowNull: false
+            allowNull: false,
+            defaultValue: DataTypes.UUIDV4
            
         },
+        eos_id: {
+            type: STRING(20)
+            
+        },
         status: {
-            type: TINYINT,
-            allowNull: false,
-            defaultValue: 0
+            type: TINYINT
+            
         }, 
         start_of_transaction: {
-            type: DATE,
-            allowNull: true,
-            defaultValue: ''
+            type: DATE
+           
         },
         end_of_transaction: {
-            type: DATE,
-            allowNull: true,
-            defaultValue: null
+            type: DATE
+         
         },
       
         arrival_id: {
-            type: STRING(100),
-            allowNull: true,
-            defaultValue: null
+            type: STRING(100)
+           
         },
         product_type: {
-            type: STRING(200),
-            allowNull: false,
-            defaultValue: ''
+            type: STRING(200)
+          
         },
-        /*product_type_id: {
-             type: UUID,
-             allowNull: false,
-             defaultValue: ''
-         },*/
-        /*product_type_id: {
-            type: UUID,
-            allowNull: false,
-            defaultValue: ''
-        },*/
+      
         product_of_volume: {
-            type: INTEGER,
-            allowNull: false,
-            defaultValue: 0
+            type: INTEGER
+           
         },
         size_of_vessel: {
-            type: INTEGER,
-            allowNull: true,
-            defaultValue: null
+            type: INTEGER
+           
         },
         flow_id: {
-            type: STRING(200),
-            allowNull: false,
-            defaultValue: ''
+            type: STRING(200)
+            
         },
         imo_number: {
-            type: STRING(200),
-            allowNull: false,
-            defaultValue: ''
+            type: STRING(200)
+            
         },
         vessel_name: {
-            type: STRING(200),
-            allowNull: false,
-            defaultValue: ''
+            type: STRING(200)
         },
         terminal_id: {
-            type: UUID,
-            allowNull: false,
-            defaultValue: ''
+            type: UUID
+           
         },
         jetty_id: {
-            type: UUID,
-            allowNull: false,
-            defaultValue: ''
+            type: UUID
+            
         },
         total_duration: {
-            type: INTEGER,
-            allowNull: true,
-            defaultValue: 0
+            type: INTEGER
         },
         
         total_nominated_quantity_b: {
-            type: INTEGER,
-            allowNull: true,
-            defaultValue: null
+            type: INTEGER
+          
         },
        total_nominated_quantity_m: {
-            type: INTEGER,
-            allowNull: true,
-           defaultValue: null
+            type: INTEGER
+           
         },
         bliockchain_hex_key: {
-            type: STRING(200),
-            allowNull: true,
-            defaultValue: ''
+            type: STRING(200)
+           
+        },
+        remarks: {
+            type: TEXT
+           
         }
+        
+
     }, {
         indexes: [
+            {
+                unique: true,
+                fields: ['eos_id']
+            },
         {
-                fields: ['start_of_transaction', 'end_of_transaction', 'product_type_id', 'imo_number', 'vessel_name', 'jetty_id','terminal_id']
+                fields: ['start_of_transaction', 'end_of_transaction', 'imo_number', 'vessel_name', 'jetty_id', 'terminal_id']
         }],
         
         timestamps: false,

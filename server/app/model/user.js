@@ -6,88 +6,71 @@
 */
 'use strict'
 module.exports = app => {
-    const { DATE, STRING, INTEGER, UUID, TINYINT } = app.Sequelize;
+    const { DATE, STRING, INTEGER, UUID, TINYINT, DataTypes } = app.Sequelize;
     const Model = app.model.define('user', {
         id: {
             type: UUID,
             primaryKey: true,
-            allowNull: false
-            
+            allowNull: false,
+            defaultValue: DataTypes.UUIDV4
+
         },
         username: {
-          type: STRING(100),
-          allowNull: false,
-          defaultValue: ''
+          type: STRING(100)
+         
         },
         nickname: {
-          type: STRING(100),
-          allowNull: false,
-          defaultValue: ''
+          type: STRING(100)
+          
         },
         sex: {
-            type: TINYINT,
-            allowNull: false,
-            defaultValue: 0
+            type: TINYINT
+           
         }, 
         avatar: {
-            type: STRING(100),
-            allowNull: false,
-            defaultValue: ''
+            type: STRING(100)
+           
         },
         password: {
-          type: STRING(100),
-          allowNull: false,
-          defaultValue: ''
+          type: STRING(100)
+        
         },
         email: {
-          type: STRING(100),
-          allowNull: true,
-          defaultValue: ''
+          type: STRING(100)
+         
         },
         phone: {
-          type: STRING(100),
-          allowNull: true,
-          defaultValue: ''
+          type: STRING(100)
+         
         },
         phone: {
-            type: STRING(100),
-            allowNull: true,
-            defaultValue: ''
+            type: STRING(100)
+          
         },
         role_id: {
-            type: UUID,
-            allowNull: false,
-            defaultValue: ''
+            type: UUID
+           
         },
         company_id: {
-            type: UUID,
-            allowNull: false,
-            defaultValue: ''
+            type: UUID
+           
         },
         status: {
-            type: TINYINT,
-            allowNull: false,
-            defaultValue: 0
+            type: TINYINT
+          
         }, 
         profile: {
-            type: STRING(500),
-            allowNull: true,
-            defaultValue: ''
+            type: STRING(500)
+           
         },
-        del_flag: {
-            type: TINYINT,
-            allowNull: false,
-            defaultValue: 0
-        },
+        
         login_time: {
-            type: INTEGER,
-            allowNull: false,
-            defaultValue: 0
+            type: INTEGER
+          
         }, 
         login_token: {
-            type: STRING(500),
-            allowNull: true,
-            defaultValue: ''
+            type: STRING(500)
+         
         },
        
     }, {
