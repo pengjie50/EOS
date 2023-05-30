@@ -17,7 +17,7 @@ const Welcome: React.FC = () => {
   useEffect(() => {
 
     flow({ pageSize: 300, current: 1, type: 0, sorter: { sort: 'ascend' } }).then((res) => {
-      res.data.push({ name: 'Total Duration', icon: 'icon-daojishi' })
+      res.data.push({ name: 'Entire Duration', icon: 'icon-daojishi' })
       res.data.push({ name: 'Breached threshold between 2 events', icon: 'icon-yundongguiji' })
       
       setFlowList(res.data)
@@ -199,7 +199,8 @@ const Welcome: React.FC = () => {
                 <th>Vessel Name</th>
                 <th>Terminal</th>
                 <th>Jetty</th>
-                <th>Total Nominated Quantity                  (BLS-60-F)/ (MT)</th>
+                <th>Total Nominated Quantity
+                  (BLS-60-F)/ (MT)</th>
               {
                 flowList.map((e, i) => {
                   return <th>

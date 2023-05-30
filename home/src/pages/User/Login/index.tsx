@@ -101,7 +101,7 @@ const Login: React.FC = () => {
   const [type, setType] = useState<string>('account');
   const [isAdmin, setIsAdmin] = useState<boolean>(useLocation().pathname == "/user/adminlogin" ? true : false);
   const { initialState, setInitialState } = useModel('@@initialState');
-
+  const [isMP, setIsMP] = useState<boolean>(!isPC());
   const containerClassName = useEmotionCss(({ token }) => {
 
     return {
@@ -135,7 +135,7 @@ const Login: React.FC = () => {
         fontSize: '14px',
         fontWeight: 'bold',
         lineHeight: '42px',
-        color: '#F67373',
+        color: '#000',
         paddingLeft: `${token.paddingXS}px`,
         backgroundColor: '#F2F2F2',
         top: 0,
@@ -148,8 +148,8 @@ const Login: React.FC = () => {
         fontSize: '24px',
         fontWeight: 'bold',
         lineHeight: '42px',
-        color: '#F67373',
-        paddingLeft: `${ token.paddingXS }px`,
+        color: '#000',
+        paddingLeft: '20px',
       
         backgroundColor: '#F2F2F2',
         top: 0,
@@ -266,6 +266,19 @@ const Login: React.FC = () => {
       >
         EOS - Efficiency Optimization System
       </div>
+
+
+
+
+      <div style={{ position: 'absolute', bottom: 20, left: 20, right:isMP?20:'none', padding: 20, backgroundColor:'rgba(0,0, 0, 0.6)', fontWeight: "bold", borderRadius: 10, }}>
+        <div style={{ fontSize: "50px", color:"#fff" }}>
+          EOS
+        </div>
+        <div style={{ fontSize: "18px", color: "#fff" }}>
+          Blockchain empowered voyage timestamp management solution
+        </div>
+
+      </div>
       <Helmet>
         <title>
           {intl.formatMessage({
@@ -276,22 +289,17 @@ const Login: React.FC = () => {
         </title>
       </Helmet>
       {/*<Lang /> */}
-      {!isAdmin &&( <div
+      {!isAdmin && (<div style={{
+        position: 'absolute', right: isMP ? 20 : 70, left: isMP ? 20 : 'none', top: 70, 
+      }}><div
         style={{
-          flex: '1',
-          padding: '32px 0',
-        }}
+          border: '1px solid #F5F7F9',
+          padding: '0px',
+          backgroundColor: '#7BA8D9' }}
       >
-        <LoginForm
-          
-          contentStyle={{
-            minWidth: 280,
-            maxWidth: '75vw',
-            marginRight: isPC()?20:'auto',
-            border: '1px solid #F5F7F9',
-            padding: '15px',
-            backgroundColor:'#7BA8D9'
-          }}
+          <LoginForm
+            style={{ padding: isMP ? 10 : 0 }}
+         
          // logo={<img alt="logo" src="/logo.png" />}
           //title="Demurrage Management System (DMS)"
          // subTitle={intl.formatMessage({ id: 'pages.layouts.userLayout.title' })}
@@ -407,17 +415,26 @@ const Login: React.FC = () => {
             </ModalForm>
            
           </div>
-          <div style={{
-            marginBottom: 24,
-            color:'#fff'
-          }}>
-            By continuing, you agree to Demurrage Management System’s Terms of Service, Privacy Policy and Cookie Use.
-          </div>
+         
         </LoginForm>
+        
+      </div>
+        <div style={{
        
-      </div>)}
+          border: '1px solid #F5F7F9',
+        padding: '15px',
+          backgroundColor: '#7BA8D9',
+          marginBottom: 24,
+         borderTop:0,
+          maxWidth:400,
+          color: '#fff'
+        }}>
+          By continuing, you agree to Efficiency Optimization System’s Terms of Service, Privacy Policy and Cookie Use.
+        </div>
+        </div>
+      )}
 
-
+      
       
     </div>
   );

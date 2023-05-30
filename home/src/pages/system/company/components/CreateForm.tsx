@@ -2,6 +2,7 @@ import {
   ProFormDateTimePicker,
   ProFormRadio,
   ProFormSelect,
+  ProFormTreeSelect,
   ProFormText,
   ProFormTextArea,
   ModalForm,
@@ -11,9 +12,12 @@ import {
 import { CompanyListItem } from '../data.d';
 import { FormattedMessage, useIntl } from '@umijs/max';
 import { Modal, Form } from 'antd';
-import React, { useRef } from 'react';
+import React, { useRef, useEffect, useState } from 'react';
+import { company } from '../service';
 
 
+
+import { tree } from "@/utils/utils";
 
 export type CreateFormProps = {
   onCancel: (flag?: boolean, formVals?: Partial<CompanyListItem>) => void;
@@ -25,7 +29,7 @@ export type CreateFormProps = {
 const UpdateForm: React.FC<CreateFormProps> = (props) => {
   const restFormRef = useRef<ProFormInstance>();
   const intl = useIntl();
- 
+  const [companyList, setCompanyList] = useState<any>({});
   const {
     onSubmit,
     onCancel,
@@ -33,7 +37,15 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
    
   } = props;
 
-  
+  useEffect(() => {
+
+    
+
+    
+
+  }, [true])
+ 
+
   return (
    
     <ModalForm
@@ -52,7 +64,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
           searchConfig: {
             resetText: intl.formatMessage({
               id: 'pages.reset',
-              defaultMessage: '重置',
+              defaultMessage: 'Reset',
             }),
           },
           resetButtonProps: {
@@ -64,14 +76,14 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
         }}
         title={intl.formatMessage({
           id: 'pages.company.add',
-          defaultMessage: '新增公司',
+          defaultMessage: 'New Company',
         })}
       >
         <ProFormText
           name="name"
           label={intl.formatMessage({
             id: 'pages.company.name',
-            defaultMessage: '公司名称',
+            defaultMessage: 'Company Name',
           })}
           width="md"
           rules={[
@@ -79,19 +91,41 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
               required: true,
               message: (
                 <FormattedMessage
-                  id="pages.company.rules.name"
-                  defaultMessage="请输入公司名称！"
+                  id="pages.rules.required"
+                  defaultMessage="This field cannot be empty"
                 />
               ),
             },
           ]}
-        />
+      />
+      <ProFormTreeSelect
+        name="pid"
+        width="md"
+        label={intl.formatMessage({
+          id: 'pages.user.parentCompany',
+          defaultMessage: 'Parent Company',
+        })}
+        request={async () => {
+          return company({}).then((res) => {
+
+            res.data = res.data.map((r) => {
+              r['value'] = r.id
+              r['title'] = r.name
+              return r
+            })
+
+            // setFlowList(tree(res.data, "                                    ", 'pid'))
+            return tree(res.data, "                                    ", 'pid')
+          });
+
+        }}
+      />
         <ProFormTextArea
           name="description"
           width="md"
           label={intl.formatMessage({
             id: 'pages.company.description',
-            defaultMessage: '公司描述',
+            defaultMessage: 'Description',
           })}
           
         />

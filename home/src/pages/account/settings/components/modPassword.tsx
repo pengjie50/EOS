@@ -1,9 +1,10 @@
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 import type { ProFormInstance } from '@ant-design/pro-form';
 
 import { UploadOutlined } from '@ant-design/icons';
 import { Button, Input, Upload, message,Form } from 'antd';
 import { FormattedMessage, useIntl } from '@umijs/max';
+import { isPC } from "@/utils/utils";
 import  {
   ProFormDependency,
   ProFormFieldSet,
@@ -11,15 +12,14 @@ import  {
   ProFormText,
   PageContainer,
   ProFormTextArea,
+  ProCard,
   ProForm
 } from '@ant-design/pro-components';
 import { useRequest } from 'umi';
-import { queryCurrent } from '../service';
-import { queryProvince, queryCity } from '../service';
+import { queryCurrent } from '../../../system/user/service';
+
 
 import { updateUser } from '../../../system/user/service';
-
-import styles from './BaseView.less';
 
 const validatorPhone = (rule: any, value: string[], callback: (message?: string) => void) => {
   if (!value[0]) {
@@ -40,7 +40,7 @@ const BaseView: React.FC = () => {
  
   const formRef = useRef<ProFormInstance>();
   
-    
+  const [isMP, setIsMP] = useState<boolean>(!isPC());
   
   const handleFinish = async (values: { [key: string]: any; } | undefined) => {
     if (values) {
@@ -58,11 +58,13 @@ const BaseView: React.FC = () => {
    // message.success('更新基本信息成功');
   };
   return (
-    <PageContainer>
-    <div className={styles.baseView}>
+    <PageContainer header={{
+
+      breadcrumb: {},
+    }}>
+      <ProCard style={{ marginBlockStart: 8 }} gutter={8} wrap={isMP ? true : false}>
       {loading ? null : (
-        <>
-          <div className={styles.left}>
+       
             <ProForm
               autoFocusFirstInput={false }
               formRef={formRef}
@@ -89,7 +91,7 @@ const BaseView: React.FC = () => {
                 name="oldPassword"
                 label={<FormattedMessage
                   id="pages.userSet.oldPassword"
-                  defaultMessage="Old password"
+                  defaultMessage="Enter Current Password"
                 />}
                 rules={[
                   {
@@ -107,7 +109,7 @@ const BaseView: React.FC = () => {
                 name="newPassword"
                 label={<FormattedMessage
                   id="pages.userSet.newPassword"
-                  defaultMessage="New password"
+                  defaultMessage="New Password"
                 />}
                 rules={[
                    {
@@ -125,7 +127,7 @@ const BaseView: React.FC = () => {
                   <ProFormText.Password
                     label={<FormattedMessage
                       id="pages.userSet.repeatNewPassword"
-                      defaultMessage="Repeat new password"
+                      defaultMessage="Re-enter New Password"
                       />}
                       width="lg"
                     name="repeatNewPassword"
@@ -159,11 +161,9 @@ const BaseView: React.FC = () => {
              
               
             </ProForm>
-          </div>
-         
-        </>
+          
       )}
-      </div>
+        </ProCard>
     </PageContainer>
   );
 };

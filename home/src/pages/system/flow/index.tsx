@@ -105,14 +105,15 @@ const handleRemove = async (selectedRows: FlowListItem[], callBack: any) => {
       try {
         removeFlow({
           id: selectedRows.map((row) => row.id),
+        }).then(() => {
+          hide();
+          message.success(<FormattedMessage
+            id="pages.deletedSuccessfully"
+            defaultMessage="Deleted successfully and will refresh soon"
+          />);
+          open = false
+          callBack(true)
         });
-        hide();
-        message.success(<FormattedMessage
-          id="pages.deletedSuccessfully"
-          defaultMessage="Deleted successfully and will refresh soon"
-        />);
-        open = false
-        callBack(true)
 
       } catch (error) {
         hide();
@@ -267,10 +268,8 @@ const TableList: React.FC = () => {
     {
       title: <FormattedMessage id="pages.flow.description" defaultMessage="Description" />,
       dataIndex: 'description',
-      valueType: 'textarea',
-      render: (dom, entity) => {
-        return entity.id
-      }
+      valueType: 'textarea'
+     
     },
     {
       title: <FormattedMessage id="pages.searchTable.titleOption" defaultMessage="Operating" />,
@@ -294,7 +293,10 @@ const TableList: React.FC = () => {
             setCurrentRow(record);
             handleRemove([record], (success) => {
               if (success) {
-               
+                if (isMP) {
+                  setData([]);
+                  getData(1, MPfilter)
+                }
                 actionRef.current?.reloadAndRest?.();
               }
             });
@@ -312,14 +314,22 @@ const TableList: React.FC = () => {
 
   return (
     <PageContainer header={{
-      title: '',
+      title: isMP ? null : < FormattedMessage id="pages.flow.title" defaultMessage="Flow" />,
       breadcrumb: {},
+      extra: isMP ? null : [
+        <Button
+          type="primary"
+          key="primary"
+          onClick={() => {
+            handleModalOpen(true);
+          }}
+        >
+          <PlusOutlined /> <FormattedMessage id="pages.searchTable.new" defaultMessage="New" />
+        </Button>,
+      ]
     }}>
       {!isMP && (<ProTable<FlowListItem, API.PageParams>
-        headerTitle={intl.formatMessage({
-          id: 'pages.flow.title',
-          defaultMessage: 'Flow',
-        })}
+      
         actionRef={actionRef}
         pagination={false}
         rowKey="id"
@@ -327,17 +337,8 @@ const TableList: React.FC = () => {
           labelWidth: 150,
           searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
         }}
-        toolBarRender={() => [
-          <Button
-            type="primary"
-            key="primary"
-            onClick={() => {
-              handleModalOpen(true);
-            }}
-          >
-            <PlusOutlined /> <FormattedMessage id="pages.searchTable.new" defaultMessage="New" />
-          </Button>,
-        ]}
+        options={false}
+        className="mytable"
         request={async (params, sorter) => {
           var d = await flow({ ...params, sorter })
           d.data = tree(d.data, "                                    ", 'pid')
@@ -369,7 +370,15 @@ const TableList: React.FC = () => {
             formRef={MPSearchFormRef}
             type={'form'}
             cardBordered={true}
-            form={{}}
+            form={{
+              submitter: {
+                searchConfig: {
+
+                  submitText: < FormattedMessage id="pages.search" defaultMessage="Search" />,
+                }
+
+              }
+            }}
 
             search={{}}
             manualRequest={true}
@@ -425,6 +434,10 @@ const TableList: React.FC = () => {
               await handleRemove(selectedRowsState, (success) => {
                 if (success) {
                   setSelectedRows([]);
+                  if (isMP) {
+                    setData([]);
+                    getData(1, MPfilter)
+                  }
                   actionRef.current?.reloadAndRest?.();
                 }
 
@@ -447,6 +460,10 @@ const TableList: React.FC = () => {
           if (success) {
            // handleModalOpen(false);
             setCurrentRow(undefined);
+            if (isMP) {
+              setData([]);
+              getData(1, MPfilter)
+            }
             if (actionRef.current) {
               actionRef.current.reload();
             }
@@ -468,6 +485,10 @@ const TableList: React.FC = () => {
           if (success) {
             handleUpdateModalOpen(false);
             setCurrentRow(undefined);
+            if (isMP) {
+              setData([]);
+              getData(1, MPfilter)
+            }
             if (actionRef.current) {
               actionRef.current.reload();
             }

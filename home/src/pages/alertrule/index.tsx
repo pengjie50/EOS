@@ -15,7 +15,9 @@ import {
   PageContainer,
   ProDescriptions,
   ProFormText,
+  ProFormDigitRange,
   ProFormTextArea,
+  ProFormGroup,
   ProFormTreeSelect,
   ProTable,
  
@@ -24,13 +26,13 @@ import {
 } from '@ant-design/pro-components';
 
 import { FormattedMessage, useIntl, useLocation, formatMessage } from '@umijs/max';
-import { Button, Drawer, Input, message, TreeSelect, Modal } from 'antd';
+import { Button, Drawer, Input, message, TreeSelect, Modal, Space as SpaceA, Empty, ConfigProvider } from 'antd';
 import React, { useRef, useState, useEffect } from 'react';
 import CreateForm from './components/CreateForm';
 import UpdateForm from './components/UpdateForm';
 import { useAccess, Access } from 'umi';
 import { tree,isPC } from "@/utils/utils";
-
+import numeral from 'numeral';
 import { event } from '../../.umi/plugin-locale/localeExports';
 const { confirm } = Modal;
 /**
@@ -42,48 +44,14 @@ const handleAdd = async (fields: any) => {
  
   var d = { ...fields }
   console.log(d)
-  if ((d.hasOwnProperty('flow_id') && d.flow_id.length > 0) || (d.hasOwnProperty('events') && d.events.length >0)) {
-    var is = false
-    for (var i in d) {
-      if ((d.hasOwnProperty('flow_id') && d.flow_id.length > 0)) {
-
-        var a = d.flow_id[0].key
-        if (d.hasOwnProperty(a + "_amber_hours") || d.hasOwnProperty(a + "_amber_mins") || d.hasOwnProperty(a + "_red_hours") || d.hasOwnProperty(a + "_red_mins")) {
-
-          is = true
-        }
-        
-        
-      }
-
-
-     
-      if ((d.hasOwnProperty('events') && d.events.length > 0)) {
-        d.events.forEach((a) => {
-          if (d.hasOwnProperty(a + "_amber_hours") || d.hasOwnProperty(a + "_amber_mins") || d.hasOwnProperty(a + "_red_hours") || d.hasOwnProperty(a + "_red_mins")) {
-
-            is = true
-          }
-
-        })
-       
-      }
-
-      
-    }
-    if (!is) {
-      message.error(<FormattedMessage
-        id="pages.aaa"
-        defaultMessage="Adding failed, Please fill in the amber or red time correctly!"
-      />);
-      return
-    }
-
+  if ((d.hasOwnProperty('typeArr') && d.typeArr.length > 0) ) {
+    
+   
 
   } else {
     message.error(<FormattedMessage
       id="pages.aaa"
-      defaultMessage="Adding failed, Please define threshold duration!"
+      defaultMessage="Please define threshold duration!"
     />);
     return
   }
@@ -138,7 +106,36 @@ const handleAdd = async (fields: any) => {
  */
 const handleUpdate = async (fields: Partial<AlertruleListItem>) => {
   var d = { ...fields }
+  if (d.from_to) {
+
+    d.size_of_vessel_from = Number(d.from_to.split("-")[0])
+    d.size_of_vessel_to = Number(d.from_to.split("-")[1])
+  } else {
+    d.size_of_vessel_from =null
+    d.size_of_vessel_to = null
+  }
+  if (d.total_nominated_quantity_from_m ) {
+
+    d['total_nominated_quantity_from_' + d.total_nominated_quantity_unit] = d.total_nominated_quantity_from_m
+    d['total_nominated_quantity_to_' + d.total_nominated_quantity_unit] = d.total_nominated_quantity_to_m
+
+    
+  }
+  if (d.total_nominated_quantity_from_b) {
+    d['total_nominated_quantity_from_' + d.total_nominated_quantity_unit] = d.total_nominated_quantity_from_b
+    d['total_nominated_quantity_to_' + d.total_nominated_quantity_unit] = d.total_nominated_quantity_to_b
+    
+  }
+
+  if (d.total_nominated_quantity_unit=='m') {
+    d.total_nominated_quantity_from_b = null
+    d.total_nominated_quantity_to_b = null
+  }
   
+  if (d.total_nominated_quantity_unit == 'b') {
+    d.total_nominated_quantity_from_m = null
+    d.total_nominated_quantity_to_m = null
+  }
     var is = false
     
      
@@ -161,7 +158,7 @@ const handleUpdate = async (fields: Partial<AlertruleListItem>) => {
     if (!is) {
       message.error(<FormattedMessage
         id="pages.aaa"
-        defaultMessage="Adding failed, Please fill in the amber or red time correctly!"
+        defaultMessage="Please enter compulsory threshold alert field for either Amber or Red!"
       />);
       return
     }
@@ -173,7 +170,7 @@ const handleUpdate = async (fields: Partial<AlertruleListItem>) => {
     defaultMessage="Modifying"
   />);
   try {
-    await updateAlertrule({ ...fields });
+    await updateAlertrule(d);
     hide();
 
     message.success(<FormattedMessage
@@ -209,14 +206,16 @@ const handleRemove = async (selectedRows: AlertruleListItem[],callBack:any) => {
       try {
         removeAlertrule({
           id: selectedRows.map((row) => row.id),
+        }).then(() => {
+          hide();
+          message.success(<FormattedMessage
+            id="pages.deletedSuccessfully"
+            defaultMessage="Deleted successfully and will refresh soon"
+          />);
+          open = false
+          callBack(true)
         });
-        hide();
-        message.success(<FormattedMessage
-          id="pages.deletedSuccessfully"
-          defaultMessage="Deleted successfully and will refresh soon"
-        />);
-        open=false
-        callBack(true)
+       
        
       } catch (error) {
         hide();
@@ -316,18 +315,20 @@ const TableList: React.FC = () => {
         }
       }, ...filter
     })
-
-
+    
     console.log(append)
     setData(val => [...val, ...append.data])
     setHasMore(10 * (page - 1) + append.data.length < append.total)
   }
   async function loadMore(isRetry: boolean) {
-  
+    
+
     await getData(currentPage , MPfilter)
     setCurrentPage(currentPage + 1)
   }
 
+
+  
 
   var  pathname=useLocation().pathname
   //--MP end
@@ -340,7 +341,7 @@ const TableList: React.FC = () => {
     }
    
 
-    flow({ pageSize: 300, current: 1, sorter: { sort: 'ascend' } }).then((res) => {
+    flow({ sorter: { sort: 'ascend' } }).then((res) => {
       var b = { "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": intl.formatMessage({
             id: 'pages.alertrule.entireTransaction',
             defaultMessage: 'Entire Transaction',
@@ -366,7 +367,12 @@ const TableList: React.FC = () => {
       var treeData = tree(res.data, "                                    ", 'pid')
       setFlowTree(treeData)
      
-      alertrule({ pageSize: 300, current: 1, type: 1 }).then((res2) => {
+      alertrule({
+        type: {
+          'field': 'type',
+          'op': 'eq',
+          'data': 1
+        } }).then((res2) => {
         var d = {  }
 
 
@@ -387,7 +393,7 @@ const TableList: React.FC = () => {
    * */
   const intl = useIntl();
   const access = useAccess();
- 
+  const formRef = useRef<ProFormInstance>();
   const columns: ProColumns<AlertruleListItem>[] = [
 
     {
@@ -404,11 +410,13 @@ const TableList: React.FC = () => {
      
     },
 
+   
+
     {
       title: (
         <FormattedMessage
           id="pages.alertrule.entireTransactionAndProcesses"
-          defaultMessage="Entire Transaction and Processes"
+          defaultMessage="Entire Transaction And Processes"
         />
       ),
       dataIndex: 'flow_id',
@@ -416,14 +424,30 @@ const TableList: React.FC = () => {
       hideInDescriptions:true,
       valueEnum: processes,
       fieldProps: {
-
+        notFoundContent: <Empty />,
         width: '300px',
         mode: 'multiple',
-        showSearch: true,
+        showSearch: false,
         multiple: true
 
+      },
+      search: {
+        transform: (value) => {
+          if (value.length > 0) {
+            return {
+              'flow_id': {
+                'field': 'flow_id',
+                'op': 'in',
+                'data': value
+              }
+            }
+          }
+          
+        }
       }
-    },
+},
+
+
     {
       title: (
         <FormattedMessage
@@ -437,15 +461,83 @@ const TableList: React.FC = () => {
       hideInDescriptions: true,
       valueEnum: events,
       fieldProps: {
+        notFoundContent: <Empty />,
         dropdownMatchSelectWidth:false,
         width: '300px',
           mode: 'multiple',
-          showSearch: true,
+          showSearch: false,
           multiple: true
         
+      },
+      search: {
+        transform: (value) => {
+          if (value.length > 0) {
+            return {
+              'flow_id': {
+                'field': 'flow_id',
+                'op': 'in',
+                'data': value.map((a) => {
+                  return a.split('_')[0]
+                })
+              },
+              'flow_id_to': {
+                'field': 'flow_id_to',
+                'op': 'in',
+                'data': value.map((a) => {
+                  return a.split('_')[1]
+                })
+              },
+            }
+          }
+        }
       }
      
      
+    },
+
+    {
+      title: <FormattedMessage id="pages.alertrule.vesselSizeLimit" defaultMessage="Vessel Size Limit (DWT)" />,
+      dataIndex: 'from_to',
+      hideInTable: true,
+      hideInDescriptions: true,
+      fieldProps: {
+
+        dropdownMatchSelectWidth: false,
+        width: '300px',
+        
+        showSearch: true,
+
+
+      },
+      valueEnum: {
+        "0-25": "1. GP (General Purpose): Less than 24.99 DWT",
+        "25-45": "2. MR (Medium Range): 25 to 44.99 DWT",
+        "45-80": "3. LR1 (Long Range 1): 45 to 79.99 DWT",
+        "80-120": "4. AFRA (AFRAMAX): 80 to 119.99 DWT",
+        "120-160": "5. LR2 (Long Range 2): 120 to 159.99 DWT",
+        "160-320": "6. VLCC (Very Large Crude Carrier): 160 to 319.99 DWT",
+        "320-1000000": "7. ULCC (Ultra-Large Crude Carrier): More than 320 DWT",
+      },
+      search: {
+        transform: (value) => {
+          if (value) {
+            return {
+              'size_of_vessel_from': {
+                'field': 'size_of_vessel_from',
+                'op': 'eq',
+                'data': value.split('-')[0]
+              },
+              'size_of_vessel_to': {
+                'field': 'size_of_vessel_to',
+                'op': 'eq',
+                'data': value.split('-')[1]
+              }
+            }
+          }
+
+        }
+      }
+
     },
     /*{
       title: (
@@ -479,7 +571,7 @@ const TableList: React.FC = () => {
       title: (
         <FormattedMessage
           id="pages.alertrule.eee"
-          defaultMessage="Flow (from)"
+          defaultMessage="Flow (From)"
         />
       ),
       dataIndex: 'flow_id',
@@ -491,59 +583,107 @@ const TableList: React.FC = () => {
 
    
     {
-      title: <FormattedMessage id="pages.alertrule.eee" defaultMessage="Flow (to)" />,
+      title: <FormattedMessage id="pages.alertrule.eee" defaultMessage="Flow (To)" />,
       dataIndex: 'flow_id_to',
       hideInSearch: true,
       valueEnum: flowConf
      
     },
+
+
+
+
     {
       title: <FormattedMessage id="pages.alertrule.vesselSizeLimit" defaultMessage="Vessel Size Limit (DWT)" />,
       dataIndex: 'size_of_vessel_from',
+      onFilter: true,
+      sorter: true,
       hideInSearch: true,
       valueType: 'text',
       render: (dom, entity) => {
         if (entity.size_of_vessel_from !=null && entity.size_of_vessel_to) {
 
-          return (entity.size_of_vessel_from + "").replace(/\B(?=(\d{3})+(?!\d))/g, ',') + " - " + (entity.size_of_vessel_to + "").replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+          return numeral(entity.size_of_vessel_from).format('0,0') + " - " + numeral(entity.size_of_vessel_to-0.01).format('0,0.00');
         } 
         
       },
     },
     {
-      title: <FormattedMessage id="pages.alertrule.throughputVolume1" defaultMessage="Total nominated quantity (MT)" />,
+      title: <FormattedMessage id="pages.alertrule.throughputVolume1" defaultMessage="Total Nominated Quantity (MT)" />,
       dataIndex: 'total_nominated_quantity_from_m',
-      hideInSearch: true,
-      valueType: "text",
+      fieldProps: { placeholder: ['From', 'To'] },
+      valueType: "digitRange",
+      sorter: true,
       render: (dom, entity) => {
         if (entity.total_nominated_quantity_from_m  && entity.total_nominated_quantity_to_m) {
 
        
-          return   (entity.total_nominated_quantity_from_m + "").replace(/\B(?=(\d{3})+(?!\d))/g, ',') + " - " + (entity.total_nominated_quantity_to_m + "").replace(/\B(?=(\d{3})+(?!\d))/g, ',') ;
+          return numeral(entity.total_nominated_quantity_from_m).format('0,0') + " - " + numeral(entity.total_nominated_quantity_to_m).format('0,0')
         }
        
       },
+      search: {
+        transform: (value) => {
+          if (value.length>0) {
+            return {
+              'total_nominated_quantity_from_m': {
+                'field': 'total_nominated_quantity_from_m',
+                'op': 'gte',
+                'data': value[0]
+              },
+              'total_nominated_quantity_to_m': {
+                'field': 'total_nominated_quantity_to_m',
+                'op': 'lt',
+                'data': value[1]
+              }
+            }
+          }
+
+        }
+      }
     },
+   
     {
-      title: <FormattedMessage id="pages.alertrule.throughputVolume1" defaultMessage="Total nominated quantity (Bal-60-F)" />,
+      title: <div style={{ lineHeight:"14px" }}>Total Nominated Quantity<br/>(Bal-60-F)</div>,
       dataIndex: 'total_nominated_quantity_from_b',
-      hideInSearch: true,
-      valueType: 'text',
+      fieldProps: { placeholder:['From','To']},
+      valueType: "digitRange",
+      sorter: true,
       render: (dom, entity) => {
         if (entity.total_nominated_quantity_from_b && entity.total_nominated_quantity_to_b ) {
-          return (entity.total_nominated_quantity_from_b + "").replace(/\B(?=(\d{3})+(?!\d))/g, ',') + " - " + (entity.total_nominated_quantity_to_b + "").replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+          return numeral(entity.total_nominated_quantity_from_b).format('0,0') + " - " + numeral(entity.total_nominated_quantity_to_b).format('0,0')
         } 
        
       },
+      search: {
+        transform: (value) => {
+          if (value.length > 0) {
+            return {
+              'total_nominated_quantity_from_b': {
+                'field': 'total_nominated_quantity_from_b',
+                'op': 'gte',
+                'data': value[0]
+              },
+              'total_nominated_quantity_to_b': {
+                'field': 'total_nominated_quantity_to_b',
+                'op': 'lt',
+                'data': value[1]
+              }
+            }
+          }
+
+        }
+      }
     },
+    
     {
       title: <FormattedMessage id="pages.alertrule.thresholdLimit" defaultMessage="Threshold Limit" />,
       dataIndex: 'amber_hours',
       hideInSearch: true,
       valueType: 'text',
       render: (dom, entity) => {
-        return (<div><div > <SvgIcon style={{ color: "#DE8205" }} type="icon-yuan" />{" "+entity.amber_hours + "h " + entity.amber_mins + "m"}</div>
-          <div><SvgIcon style={{ color: "red" }} type="icon-yuan" />{" "+entity.red_hours + "h " + entity.red_mins + "m"}</div></div>)
+        return (<div><div style={{ display: entity.amber_hours || entity.amber_mins ?"block":"none" }}> <SvgIcon style={{ color: "#DE8205" }} type="icon-yuan" />{" " + (entity.amber_hours ? entity.amber_hours : '0') + "h " + (entity.amber_mins ? entity.amber_mins : '0') + "m"}</div>
+          <div style={{ display: entity.red_hours || entity.red_mins ? "block" : "none" }}><SvgIcon style={{ color: "red" }} type="icon-yuan" />{" " + (entity.red_hours ? entity.red_hours : '0') + "h " + (entity.red_mins ? entity.red_mins :'0') + "m"}</div></div>)
       },
     },
     {
@@ -554,7 +694,7 @@ const TableList: React.FC = () => {
       valueType: 'text',
     },
     {
-      title: <FormattedMessage id="pages.alertrule.sendEmailSelect" defaultMessage="Send email Select" />,
+      title: <FormattedMessage id="pages.alertrule.sendEmailSelect" defaultMessage="Send Email Select" />,
       dataIndex: 'send_email_select',
       hideInSearch: true,
       hideInTable: true,
@@ -563,6 +703,23 @@ const TableList: React.FC = () => {
         return dom;
       },
     },
+
+
+    {
+      title: <FormattedMessage id="pages.alertrule.userName" defaultMessage="User Name" />,
+      dataIndex: 'username',
+      hideInSearch: true,
+      
+      valueType: 'text',
+    },
+    {
+      title: <FormattedMessage id="pages.alertrule.userName" defaultMessage="Date of Threshold Alert Creation" />,
+      dataIndex: 'created_at',
+      hideInSearch: true,
+     
+      valueType: 'dateTime',
+    },
+    
     
     {
       title: <FormattedMessage id="pages.searchTable.titleOption" defaultMessage="Operating" />,
@@ -578,6 +735,12 @@ const TableList: React.FC = () => {
               handleUpdateModalOpen(true);
              
               try {
+                if (record.size_of_vessel_from == null && record.size_of_vessel_to == null) {
+                  record.from_to = null
+                } else {
+                  record.from_to = record.size_of_vessel_from + "-" + record.size_of_vessel_to
+                }
+                
                 record.send_email_select = record.send_email_select.split(",")
               } catch (e) {
 
@@ -599,7 +762,10 @@ const TableList: React.FC = () => {
              
               handleRemove([record], (success) => {
                 if (success) {
-                 
+                  if (isMP) {
+                    setData([]);
+                    getData(1, MPfilter)
+                  }
                   actionRef.current?.reloadAndRest?.();
                 }
               });
@@ -634,17 +800,44 @@ const TableList: React.FC = () => {
       ],
     },
   ];
-  
+  const customizeRenderEmpty = () => {
+    var o = formRef.current?.getFieldsValue()
+    var isSearch = false
+    for (var a in o) {
+      if (o[a]) {
+        isSearch = true
+      }
+
+    }
+    if (isSearch) {
+      return <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />
+    } else {
+      return <Empty />
+    }
+
+
+  }
   return  (
     <PageContainer header={{
-      title: '',
+      title: isMP ? null : < FormattedMessage id="pages.alertrule.title" defaultMessage="Threshold Limit List" />,
       breadcrumb: {},
+      extra: isMP?null:[<Access accessible={access.canAlertruleAdd()} fallback={<div></div>}>
+        <Button
+
+          type="primary"
+          key="primary"
+          onClick={() => {
+            handleModalOpen(true);
+          }}
+        >
+          <PlusOutlined /> <FormattedMessage id="pages.searchTable.new" defaultMessage="Create New" />
+        </Button>
+      </Access>]
     }}>
-      {!isMP && (<ProTable<AlertruleListItem, API.PageParams>
-        headerTitle={intl.formatMessage({
-          id: 'pages.alertrule.title',
-          defaultMessage: 'Threshold Limit List',
-        })}
+      {!isMP && (<ConfigProvider renderEmpty={customizeRenderEmpty}><ProTable<AlertruleListItem, API.PageParams>
+       
+        formRef={formRef}
+        className="mytable"
         actionRef={actionRef}
         rowKey="id"
         scroll={{ y: 300 }}
@@ -654,18 +847,8 @@ const TableList: React.FC = () => {
           span: 8,
           searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
         }}
-        toolBarRender={() => [<Access accessible={access.canAlertruleAdd()} fallback={<div></div>}>
-          <Button
-
-            type="primary"
-            key="primary"
-            onClick={() => {
-              handleModalOpen(true);
-            }}
-          >
-            <PlusOutlined /> <FormattedMessage id="pages.searchTable.new" defaultMessage="New" />
-          </Button>
-        </Access>]
+        options={false }
+        toolBarRender={() => []
 
         }
         request={(params, sorter) => alertrule({ ...params, sorter })}
@@ -675,7 +858,7 @@ const TableList: React.FC = () => {
             setSelectedRows(selectedRows);
           },
         }}
-      />)}
+      /></ConfigProvider >)}
 
       {isMP && (<>
        
@@ -695,7 +878,15 @@ const TableList: React.FC = () => {
             formRef={MPSearchFormRef}
             type={'form'}
             cardBordered={true}
-            form={{}}
+            form={{
+              submitter: {
+                searchConfig: {
+
+                  submitText: < FormattedMessage id="pages.search" defaultMessage="Search" />,
+                }
+
+              }
+            }}
 
             search={{}}
             manualRequest={true}
@@ -751,7 +942,12 @@ const TableList: React.FC = () => {
             <Button
               onClick={async () => {
                 await handleRemove(selectedRowsState, () => {
+
                   setSelectedRows([]);
+                  if (isMP) {
+                    setData([]);
+                    getData(1, MPfilter)
+                  }
                   actionRef.current?.reloadAndRest?.();
                 });
                 
@@ -775,6 +971,10 @@ const TableList: React.FC = () => {
           if (success) {
             handleModalOpen(false);
             setCurrentRow(undefined);
+            if (isMP) {
+              setData([]);
+              getData(1, MPfilter)
+            }
             if (actionRef.current) {
               actionRef.current.reload();
             }
@@ -796,6 +996,11 @@ const TableList: React.FC = () => {
           if (success) {
             handleUpdateModalOpen(false);
             setCurrentRow(undefined);
+            if (isMP) {
+             
+              setData([]);
+              getData(1, MPfilter)
+            }
             if (actionRef.current) {
               actionRef.current.reload();
             }

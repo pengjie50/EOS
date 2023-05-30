@@ -171,7 +171,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         name="value"
         label={intl.formatMessage({
           id: 'pages.filterOfTimestamps.value',
-          defaultMessage: 'Template content',
+          defaultMessage: 'Template Content',
         })}
        
 

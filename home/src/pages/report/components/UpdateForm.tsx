@@ -8,7 +8,7 @@ import {
   ProFormInstance
   
 } from '@ant-design/pro-components';
-import { AlertListItem } from '../data.d';
+import { ReportListItem } from '../data.d';
 import { FormattedMessage, useIntl } from '@umijs/max';
 import { Modal, Form } from 'antd';
 import React, { useRef } from 'react';
@@ -16,10 +16,10 @@ import React, { useRef } from 'react';
 
 
 export type UpdateFormProps = {
-  onCancel: (flag?: boolean, formVals?: Partial<AlertListItem>) => void;
-  onSubmit: (values: Partial<AlertListItem>) => Promise<void>;
+  onCancel: (flag?: boolean, formVals?: Partial<ReportListItem>) => void;
+  onSubmit: (values: Partial<ReportListItem>) => Promise<void>;
   updateModalOpen: boolean;
-  values: Partial<AlertListItem>;
+  values: Partial<ReportListItem>;
 };
 
 const UpdateForm: React.FC<UpdateFormProps> = (props) => {
@@ -52,7 +52,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           searchConfig: {
             resetText: intl.formatMessage({
               id: 'pages.reset',
-              defaultMessage: 'Reset',
+              defaultMessage: '重置',
             }),
           },
           resetButtonProps: {
@@ -63,21 +63,38 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           },
         }}
         title={intl.formatMessage({
-          id: 'pages.alert.mod',
-          defaultMessage: 'Modify Remarks',
+          id: 'pages.report.mod',
+          defaultMessage: '角色修改',
         })}
       >
-      
-      <ProFormTextArea
-        name="t.remarks"
-        width="md"
-        label={intl.formatMessage({
-          id: 'pages.alert.remark',
-          defaultMessage: 'Remarks',
-        })}
-
-      />
-        
+        <ProFormText
+          name="name"
+          label={intl.formatMessage({
+            id: 'pages.report.name',
+            defaultMessage: '角色名称',
+          })}
+          width="md"
+          rules={[
+            {
+              required: true,
+              message: (
+                <FormattedMessage
+                  id="pages.report.rules.name"
+                  defaultMessage="角色名称！"
+                />
+              ),
+            },
+          ]}
+        />
+        <ProFormTextArea
+          name="description"
+          width="md"
+          label={intl.formatMessage({
+            id: 'pages.report.description',
+            defaultMessage: '角色描述',
+          })}
+         
+        />
     </ModalForm>
      
   );

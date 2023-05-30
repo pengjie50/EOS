@@ -1,7 +1,7 @@
 import { GridContent, ProFormSelect, ProFormDateRangePicker, ProCard, ProFormDatePicker } from '@ant-design/pro-components';
 import { useModel } from '@umijs/max';
 import { EyeOutlined } from '@ant-design/icons';
-import { Card, theme, Progress, Statistic, Badge, message } from 'antd';
+import { Card, theme, Progress, Statistic, Badge, message, Tooltip } from 'antd';
 import React, { useEffect, useState } from 'react';
 const { Divider } = ProCard;
 import { flow } from './system/flow/service';
@@ -21,13 +21,31 @@ import numeral from 'numeral';
 // use your custom format
 numeral().format('0%');
 import moment from 'moment';
+import { read } from 'xlsx';
+
+const getFilterStr = (terminal_id, terminalList, dateArr,status,title) => {
+  var dateStr = dateArr[0] && dateArr[1] ? ' - ' + moment(dateArr[0]).format('DD/MM/YYYY') + ' to ' + moment(dateArr[1]).format('DD/MM/YYYY') :''
+  var terminalStr = (terminal_id ? terminalList[terminal_id] : "")
+
+  var statusStr = (status === '' ? '' : (status == 1 ? 'Closed' : 'Open'))
+  if (terminalStr || dateStr) {
+    return statusStr + ' ' + title +' (' + terminalStr + dateStr + ')'
+  } else {
+    return statusStr + ' ' + title
+  }
+  
+ 
+}
+const getTimeStr = (time) => {
+  return parseInt((time / 3600) + "") + "h " + parseInt((time % 3600) / 60) + "m"
+}
 const Welcome: React.FC = () => {
   const { token } = theme.useToken();
   const { initialState } = useModel('@@initialState');
   const [flowList, setFlowList] = useState<any>([]);
   const [isMP, setIsMP] = useState<boolean>(!isPC());
   const [transactionList, setTransactionList] = useState<any>([]);
-  const [transactionMap, setTransactionMap] = useState<any>([]);
+  const [transactionMap, setTransactionMap] = useState<any>({});
   const [terminalList, setTerminalList] = useState<any>({});
   const [jettyList, setJettyList] = useState<any>({});
   
@@ -36,7 +54,7 @@ const Welcome: React.FC = () => {
   const [transactionAlert, setTransactionAlert] = useState<any>({});
   const [alertruleMap, setAlertruleMap] = useState<any>({});
 
-  
+  const [avg_duration, setAvg_duration] = useState<any>({});
 
   const [collapsed1, setCollapsed1] = useState<boolean>(localStorage.getItem('collapsed1')==='true');
   const [collapsed2, setCollapsed2] = useState<boolean>(localStorage.getItem('collapsed2') ==='true');
@@ -46,8 +64,8 @@ const Welcome: React.FC = () => {
 
   const [terminal_id, setTerminal_id] = useState<any>("");
   const [dateArr, setDateArr] = useState<any>(['', '']);
-
-  const [dateMPArr, setDateMPArr] = useState<any>(['', '']);
+  const [status, setStatus] = useState<any>("");
+ 
 
  // const [terminal_id, setTerminal_id] = useState(false);
 
@@ -70,27 +88,144 @@ const Welcome: React.FC = () => {
 
     let p = { pageSize: 100000, current: 1 }
     if (terminal_id) {
-      p.terminal_id = terminal_id
+      p.terminal_id = {
+          'field': 'terminal_id',
+          'op': 'eq',
+          'data': terminal_id
+        } 
+    }
+
+
+    if (status!=="") {
+      p.status = {
+          'field': 'status',
+          'op': 'eq',
+          'data': status
+        }
     }
    
     if (dateArr[0] && dateArr[1]) {
 
 
 
-      p.start_of_transaction__gt = dateArr[0]
+      p.start_of_transaction =  {
+          'field': 'start_of_transaction',
+          'op': 'gte',
+          'data': dateArr[0]
+        }
 
-      p.start_of_transaction__lt = dateArr[1]
+        p.end_of_transaction = {
+            'field': 'end_of_transaction',
+            'op': 'lte',
+            'data': dateArr[1]
+          }
     } 
 
 
     statistics(p).then((res) => {
       
       setStatisticsObj(res.data)
-      //p.status=0
-      transaction(p).then((res) => {
+
+      transaction({ ...p, status:0 }).then((res) => {
 
         hide()
         setTransactionList(res.data)
+
+       var ids= res.data.map((t) => {
+          return t.id
+        })
+
+        transactionevent({
+          transaction_id: {
+            'field': 'transaction_id',
+            'op': 'in',
+            'data': ids
+          }  ,sorter: { event_time: 'ascend' }
+        }).then((res) => {
+          var m = {}
+          res.data.forEach((a) => {
+            if (!m[a.transaction_id]) {
+              m[a.transaction_id] = {
+                eventList: [], processMap: {}
+              }
+            }
+            m[a.transaction_id].eventList.push(a)
+
+          })
+          for (var kk in m) {
+            var eventList = m[kk].eventList
+            var processMap = {}
+
+
+
+            eventList.forEach((a, index) => {
+
+              var obj = processMap[a.flow_pid]
+              if (!obj) {
+                obj = { duration: 0, process_duration: 0, status: 0, event_count: 0, eventArr: [], isFinish: false }
+              }
+              obj.eventArr.push(a)
+              if (a.flow_id == "66ba5680-d912-11ed-a7e5-47842df0d9cc") {
+
+                obj.isFinish = true
+              }
+
+              var next = res.data[index + 1]
+              if (next) {
+
+                if (next.flow_pid != a.flow_pid) {
+
+                  obj.process_duration = parseInt(((new Date(res.data[index + 1].event_time)).getTime() - (new Date(a.event_time)).getTime()) / 1000 + "")
+                }
+              }
+
+              processMap[a.flow_pid] = obj
+
+            })
+            for (var k in processMap) {
+              var ps = processMap[k].eventArr[0]
+              var es = processMap[k].eventArr[processMap[k].eventArr.length - 1]
+              processMap[k].duration = ((new Date(es.event_time)).getTime() - (new Date(ps.event_time)).getTime()) / 1000
+
+              processMap[k].event_count = processMap[k].eventArr.length
+            }
+
+
+
+
+
+            
+            m[kk].processMap = processMap
+
+          }
+
+          var num = 0
+          var to = {}
+          for (var k in m) {
+            var p = m[k].processMap
+
+            for (var j in p) {
+              if (!to[j]) {
+                to[j] = { count: 0, duration: 0, avg: 0 }
+              }
+              if (p[j].isFinish) {
+
+                to[j].duration += p[j].duration
+                to[j].count++
+                to[j].avg = to[j].duration / to[j].count
+
+              }
+
+
+            }
+          }
+          console.log("dddddddddddddddddddddddd")
+          console.log(to)
+          setAvg_duration(to)
+
+
+          setTransactionMap(m)
+        });
 
       });
 
@@ -127,8 +262,8 @@ const Welcome: React.FC = () => {
 
     });
     flow({ pageSize: 300, current: 1, type: 0, sorter: { sort: 'ascend' } }).then((res) => {
-      res.data.push({ name: 'Total Duration', icon: 'icon-daojishi', pid: '                                    ',id:'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' })
-      res.data.push({ name: 'Breached threshold between 2 events', icon: 'icon-yundongguiji', pid: '                                    ',id:'b2e' })
+      res.data.push({ name: 'Entire Duration', icon: 'icon-daojishi', pid: '                                    ',id:'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' })
+      res.data.push({ name: 'Breached Threshold Between 2 Events', icon: 'icon-yundongguiji', pid: '                                    ',id:'b2e' })
       var ss = res.data.map((bb) => { return { ...bb } })
       console.log(ss)
       var all = tree(ss, "                                    ", 'pid')
@@ -138,13 +273,13 @@ const Welcome: React.FC = () => {
      
       
       setFlowList(res.data)
-      getAlertrule(all)
+     // getAlertrule(all)
      
-
+      get()
 
     })
     const getAlertrule = (flowTreeAll)=>{
-      alertrule({ pageSize: 3000, current: 1 }).then((res) => {
+      alertrule({ pageSize: 3000,transaction_id:"", current: 1 }).then((res) => {
         var b = {}
         res.data.forEach((r) => {
           b[r.id] = r
@@ -156,62 +291,7 @@ const Welcome: React.FC = () => {
     }
    
 
-    transactionevent({
-      pageSize: 1000, current: 1, sorter: { event_time: 'ascend' }
-    }).then((res) => {
-      var m = {}
-      res.data.forEach((a) => {
-        if (!m[a.transaction_id]) {
-          m[a.transaction_id] = {
-            eventList: [], totalDuration: 0, processMap: {}
-          }
-        }
-        m[a.transaction_id].eventList.push(a)
-
-      })
-      for (var k in m) {
-        var eventList = m[k].eventList
-        var processMap = {}
-        try {
-          m[k].totalDuration=parseInt(((new Date(eventList[eventList.length - 1].event_time)).getTime() - (new Date(eventList[0].event_time)).getTime()) / 1000 + "")
-        } catch (e) {
-
-        }
-
-        eventList.forEach((a, index) => {
-
-          var obj = processMap[a.flow_pid]
-          if (!obj) {
-            obj = { duration: 0, process_duration: 0, status: 0, event_count: 0 }
-          }
-          var next = eventList[index + 1]
-          if (next) {
-
-            if (next.flow_pid != a.flow_pid) {
-
-              obj.process_duration = parseInt(((new Date(eventList[index + 1].event_time)).getTime() - (new Date(a.event_time)).getTime()) / 1000 + "")
-            }
-
-            var val = parseInt(((new Date(next.event_time)).getTime() - (new Date(a.event_time)).getTime()) / 1000 + "")
-            obj.duration += val
-
-
-
-          }
-
-          obj.event_count++
-
-          processMap[a.flow_pid]=obj
-
-
-
-        })
-        m[k].processMap = processMap
-
-      }
-      console.log(m)
-      setTransactionMap(m)
-    });
+    
 
    
 
@@ -269,7 +349,7 @@ const Welcome: React.FC = () => {
     
 
    
-  }, [terminal_id, dateArr])
+  }, [terminal_id, dateArr,status])
   var color = {
     'icon-daojishimeidian': '#70AD47',
     'icon-matou': '#70AD47',
@@ -284,11 +364,11 @@ const Welcome: React.FC = () => {
 
       <ProCard ghost={true} bodyStyle={isMP ? { padding: '5px' } : {}} wrap >
 
-        <ProCard wrap={isMP} >
-          <ProCard ghost={true} colSpan={{ xs: 24, md: 12 }} bodyStyle={{ padding: '5px 0px 5px 0px', fontWeight:'500', fontSize: '14px' }} >
-            {'Transactions Overview (' + (terminal_id?terminalList[terminal_id]:"") + ' - ' + dateArr[0] + ' to ' + dateArr[1]+')'}
+        <ProCard wrap={isMP} gutter={8}>
+          <ProCard ghost={true} colSpan={{ xs: 24, md: 10 }} bodyStyle={{ padding: '5px 0px 5px 0px', fontWeight:'500', fontSize: '14px' }} >
+            {getFilterStr(terminal_id, terminalList, dateArr, status,"Transactions Overview")}
           </ProCard>
-          <ProCard ghost={true} colSpan={{ xs: 24, md: 6 }} >
+          <ProCard ghost={true} colSpan={{ xs: 24, md: 4 }} >
             <ProFormSelect
               name="select"
               label=""
@@ -306,81 +386,119 @@ const Welcome: React.FC = () => {
 
             />
           </ProCard>
-          <ProCard ghost={true}  colSpan={{ xs: 24, md: 6 }} bodyStyle={{ paddingLeft: isMP?0:10 }} >
+          <ProCard ghost={true} colSpan={{ xs: 24, md:4 }} >
+            <ProFormSelect
+              name="select"
+              label=""
+              onChange={(a) => {
+                if (a) {
+                  setStatus(a)
+                } else {
+                  setStatus("")
 
-            {
-              isMP && (
-                [<ProCard ghost={true} colSpan={11} key="2"> <ProFormDatePicker onChange={(a, b) => {
-                  
-                 
-                  setDateArr((preDateArr) => {
-                    preDateArr[0] = b
-                    return [...preDateArr]
-                  })
+                }
 
+              }}
+              valueEnum={{
+                0:'Open',
+                1: 'Closed',
+                2: 'Cancelled'
+              }}
+              placeholder="Filter By: Status"
 
-                }} name="date" label="" /> </ProCard>,
-                  <ProCard ghost={true} bodyStyle={{ textAlign: 'center' }}   colSpan={2}>to</ProCard>,
-                  <ProCard ghost={true} colSpan={11} key="2"><ProFormDatePicker onChange={(a, b) => {
+            />
+          </ProCard>
+          <ProCard ghost={true}  colSpan={{ xs: 24, md: 6 }}  >
 
-                  
-                   
-
-                    setDateArr((preDateArr) => {
-                      preDateArr[1] = b
-                      return [...preDateArr]
-                    })
-
-                  
-
-                  }} name="date" label="" /></ProCard>]
-
-              )
-            }
-            {
-              !isMP && (<ProFormDateRangePicker name="dateRange" onChange={(a, b) => {
+           
+            <ProFormDateRangePicker name="dateRange" fieldProps={{ placeholder: ['Date (From) ', 'Date (To) '] }}   onChange={(a, b) => {
 
 
                 setDateArr(b)
 
 
 
-              }} />)
-            }
+              }} />
+            
             
           </ProCard>
         </ProCard>
 
 
         <ProCard ghost={true} style={{ marginBlockStart: 16, marginLeft: -4 }} gutter={8} wrap={isMP} >
-          <ProCard collapsed={collapsed1} colSpan={{ xs: 24, md: 12 }} wrap title={<div style={{ fontWeight: '500', fontSize: 14 }}> No of Transaction</div>} extra={< EyeOutlined onClick={() => {
+          <ProCard collapsed={collapsed1} colSpan={{ xs: 24, md: 12 }} wrap title={<div style={{ fontWeight: '500', fontSize: 14 }}> No. Of Transaction</div>} extra={< EyeOutlined onClick={() => {
             setCollapsed1(!collapsed1);
             localStorage.setItem('collapsed1', !collapsed1);
           }} style={{ fontWeight: 'normal', fontSize: 14 }} />} bordered headerBordered>
 
-            <ProCard colSpan={24} ghost={true} bodyStyle={{ fontSize: '30px', lineHeight: '30px', height:'30px' }} >
-              <div>{numeral(statisticsObj?.no_of_transaction?.completed / statisticsObj?.no_of_transaction?.total).format('0%')}</div>
+            <ProCard colSpan={24} ghost={true} bodyStyle={{ fontSize: '30px', lineHeight: '30px', height: '30px' }} >
+              <div onClick={() => {
+                history.push(`/Transactions`, { terminal_id, dateArr, status: "" });
+
+              }} style={{ cursor: 'pointer', float: 'left', lineHeight: '22px', height: '22px', fontSize: '14px', marginRight: '16px', width: isMP ? '100%' : 'auto' }}>
+                <span style={{ fontWeight: 500 }}>Total</span><span style={{ marginLeft: '8px' }}>{statisticsObj?.no_of_transaction?.total}</span>
+              </div> 
             </ProCard>
             <ProCard ghost={true} colSpan={24} >
+
+
+
+              {
+
+                [1].map(() => {
+
+                  var closed = parseInt((statisticsObj?.no_of_transaction?.closed / statisticsObj?.no_of_transaction?.total) * 100+"")
+                  var open = parseInt((statisticsObj?.no_of_transaction?.open / statisticsObj?.no_of_transaction?.total) * 100 + "")
+                  var cancelled = parseInt((statisticsObj?.no_of_transaction?.cancelled / statisticsObj?.no_of_transaction?.total) * 100 + "")
+
+                  if (closed + open + cancelled!=100) {
+                    open += (100 - (closed + open + cancelled))
+                  }
+
+
+                  return < Tooltip title={"closed: " + closed + "% | open: " + open + "% | cancelled:" + cancelled + "%"} overlayStyle={{ maxWidth: 600 }}>
+                    <div style={{ overflow: 'hidden',borderRadius: 5, height: 22, width: '100%', backgroundColor: "#333", color: "#fff" }}>
+                        <div style={{  height: 22, width: closed + '%', backgroundColor: "rgb(19, 194, 194)", float: 'left', textAlign: "center" }}>{closed + '%'}</div>
+                        <div style={{ height: 22, width: open + '%', backgroundColor: "#00b578", float: 'left', textAlign: "center" }}>{open + '%'}</div>
+                        <div style={{  height: 22, width: cancelled + '%', backgroundColor: "#333", float: 'left', textAlign: "center" }}>{cancelled + '%'}</div>
+                      </div>
+                  </Tooltip>
+                })
+                  
+
+                
+
+              }
+
+              
              
-              <Progress percent={(statisticsObj?.no_of_transaction?.completed / statisticsObj?.no_of_transaction?.total) * 100} strokeColor="#13C2C2" size={['100%', 10]} strokeLinecap="butt" showInfo={false} />
             </ProCard>
             
 
-            <ProCard ghost={true} style={{ marginBlockStart: 2 }} gutter={2}>
-              <div style={{ float: 'left', lineHeight: '22px', height: '22px', fontSize: '14px', marginRight: '16px' }}>
-                <span>Total</span><span style={{ marginLeft: '8px' }}>{statisticsObj?.no_of_transaction?.total}</span>
+            <ProCard ghost={true} style={{ marginBlockStart: 13 }} gutter={2}>
+              
+              <div onClick={() => {
+                history.push(`/Transactions`, { terminal_id, dateArr, status: 1 });
+
+              }} style={{ cursor: 'pointer', float: 'left', lineHeight: '22px', height: '22px', fontSize: '14px', marginRight: '16px' }}>
+                <span style={{ fontWeight: 500 }}><SvgIcon style={{ color: "rgb(19, 194, 194)" }} type="icon-youjiantou" /> Closed</span> <span style={{ marginLeft: '8px' }}>{statisticsObj?.no_of_transaction?.closed}</span>
               </div>
-              <div style={{ float: 'left', lineHeight: '22px', height: '22px', fontSize: '14px', marginRight: '16px' }}>
-                <span>Completed</span> <span style={{ marginLeft: '8px' }}>{statisticsObj?.no_of_transaction?.completed}</span>
+              <div onClick={() => {
+                history.push(`/Transactions`, { terminal_id, dateArr, status: 0 });
+
+              }} style={{ cursor: 'pointer', float: 'left', lineHeight: '22px', height: '22px', fontSize: '14px', marginRight: '16px' }}>
+                <span style={{ fontWeight: 500 }}><SvgIcon style={{ color:"#00b578" }}  type="icon-youjiantou" /> Open</span> <span style={{ marginLeft: '8px' }}>{statisticsObj?.no_of_transaction?.open}</span>
               </div>
-              <div style={{ float: 'left', lineHeight: '22px', height: '22px', fontSize: '14px', marginRight: '16px' }}>
-                <span>Open</span> <span style={{ marginLeft: '8px' }}>{statisticsObj?.no_of_transaction?.open}</span>
+              <div onClick={() => {
+                history.push(`/Transactions`, { terminal_id, dateArr, status: 2 });
+
+              }} style={{ cursor: 'pointer', float: 'left', lineHeight: '22px', height: '22px', fontSize: '14px', marginRight: '16px' }}>
+                <span style={{ fontWeight: 500 }}><SvgIcon style={{ color: "#333" }}  type="icon-youjiantou" /> Cancelled</span> <span style={{ marginLeft: '8px' }}>{statisticsObj?.no_of_transaction?.cancelled}</span>
               </div>
             </ProCard>
           </ProCard>
 
-          <ProCard collapsed={collapsed2} colSpan={{ xs: 24, md: 12 }} style={{ marginBlockStart: isMP ? 16 : 0, marginLeft: 4 }} wrap title={<div style={{ fontWeight: '500', fontSize: 14 }}> Average Total Duration Per Transaction</div>} extra={< EyeOutlined onClick={() => {
+          <ProCard collapsed={collapsed2} colSpan={{ xs: 24, md: 12 }} style={{ marginBlockStart: isMP ? 16 : 0, marginLeft: 4 }} wrap title={<div style={{ fontWeight: '500', fontSize: 14 }}> Average Total Duration Per Completed Transaction</div>} extra={< EyeOutlined onClick={() => {
             setCollapsed2(!collapsed2);
             localStorage.setItem('collapsed2', !collapsed2);
           }} style={{ fontWeight: 'normal', fontSize: 14 }} />} bordered headerBordered>
@@ -390,15 +508,16 @@ const Welcome: React.FC = () => {
             }} >
 
               <ProCard.Group ghost={true} direction={'row'} bodyStyle={{ paddingLeft: 10, backgroundColor: "#70AD47", borderRadius: '10px' }}>
-                <ProCard ghost={true} bodyStyle={{ padding: 5 }}>
-                  <Statistic title="All Time" value={parseInt(statisticsObj?.average_total_duration_per_transaction?.all_time/3600+"")} suffix=" h"  />
+                <ProCard ghost={true} bodyStyle={{ padding: 5, textAlign: isMP ? 'center' : 'left' }}>
+
+                  <Statistic title={dateArr[0] && dateArr[1] ? "Selected Filter Period" : (<span>All Time &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>)} value={parseInt(statisticsObj?.average_total_duration_per_transaction?.all_time / 3600 + "")} suffix=" h"  />
                 </ProCard>
                 <Divider type={'vertical'} />
-                <ProCard ghost={true} bodyStyle={{ padding: 5}}>
+                <ProCard ghost={true} bodyStyle={{ padding: 5, textAlign: isMP ? 'center' : 'left' }}>
                   <Statistic title="12 Month Average" value={statisticsObj?.average_total_duration_per_transaction?.month_12 ? parseInt(statisticsObj?.average_total_duration_per_transaction?.month_12 / 3600 + "") : "-"} suffix={statisticsObj?.average_total_duration_per_transaction?.month_12 ? " h" : ""} />
                 </ProCard>
                 <Divider type={'vertical'} />
-                <ProCard ghost={true} bodyStyle={{ padding: 5}}>
+                <ProCard ghost={true} bodyStyle={{ padding: 5, textAlign: isMP ? 'center' : 'left' }}>
                   <Statistic title="30 Day Average" value={statisticsObj?.average_total_duration_per_transaction?.day_30 ? parseInt(statisticsObj?.average_total_duration_per_transaction?.day_30 / 3600 + "") : "-"} suffix={statisticsObj?.average_total_duration_per_transaction?.day_30 ? " h":""} />
                 </ProCard>
 
@@ -409,7 +528,7 @@ const Welcome: React.FC = () => {
         </ProCard>
 
 
-        <ProCard collapsed={collapsed3} colSpan={34} style={{ marginBlockStart: 16 }} bodyStyle={{ padding: '16px', overflow: isMP ? 'auto' : 'hidden' }} wrap title={<div style={{ fontWeight: '500', fontSize: 14 }}> Overview of Threshold Breached in Transactions </div>} extra={< EyeOutlined onClick={() => {
+        <ProCard collapsed={collapsed3} colSpan={34} style={{ marginBlockStart: 16 }} bodyStyle={{ padding: '16px', overflow: isMP ? 'auto' : 'hidden' }} wrap title={<div style={{ fontWeight: '500', fontSize: 14 }}> Overview Of Threshold Breached In Transactions </div>} extra={< EyeOutlined onClick={() => {
           setCollapsed3(!collapsed3);
           localStorage.setItem('collapsed3', !collapsed3);
         }} style={{ fontWeight: 'normal', fontSize: 14 }} />} bordered headerBordered>
@@ -427,15 +546,17 @@ const Welcome: React.FC = () => {
 
 
                       <div style={{ position: 'absolute', zIndex: 0, top: 20, left: i == 0 ? '50%' : 0, width: i == 0 || i == 4 ? '50%' : (i > 4 ? '0' : '100%'), height: 2, backgroundColor: '#8aabe5', overflow: 'hidden', }}></div>
-                     
-                      <div style={{ position: 'relative', zIndex: 1 }}>
+
+                      <div style={{ position: 'relative', zIndex: 1, cursor: 'pointer' }} onClick={() => {
+                        history.push(`/threshold/alert?flow_id=` + e.id);
+                      }}>
                         <span style={{
                           display: "inline-block",
                           color: "#fff",
                           width: '40px',
                           height: '40px',
                           fontSize: "30px",
-                          backgroundColor: color[e.icon],
+                          backgroundColor: statisticsObj?.threshold_reached?.no[e.id]?.color || color[e.icon],
                           borderRadius: '50%',
                           textAlign: 'center',
                           lineHeight: '40px'
@@ -454,18 +575,18 @@ const Welcome: React.FC = () => {
              
             </tr>
             <tr style={{ textAlign: 'center', height:30 }}>
-              <td style={{ fontWeight: '500', textAlign: 'left' }}>No. of Threshold Breach</td>
+              <td style={{ fontWeight: '500', textAlign: 'left' }}>No. Of Threshold Breach</td>
               {
                 flowList.map((e, i) => {
 
-                  return <td>{statisticsObj?.threshold_reached?.no[e.id] || 0}</td>
+                  return <td>{statisticsObj?.threshold_reached?.no[e.id]?.count || 0}</td>
                 })
 
               }
               
             </tr>
             <tr style={{ textAlign: 'center',height: 30, }} >
-              <td style={{ fontWeight: '500', textAlign: 'left' }}>% of breaches</td>
+              <td style={{ fontWeight: '500', textAlign: 'left' }}>% Of Breaches</td>
               {
                 flowList.map((e, i) => {
 
@@ -479,7 +600,7 @@ const Welcome: React.FC = () => {
               {
                 flowList.map((e, i) => {
 
-                  return <td>{statisticsObj?.threshold_reached?.avg_duration[e.id]}</td>
+                  return <td>{(statisticsObj?.threshold_reached?.avg_duration?.[e.id]) && statisticsObj?.threshold_reached?.avg_duration?.[e.id]?.avg !=0?getTimeStr(statisticsObj?.threshold_reached?.avg_duration?.[e.id]?.avg):'-'}</td>
                 })
 
               }
@@ -489,7 +610,7 @@ const Welcome: React.FC = () => {
         </ProCard>
 
 
-        <ProCard collapsed={collapsed4} colSpan={24} style={{ marginBlockStart: 16 }} wrap title={<div style={{ fontWeight: '500', fontSize: 14 }}> {'Open Transactions (' + (terminal_id ? terminalList[terminal_id] : "") + ' - ' + dateArr[0] + ' to ' + dateArr[1] + ')'} </div>} extra={< EyeOutlined onClick={() => {
+        <ProCard collapsed={collapsed4} colSpan={24} style={{ marginBlockStart: 16 }} wrap title={<div style={{ fontWeight: '500', fontSize: 14 }}>  {getFilterStr(terminal_id, terminalList, dateArr, 0, "Transactions")} </div>} extra={< EyeOutlined onClick={() => {
           setCollapsed4(!collapsed4);
           localStorage.setItem('collapsed4', !collapsed4);
         }} style={{ fontWeight: 'normal', fontSize: 14 }} />} bordered headerBordered >
@@ -524,25 +645,25 @@ const Welcome: React.FC = () => {
 
                 {
                   transactionList.map((e, i) => {
-                   
+                    var transaction = e
                     var t_id=e.id
                     return <tr style={{ textAlign: 'center', height: 60 }}>
                       <td onClick={() => {
                         history.push(`/transaction/detail?transaction_id=` + e.id);
-                      }} title={e.id} style={{ cursor: 'pointer' }}><a>{e.id.substr(0, 8) + "..."}</a></td>
+                      }}  style={{ cursor: 'pointer' }}><a>{e.eos_id}</a></td>
                       <td>{moment(e.start_of_transaction).format('DD/MM/YYYY')  }</td>
                       <td>{e.imo_number}</td>
                       <td>{e.vessel_name}</td>
                       <td>{terminalList[e.terminal_id]}</td>
                       <td>{jettyList[e.jetty_id] }</td>
                      
-                      <td>{e.total_nominated_quantity_b} / {e.total_nominated_quantity_m}</td>
+                      <td>{numeral(e.total_nominated_quantity_b).format('0,0')} / {numeral(e.total_nominated_quantity_m).format('0,0')}</td>
                       {
                         flowTreeAll.map((e, i) => {
                           
                           var p = transactionMap[t_id]?.processMap[e.id]
                           var val = p?.duration
-                          var total_duration = transactionMap[t_id]?.totalDuration
+                          var total_duration = transaction.total_duration
                           var ta = transactionAlert[t_id]?.[e.id]
                          
                           return <td>
@@ -573,16 +694,16 @@ const Welcome: React.FC = () => {
                                   <span style={{
                                     display: "inline-block",
                                     color: "#fff",
-                                    width: '75px',
-                                    height: '18px',
-                                    fontSize: "14px",
+                                    width: '25px',
+                                    height: '25px',
+                                    fontSize: "18px",
                                     backgroundColor: ta ? (ta.red > 0 ? "red" : "#DE8205") : "#13c2c2",
                                     borderRadius: '30px',
                                     textAlign: 'center',
-                                    lineHeight: '18px'
+                                    lineHeight: '25px'
                                   }}>
-
-                                    {parseInt((total_duration / 3600) + "") + "h " + parseInt((total_duration % 3600) / 60) + "m"}
+                                    <SvgIcon type="icon-shalou" /> 
+                                   
                                   </span>
                                 )}
 
@@ -599,7 +720,9 @@ const Welcome: React.FC = () => {
                               {i < 5 && (
                                 <div style={{ position: 'relative', zIndex: 1, fontSize: '12px', color: "#333", lineHeight: "12px" }}>{p ? (p.event_count > 0 ? parseInt((val / 3600) + "") + "h " + parseInt((val % 3600) / 60) + "m" : "") : ""}</div>
                               )}
-
+                              {i == 5 && (
+                                <div style={{ position: 'relative', zIndex: 1, fontSize: '12px', color: "#333", lineHeight: "12px" }}> {parseInt((total_duration / 3600) + "") + "h " + parseInt((total_duration % 3600) / 60) + "m"}</div>
+                              )}
                             </div>
 
                           </td>

@@ -15,7 +15,7 @@ import {
   ProTable,
 } from '@ant-design/pro-components';
 import { FormattedMessage, useIntl, formatMessage } from '@umijs/max';
-import { Button, Drawer, Input, message, Upload, Tooltip, Modal } from 'antd';
+import { Button, Drawer, Input, message, Upload, Tooltip, Modal, Empty, ConfigProvider } from 'antd';
 import React, { useRef, useState, useEffect } from 'react';
 import CreateForm from './components/CreateForm';
 import UpdateForm from './components/UpdateForm';
@@ -108,14 +108,19 @@ const handleRemove = async (selectedRows: JettyListItem[], callBack: any) => {
       try {
         removeJetty({
           id: selectedRows.map((row) => row.id),
+        }).then(() => {
+          hide();
+          message.success(<FormattedMessage
+            id="pages.deletedSuccessfully"
+            defaultMessage="Deleted successfully and will refresh soon"
+          />);
+          open = false
+          callBack(true)
         });
-        hide();
-        message.success(<FormattedMessage
-          id="pages.deletedSuccessfully"
-          defaultMessage="Deleted successfully and will refresh soon"
-        />);
-        open = false
-        callBack(true)
+
+
+
+          
 
       } catch (error) {
         hide();
@@ -230,7 +235,7 @@ const TableList: React.FC = () => {
   useEffect(() => {
 
    
-    terminal({ pageSize: 3000, current: 1, sorter: { name: 'ascend' } }).then((res) => {
+    terminal({ sorter: { name: 'ascend' } }).then((res) => {
       var b = {}
       res.data.forEach((r) => {
         b[r.id] = r.name
@@ -318,7 +323,7 @@ const TableList: React.FC = () => {
       hideInSearch: true,
       defaultSortOrder: 'ascend',
       dataIndex: 'name',
-      tip: 'The jetty name is the unique key',
+     
       render: (dom, entity) => {
         return (
           <a
@@ -335,7 +340,24 @@ const TableList: React.FC = () => {
     {
       title: <FormattedMessage id="pages.jetty.terminals" defaultMessage="Terminal" />,
       dataIndex: 'terminal_id',
-      valueEnum: terminalList
+      valueEnum: terminalList,
+      fieldProps: {
+        notFoundContent: <Empty />,
+      },
+      search: {
+        transform: (value) => {
+          if (value) {
+            return {
+              'terminal_id': {
+                'field': 'terminal_id',
+                'op': 'eq',
+                'data': value
+              }
+            }
+          }
+
+        }
+      }
     },
     {
       title: <FormattedMessage id="pages.jetty.depthAlongside" defaultMessage="Depth Alongside (M)" />,
@@ -369,7 +391,7 @@ const TableList: React.FC = () => {
       hideInSearch: true,
     },
     {
-      title: <FormattedMessage id="pages.jetty.mlaEnvelopAtMHWS3m" defaultMessage="MLA Envelop at MHWS 3.0m (unless otherwise specified) (M)
+      title: <FormattedMessage id="pages.jetty.mlaEnvelopAtMHWS3m" defaultMessage="MLA Envelop At MHWS 3.0m (Unless Otherwise Specified) (M)
 " />,
       dataIndex: 'mla_envelop_at_mhws_3m',
       valueType: 'text',
@@ -380,6 +402,7 @@ const TableList: React.FC = () => {
       title: <FormattedMessage id="pages.searchTable.titleOption" defaultMessage="Operating" />,
       dataIndex: 'option',
       valueType: 'option',
+      hideInTable: !access.canJettyMod(),
       render: (_, record) => [
         <Access accessible={access.canJettyMod()} fallback={<div></div>}>
         <a
@@ -391,8 +414,8 @@ const TableList: React.FC = () => {
         >
           <FormOutlined style={{ fontSize: '20px' }} /> 
           </a>
-          </Access>,
-        <Access accessible={access.canJettyMod()} fallback={<div></div>}>
+        </Access>,
+        <Access accessible={access.canJettyDel()} fallback={<div></div>}>
           <a
             title={formatMessage({ id: "pages.delete", defaultMessage: "Delete" })}
             key="config"
@@ -400,6 +423,10 @@ const TableList: React.FC = () => {
               setCurrentRow(record);
               handleRemove([record], (success) => {
                 if (success) {
+                  if (isMP) {
+                    setData([]);
+                    getData(1, MPfilter)
+                  }
                   actionRef.current?.reloadAndRest?.();
                 }
               });
@@ -414,41 +441,55 @@ const TableList: React.FC = () => {
       ],
     },
   ];
+  const customizeRenderEmpty = () => {
+    var o = formRef.current?.getFieldsValue()
+    var isSearch = false
+    for (var a in o) {
+      if (o[a]) {
+        isSearch = true
+      }
 
+    }
+    if (isSearch) {
+      return <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />
+    } else {
+      return <Empty />
+    }
+
+
+  }
   return (
     <PageContainer header={{
-      title: '',
+      title: isMP ? null : < FormattedMessage id="'pages.jetty.title" defaultMessage="Jetty Criteria – Advario" />,
       breadcrumb: {},
+      extra: isMP ? null : [
+        <Access accessible={access.canJettyAdd()} fallback={<div></div>}> <Button
+          type="primary"
+          key="primary"
+          onClick={() => {
+            handleModalOpen(true);
+          }}
+        >
+          <PlusOutlined /> <FormattedMessage id="pages.searchTable.new" defaultMessage="New" />
+        </Button></Access>, <Access accessible={access.canJettyAdd()} fallback={<div></div>}> <Upload {...uploadprops}>
+          <Tooltip title="">
+            <Button type="primary">
+              Batch Add
+            </Button>
+          </Tooltip>
+        </Upload></Access>
+      ]
     }}>
-      {!isMP && (<ProTable<JettyListItem, API.PageParams>
+      {!isMP && (<ConfigProvider renderEmpty={customizeRenderEmpty}><ProTable<JettyListItem, API.PageParams>
         formRef={formRef }
-        headerTitle={intl.formatMessage({
-          id: 'pages.jetty.title',
-          defaultMessage: 'Jetty Criteria – Advario',
-        })}
+        className="mytable"
         actionRef={actionRef}
         rowKey="id"
         search={{
-          labelWidth: 150,
+          labelWidth: 80,
           searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
         }}
-        toolBarRender={() => [
-          <Access accessible={access.canJettyAdd()} fallback={<div></div>}> <Button
-            type="primary"
-            key="primary"
-            onClick={() => {
-              handleModalOpen(true);
-            }}
-          >
-            <PlusOutlined /> <FormattedMessage id="pages.searchTable.new" defaultMessage="New" />
-          </Button></Access>, <Access accessible={access.canJettyAdd()} fallback={<div></div>}> <Upload {...uploadprops}>
-            <Tooltip title="">
-              <Button type="primary">
-                Batch Add
-              </Button>
-            </Tooltip>
-          </Upload></Access>
-        ]}
+        options={false }
         request={(params, sorter) => jetty({ ...params, sorter })}
         columns={columns}
         rowSelection={{
@@ -456,7 +497,7 @@ const TableList: React.FC = () => {
             setSelectedRows(selectedRows);
           },
         }}
-      />)}
+      /></ConfigProvider >)}
 
       {isMP && (<>
 
@@ -476,7 +517,15 @@ const TableList: React.FC = () => {
             formRef={MPSearchFormRef}
             type={'form'}
             cardBordered={true}
-            form={{}}
+            form={{
+              submitter: {
+                searchConfig: {
+
+                  submitText: < FormattedMessage id="pages.search" defaultMessage="Search" />,
+                }
+
+              }
+            }}
 
             search={{}}
             manualRequest={true}
@@ -533,6 +582,10 @@ const TableList: React.FC = () => {
               await handleRemove(selectedRowsState, (success) => {
                 if (success) {
                   setSelectedRows([]);
+                  if (isMP) {
+                    setData([]);
+                    getData(1, MPfilter)
+                  }
                   actionRef.current?.reloadAndRest?.();
                 }
                
@@ -556,6 +609,10 @@ const TableList: React.FC = () => {
           if (success) {
             handleModalOpen(false);
             setCurrentRow(undefined);
+            if (isMP) {
+              setData([]);
+              getData(1, MPfilter)
+            }
             if (actionRef.current) {
               actionRef.current.reload();
             }
@@ -577,6 +634,10 @@ const TableList: React.FC = () => {
           if (success) {
             handleUpdateModalOpen(false);
             setCurrentRow(undefined);
+            if (isMP) {
+              setData([]);
+              getData(1, MPfilter)
+            }
             if (actionRef.current) {
               actionRef.current.reload();
             }

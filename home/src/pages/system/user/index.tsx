@@ -16,14 +16,15 @@ import {
 } from '@ant-design/pro-components';
 import { FormattedMessage, useIntl, formatMessage } from '@umijs/max';
 import { Button, Drawer, Input, message, Modal } from 'antd';
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import CreateForm from './components/CreateForm';
 import UpdateForm from './components/UpdateForm';
 import { isPC } from "@/utils/utils";
 const { confirm } = Modal;
 //MP
 import { InfiniteScroll, List, NavBar, Space, DotLoading } from 'antd-mobile'
-
+import { role } from '../../system/role/service';
+import { company } from '../../system/company/service';
 /**
  * @en-US Add node
  * @zh-CN 添加节点
@@ -106,14 +107,15 @@ const handleRemove = async (selectedRows: UserListItem[], callBack: any) => {
       try {
         removeUser({
           id: selectedRows.map((row) => row.id),
+        }).then(() => {
+          hide();
+          message.success(<FormattedMessage
+            id="pages.deletedSuccessfully"
+            defaultMessage="Deleted successfully and will refresh soon"
+          />);
+          open = false
+          callBack(true)
         });
-        hide();
-        message.success(<FormattedMessage
-          id="pages.deletedSuccessfully"
-          defaultMessage="Deleted successfully and will refresh soon"
-        />);
-        open = false
-        callBack(true)
 
       } catch (error) {
         hide();
@@ -145,7 +147,8 @@ const TableList: React.FC = () => {
   const actionRef = useRef<ActionType>();
   const [currentRow, setCurrentRow] = useState<UserListItem>();
   const [selectedRowsState, setSelectedRows] = useState<UserListItem[]>([]);
-
+  const [roleList, setRoleList] = useState<any>({});
+  const [companyList, setCompanyList] = useState<any>({});
   /**
    * @en-US International configuration
    * @zh-CN 国际化配置
@@ -156,6 +159,30 @@ const TableList: React.FC = () => {
 
   const [showMPSearch, setShowMPSearch] = useState<boolean>(false);
   const [isMP, setIsMP] = useState<boolean>(!isPC());
+
+
+
+  useEffect(() => {
+
+    role({  sorter: { name: 'ascend' } }).then((res) => {
+      var b = {}
+      res.data.forEach((r) => {
+        b[r.id] = r.name
+      })
+      setRoleList(b)
+
+    });
+
+    company({  sorter: { name: 'ascend' } }).then((res) => {
+      var b = {}
+      res.data.forEach((r) => {
+        b[r.id] = r.name
+      })
+      setCompanyList(b)
+
+    });
+
+  },[true])
 
   const right = (
     <div style={{ fontSize: 24 }}>
@@ -227,6 +254,7 @@ const TableList: React.FC = () => {
       ),
       dataIndex: 'username',
       
+      sorter: true,
       render: (dom, entity) => {
         return (
           <a
@@ -257,17 +285,62 @@ const TableList: React.FC = () => {
     },
     {
       title: <FormattedMessage id="pages.user.company" defaultMessage="Company" />,
-      dataIndex: 'company_name',
-      valueType: 'text',
+      dataIndex: 'company_id',
+      valueEnum: companyList,
+      search: {
+        transform: (value) => {
+          if (value) {
+            return {
+              'company_id': {
+                'field': 'company_id',
+                'op': 'eq',
+                'data': value
+              }
+            }
+          }
+
+        }
+      }
     },
     {
       title: <FormattedMessage id="pages.user.role" defaultMessage="Role" />,
-      dataIndex: 'role_name',
-      valueType: 'text',
+      dataIndex: 'role_id',
+      valueEnum: roleList,
+      search: {
+        transform: (value) => {
+          if (value) {
+            return {
+              'role_id': {
+                'field': 'role_id',
+                'op': 'eq',
+                'data': value
+              }
+            }
+          }
+
+        }
+      }
     },
     {
       title: <FormattedMessage id="pages.user.status" defaultMessage="Status" />,
       dataIndex: 'status',
+      search: {
+        transform: (value) => {
+          alert(value)
+          if (value !== null) {
+            return {
+
+              status: {
+                'field': 'status',
+                'op': 'eq',
+                'data': Number(value)
+              }
+
+            }
+          }
+
+        }
+      },
       valueEnum: {
         0: { text: <FormattedMessage id="pages.user.normal" defaultMessage="Normal" />, status: 'Success' },
         1: { text: <FormattedMessage id="pages.user.disable" defaultMessage="Disable" />, status: 'Error' },
@@ -276,6 +349,23 @@ const TableList: React.FC = () => {
     {
       title: <FormattedMessage id="pages.user.onlineStatus" defaultMessage="Online Status" />,
       dataIndex: 'online_status',
+      search: {
+        transform: (value) => {
+          alert(value)
+          if (value !== null) {
+            return {
+
+              online_status: {
+                'field': 'online_status',
+                'op': 'eq',
+                'data': Number(value)
+              }
+
+            }
+          }
+
+        }
+      },
       valueEnum: {
         0: { text: <FormattedMessage id="pages.user.online" defaultMessage="Online" />, status: 'Success' },
         1: { text: <FormattedMessage id="pages.user.offline" defaultMessage="Offline" />, status: 'Error' },
@@ -316,7 +406,10 @@ const TableList: React.FC = () => {
             setCurrentRow(record);
             handleRemove([record], (success) => {
               if (success) {
-               
+                if (isMP) {
+                  setData([]);
+                  getData(1, MPfilter)
+                }
                 actionRef.current?.reloadAndRest?.();
               }
             });
@@ -343,31 +436,30 @@ const TableList: React.FC = () => {
 
   return (
     <PageContainer header={{
-      title: '',
+      title: isMP ? null : < FormattedMessage id="pages.user.title" defaultMessage="User" />,
       breadcrumb: {},
+      extra: isMP ? null : [
+        <Button
+          type="primary"
+          key="primary"
+          onClick={() => {
+            handleModalOpen(true);
+          }}
+        >
+          <PlusOutlined /> <FormattedMessage id="pages.searchTable.new" defaultMessage="New" />
+        </Button>,
+      ]
     }}>
       {!isMP && (<ProTable<UserListItem, API.PageParams>
-        headerTitle={intl.formatMessage({
-          id: 'pages.user.title',
-          defaultMessage: 'User',
-        })}
+       
         actionRef={actionRef}
         rowKey="id"
         search={{
           labelWidth: 120,
           searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
         }}
-        toolBarRender={() => [
-          <Button
-            type="primary"
-            key="primary"
-            onClick={() => {
-              handleModalOpen(true);
-            }}
-          >
-            <PlusOutlined /> <FormattedMessage id="pages.searchTable.new" defaultMessage="New" />
-          </Button>,
-        ]}
+        className="mytable"
+        options={false }
         request={(params, sorter) => user({ ...params, sorter })}
         columns={columns}
         rowSelection={{
@@ -451,6 +543,10 @@ const TableList: React.FC = () => {
               await handleRemove(selectedRowsState, (success) => {
                 if (success) {
                   setSelectedRows([]);
+                  if (isMP) {
+                    setData([]);
+                    getData(1, MPfilter)
+                  }
                   actionRef.current?.reloadAndRest?.();
                 }
 
@@ -473,6 +569,10 @@ const TableList: React.FC = () => {
           if (success) {
             handleModalOpen(false);
             setCurrentRow(undefined);
+            if (isMP) {
+              setData([]);
+              getData(1, MPfilter)
+            }
             if (actionRef.current) {
               actionRef.current.reload();
             }
@@ -494,6 +594,10 @@ const TableList: React.FC = () => {
           if (success) {
             handleUpdateModalOpen(false);
             setCurrentRow(undefined);
+            if (isMP) {
+              setData([]);
+              getData(1, MPfilter)
+            }
             if (actionRef.current) {
               actionRef.current.reload();
             }

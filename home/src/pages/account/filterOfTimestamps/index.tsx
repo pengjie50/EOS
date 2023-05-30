@@ -309,7 +309,7 @@ const TableList: React.FC = () => {
       {!isMP && (<ProTable<FilterOfTimestampsListItem, API.PageParams>
         headerTitle={intl.formatMessage({
           id: 'pages.filterOfTimestamps.title',
-          defaultMessage: 'Filter of Timestamps',
+          defaultMessage: 'Filter Of Timestamps',
         })}
         actionRef={actionRef}
         rowKey="id"
@@ -342,7 +342,7 @@ const TableList: React.FC = () => {
         <NavBar backArrow={false} right={right} onBack={back}>
           {intl.formatMessage({
             id: 'pages.filterOfTimestamps.title',
-            defaultMessage: 'Filter of Timestamps',
+            defaultMessage: 'Filter Of Timestamps',
           })}
         </NavBar>
 
@@ -355,7 +355,15 @@ const TableList: React.FC = () => {
             formRef={MPSearchFormRef}
             type={'form'}
             cardBordered={true}
-            form={{}}
+            form={{
+              submitter: {
+                searchConfig: {
+
+                  submitText: < FormattedMessage id="pages.search" defaultMessage="Search" />,
+                }
+
+              }
+            }}
 
             search={{}}
             manualRequest={true}

@@ -13,8 +13,28 @@ export async function user(params?: UserListParams) {
   });
 }
 
+export async function queryCurrent(options ?: { [key: string]: any }) {
+
+  return request<{
+    data: API.CurrentUser;
+  }>('/api/user/info', {
+    method: 'POST',
+    data: {},
+    headers: {
+      'Content-Type': 'application/json',
+    },
+    ...(options || {}),
+  });
+}
+
 export async function checkEmail(options?: { [key: string]: any }) {
   return request<any>('/api/user/checkEmail', {
+    method: 'POST',
+    data: options || {}
+  });
+}
+export async function checkUsername(options?: { [key: string]: any }) {
+  return request<any>('/api/user/checkUsername', {
     method: 'POST',
     data: options || {}
   });

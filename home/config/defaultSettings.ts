@@ -16,7 +16,7 @@ const Settings: ProLayoutProps & {
   fixedHeader: false,
   fixSiderbar: true,
   colorWeak: false,
-  title: 'EOS',
+  title: 'EOS - Efficiency Optimization System',
   pwa: true,
   logo: '/logo.png',
   iconfontUrl: '',

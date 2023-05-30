@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect,useCallback } from 'react';
 import { PageContainer, ProCard, ProColumns, ProDescriptions, ProFormGroup, ProFormSelect, ProDescriptionsItemProps } from '@ant-design/pro-components';
-import { AlertOutlined, SafetyCertificateOutlined, FormOutlined,CheckOutlined, EyeOutlined, ExclamationCircleOutlined } from '@ant-design/icons'; 
+import { AlertOutlined, SafetyCertificateOutlined, FormOutlined, CheckOutlined, ReloadOutlined, FieldTimeOutlined,CalendarOutlined, EyeOutlined, ExclamationCircleOutlined, AimOutlined } from '@ant-design/icons'; 
 import ProTable from '@ant-design/pro-table';
 import { FormattedMessage, useIntl, useLocation, useModel, history } from '@umijs/max';
 import { TransactionList, TransactionListItem } from '../data.d';
@@ -20,16 +20,17 @@ import { jetty } from '../../system/jetty/service';
 import { alertrule } from '../../alertrule/service';
 import numeral from 'numeral';
 var moment = require('moment');
+
 const { Step } = Steps;
 const { confirm } = Modal;
 
-const is_do=(transactioneventList: any[],id: any) =>{
-  return transactioneventList.find((a) => {
-    return a.flow_id == id
-  })
-}
+
 var handleget: () => void
 var handlegetFlow: (f: any) => void
+
+var handlegetFlowFilter: (f: any) => void
+
+
 const handleAdd = async (fields: any) => {
   const hide = message.loading(<FormattedMessage
     id="pages.adding"
@@ -74,14 +75,15 @@ const handleRemove = async (selectedRows: any[], callBack: any) => {
       try {
         removeFilterOfTimestamps({
           id: selectedRows.map((row) => row.id),
+        }).then(() => {
+          hide();
+          message.success(<FormattedMessage
+            id="pages.deletedSuccessfully"
+            defaultMessage="Deleted successfully and will refresh soon"
+          />);
+          open = false
+          callBack(true)
         });
-        hide();
-        message.success(<FormattedMessage
-          id="pages.deletedSuccessfully"
-          defaultMessage="Deleted successfully and will refresh soon"
-        />);
-        open = false
-        callBack(true)
 
       } catch (error) {
         hide();
@@ -122,18 +124,36 @@ const handleUpdate = async (fields: any) => {
     return false;
   }
 };
+
+const Threshold: React.FC<any> = (props) => {
+  const {
+    hours,
+    mins,
+    type,
+    size,
+    ...restProps
+  } = props;
+
+
+  return (hours || mins) ? <span style={{ fontSize: size } }><SvgIcon style={{ color: type == "amber" ? "#DE8205" : "red" }} type="icon-yuan" /> {(hours ? hours : 0) + "h " + (mins ? mins : 0) + "m"}</span> : "cccc" + hours + mins
+}
+
+
+
+
+
 const Detail: React.FC<any> = (props) => {
 
   const [currentFilter, setCurrentFilter] = useState<any>();
   const [currentRow, setCurrentRow] = useState<TransactionListItem>();
-  const [flowTree, setFlowTree] = useState<any>([]);
+  const [flowTreeFilter, setFlowTreeFilter] = useState<any>([]);
   const [flowTreeAll, setFlowTreeAll] = useState<any>([]);
   const [flowList, setFlowList] = useState<any>([]);
   const [summaryList, setSummaryList] = useState<any>([]);
   const [transactionAlert, setTransactionAlert] = useState<any>([]);
-  const [transactioneventList, setTransactioneventList] = useState<any>([]);
+ 
   const [transactioneventMap, setTransactioneventMap] = useState<any>(new Map());
-  const [processMap, setProcessMap] = useState<any>(new Map());
+  const [processMap, setProcessMap] = useState<any>({});
  // const [transaction_id, setTransaction_id] = useState<any>("");
   const [filterOfTimestampsList, setFilterOfTimestampsList] = useState<any>([{ value: 'add', label: 'Add new template' }]);
   const [filterOfTimestampsMap, setFilterOfTimestampsMap] = useState<any>(new Map());
@@ -149,6 +169,7 @@ const Detail: React.FC<any> = (props) => {
   const { currentUser } = initialState || {};
   const [show, setShow] = useState<any>({});
   var transaction_id = useLocation().search.split("=")[1]
+
   const [createModalOpen, handleModalOpen] = useState<boolean>(false);
   const [isAdd, setIsAdd] = useState<boolean>(false);
 
@@ -162,10 +183,110 @@ const Detail: React.FC<any> = (props) => {
   const [selectValue, setSelectValue] = useState<any>(null);
   
   const getTimeStr=(time)=>{
-    return parseInt((time / 3600) + "") + "h " + parseInt((time % 3600) / 60) + "m"
+    return (time ? parseInt((time / 3600) + "") : 0 )+ "h " +( time? parseInt((time % 3600) / 60):0) + "m"
   }
 
   const access = useAccess();
+
+
+  const columns1: ProColumns<TransactionListItem>[] = [
+    {
+      title: <FormattedMessage id="pages.transaction.status" defaultMessage="Status" />,
+      dataIndex: 'status',
+      valueEnum: {
+        0: { text: <FormattedMessage id="pages.transaction.active" defaultMessage="Open" /> },
+        1: { text: <FormattedMessage id="pages.transaction.closed" defaultMessage="Closed" /> },
+        2: { text: <FormattedMessage id="pages.transaction.cancelled" defaultMessage="Cancelled" /> }
+      },
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.startOfTransaction" defaultMessage="Start of transaction" />,
+      dataIndex: 'start_of_transaction',
+      valueType: 'date',
+
+      hideInSearch: true,
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.endOfTransaction" defaultMessage="End of transaction" />,
+      dataIndex: 'end_of_transaction',
+      valueType: 'date',
+      hideInSearch: true,
+    }
+   
+
+    ]
+
+  const columns2: ProColumns<TransactionListItem>[] = [
+    {
+      title: <FormattedMessage id="pages.transaction.vesselName" defaultMessage="Vessel Name" />,
+      dataIndex: 'vessel_name',
+      valueType: 'text',
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.imoNumber" defaultMessage="IMO Number" />,
+      dataIndex: 'imo_number',
+      hideInSearch: true,
+      valueType: 'text',
+    }
+   
+
+
+  ]
+  const columns3: ProColumns<TransactionListItem>[] = [
+    {
+      title: <FormattedMessage id="pages.transaction.terminalName" defaultMessage="Terminal Name" />,
+      dataIndex: 'terminal_id',
+      valueEnum: terminalList
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.jettyName" defaultMessage="Jetty Name" />,
+      dataIndex: 'jetty_id',
+      valueEnum: jettyList
+    }
+
+
+  ]
+
+
+  const columns4: ProColumns<TransactionListItem>[] = [
+    {
+      title: <FormattedMessage id="pages.alertrule.throughputVolume1" defaultMessage="Total Nominated Quantity (MT)" />,
+      dataIndex: 'total_nominated_quantity_m',
+      hideInSearch: true,
+      valueType: "text",
+      render: (dom, entity) => {
+        if (dom != null) {
+          return numeral(dom).format('0,0')
+        }
+
+      },
+    },
+    {
+      title: <FormattedMessage id="pages.alertrule.throughputVolume1" defaultMessage="Total Nominated Quantity (Bal-60-F)" />,
+      dataIndex: 'total_nominated_quantity_b',
+      hideInSearch: true,
+      valueType: 'text',
+      render: (dom, entity) => {
+        if (dom != null) {
+          return numeral(dom).format('0,0')
+        }
+
+      },
+    },
+
+
+  ]
+
+  const columns5: ProColumns<TransactionListItem>[] = [
+    {
+      title: <FormattedMessage id="pages.transaction.productType" defaultMessage="Product Type" />,
+      dataIndex: 'product_type',
+      //valueEnum: producttypeList,
+    },
+
+  ]
+
+
   const columns: ProColumns<TransactionListItem>[] = [
     {
       title: (
@@ -174,19 +295,18 @@ const Detail: React.FC<any> = (props) => {
           defaultMessage="EOS ID"
         />
       ),
-      dataIndex: 'id',
-      render: (dom, entity) => {
-        return !isMP?entity.id.substr(0, 8) + "...":dom
-          
-        
-      },
+      dataIndex: 'eos_id',
+      ellipsis: {
+        showTitle: true,
+      }
+     
     },
 
     {
       title: (
         <FormattedMessage
           id="pages.transaction.timeFrame"
-          defaultMessage="Time frame"
+          defaultMessage="Timeframe"
         />
       ),
       sorter: true,
@@ -207,28 +327,7 @@ const Detail: React.FC<any> = (props) => {
 
 
     },
-    {
-      title: <FormattedMessage id="pages.transaction.startOfTransaction" defaultMessage="Start of transaction" />,
-      dataIndex: 'start_of_transaction',
-      valueType: 'date',
-      
-      hideInSearch: true,
-    },
-    {
-      title: <FormattedMessage id="pages.transaction.endOfTransaction" defaultMessage="End of transaction" />,
-      dataIndex: 'end_of_transaction',
-      valueType: 'date',
-      hideInSearch: true,
-    },
-    {
-      title: <FormattedMessage id="pages.transaction.status" defaultMessage="Status" />,
-      dataIndex: 'status',
-      valueEnum: {
-        0: { text: <FormattedMessage id="pages.transaction.active" defaultMessage="Active" /> },
-        1: { text: <FormattedMessage id="pages.transaction.closed" defaultMessage="Closed" /> },
-        2: { text: <FormattedMessage id="pages.transaction.cancelled" defaultMessage="Cancelled" /> }
-      },
-    },
+    
     {
       title: <FormattedMessage id="pages.transaction.arrivalID" defaultMessage="Arrival ID" />,
       dataIndex: 'arrival_id',
@@ -268,61 +367,14 @@ const Detail: React.FC<any> = (props) => {
       valueType: 'text',
     },*/
 
-    {
-      title: <FormattedMessage id="pages.transaction.imoNumber" defaultMessage="IMO Number" />,
-      dataIndex: 'imo_number',
-      hideInSearch: true,
-      valueType: 'text',
-    },
-    {
-      title: <FormattedMessage id="pages.transaction.vesselName" defaultMessage="Vessel Name" />,
-      dataIndex: 'vessel_name',
-      valueType: 'text',
-    },
-    {
-      title: <FormattedMessage id="pages.transaction.terminalName" defaultMessage="Terminal Name" />,
-      dataIndex: 'terminal_id',
-      valueEnum: terminalList
-    },
-    {
-      title: <FormattedMessage id="pages.transaction.jettyName" defaultMessage="Jetty Name" />,
-      dataIndex: 'jetty_id',
-      valueEnum: jettyList
-    },
+    
+   
 
+   
+   
 
     {
-      title: <FormattedMessage id="pages.transaction.productType" defaultMessage="Product Type" />,
-      dataIndex: 'product_type',
-      //valueEnum: producttypeList,
-    },
-    {
-      title: <FormattedMessage id="pages.alertrule.throughputVolume1" defaultMessage="Total nominated quantity (MT)" />,
-      dataIndex: 'total_nominated_quantity_m',
-      hideInSearch: true,
-      valueType: "text",
-      render: (dom, entity) => {
-        if (dom !=null) {
-          return numeral(dom).format('0,0') 
-        }
-
-      },
-    },
-    {
-      title: <FormattedMessage id="pages.alertrule.throughputVolume1" defaultMessage="Total nominated quantity (Bal-60-F)" />,
-      dataIndex: 'total_nominated_quantity_b',
-      hideInSearch: true,
-      valueType: 'text',
-      render: (dom, entity) => {
-        if (dom != null) {
-          return numeral(dom).format('0,0')
-        }
-
-      },
-    },
-
-    {
-      title: <FormattedMessage id="pages.transaction.totalDuration" defaultMessage="Total Duration (Till Date)" />,
+      title: <FormattedMessage id="pages.transaction.totalDuration" defaultMessage="Entire Duration (Till Date)" />,
       dataIndex: 'total_duration',
       hideInSearch: true,
       render: (dom, entity) => {
@@ -393,7 +445,7 @@ const Detail: React.FC<any> = (props) => {
     
   }
   useEffect(() => {
-    jetty({ pageSize: 3000, current: 1, sorter: { name: 'ascend' } }).then((res) => {
+    jetty({ sorter: { name: 'ascend' } }).then((res) => {
       var b = {}
       res.data.forEach((r) => {
         b[r.id] = r.name
@@ -402,12 +454,19 @@ const Detail: React.FC<any> = (props) => {
 
     });
 
-    alertrule({ pageSize: 3000, current: 1}).then((res) => {
+    alertrule({ transaction_id: {
+      'field': 'transaction_id',
+        'op': 'eq',
+      'data': transaction_id
+      } }).then((res) => {
       var b = {}
       var c = []
       res.data.forEach((r) => {
         if (r.type != 1) {
-          b[r.flow_id] = r
+          if (!b[r.flow_id]) {
+            b[r.flow_id]=[]
+          }
+          b[r.flow_id].push(r)
         } else {
           setCollapsed(false)
           c.push(r)
@@ -421,7 +480,13 @@ const Detail: React.FC<any> = (props) => {
     });
 
 
-    getAlertBytransactionId({ pageSize: 300, current: 1, transaction_id: transaction_id }).then((res) => {
+    getAlertBytransactionId({
+      transaction_id: {
+       
+          'field': 'transaction_id',
+          'op': 'eq',
+          'data': transaction_id
+        } }).then((res) => {
       var map = {}
 
 
@@ -465,7 +530,7 @@ const Detail: React.FC<any> = (props) => {
 
     });
 
-    producttype({ pageSize: 3000, current: 1, sorter: { name: 'ascend' } }).then((res) => {
+    producttype({  sorter: { name: 'ascend' } }).then((res) => {
       var b = {}
       res.data.forEach((r) => {
         b[r.id] = r.name
@@ -473,7 +538,7 @@ const Detail: React.FC<any> = (props) => {
       setProducttypeList(b)
 
     });
-    terminal({ pageSize: 3000, current: 1, sorter: { name: 'ascend' } }).then((res) => {
+    terminal({ sorter: { name: 'ascend' } }).then((res) => {
       var b = {}
       res.data.forEach((r) => {
         b[r.id] = r.name
@@ -482,34 +547,29 @@ const Detail: React.FC<any> = (props) => {
 
     });
     //setTransaction_id(transaction_id)
-    handlegetFlow = (f: any) => {
+     handlegetFlowFilter = (f: any) => {
+     
 
-     // f.push("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
-      var currentRow_
-      setCurrentRow((currentRow) => {
-        currentRow_ = currentRow
-        return currentRow
-      })
+
+   
+       setFlowList((flowList) => {
+         
+        
+        
       var fidMap = {}
-      flow({ pageSize: 300, current: 1, sorter: { sort: 'ascend' } }).then((res) => {
-       
-        res.data.push({
-          name: currentRow_?.status == 1 ? 'Total Duration' : 'Current Duration', icon: 'icon-daojishi', pid: '                                    ', id: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' })
-        var b = {}
-        res.data.forEach((r) => {
-          b[r.id] = r.name
-        })
-        setFlowConf(b)
+       var arr = flowList.map((a) => {
+         return a
+       });
 
-        var ss = res.data.map((bb) => { return {...bb} })
+      var ss = arr.map((bb) => { return { ...bb } })
         var all = tree(ss, "                                    ", 'pid')
-          setFlowTreeAll(all)
+        setFlowTreeAll(all)
 
         if (f && f.length > 0) {
-          
-          res.data.forEach((a) => {
+
+          arr.forEach((a) => {
             if (a.pid && f.some((c) => {
-              return c==a.id
+              return c == a.id
             })) {
               fidMap[a.pid] = true
             }
@@ -521,88 +581,152 @@ const Detail: React.FC<any> = (props) => {
 
             f.push(k)
           }
-         
-          res.data = res.data.filter((a) => {
+
+          arr = arr.filter((a) => {
             return f.some((b) => {
 
               return a.id == b
             })
           })
 
-          res.data.push({
-            name: currentRow_?.status == 1 ? 'Total Duration' : 'Current Duration', icon: 'icon-daojishi', pid: '                                    ', id: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' })
+          arr.push({
+            name: currentRow?.status == 1 ? 'Entire Duration' : 'Current Duration', icon: 'icon-daojishi', pid: '                                    ', id: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+          })
         }
+       
+
+
+       
+      arr = tree(arr, "                                    ", 'pid')
+      setFlowTreeFilter(arr)
+
+
+         return flowList
+       })
+
+      
+
+    }
+
+
+    handlegetFlow = (f: any) => {
+
+     // f.push("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
+    
+      setCurrentRow((currentRow) => {
+     
+       
+     
+      flow({ sorter: { sort: 'ascend' } }).then((res) => {
+       
+        res.data.push({
+          name: currentRow?.status == 1 ? 'Entire Duration' : 'Current Duration', icon: currentRow?.status == 1 ? 'icon-daojishi' :'icon-shalou', pid: '                                    ', id: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' })
+        var b = {}
+        res.data.forEach((r) => {
+          b[r.id] = r.name
+        })
+        setFlowConf(b)
+
+        var ss = res.data.map((bb) => { return {...bb} })
+        var all = tree(ss, "                                    ", 'pid')
+          setFlowTreeAll(all)
+
+        
         console.log("dddddddddd",res.data)
 
       
         setFlowList(res.data)
-        res.data = tree(res.data, "                                    ", 'pid')
-        setFlowTree(res.data)
+
+        var cc = res.data.map((cc) => { return { ...cc } })
+        var f = tree(cc, "                                    ", 'pid')
+        setFlowTreeFilter(f)
 
 
        
 
       });
+
+        return currentRow
+      })
      }
     
 
     
     
     
-    transactionevent({ pageSize: 1000, current: 1, transaction_id: transaction_id,sorter: { event_time: 'ascend' }
+    transactionevent({
+      transaction_id: {
+       
+          'field': 'transaction_id',
+          'op': 'eq',
+          'data': transaction_id
+        },sorter: { event_time: 'ascend' }
     }).then((res) => {
-      var processMap = new Map()
+      var processMap = {}
+      var td=0
       try {
-        setTotalDuration(parseInt(((new Date(res.data[res.data.length - 1].event_time)).getTime() - (new Date(res.data[0].event_time)).getTime()) / 1000 + ""))
+       
+       var e=new Date(res.data[res.data.length - 1].event_time).getTime()
+        var s = new Date(res.data[0].event_time).getTime()
+
+        td = (e - s) / 1000
+        setTotalDuration(td)
+       
       } catch (e) {
 
       }
-  
-      res.data = res.data.map((a, index) => {
+      res.data.forEach((a,index) => {
 
-        var obj=processMap.get(a.flow_pid)
+        var obj = processMap[a.flow_pid]
         if (!obj) {
-          obj = { duration: 0, process_duration:0, status:0,event_count:0 }
-        } 
-          var next = res.data[index + 1]
-          if (next) {
-           
-            if (next.flow_pid != a.flow_pid) {
-
-              obj.process_duration = parseInt(((new Date(res.data[index + 1].event_time)).getTime() - (new Date(a.event_time)).getTime()) / 1000 + "")
-            } else {
-              var val = parseInt(((new Date(next.event_time)).getTime() - (new Date(a.event_time)).getTime()) / 1000 + "")
-              obj.duration += val
-            }
-
-           
-
-            a.duration = getTimeStr(val) 
-            
-          }
-          
-          obj.event_count++
-
-        processMap.set(a.flow_pid, obj)
-
+          obj = { duration: 0, process_duration: 0, status: 0, event_count: 0,eventArr:[] ,start_date:null}
+        }
+        obj.eventArr.push(a)
         transactioneventMap.set(a.flow_id, a);
 
+        var next = res.data[index + 1]
+        if (next) {
 
-        
-        
-        return a
+          if (next.flow_pid != a.flow_pid) {
+           
+            obj.process_duration = parseInt(((new Date(res.data[index + 1].event_time)).getTime() - (new Date(a.event_time)).getTime()) / 1000 + "")
+          } 
+        }
+
+        processMap[a.flow_pid] = obj
 
       })
+      for (var k in processMap) {
+        var ps = processMap[k].eventArr[0]
+        var es = processMap[k].eventArr[processMap[k].eventArr.length - 1]
+        processMap[k].duration = ((new Date(es.event_time)).getTime() - (new Date(ps.event_time)).getTime()) / 1000
+
+        processMap[k].start_date = moment(new Date(ps.event_time)).format('DD/MM/YYYY')
+
+        processMap[k].event_count = processMap[k].eventArr.length
+      }
+
+
+      processMap["aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"] = { duration: td }
       setProcessMap(processMap)
-      setTransactioneventList(res.data)
+    
 
-
+      console.log("qqqqqqqqqqqqqqqq", processMap)
 
 
 });
     const getFilterOfTimestamps = async () => {
     
-      filterOfTimestamps({ pageSize: 300, current: 1, user_id: currentUser?.id, type: 0 }).then((res) => {
+      filterOfTimestamps({
+        user_id: {
+            'field': 'user_id',
+            'op': 'eq',
+            'data': currentUser?.id
+          }, type: {
+            'field': 'type',
+            'op': 'eq',
+            'data':0
+          } }).then((res) => {
 
         var m = new Map()
         res.data = res.data.map((b) => {
@@ -625,7 +749,12 @@ const Detail: React.FC<any> = (props) => {
     handleget=getFilterOfTimestamps
     getFilterOfTimestamps()
 
-    transaction({ pageSize: 1, current: 1, id: transaction_id }).then((res) => {
+    transaction({
+      id: {
+      'field': 'id',
+      'op': 'eq',
+      'data': transaction_id
+    } }).then((res) => {
 
 
       setCurrentRow(res.data[0])
@@ -633,7 +762,7 @@ const Detail: React.FC<any> = (props) => {
       if (res.data[0].status == 1) {
         setValidateStatus(1)
         validateBC({ id: res.data[0].id }).then((res) => {
-          if (res.data.length==0) {
+          if (res.data && res.data.length==0) {
             setValidateStatus(0)
             setValidateData([])
           } else {
@@ -671,7 +800,7 @@ const Detail: React.FC<any> = (props) => {
     <PageContainer
 
       header={{
-        title: false
+        title: "Transaction - "+currentRow?.eos_id
 
       }}
 
@@ -702,7 +831,7 @@ const Detail: React.FC<any> = (props) => {
       
         onApply={async (value) => {
           value.id = currentRow?.id
-          handlegetFlow(value.value)
+          handlegetFlowFilter(value.value)
             handleModalOpen(false);
             setCurrentFilter(value);
 
@@ -714,6 +843,7 @@ const Detail: React.FC<any> = (props) => {
               handleModalOpen(false);
               setSelectValue(null)
               handleget()
+              handlegetFlowFilter([])
             }
             
           })
@@ -726,60 +856,139 @@ const Detail: React.FC<any> = (props) => {
         createModalOpen={createModalOpen}
         values={currentFilter || {}}
       />
-      {!isMP && (<ProTable<any>
-        columns={columns}
-        dataSource={currentRow?[currentRow]:[]}
-        rowKey="key"
-        pagination={false}
-        search={false}
-        toolBarRender={false}
-        bordered size="small"
+      
 
-      />)}
+      <ProCard ghost={true} style={{ marginBlockStart: 8 }} wrap={isMP ?true : false } gutter={8}>
+          <ProCard
+          colSpan={isMP ? 24 : 12}
+          style={{  backgroundColor: "#e5e5e5" }}
+            layout="center"
+            title={"General Information"}
+            wrap={true }
+            bordered
+          >
 
-      {isMP && (<> <ProDescriptions<any>
-        bordered={true}
-        size="small"
-        layout="horizontal"
-        column={1}
-        title={currentRow?.process_name}
-        request={async () => ({
-          data: currentRow || {},
-        })}
-        params={{
-          id: currentRow?.id,
-        }}
-        columns={columns as ProDescriptionsItemProps<any>[]}
-      /></>)
+            <ProCard ghost={true}>
+              <ProDescriptions contentStyle={{ marginTop:-20 }} columns={columns1 as ProDescriptionsItemProps<any>[]} dataSource={currentRow} labelStyle={{ fontSize: '12px', color: "#333" }} layout="vertical" className="my-descriptions-item"
+                column={isMP ? 2 : 3} >
 
-        }
+              </ProDescriptions>
+            </ProCard>
+           
+            <ProCard ghost={true}>
+
+
+              <ProCard ghost={true} colSpan={8} >
+                <SvgIcon style={{ fontSize: 40 }} type="icon-lunchuan" />
+              </ProCard>
+
+              <ProCard ghost={true} colSpan={16} >
+                <ProDescriptions style={{ display: "inline-block" }} contentStyle={{ marginTop: -20 }} columns={columns2 as ProDescriptionsItemProps<any>[]} dataSource={currentRow} labelStyle={{ fontSize: '12px', color: "#333" }} layout="vertical" className="my-descriptions-item"
+                  column={isMP ? 2 : 2} >
+
+                </ProDescriptions>
+              </ProCard>
+
+              
+            </ProCard>
+
+            <ProCard ghost={true}>
+              <ProCard ghost={true} colSpan={8} >
+                <SvgIcon style={{ fontSize:40 }} type="icon-terminal" />
+              </ProCard>
+
+              <ProCard ghost={true} colSpan={16} >
+                <ProDescriptions style={{ display: "inline-block" }} contentStyle={{ marginTop: -20 }} columns={columns3 as ProDescriptionsItemProps<any>[]} dataSource={currentRow} labelStyle={{ fontSize: '12px', color: "#333" }} layout="vertical" className="my-descriptions-item"
+                  column={isMP ? 2 : 2} >
+
+                </ProDescriptions>
+              </ProCard>
+              
+
+            </ProCard>
+           
+           
+          </ProCard>
+          <ProCard
+          colSpan={isMP ? 24 : 12}
+          style={{ height: '100%',backgroundColor:"#e5e5e5",marginTop:isMP?10:0 }}
+            layout="center"
+            title={"Products"}
+            wrap={true}
+            bordered
+          >
+
+             <ProCard ghost={true}>
+              <ProDescriptions contentStyle={{ marginTop: -20 }} columns={columns4 as ProDescriptionsItemProps<any>[]} dataSource={currentRow} labelStyle={{ fontSize: '12px', color: "#333" }} layout="vertical" className="my-descriptions-item"
+                column={isMP ? 1 : 2} >
+
+              </ProDescriptions>
+            </ProCard>
+
+
+          <ProCard ghost={true} >
+              <ProCard ghost={true} colSpan={6} >
+                <SvgIcon style={{ fontSize: 40 }} type="icon-huowu1" />
+              </ProCard>
+
+              <ProCard ghost={true} colSpan={18} >
+                <ProDescriptions style={{ display: "inline-block" }} contentStyle={{ marginTop: -20 }} columns={columns5 as ProDescriptionsItemProps<any>[]} dataSource={currentRow} labelStyle={{ fontSize: '12px', color: "#333" }} layout="vertical" className="my-descriptions-item"
+                  column={isMP ? 1 : 1} >
+
+                </ProDescriptions>
+              </ProCard>
+
+
+            </ProCard>
+          </ProCard>
+
+
+           
+
+           
+
+
+           
+        
+
+      </ProCard>
+
+
+
+
+     
 
     
       {!isMP && (<ProCard ghost={true} style={{ marginBlockStart:  16  }}><div style={{ width: '100%', height: 'auto', overflow: 'auto', padding: "10px", backgroundColor: "#FFF" }}>
         <div style={{ position: 'relative', float: 'left', zIndex: 1, textAlign: 'left', marginRight: 10 }}>
 
-          <div style={{ position: 'relative', zIndex: 1, fontSize: '14px', color: "#808080" }}>Processes</div>
+          <div style={{ position: 'relative', zIndex: 1, fontSize: '14px', lineHeight:'14px', color: "#808080", height: 28, }}>Processes</div>
           <div style={{ position: 'relative', zIndex: 1, height: '40px', }}>
 
           </div>
-          <div style={{ fontSize: '14px', color: "#808080" }}>
+          <div style={{ fontSize: '14px', height: 25, lineHeight: '25px', color: "#808080" }}>
             Duration
           </div>
-          <div style={{ fontSize: '10px', color: "#808080" }}>
+          <div style={{ fontSize: '14px', height: 25, lineHeight: '25px', color: "#808080" }}>
+            Date
+          </div>
+          <div style={{ fontSize: '14px', height: 25, lineHeight: '25px', color: "#808080" }}>
             Threshold
           </div>
+
+        
         </div>
         {flowTreeAll.map((e, i) => {
 
-          var p = processMap.get(e.id)
-          var ar = alertruleProcessMap[e.id]
+          var p = processMap[e.id]
+          var arArr = alertruleProcessMap[e.id]
          
           return [
             <div style={{ position: 'relative', float: 'left', zIndex: 1, textAlign: 'center', width: '10%' }}>
 
 
-              <div style={{ position: 'absolute', zIndex: 0, top: 40, left: i == 0 ? '50%' : 0, width: (i == 0 || i==5)? '50%' : '100%', height: 2, backgroundColor: '#8aabe5', overflow: 'hidden', }}></div>
-              <div style={{ position: 'relative', zIndex: 1, fontSize: '14px', color: "#333", fontWeight: "bold" }}>{e.name}</div>
+              <div style={{ position: 'absolute', zIndex: 0, top: 47, left: i == 0 ? '50%' : 0, width: (i == 0 || i == 4) ? '50%' : (i == 5 ? 0 : '100%'), height: 2, backgroundColor: '#d2d2d2', overflow: 'hidden', }}></div>
+              <div style={{ position: 'relative', zIndex: 1, fontSize: '14px', height:28,lineHeight:'14px', color: "#333", fontWeight: "bold" }}>{e.name}</div>
               <div style={{ position: 'relative', zIndex: 1 }}>
                 {e.id != "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" && (<span style={{
                   display: "inline-block",
@@ -799,44 +1008,63 @@ const Detail: React.FC<any> = (props) => {
 
 
                 {e.id == "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" && (
-
+                  <div style={{ height:40 }}>
                   <span style={{
-                    marginTop: 7,
+                   
                     display: "inline-block",
                     color: "#fff",
-                    width: '80px',
-                    height: '25px',
-                    fontSize: "14px",
-                    backgroundColor: currentRow?.status == 1 ? (transactionAlert[e.id] ? (transactionAlert[e.id].red > 0 ? "red" : "#DE8205") : color[e.icon]):"#595959",      
+                    width: '40px',
+                    height: '40px',
+                    fontSize: "28px",
+                    backgroundColor: transactionAlert[e.id] ? (transactionAlert[e.id].red > 0 ? "red" : "#DE8205") :( currentRow?.status == 1 ?color[e.icon]:"#595959"),      
                     borderRadius: '50%',
                     textAlign: 'center',
-                    lineHeight: '25px'
+                    lineHeight: '40px'
                   }}>
-
-                    {totalDuration > 0 ? getTimeStr(totalDuration) : ""}
+                      <SvgIcon type={e.icon} />
+                    
                   </span>
+                    </div>
 
                   )} 
 
               </div>
-              <div style={{ fontSize: '14px', color: "#333", height: 20, lineHeight: "20px" }}>
-                {p && p.event_count == e.children.length ? getTimeStr(p.duration) : ""}
+              <div style={{ fontSize: '14px', fontWeight:500, color: "#333",  height: 25, lineHeight: "25px" }}>
+                {p ? getTimeStr(p.duration) : ""}
               </div>
-              <div style={{ fontSize: '10px' }}>
-                {ar && (<SvgIcon style={{ color: "#DE8205" }} type="icon-yuan" />)} {ar ? ar.amber_hours + "h " + ar.amber_mins + "m" : ""} {ar && (<SvgIcon style={{ color: "red" }} type="icon-yuan" />)} {ar ? ar.red_hours + "h " + ar.red_mins + "m" : ""}
+
+
+              <div style={{ fontSize: '14px', fontWeight: 500, color: "#333", height: 25, lineHeight: "25px" }}>
+                {p ? p.start_date : ""}
               </div>
+
+
+              <div style={{ fontSize: '12px', lineHeight: "25px" }}>
+
+                {arArr && arArr.map((ar) => {
+
+                  return (<> <Threshold hours={ar.amber_hours} mins={ar.amber_mins} type="amber" size={10} /> &nbsp;
+
+                    <Threshold hours={ar.red_hours} mins={ar.red_mins} type="red" size={10} /></>)
+                })
+                }
+
+              </div>
+
+             
+
             </div>,
 
             
               e.id != "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"?
                 (<div style={{ width: '4.5%', position: 'relative', float: 'left', textAlign: 'center', display: i >= flowTreeAll.length-2 ? "none" : "block" }}>
-              <div style={{ position: 'absolute', zIndex: 0, top: 40, width: '100%', height: 2, backgroundColor: '#8aabe5', overflow: 'hidden', }}></div>
-              <div style={{ position: 'relative', marginTop: '35px', fontSize: "20px", zIndex: 1 }}>
+              <div style={{ position: 'absolute', zIndex: 0, top: 47, width: '100%', height: 2, backgroundColor: '#d2d2d2', overflow: 'hidden', }}></div>
+              <div style={{ position: 'relative', marginTop: '41px', fontSize: "16px", zIndex: 1 }}>
 
-                {p && p.process_duration > 0 && (<SvgIcon type={'icon-map-link-full'} />)}
+                    {p && p.process_duration > 0 && (<SvgIcon style={{ color: "#d2d2d2" }} type={'icon-map-link-full'} />)}
 
               </div>
-              <div style={{ fontSize: '10px' }}>
+              <div style={{ fontSize: '12px' }}>
                 {p && p.process_duration > 0 ? getTimeStr(p.process_duration):"" }
               </div>
             </div>):null
@@ -874,7 +1102,7 @@ const Detail: React.FC<any> = (props) => {
                 lineHeight: '30px'
               }}>
 
-                <CheckOutlined />
+                <SvgIcon type={"icon-a-outline-polygon-matic"} />
 
               </span>
 
@@ -882,7 +1110,7 @@ const Detail: React.FC<any> = (props) => {
             
           </div>
           <div style={{ fontSize: '10px', color: validateStatus == 2 ? "#67C23A" : "#808080", width: "100%s" }}>
-            Timestamps to be validated on blockchain
+            {validateStatus == 1 ? 'Penockchain falidation' :'Validated on Blockchain'}
           </div>
 
         </div>
@@ -912,8 +1140,8 @@ const Detail: React.FC<any> = (props) => {
         </div>
         {flowTreeAll.map((e, i) => {
 
-          var p = processMap.get(e.id)
-          var ar = alertruleProcessMap[e.id]
+          var p = processMap[e.id]
+          var ar = alertruleProcessMap[e.id]?.[0]
           return [
             <div style={{ position: 'relative', float: 'left', zIndex: 1, textAlign: 'left', width: '100%' }}>
 
@@ -939,19 +1167,19 @@ const Detail: React.FC<any> = (props) => {
 
                 {e.id == "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" && (
                   <span style={{
-                    marginTop: 5,
+                    
                     display: "inline-block",
                     color: "#fff",
-                    width: '70px',
-                    height: '25px',
-                    fontSize: "14px",
+                    width: '40px',
+                    height: '40px',
+                    fontSize: "28px",
                     backgroundColor: currentRow?.status == 1 ? (transactionAlert[e.id] ? (transactionAlert[e.id].red > 0 ? "red" : "#DE8205") : color[e.icon]) : "#595959",
                     borderRadius: '50%',
                     textAlign: 'center',
-                    lineHeight: '25px'
+                    lineHeight: '40px'
                   }}>
-
-                    {totalDuration > 0 ? getTimeStr(totalDuration) : ""}
+                    <SvgIcon type={e.icon} />
+                   
                   </span>
 
                   )}
@@ -959,18 +1187,22 @@ const Detail: React.FC<any> = (props) => {
               <div style={{ position: 'relative', marginLeft: 5, height: '40px', lineHeight: '40px', width: '30%', zIndex: 1, float: 'left', fontSize: '12px', color: "#333", fontWeight: "bold" }}>{e.name}</div>
               {e.id != "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" && (
                 <div style={{ fontSize: '12px', float: 'left', height: '40px', lineHeight: '40px', width: '15%', color: "#333" }}>
-                  {p && p.event_count == e.children.length ? getTimeStr(p.duration) : ""}
+                  {p  ? getTimeStr(p.duration) : ""}
                 </div>)}
               <div style={{ fontSize: '10px', height: '40px', lineHeight: '40px', textAlign: 'center', width: '40%', display: "inline-block", float:'right'  }}>
-                {ar && (<SvgIcon style={{ color: "#DE8205" }} type="icon-yuan" />)} {ar ? ar.amber_hours + "h " + ar.amber_mins + "m" : ""} {ar && (<SvgIcon style={{ color: "red" }} type="icon-yuan" />)} {ar ? ar.red_hours + "h " + ar.red_mins + "m" : ""}
+                {ar && (<><Threshold hours={ar.amber_hours} mins={ar.amber_mins} type="amber" size={12} />&nbsp;
+
+                  <Threshold hours={ar.red_hours} mins={ar.red_mins} type="red" size={12} /></>)
+
+                }
               </div>
             </div>,
 
             e.id != "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" ?(
             <div style={{ height: '30px', position: 'relative', float: 'left', textAlign: 'center' }}>
-              <div style={{ position: 'absolute', zIndex: 0, left: 20, height: '100%', width: 2, backgroundColor: '#8aabe5', overflow: 'hidden', }}></div>
-              <div style={{ position: 'relative', marginLeft: '19px', fontSize: "14px", height: 20, lineHeight: '20px', zIndex: 1 }}>
-                {p && p.process_duration > 0 && (<SvgIcon type={'icon-map-connect-full'} />)}
+                {i != 4 && <div style={{ position: 'absolute', zIndex: 0, left: 20, height: '100%', width: 1, backgroundColor: '#d2d2d2', overflow: 'hidden', }}></div>} 
+                <div style={{ position: 'relative', marginLeft: '19px', fontSize: "14px", height: 20, lineHeight: '20px', zIndex: 1 }}>
+                  {p && p.process_duration > 0 && (<SvgIcon style={{color:"#d2d2d2"}} type={'icon-map-connect-full'} />)}
                 
                 <span style={{ display: 'inline-block', height: 20, marginLeft: 5, lineHeight: '20px', fontSize: "14px" }}>  {p && p.process_duration > 0 ? getTimeStr(p.process_duration) : ""}</span>
               </div>
@@ -1008,7 +1240,7 @@ const Detail: React.FC<any> = (props) => {
                 lineHeight: '30px'
               }}>
 
-                <CheckOutlined />
+                <SvgIcon type={"icon-a-outline-polygon-matic"} />
               </span>}
           </div>
           <div style={{ position: 'relative', height: '40px', lineHeight: '40px', zIndex: 1, float: 'left', fontSize: '14px', color: "#333", fontWeight: "bold" }}>{''}</div>
@@ -1016,7 +1248,7 @@ const Detail: React.FC<any> = (props) => {
 
           </div>
           <div style={{ fontSize: '10px', float: 'left', color: validateStatus == 2 ? "#67C23A" : "#808080", height: '40px', marginLeft:'5px', textAlign: "left", lineHeight: '40px'}}>
-            Timestamps to be validated on blockchain
+            {validateStatus == 1 ? 'Penockchain falidation' : 'Validated on Blockchain'}
           </div>
         </div>
 
@@ -1034,57 +1266,57 @@ const Detail: React.FC<any> = (props) => {
         {alertruleEventList.map((ta) => {
           var tb=transactionAlert?.b2e?.[ta.flow_id + "_" + ta.flow_id_to]
           return (
-            <ProCard ghost={true} colSpan={isMP ? 24 : 12} 
-              collapsibleIconRender={({
-                collapsed: buildInCollapsed,
-              }: {
-                collapsed: boolean;
-              }) => (buildInCollapsed ? <span> </span> : <span> </span>)}
-              style={{ marginBlockStart: 5 }}
+            <ProCard ghost={true} colSpan={24} 
+
+              style={{ marginBlockStart: 5, cursor: 'pointer' }}
               headStyle={{ padding: 0, fontWeight: 'normal', fontSize:'14px'}}
               bodyStyle={{paddingLeft:25} }
-              collapsible
-              defaultCollapsed
+             
               onClick={(e) => {
-                handlegetFlow([ta.flow_id, ta.flow_id_to])
+                handlegetFlowFilter([ta.flow_id, ta.flow_id_to])
               } }
-              title={(<div style={{ position: 'relative', height: 30, lineHeight: '30px', marginBottom: "10px" }}>
-
-                <div style={{ float: "left",  paddingLeft: '10px' }}>
-                  <span style={{
-                    display: "inline-block",
-                    color: "#fff",
-                    width: '100px',
-                    height: '25px',
-                    fontSize: "14px",
-                    backgroundColor: tb ? tb.type == 0 ? "#DE8205" : "red" : (getTimeByTwoEvent(ta.flow_id, ta.flow_id_to) == '-' ? "#595959" : "#67C23A"),
-                    borderRadius: '50%',
-                    textAlign: 'center',
-                    lineHeight: '25px'
-                  }}>
-
-                    {getTimeByTwoEvent(ta.flow_id, ta.flow_id_to)}
-                  </span>
-                </div>
-                <div style={{ float: "left", paddingLeft: '10px', fontWeight: 'normal', fontSize: '14px' }}>
-                  {flowConf[ta.flow_id]}<span >{' -> '}</span>{flowConf[ta.flow_id_to]}
-                </div>
-
-              </div>) }
-
             >
 
+
+              <ProCard ghost={true}>
+                {flowConf[ta.flow_id]}<span >{' -> '}</span>{flowConf[ta.flow_id_to]}
+              </ProCard>
+
+              <ProCard ghost={true} layout="center">
+                <span style={{
+                  display: "inline-block",
+                  color: "#fff",
+                  width: '22px',
+                  height: '22px',
+                  fontSize: "16px",
+                  backgroundColor: tb ? tb.type == 0 ? "#DE8205" : "red" : (getTimeByTwoEvent(ta.flow_id, ta.flow_id_to) == '-' ? "#595959" : "#67C23A"),
+                  borderRadius: '50%',
+                  textAlign: 'center',
+                  lineHeight: '22px'
+                }}>
+                  <SvgIcon type={"icon-daojishi"} />
+
+                </span>
+                <span style={{ marginLeft: 5, fontWeight:500 }}>{getTimeByTwoEvent(ta.flow_id, ta.flow_id_to)}</span>
+              </ProCard>
+              <ProCard ghost={true} layout="center">
+
+                <ProDescriptions
+                  column={isMP ? 1 : 2} >
+                  <ProDescriptions.Item label="Threshold" valueType="text" style={{ fontSize: '14px' }} >
+
+
+                    <Threshold hours={ta.amber_hours} mins={ta.amber_mins} type="amber" size={14 }/>&nbsp;
+
+                     <Threshold hours={ta.red_hours} mins={ta.red_mins} type="red" size={14} />
+                    
+                  </ProDescriptions.Item>
+
+                </ProDescriptions>
+              </ProCard>
+
              
-              <ProDescriptions
-                column={isMP ? 1 : 2} >
-                <ProDescriptions.Item label="Threshold" valueType="text" style={{fontSize:'14px'} } >
-                  <SvgIcon style={{ color: "#DE8205" }} type="icon-yuan" /> {ta.amber_hours + "h " + ta.amber_mins + "m "} <SvgIcon style={{ color: "red", marginLeft: 5 }}  type="icon-yuan" />  {ta.red_hours + "h " + ta.red_mins + "m "} 
-                </ProDescriptions.Item>
-               
-               
-
-
-              </ProDescriptions>
+             
 
             </ProCard>
           )
@@ -1102,16 +1334,22 @@ const Detail: React.FC<any> = (props) => {
       </ProCard>
       
 
-      <ProCard  style={{ marginBlockStart: 16 }} title={'Detailed Timestamps' }
+      <ProCard style={{ marginBlockStart: 16 }} title={<><ReloadOutlined onClick={() => {
+        setSelectValue(null)
+        setCurrentFilter(null);
+        setIsAdd(false)
+        handlegetFlowFilter("")
+      }} style={{ cursor: 'pointer' }} />&nbsp;<span>Detailed Timestamps</span></>}
         bordered headerBordered
         extra={<Select
           style={{ width: 200 }}
           allowClear={true}
           value={selectValue}
           onClear={() => {
+            setSelectValue(null)
             setCurrentFilter(null);
             setIsAdd(false)
-            handlegetFlow("")
+            handlegetFlowFilter("")
           } }
           dropdownMatchSelectWidth={ false}
           onSelect={(a) => {
@@ -1123,7 +1361,7 @@ const Detail: React.FC<any> = (props) => {
             }
             else {
               setCurrentFilter(filterOfTimestampsMap.get(a));
-              handlegetFlow(filterOfTimestampsMap.get(a).value)
+             handlegetFlowFilter(filterOfTimestampsMap.get(a).value)
               setIsAdd(false)
             }
            
@@ -1145,13 +1383,15 @@ const Detail: React.FC<any> = (props) => {
 
 
         <Steps
-          direction={'vertical'}
+            direction={'vertical'}
+           
           size="default"
-          style={{ float: 'left', width: '99%', marginLeft: "1%", marginTop:  0, maxHeight: '400px', overflow: 'auto' }}
+            style={{ float: 'left', width: isMP ? '100%' : '50%', marginLeft: isMP ? '0px' : '25%', marginTop: 0, overflow: 'auto', maxWidth:'100%' }}
         >
 
-          {flowTree.map(e => {
-            var p = processMap.get(e.id)
+            {flowTreeFilter.map(e => {
+             
+            var p = processMap[e.id]
             var ar = alertruleProcessMap[e.id]
             flowTreeAll.forEach((nn) => {
               if (nn.id == e.id) {
@@ -1165,35 +1405,35 @@ const Detail: React.FC<any> = (props) => {
 
 
 
-              <Step style={{ cursor: 'pointer' }} status="finish" icon={
+              <Step  style={{ cursor: p ? 'pointer' : 'initial' }} status="wait" icon={
 
 
                 <span onClick={() => {
                   show[e.id] = !show[e.id]
                   setShow({ ...show })
                   console.log(show)
-                }} style={{
+                }}style={{
                   display: "inline-block",
-
+                  
                   color: "#fff",
-                  width: '35px',
-                  height: '35px',
+                  width: '33px',
+                  height: '33px',
                   backgroundColor: e.id == 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' ? "#fff" : (p ? (p.event_count > 0 ? transactionAlert[e.id] ? (transactionAlert[e.id].red > 0 ? "red" : "#DE8205") : color[e.icon] : "#595959") : "#595959"),
                   borderRadius: '50%',
                   textAlign: 'center',
-                  lineHeight: '35px'
+                  lineHeight: '33px'
                 }}>
                   <SvgIcon style={{ color: '#fff' }} type={e.icon} />
                 </span>
 
 
 
-              } title={<div style={{ color: e.id == 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' ? "#fff":"none" }} onClick={() => {
+              } title={<div style={{ color: e.id == 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' ? "#fff" : "#333" }} onClick={() => {
                 show[e.id] = !show[e.id]
                 setShow({ ...show })
-                console.log(show)
-                }}> <span style={{ paddingRight: '20px', width: 135, display: "inline-block", textAlign: "left", fontSize: "16px", lineHeight: "20px", height: 20 }}>{e.name}</span>
-                <span style={{ paddingLeft: '20px', display: "inline-block", textAlign: "left", fontSize: "14px", lineHeight: "20px", height: 20 }}>{p && p.event_count == e.children_length ? getTimeStr(p.duration) : ""}</span></div>} description={<div >{
+
+              }}> <span className={p?"title-hover":"" } style={{paddingRight: '20px', fontWeight:500, display: 'block', width: 160, textAlign: "left", fontSize: "16px", lineHeight: "20px", height: 20 }}>{e.name}</span>
+                <span className={p ? "title-hover" : ""} style={{  display: 'block', textAlign: "left", fontSize: "14px", lineHeight: "20px", height: 20 }}>Process Duration: {p ? getTimeStr(p.duration) : "0h 00m"}</span></div>} description={<div >{
 
                   e.children?.map(c => {
                     if (!show[e.id]) {
@@ -1204,15 +1444,22 @@ const Detail: React.FC<any> = (props) => {
                     var te = transactioneventMap.get(c.id)
                     return (
 
-                      <ProCard
-                        
-                        style={{ marginTop: 10, maxWidth: "100%"}}
-                        title={<span style={{ fontSize: "12px", backgroundColor: "#F2F2F2", padding: "5px", borderRadius: '5px', fontWeight: 'normal' }}>{(te ? moment(te?.event_time).format('YYYY-MM-DD HH:mm:ss') + "   " : "") + c.name}</span>}
+                      (te || access.canAdmin) && <ProCard
+                        headStyle={{ width:'450px' }}
+                        style={{ marginTop: 15, maxWidth: "100%" }}
+                        title={<span className="timestamp-hover" style={{ marginLeft: 22,fontSize: "12px", display: 'inline-block', width: '350px', border: "1px solid #d2d2d2", padding: "5px", borderRadius: '5px', fontWeight: 'normal' }}>
+                          <div>{c.name}</div>
+                          <div><CalendarOutlined /> {moment(te?.event_time).format('DD MMMM YYYY')} &nbsp;&nbsp;&nbsp;&nbsp;<FieldTimeOutlined /> {moment(te?.event_time).format('h:mm a') }</div>
+
+                         
+
+                        </span>}
                         collapsibleIconRender={({ collapsed: buildInCollapsed }: { collapsed: boolean }) =>
-                          <span style={{ color: "#6495ED", marginLeft: -4 }}>-</span>
+                          <span style={{ display: 'inline-block', position: 'relative', width: 20, color: "#d5d5d5", marginLeft: -12.5 }}>< AimOutlined style={{ background: "#fff", position: 'absolute',top:-20 }} /></span>
                         }
-                        collapsible={te ? true : false}
+                        collapsible={ true }
                         defaultCollapsed
+                        bodyStyle={{ marginTop: 18, marginLeft:30 }}
                         onCollapse={(collapse) => console.log(collapse)}
                         extra={
                           (!te ? <Access accessible={access.canAdmin} fallback={<div></div>}><Button
@@ -1230,7 +1477,7 @@ const Detail: React.FC<any> = (props) => {
                         }
                       >
 
-                        <ProDescriptions editable={access.canAdmin ? {
+                        <ProDescriptions labelStyle={{ fontSize: '12px' }} className="my-descriptions-item" editable={access.canAdmin ? {
                          
                           onSave: async (keypath, newInfo, oriInfo) => {
                             var d = { id: te?.id, ...newInfo }
@@ -1244,25 +1491,25 @@ const Detail: React.FC<any> = (props) => {
                           },
                         } : null}
                           column={isMP ? 1 : 2} >
-                          <ProDescriptions.Item label="Work order ID" dataIndex="work_order_id" valueType="text" >
+                          <ProDescriptions.Item label="Work order ID"  dataIndex="work_order_id" valueType="text" >
                            {te?.work_order_id}
                           </ProDescriptions.Item>
-                          <ProDescriptions.Item label="Product Type" dataIndex="product_type" valueType="text">
-                            {te?.product_type}
+                          <ProDescriptions.Item label="Product Type"  dataIndex="product_type" valueType="text">
+                          {te?.product_type}
                           </ProDescriptions.Item>
-                          <ProDescriptions.Item label="Tank ID" dataIndex="tank_id" valueType="text">
-                            {te?.tank_id}
+                          <ProDescriptions.Item label="Tank ID"  dataIndex="tank_id" valueType="text">
+                           {te?.tank_id}
                           </ProDescriptions.Item>
-                          <ProDescriptions.Item label="Volume" dataIndex="volume" valueType="text">
+                          <ProDescriptions.Item label="Volume"  dataIndex="volume" valueType="text">
                             {te?.volume}
                           </ProDescriptions.Item>
-                          <ProDescriptions.Item label="Unit of Measurement" dataIndex="unit_of_measurement" valueType="text">
-                            {te?.unit_of_measurement}
-                          </ProDescriptions.Item>
+                          <ProDescriptions.Item label="Unit of Measurement"  dataIndex="unit_of_measurement" valueType="text">
+                           {te?.unit_of_measurement}
+                          </ProDescriptions.Item >
                           
-                            {
-                              access.canAdmin && <ProDescriptions.Item label="Event Time" dataIndex="event_time" valueType="text">
-                                {moment(te?.event_time).format('YYYY-MM-DD HH:mm:ss')}
+                          {
+                            access.canAdmin && <ProDescriptions.Item label="Event Time"  dataIndex="event_time" valueType="text">
+                               {moment(te?.event_time).format('YYYY-MM-DD HH:mm:ss')}
                               </ProDescriptions.Item>
                             }
                           
@@ -1278,12 +1525,22 @@ const Detail: React.FC<any> = (props) => {
                 }</div>} />
             ]
 
-
-
+            
+              if (e.id == "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" ) {
+                if (show["a7332eb0-d3c9-11ed-a0d9-55ccaa27cc37"]) {
+                
+                  return arr
+                } else {
+                  return null
+                }
+               
+              } else {
+                return arr
+              }
             //return arr
 
 
-            return arr
+            
           })
           }
 

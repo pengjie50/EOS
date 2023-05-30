@@ -1,20 +1,21 @@
-import { addTerminal, removeTerminal, terminal, updateTerminal } from './service';
+import { addReport, removeReport, report, updateReport, updateReportMenu } from './service';
 import { PlusOutlined, SearchOutlined, FormOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import type { ActionType, ProColumns, ProDescriptionsItemProps } from '@ant-design/pro-components';
-import { TerminalList, TerminalListItem } from './data.d';
+import { ReportList, ReportListItem } from './data.d';
+
 import {
   FooterToolbar,
   ModalForm,
   PageContainer,
   ProDescriptions,
   ProFormText,
-  ProFormTextArea,
   Search,
   ProFormInstance,
+  ProFormTextArea,
   ProTable,
 } from '@ant-design/pro-components';
-import { FormattedMessage, useIntl, formatMessage } from '@umijs/max';
-import { Button, Drawer, Input, message, Modal } from 'antd';
+import { FormattedMessage, useIntl, formatMessage, history } from '@umijs/max';
+import { Button, Drawer, Input, message, Modal, ConfigProvider, Empty } from 'antd';
 import React, { useRef, useState } from 'react';
 import CreateForm from './components/CreateForm';
 import UpdateForm from './components/UpdateForm';
@@ -27,13 +28,13 @@ import { InfiniteScroll, List, NavBar, Space, DotLoading } from 'antd-mobile'
  * @zh-CN 添加节点
  * @param fields
  */
-const handleAdd = async (fields: TerminalListItem) => {
+const handleAdd = async (fields: ReportListItem) => {
   const hide = message.loading(<FormattedMessage
     id="pages.adding"
     defaultMessage="Adding"
   />);
   try {
-    await addTerminal({ ...fields });
+    await addReport({ ...fields });
     hide();
     message.success(<FormattedMessage
       id="pages.addedSuccessfully"
@@ -56,13 +57,17 @@ const handleAdd = async (fields: TerminalListItem) => {
  *
  * @param fields
  */
-const handleUpdate = async (fields: Partial<TerminalListItem> ) => {
+const handleUpdate = async (fields: Partial<ReportListItem> ) => {
   const hide = message.loading(<FormattedMessage
     id="pages.modifying"
     defaultMessage="Modifying"
   />);
+ 
   try {
-    await updateTerminal({ ...fields });
+    await updateReport({
+      ...fields
+    }
+    );
     hide();
 
     message.success(<FormattedMessage
@@ -86,7 +91,7 @@ const handleUpdate = async (fields: Partial<TerminalListItem> ) => {
  *
  * @param selectedRows
  */
-const handleRemove = async (selectedRows: TerminalListItem[], callBack: any) => {
+const handleRemove = async (selectedRows: ReportListItem[], callBack: any) => {
   if (!selectedRows) return true;
   var open = true
   confirm({
@@ -102,7 +107,7 @@ const handleRemove = async (selectedRows: TerminalListItem[], callBack: any) => 
         defaultMessage="Deleting"
       />);
       try {
-        removeTerminal({
+        removeReport({
           id: selectedRows.map((row) => row.id),
         }).then(() => {
           hide();
@@ -146,10 +151,13 @@ const TableList: React.FC = () => {
 
   const [showDetail, setShowDetail] = useState<boolean>(false);
 
-  const actionRef = useRef<ActionType>();
-  const [currentRow, setCurrentRow] = useState<TerminalListItem>();
-  const [selectedRowsState, setSelectedRows] = useState<TerminalListItem[]>([]);
 
+  const [updateMenuModalVisible, handleUpdateMenuModalVisible] = useState<boolean>(false);
+
+  const actionRef = useRef<ActionType>();
+  const [currentRow, setCurrentRow] = useState<ReportListItem>();
+  const [selectedRowsState, setSelectedRows] = useState<ReportListItem[]>([]);
+  const formRef = useRef<ProFormInstance>();
   /**
    * @en-US International configuration
    * @zh-CN 国际化配置
@@ -202,7 +210,7 @@ const TableList: React.FC = () => {
   const [MPfilter, setMPfilter] = useState<any>({})
 
   async function getData(page, filter) {
-    const append = await terminal({
+    const append = await report({
       ...{
         "current": page,
         "pageSize": 10
@@ -221,16 +229,15 @@ const TableList: React.FC = () => {
     setCurrentPage(currentPage + 1)
   }
   //--MP end
-  const columns: ProColumns<TerminalListItem>[] = [
+  const columns: ProColumns<ReportListItem>[] = [
     {
       title: (
         <FormattedMessage
-          id="pages.terminal.name"
-          defaultMessage="Terminal Name"
+          id="pages.report.name"
+          defaultMessage="Report name"
         />
       ),
       sorter: true,
-      defaultSortOrder: 'ascend',
       dataIndex: 'name',
      
       render: (dom, entity) => {
@@ -247,7 +254,52 @@ const TableList: React.FC = () => {
       },
     },
     {
-      title: <FormattedMessage id="pages.terminal.description" defaultMessage="Description" />,
+      title: (
+        <FormattedMessage
+          id="pages.report.addTime"
+          defaultMessage="Report Generated Date"
+        />
+      ),
+      sorter: true,
+      hideInSearch: true,
+      dataIndex: 'created_at',
+      valueType: 'dateTime'
+
+    },
+    {
+      title: (
+        <FormattedMessage
+          id="pages.report.addTime"
+          defaultMessage="Report Generated Date"
+        />
+      ),
+      sorter: true,
+      fieldProps: {placeholder: ['From', 'To'] },
+      hideInForm: true,
+      hideInTable: true,
+      defaultSortOrder: 'descend',
+      dataIndex: 'created_at',
+      valueType: 'dateRange',
+      search: {
+        transform: (value) => {
+          if (value.length > 0) {
+            return {
+              'created_at': {
+                'field': 'created_at',
+                'op': 'between',
+                'data': value
+              }
+            }
+          }
+
+        }
+      }
+
+
+
+    },
+    {
+      title: <FormattedMessage id="pages.report.description" defaultMessage="Description" />,
       dataIndex: 'description',
       valueType: 'textarea',
     },
@@ -259,86 +311,101 @@ const TableList: React.FC = () => {
         <a
           key="config"
           onClick={() => {
+
+
             handleUpdateModalOpen(true);
             setCurrentRow(record);
           }}
         >
           <FormOutlined style={{ fontSize: '20px' }} />
         </a>,
-
-        <a
-          title={formatMessage({ id: "pages.delete", defaultMessage: "Delete" })}
-          key="config"
-          onClick={() => {
-            setCurrentRow(record);
-            handleRemove([record], (success) => {
-              if (success) {
-                handleUpdateModalOpen(false);
-                setCurrentRow(undefined);
-                if (actionRef.current) {
+        
+          <a
+            title={formatMessage({ id: "pages.delete", defaultMessage: "Delete" })}
+            key="config"
+            onClick={() => {
+              setCurrentRow(record);
+              handleRemove([record], (success) => {
+                if (success) {
                   if (isMP) {
                     setData([]);
                     getData(1, MPfilter)
                   }
-                  actionRef.current.reload();
+                  actionRef.current?.reloadAndRest?.();
                 }
-              }
-            });
+              });
 
 
-          }}
-        >
-          <DeleteOutlined style={{ fontSize: '20px', color: 'red' }} />
+            }}
+          >
+            <DeleteOutlined style={{ fontSize: '20px', color: 'red' }} />
 
-        </a>
-
+          </a>
+       
        
       ],
     },
   ];
+  const customizeRenderEmpty = () => {
+    var o = formRef.current?.getFieldsValue()
+    var isSearch = false
+    for (var a in o) {
+      if (o[a]) {
+        isSearch = true
+      }
 
+    }
+    if (isSearch) {
+      return <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />
+    } else {
+      return <Empty />
+    }
+
+
+  }
   return (
-    <PageContainer header = {{
-      title: isMP ? null : < FormattedMessage id="pages.terminal.title" defaultMessage="Terminal" />,
+    <PageContainer header={{
+      title: isMP ? null : < FormattedMessage id="pages.report.title" defaultMessage="Report" />,
       breadcrumb: {},
-      extra:
-        isMP ? null : [
-          <Button
-            type="primary"
-            key="primary"
-            onClick={() => {
-              handleModalOpen(true);
-            }}
-          >
-            <PlusOutlined /> <FormattedMessage id="pages.searchTable.new" defaultMessage="New" />
-          </Button>,
-        ]
+      extra: isMP ? null : [
+        <Button
+          type="primary"
+          key="primary"
+          onClick={() => {
+
+            history.push(`/Report/add`);
+           // handleModalOpen(true);
+          }}
+        >
+          <PlusOutlined /> <FormattedMessage id="pages.searchTable.new" defaultMessage="New" />
+        </Button>,
+      ]
     }}>
-      {!isMP && (<ProTable<TerminalListItem, API.PageParams>
-       
+      {!isMP && (<ConfigProvider renderEmpty={customizeRenderEmpty}><ProTable<ReportListItem, API.PageParams>
+        formRef={formRef}
         actionRef={actionRef}
         rowKey="id"
         search={{
-          labelWidth: 150,
+          labelWidth: 155,
           searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
         }}
         options={false}
         className="mytable"
-        request={(params, sorter) => terminal({ ...params, sorter })}
+        request={(params, sorter) => report({ ...params, sorter })}
         columns={columns}
         rowSelection={{
           onChange: (_, selectedRows) => {
             setSelectedRows(selectedRows);
           },
         }}
-      />)}
+      /></ConfigProvider >)}
 
       {isMP && (<>
 
         <NavBar backArrow={false} right={right} onBack={back}>
           {intl.formatMessage({
-            id: 'pages.terminal.title',
-            defaultMessage: 'Terminal',
+            id: 'pages.report.title',
+            defaultMessage: 'Report',
           })}
         </NavBar>
 
@@ -413,16 +480,16 @@ const TableList: React.FC = () => {
           <Button
             onClick={async () => {
               await handleRemove(selectedRowsState, (success) => {
-
-                setSelectedRows([]);
-                if (isMP) {
-                  setData([]);
-                  getData(1, MPfilter)
+                if (success) {
+                  setSelectedRows([]);
+                  if (isMP) {
+                    setData([]);
+                    getData(1, MPfilter)
+                  }
+                  actionRef.current?.reloadAndRest?.();
                 }
-                actionRef.current?.reloadAndRest?.();
 
               });
-             
             }}
           >
             <FormattedMessage
@@ -433,32 +500,7 @@ const TableList: React.FC = () => {
           
         </FooterToolbar>
       )}
-      
-      <CreateForm
-        onSubmit={async (value) => {
-          value.id = currentRow?.id
-          const success = await handleAdd(value as TerminalListItem);
-          if (success) {
-            handleModalOpen(false);
-            setCurrentRow(undefined);
-            if (isMP) {
-              setData([]);
-              getData(1, MPfilter)
-            }
-            if (actionRef.current) {
-              actionRef.current.reload();
-            }
-          }
-        }}
-        onCancel={() => {
-          handleModalOpen(false);
-          if (!showDetail) {
-            setCurrentRow(undefined);
-          }
-        }}
-        createModalOpen={createModalOpen}
-        values={currentRow || {}}
-      />
+     
       <UpdateForm
         onSubmit={async (value) => {
           value.id = currentRow?.id
@@ -484,7 +526,7 @@ const TableList: React.FC = () => {
         updateModalOpen={updateModalOpen}
         values={currentRow || {}}
       />
-
+      
       <Drawer
         width={isMP ? '100%' : 600}
         open={showDetail}
@@ -495,8 +537,9 @@ const TableList: React.FC = () => {
         closable={isMP ? true : false}
       >
         {currentRow?.name && (
-          <ProDescriptions<TerminalListItem>
+          <ProDescriptions<ReportListItem>
             column={isMP ? 1 : 2}
+           
             title={currentRow?.name}
             request={async () => ({
               data: currentRow || {},
@@ -504,7 +547,7 @@ const TableList: React.FC = () => {
             params={{
               id: currentRow?.name,
             }}
-            columns={columns as ProDescriptionsItemProps<TerminalListItem>[]}
+            columns={columns as ProDescriptionsItemProps<ReportListItem>[]}
           />
         )}
       </Drawer>

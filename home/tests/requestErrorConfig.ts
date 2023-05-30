@@ -6,7 +6,11 @@ import { history,useModel } from '@umijs/max';
 import { outLogin } from '@/services/ant-design-pro/api';
 import { stringify } from 'querystring';
 const loginOut = async () => {
-  await outLogin();
+
+  
+   //await outLogin();
+
+  localStorage.setItem('token', "");
   const { search, pathname } = window.location;
   const urlParams = new URL(window.location.href).searchParams;
   /** 此方法会跳转到 redirect 参数所在的位置 */
@@ -72,11 +76,21 @@ export const errorConfig: RequestConfig = {
          
           const { errorMessage, errorCode } = errorInfo;
 
-          if (errorCode == 1005) {
-            message.warning(errorMessage);
+          if (errorCode == 1005 || errorCode == 1011) {
+
+            if (localStorage.getItem('token')) {
+             
+              message.warning(errorMessage );
+              loginOut()
+            }
+            
             //const { initialState, setInitialState } = useModel('@@initialState');
             //setInitialState((s) => ({ ...s, currentUser: undefined }));
-            loginOut()
+           
+          
+              
+          
+           
          
             return
           }
@@ -129,56 +143,29 @@ export const errorConfig: RequestConfig = {
         delete config.data.hasFilters
         var filters = [{ groupOp: 'AND', rules: [] }]
 
-        var b = []
-        var bk = ''
+      
+     
         for (var k in config.data) {
          
           if (k != "current" && k != "pageSize" && k != "filter" && k != "sorter") {
 
-            if (k == 'flow_id' && typeof config.data[k] == "object" && config.data[k].length>0) {
-              
-              var b = {}
-              b.field = k
-              b.op = 'in'
-              b.data = config.data[k]
-              filters[0].rules.push(b)
-             
+
+            if (typeof config.data[k] == "object" && config.data[k].field) {
+              filters[0].rules.push(config.data[k])
               delete config.data[k]
               continue
             }
-            if (k == 'flow_id_to' && typeof config.data[k] == "object" && config.data[k].length > 0) {
-
-              var b = {}
-              b.field = 'flow_id'
-              b.op = 'in'
-              b.data = config.data[k].map((a) => {
-                return a.split('_')[0]
-              })
-              filters[0].rules.push(b)
 
 
-              var c = {}
-              c.field = k
-              c.op = 'in'
-              c.data = config.data[k].map((a) => {
-                return a.split('_')[1]
-              })
-              filters[0].rules.push(c)
 
-              delete config.data[k]
-              continue
-            }
-            if (k.indexOf("__gt")>-1) {
-              b[0] = config.data[k]
-              bk = k.replace("__gt", "")
-              delete config.data[k]
-              continue
-            }
-            if (k.indexOf("__lt") > -1) {
-              b[1] = config.data[k]
-              delete config.data[k]
-              continue
-            }
+
+           
+
+
+
+
+
+           
             var a = {}
             a.field = k
             a.op = 'like'
@@ -188,13 +175,7 @@ export const errorConfig: RequestConfig = {
           }
 
         }
-        if (b.length==2) {
-          var a = {}
-          a.field = bk
-          a.op = 'between'
-          a.data = b
-          filters[0].rules.push(a)
-        }
+        
 
         if (config.data.sorter) {
           for (var k in config.data.sorter) {
@@ -221,7 +202,7 @@ export const errorConfig: RequestConfig = {
       if (config.url != "/api/user/login" && config.url != "/api/user/retrievePassword" && config.url != "/api/user/modifyPassword") {
         config.headers.authorization = localStorage.getItem('token');
       }
-     
+      console.log("sssssssssssssssssssssssssssssssssssssssssssssssssssssssssssssss")
       console.log(config)
       const url = config?.url?.concat('');
       return { ...config, url };

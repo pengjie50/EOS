@@ -73,6 +73,8 @@ export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) =
     footerRender: null,
     logo: logo ,
     onPageChange: () => {
+      document.getElementsByClassName('ant-pro-sider-collapsed-button-is-mobile')?.[0]?.click();
+    
       const { location } = history;
       // 如果没有登录，重定向到 login
       if (!initialState?.currentUser && location.pathname !== loginPath) {

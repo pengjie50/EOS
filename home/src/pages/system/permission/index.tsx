@@ -104,14 +104,15 @@ const handleRemove = async (selectedRows: PermissionListItem[], callBack: any) =
       try {
         removePermission({
           id: selectedRows.map((row) => row.id),
+        }).then(() => {
+          hide();
+          message.success(<FormattedMessage
+            id="pages.deletedSuccessfully"
+            defaultMessage="Deleted successfully and will refresh soon"
+          />);
+          open = false
+          callBack(true)
         });
-        hide();
-        message.success(<FormattedMessage
-          id="pages.deletedSuccessfully"
-          defaultMessage="Deleted successfully and will refresh soon"
-        />);
-        open = false
-        callBack(true)
 
       } catch (error) {
         hide();
@@ -273,7 +274,10 @@ const TableList: React.FC = () => {
             setCurrentRow(record);
             handleRemove([record], (success) => {
               if (success) {
-                
+                if (isMP) {
+                  setData([]);
+                  getData(1, MPfilter)
+                }
                 actionRef.current?.reloadAndRest?.();
               }
             });
@@ -291,31 +295,30 @@ const TableList: React.FC = () => {
 
   return (
     <PageContainer header={{
-      title: '',
+      title: isMP ? null : < FormattedMessage id="pages.permission.title" defaultMessage="Permission" />,
       breadcrumb: {},
+      extra: isMP ? null : [
+        <Button
+          type="primary"
+          key="primary"
+          onClick={() => {
+            handleModalOpen(true);
+          }}
+        >
+          <PlusOutlined /> <FormattedMessage id="pages.searchTable.new" defaultMessage="New" />
+        </Button>,
+      ]
     }}>
       {!isMP && (<ProTable<PermissionListItem, API.PageParams>
-        headerTitle={intl.formatMessage({
-          id: 'pages.permission.title',
-          defaultMessage: 'Permission',
-        })}
+       
         actionRef={actionRef}
         rowKey="id"
         search={{
           labelWidth: 150,
           searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
         }}
-        toolBarRender={() => [
-          <Button
-            type="primary"
-            key="primary"
-            onClick={() => {
-              handleModalOpen(true);
-            }}
-          >
-            <PlusOutlined /> <FormattedMessage id="pages.searchTable.new" defaultMessage="New" />
-          </Button>,
-        ]}
+        className="mytable"
+        options={false }
         request={(params, sorter) => permission({ ...params, sorter })}
         columns={columns}
         rowSelection={{
@@ -343,7 +346,15 @@ const TableList: React.FC = () => {
             formRef={MPSearchFormRef}
             type={'form'}
             cardBordered={true}
-            form={{}}
+            form={{
+              submitter: {
+                searchConfig: {
+
+                  submitText: < FormattedMessage id="pages.search" defaultMessage="Search" />,
+                }
+
+              }
+            }}
 
             search={{}}
             manualRequest={true}
@@ -399,6 +410,10 @@ const TableList: React.FC = () => {
               await handleRemove(selectedRowsState, (success) => {
                 if (success) {
                   setSelectedRows([]);
+                  if (isMP) {
+                    setData([]);
+                    getData(1, MPfilter)
+                  }
                   actionRef.current?.reloadAndRest?.();
                 }
 
@@ -421,6 +436,10 @@ const TableList: React.FC = () => {
           if (success) {
             handleModalOpen(false);
             setCurrentRow(undefined);
+            if (isMP) {
+              setData([]);
+              getData(1, MPfilter)
+            }
             if (actionRef.current) {
               actionRef.current.reload();
             }
@@ -442,6 +461,10 @@ const TableList: React.FC = () => {
           if (success) {
             handleUpdateModalOpen(false);
             setCurrentRow(undefined);
+            if (isMP) {
+              setData([]);
+              getData(1, MPfilter)
+            }
             if (actionRef.current) {
               actionRef.current.reload();
             }

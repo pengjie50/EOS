@@ -2,22 +2,24 @@ import React, { useState } from 'react';
 import { UploadOutlined } from '@ant-design/icons';
 import { Button, Input, Upload, message } from 'antd';
 import { FormattedMessage, useIntl } from '@umijs/max';
+import { isPC } from "@/utils/utils";
 import  {
   ProFormDependency,
   ProFormFieldSet,
   ProFormSelect,
   ProFormText,
+  ProCard,
   PageContainer,
   ProFormTextArea,
   ProForm
 } from '@ant-design/pro-components';
 import { useRequest } from 'umi';
-import { queryCurrent } from '../service';
-import { queryProvince, queryCity } from '../service';
+import { queryCurrent } from '../../../system/user/service';
+
 
 import { updateUser, uploadFile, checkEmail } from '../../../system/user/service';
 
-import styles from './BaseView.less';
+
 
 const validatorPhone = (rule: any, value: string[], callback: (message?: string) => void) => {
   if (!value[0]) {
@@ -144,28 +146,36 @@ const AvatarView = ({ useravatar, userid }: { useravatar: string; userid: string
   };
 
   return (<>
-    <div className={styles.avatar_title}><FormattedMessage
+    <div style={{ width: "100%", textAlign: "center" }}><FormattedMessage
       id="pages.userSet.avatar"
       defaultMessage="Avatar"
     /></div>
-    <div className={styles.avatar}>
-      <img src={avatar} alt="avatar" />
+    <div style={{ width: "100%" ,textAlign: "center" }}>
+      <img style={{ width: "200px" }} src={avatar} alt="avatar" />
     </div>
-    <Upload showUploadList={false} action=""
-      
-      fileList={fileList}
-      onChange={onChange}
-      >
-      <div className={styles.button_view}>
-        <Button>
-          <UploadOutlined />
-          <FormattedMessage
-            id="pages.userSet.uploadAvatar"
-            defaultMessage="Upload avatar"
-          />
-        </Button>
-      </div>
-    </Upload>
+
+   
+    
+      <ProCard layout="center">
+
+        <Upload style={{ width: "100%", textAlign: "center" }} showUploadList={false} action=""
+
+          fileList={fileList}
+          onChange={onChange}
+        >
+          <div>
+            <Button>
+              <UploadOutlined />
+              <FormattedMessage
+                id="pages.userSet.uploadAvatar"
+                defaultMessage="Upload Avatar"
+              />
+            </Button>
+          </div>
+        </Upload>
+      </ProCard>
+
+    
   </>)
 };
 
@@ -174,7 +184,7 @@ const BaseView: React.FC = () => {
     return queryCurrent();
   });
   const intl = useIntl();
-  
+  const [isMP, setIsMP] = useState<boolean>(!isPC());
   const emailCheck = (rule: any, value: any, callback: (arg0: string | undefined) => void) => {
 
     if (currentUser?.email == value) {
@@ -210,11 +220,16 @@ const BaseView: React.FC = () => {
    // message.success('更新基本信息成功');
   };
   return (
-    <PageContainer>
-    <div className={styles.baseView}>
-      {loading ? null : (
-        <>
-          <div className={styles.left}>
+    <PageContainer header={{
+     
+      breadcrumb: {},
+    }}>
+      <ProCard style={{ marginBlockStart: 8 }} gutter={8} wrap={isMP ? true : false}>
+        {loading ? null : (
+        
+          [ <ProCard colSpan={isMP?24:12}>
+          
+        
             <ProForm
               autoFocusFirstInput={false}
               validateTrigger={['onBlur']}
@@ -237,7 +252,7 @@ const BaseView: React.FC = () => {
             >
              
               <ProFormText
-                width="lg"
+                
                 name="nickname"
                 label={<FormattedMessage
                   id="pages.user.nickname"
@@ -255,7 +270,7 @@ const BaseView: React.FC = () => {
               />
               <ProFormTextArea
                   name="profile"
-                  width="lg"
+                 
                 label={<FormattedMessage
                   id="pages.user.profile"
                   defaultMessage="Profile"
@@ -263,7 +278,7 @@ const BaseView: React.FC = () => {
               
               />
               <ProFormText
-                  width="lg"
+                 
                 name="email"
                 rules={[
                 
@@ -284,7 +299,7 @@ const BaseView: React.FC = () => {
 
               />
               <ProFormText
-                  width="lg"
+                  
                 name="phone"
                 label={<FormattedMessage
                   id="pages.user.phone"
@@ -294,13 +309,13 @@ const BaseView: React.FC = () => {
               />
               
             </ProForm>
-          </div>
-          <div className={styles.right}>
+          </ProCard>,
+          <ProCard colSpan={isMP ? 24 : 12}>
             <AvatarView useravatar={currentUser?.avatar} userid={currentUser?.id } />
-          </div>
-        </>
+          </ProCard>]
+        
       )}
-      </div>
+      </ProCard>
       </PageContainer>
   );
 };

@@ -14,12 +14,12 @@ import {
   ProForm
 } from '@ant-design/pro-components';
 
-import { queryCurrent } from '../service';
-import { queryProvince, queryCity } from '../service';
+import { queryCurrent } from '../../../system/user/service';
+
 
 import { modifyPassword } from '../../../system/user/service';
 
-import styles from './BaseView.less';
+
 
 const validatorPhone = (rule: any, value: string[], callback: (message?: string) => void) => {
   if (!value[0]) {

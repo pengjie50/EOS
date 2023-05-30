@@ -171,7 +171,7 @@ const TableList: React.FC = () => {
       title: (
         <FormattedMessage
           id="pages.user.usename"
-          defaultMessage="Login usename"
+          defaultMessage="Login Usename"
         />
       ),
       dataIndex: 'username',
@@ -208,6 +208,23 @@ const TableList: React.FC = () => {
     {
       title: <FormattedMessage id="pages.loginlog.status" defaultMessage="Status" />,
       dataIndex: 'status',
+      search: {
+        transform: (value) => {
+          alert(value)
+          if (value !== null) {
+            return {
+
+              status: {
+                'field': 'status',
+                'op': 'eq',
+                'data': Number(value)
+              }
+
+            }
+          }
+
+        }
+      },
       valueEnum: {
         0: {
           text: (
@@ -274,10 +291,16 @@ const TableList: React.FC = () => {
       valueType: 'dateRange',
       search: {
         transform: (value) => {
-          return {
-            'login_time__gt': value[0],
-            'login_time__lt': value[1],
+          if (value.length>0) {
+            return {
+              'login_time': {
+                'field': 'login_time',
+                'op': 'between',
+                'data': value
+              }
+            }
           }
+          
         }
       }
 
@@ -297,15 +320,13 @@ const TableList: React.FC = () => {
 
   return (
     <PageContainer header={{
-      title: '',
+      title: isMP ? null : < FormattedMessage id="pages.loginlog.title" defaultMessage="Login log" />,
       breadcrumb: {},
+      
     }} >
       {!isMP && (<ProTable<LoginlogListItem, API.PageParams>
         scroll={{  y: 300 }}
-        headerTitle={intl.formatMessage({
-          id: 'pages.loginlog.title',
-          defaultMessage: 'Login log',
-        })}
+       
         actionRef={actionRef}
         rowKey="id"
         search={{
@@ -315,6 +336,8 @@ const TableList: React.FC = () => {
         toolBarRender={() => [
          
         ]}
+        options={false}
+        className="mytable"
         request={(params, sorter) => loginlog({ ...params, sorter })}
         columns={columns}
         rowSelection={{
@@ -342,7 +365,15 @@ const TableList: React.FC = () => {
             formRef={MPSearchFormRef}
             type={'form'}
             cardBordered={true}
-            form={{}}
+            form={{
+              submitter: {
+                searchConfig: {
+
+                  submitText: < FormattedMessage id="pages.search" defaultMessage="Search" />,
+                }
+
+              }
+            }}
 
             search={{}}
             manualRequest={true}

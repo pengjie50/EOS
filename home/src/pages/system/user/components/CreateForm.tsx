@@ -3,6 +3,7 @@ import {
   ProFormRadio,
   ProFormSelect,
   ProFormText,
+  ProFormTreeSelect,
   ProFormTextArea,
   ModalForm,
   ProFormInstance
@@ -15,8 +16,8 @@ import { company } from '../../company/service';
 import { FormattedMessage, useIntl } from '@umijs/max';
 import { Modal, Form } from 'antd';
 import React, { useRef, useState, useEffect } from 'react';
-
-
+import { checkEmail, checkUsername } from '../service';
+import { tree } from "@/utils/utils";
 
 export type CreateFormProps = {
   onCancel: (flag?: boolean, formVals?: Partial<UserListItem>) => void;
@@ -29,7 +30,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
   const restFormRef = useRef<ProFormInstance>();
   const intl = useIntl();
   const [roleConf, setRoleConf] = useState<any>({});
-  const [companyConf, setCompanyConf] = useState<any>({});
+  
 
   const {
     onSubmit,
@@ -51,17 +52,40 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
         setRoleConf(b)
        
       });
-      company({ pageSize: 100, current: 1 }).then((res) => {
-        var b = {}
-        res.data.forEach((r) => {
-          b[r.id] = r.name
-        })
-        setCompanyConf(b)
-
-      });
+     
     }
 
   }, [props.createModalOpen]);
+
+  const usernameCheck = (rule: any, value: any, callback: (arg0: string | undefined) => void) => {
+
+
+    checkUsername({ username: value }).then((res) => {
+      if (res.data == true) {
+
+        callback(intl.formatMessage({
+          id: 'pages.user.emailIsUse',
+          defaultMessage: 'This email is already in use',
+        }))
+      } else {
+        callback(undefined); // 必须返回一个callback
+      }
+    });
+
+
+
+
+  }
+
+
+
+
+
+
+
+
+
+ 
   return (
    
     <ModalForm
@@ -112,6 +136,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
               />
             ),
           },
+          { validator: usernameCheck }
         ]}
       />
       <ProFormText.Password
@@ -133,14 +158,27 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
           },
         ]}
       />
-      <ProFormSelect
+      <ProFormTreeSelect
         name="company_id"
         width="md"
         label={intl.formatMessage({
           id: 'pages.user.company',
-          defaultMessage: '公司',
+          defaultMessage: 'Company',
         })}
-        valueEnum={companyConf}
+        request={async () => {
+          return company({}).then((res) => {
+
+            res.data = res.data.map((r) => {
+              r['value'] = r.id
+              r['title'] = r.name
+              return r
+            })
+
+            // setFlowList(tree(res.data, "                                    ", 'pid'))
+            return tree(res.data, "                                    ", 'pid')
+          });
+
+        }}
       />
       <ProFormSelect
         name="role_id"

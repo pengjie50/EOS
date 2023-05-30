@@ -1,6 +1,10 @@
 import { addAlert, removeAlert, alert, updateAlert } from './service';
-import { PlusOutlined, SearchOutlined , ExclamationCircleOutlined } from '@ant-design/icons';
-import type { ActionType, ProColumns, ProDescriptionsItemProps } from '@ant-design/pro-components';
+
+import { updateTransaction } from '../transaction/service';
+
+import { Empty } from 'antd';
+import { PlusOutlined, SearchOutlined, ExclamationCircleOutlined, FormOutlined } from '@ant-design/icons';
+import { ActionType, ProColumns, ProDescriptionsItemProps, ProCard } from '@ant-design/pro-components';
 import { AlertList, AlertListItem } from './data.d';
 import { flow } from '../system/flow/service';
 import { alertrule } from '../alertrule/service';
@@ -8,6 +12,7 @@ import { SvgIcon } from '@/components' // 自定义组件
 import { producttype } from '../system/producttype/service';
 import { terminal } from '../system/terminal/service';
 import { history } from '@umijs/max';
+import numeral from 'numeral';
 import {
   FooterToolbar,
   ModalForm,
@@ -19,12 +24,13 @@ import {
   Search,
   ProTable,
 } from '@ant-design/pro-components';
-import { FormattedMessage, useIntl } from '@umijs/max';
-import { Button, Drawer, Input, message, Modal } from 'antd';
+import { FormattedMessage, useIntl, useLocation, formatMessage } from '@umijs/max';
+import { Button, Drawer, Input, message, Modal, ConfigProvider } from 'antd';
 import React, { useRef, useState, useEffect } from 'react';
 import CreateForm from './components/CreateForm';
 import UpdateForm from './components/UpdateForm';
-import { tree,isPC } from "@/utils/utils";
+import { tree, isPC } from "@/utils/utils";
+import { useAccess, Access } from 'umi';
 //MP
 import { InfiniteScroll, List, NavBar, Space, DotLoading } from 'antd-mobile'
 import { before } from 'lodash';
@@ -76,6 +82,40 @@ const handleRemove = async (selectedRows: AlertListItem[]) => {
   
 };
 
+/**
+ * @en-US Update node
+ * @zh-CN 更新节点
+ *
+ * @param fields
+ */
+const handleUpdate = async (fields: Partial<any>) => {
+  const hide = message.loading(<FormattedMessage
+    id="pages.modifying"
+    defaultMessage="Modifying"
+  />);
+  try {
+    
+    await updateTransaction({ remarks: fields['t.remarks'], id: fields.id });
+    hide();
+
+    message.success(<FormattedMessage
+      id="pages.modifySuccessful"
+      defaultMessage="Modify is successful"
+    />);
+    return true;
+  } catch (error) {
+    hide();
+    message.error(<FormattedMessage
+      id="pages.modifyFailed"
+      defaultMessage="Modify failed, please try again!"
+    />);
+    return false;
+  }
+};
+
+
+
+
 const TableList: React.FC = () => {
   /**
    * @en-US Pop-up window of new window
@@ -104,7 +144,10 @@ const TableList: React.FC = () => {
    * @zh-CN 国际化配置
    * */
   const intl = useIntl();
+  const access = useAccess();
+  var flow_id = useLocation().search.split("=")[1]
 
+  const formRef = useRef<ProFormInstance>();
 
   //--MP start
   const MPSearchFormRef = useRef<ProFormInstance>();
@@ -167,6 +210,7 @@ const TableList: React.FC = () => {
     setHasMore(10 * (page - 1) + append.data.length < append.total)
   }
   async function loadMore(isRetry: boolean) {
+   
     await getData(currentPage, MPfilter)
     setCurrentPage(currentPage + 1)
   }
@@ -205,13 +249,20 @@ const TableList: React.FC = () => {
 
     return b
   }
+
+  
   useEffect(() => {
-
-    flow({ pageSize: 300, current: 1, sorter: { sort: 'ascend' } }).then((res) => {
-      var b = { "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": "Total Duration" }
-      var p = { "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": "Total Duration" }
-
-
+  
+    if (flow_id) {
+      formRef.current?.setFieldValue('flow_id', [flow_id])
+      formRef.current?.submit();
+    }
+   
+    flow({ sorter: { sort: 'ascend' } }).then((res) => {
+      var b = { "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": "Entire Duration" }
+      var p = { "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": "Entire Duration" }
+   
+     
       res.data.forEach((r) => {
         if (r.type == 0) {
 
@@ -226,7 +277,13 @@ const TableList: React.FC = () => {
       var treeData = tree(res.data, "                                    ", 'pid')
       setFlowTree(treeData)
 
-      alertrule({ pageSize: 300, current: 1, type: 1 }).then((res2) => {
+      alertrule({
+        type: {
+          'field': 'type',
+          'op': 'eq',
+          'data': 1
+        }
+}).then((res2) => {
         var d = {}
 
 
@@ -241,7 +298,7 @@ const TableList: React.FC = () => {
       });
     });
 
-    producttype({ pageSize: 3000, current: 1, sorter: { name: 'ascend' } }).then((res) => {
+    producttype({  sorter: { name: 'ascend' } }).then((res) => {
       var b = {}
       res.data.forEach((r) => {
         b[r.id] = r.name
@@ -251,7 +308,7 @@ const TableList: React.FC = () => {
     });
    
 
-    terminal({ pageSize: 3000, current: 1, sorter: { name: 'ascend' } }).then((res) => {
+    terminal({ sorter: { name: 'ascend' } }).then((res) => {
       var b = {}
       res.data.forEach((r) => {
         b[r.id] = r.name
@@ -269,7 +326,7 @@ const TableList: React.FC = () => {
       title: (
         <FormattedMessage
           id="pages.alertrule.eee"
-          defaultMessage="Entire transaction and processes"
+          defaultMessage="Entire Transaction And Processes"
         />
       ),
       dataIndex: 'flow_id',
@@ -277,19 +334,33 @@ const TableList: React.FC = () => {
       hideInDescriptions: true,
       valueEnum: processes,
       fieldProps: {
-
+        notFoundContent: <Empty />,
         width: '300px',
         mode: 'multiple',
-        showSearch: true,
+        showSearch: false,
         multiple: true
 
+      },
+      search: {
+        transform: (value) => {
+          if (value.length > 0) {
+            return {
+              'flow_id': {
+                'field': 'flow_id',
+                'op': 'in',
+                'data': value
+              }
+            }
+          }
+
+        }
       }
     },
     {
       title: (
         <FormattedMessage
           id="pages.alertrule.eee"
-          defaultMessage="Between two events"
+          defaultMessage="Between Two Events"
         />
       ),
       dataIndex: 'flow_id_to',
@@ -298,12 +369,35 @@ const TableList: React.FC = () => {
       hideInDescriptions: true,
       valueEnum: events,
       fieldProps: {
+        notFoundContent: <Empty/>,
         dropdownMatchSelectWidth: false,
         width: '300px',
         mode: 'multiple',
-        showSearch: true,
+        showSearch: false,
         multiple: true
 
+      },
+      search: {
+        transform: (value) => {
+          if (value.length > 0) {
+            return {
+              'flow_id': {
+                'field': 'flow_id',
+                'op': 'in',
+                'data': value.map((a) => {
+                  return a.split('_')[0]
+                })
+              },
+              'flow_id_to': {
+                'field': 'flow_id_to',
+                'op': 'in',
+                'data': value.map((a) => {
+                  return a.split('_')[1]
+                })
+              },
+            }
+          }
+        }
       }
 
 
@@ -315,15 +409,15 @@ const TableList: React.FC = () => {
           defaultMessage="EOS ID"
         />
       ),
-      dataIndex: 'transaction_id',
+      dataIndex: 't.eos_id',
       hideInSearch:true,
-      
+      align: "center",
       render: (dom, entity) => {
         return (
           <a
             onClick={() => {
               setCurrentRow(entity);
-              history.push(`/transaction/detail?transaction_id=` + dom);
+              history.push(`/transaction/detail?transaction_id=` + entity.transaction_id);
               //setShowDetail(true);
             }}
           >
@@ -334,103 +428,172 @@ const TableList: React.FC = () => {
     },
    
     {
-      title: <FormattedMessage id="pages.alert.NumberProcessThresholdBreach" defaultMessage="Total Number of Process Threshold Breach" />,
+      title: <FormattedMessage id="pages.alert.NumberProcessThresholdBreach" defaultMessage="Total Number Of Process Threshold Breach" />,
       dataIndex: 'product_type',
+      align: "center",
       hideInSearch: true,
       render: (dom, entity) => {
         return (
-          <a
-            onClick={() => {
-              //setCurrentRow(entity);
-             // setShowDetail(true);
-            }}
-          >
-            {entity.red.length + entity.amber.length}
-          </a>
+          
+            entity.red.length + entity.amber.length
+         
         );
       },
       valueType: 'text',
     },
     {
-      title: <FormattedMessage id="pages.alert.specificProcess" defaultMessage="Number of Amber and Red Alert with related processes
+      title: <FormattedMessage id="pages.alert.specificProcess" defaultMessage="Number Of Amber And Red Alert With Related Processes
 " />,
       dataIndex: 'product_type',
       hideInSearch: true,
+      
       valueType: 'text',
       width:300,
       render: (dom, entity) => {
         return (
           <div>
-            <div style={{ marginBottom: '10px' }}><SvgIcon style={{ color: "#DE8205" }} type="icon-yuan" /><span style={{ marginLeft: "10px", display: "inline-block", width: '50px' }}>Amber</span>  <span style={{ display: "inline-block", padding: "3px 8px 3px 8px", border: '1px solid #333' }}>{entity.amber.length}</span>
-              <span style={{ marginLeft: "10px", display: "inline-block" }}>
+            <ProCard
+              headStyle={{ padding: 5 }}
+              bodyStyle={{ paddingLeft: 20 }}
+              ghost={true}
+              title={
+
+                <><SvgIcon style={{ color: "#DE8205" }} type="icon-yuan" /><span style={{ marginLeft: "10px", display: "inline-block", width: '100px' }}>Amber ( {entity.amber.length} )</span></>
+              
+            }
+              extra={
+                ""
+                /* <span style={{ display: "inline-block", padding: "3px 8px 3px 8px", border: '1px solid #aaa' }}>{entity.amber.length}</span>*/
+
+             
+            }
+              
+              style={{ maxWidth: 300 }}
+              
+            >
+              <span style={{ marginLeft: "10px", display: entity.amber.length>0?"inline-block":"none" }}>
                 {
                   entity.amber.map((p) => {
-                    return <div>{flowConf[p.flow_id] + (flowConf[p.flow_id_to] ?" -> " +flowConf[p.flow_id_to] :"")}</div>
+                    return <div><SvgIcon style={{ color: "#333", fontSize: 5 }} type="icon-yuan" />{" " +flowConf[p.flow_id] + (flowConf[p.flow_id_to] ? " -> " + flowConf[p.flow_id_to] : "")}</div>
                   })
                 }
-              
+
 
               </span>
-            
-            </div>
-            <div> <SvgIcon style={{ color: "red" }} type="icon-yuan" /><span style={{ marginLeft: "10px", display: "inline-block", width: '50px' }}>Red</span>   <span style={{ display: "inline-block", padding: "3px 8px 3px 8px", border: '1px solid #333' }}>{entity.red.length}</span>
-              <span style={{ marginLeft: "10px", display: "inline-block" }}>
-                {
-                  entity.red.map((p) => {
-                    return <div>{flowConf[p.flow_id] + (flowConf[p.flow_id_to] ? " -> " + flowConf[p.flow_id_to] : "")}</div>
-                  })
-                }
+            </ProCard>
 
-              </span></div>
-          </div>
+
+            <ProCard
+              ghost={true}
+              headStyle={{ padding: 5, borderTop: "1px solid #ddd" }}
+              title={
+                <div>
+                  <SvgIcon style={{ color: "red" }} type="icon-yuan" /><span style={{ marginLeft: "10px", display: "inline-block", width: '100px' }}>Red  ( {entity.red.length} )</span>  
+                  </div>
+               
+              }
+              extra={
+                ""
+                 /*<span style={{ display: "inline-block", padding: "3px 8px 3px 8px", border: '1px solid #aaa' }}>{entity.red.length}</span>*/
+              
+              }
+              bodyStyle={{ paddingLeft:20 }}
+              style={{ maxWidth: 300 }}
+              
+            >
+              <span style={{ marginLeft: "10px", display: entity.red.length >0? "inline-block" : "none" }}>
+              {
+                entity.red.map((p) => {
+                  return <div><SvgIcon style={{ color: "#333",fontSize:5 }} type="icon-yuan" />{" "+flowConf[p.flow_id] + (flowConf[p.flow_id_to] ? " -> " + flowConf[p.flow_id_to] : "")}</div>
+                })
+                }
+              </span>
+            </ProCard>
+
+            </div>
+         
         );
       },
     },
     {
       title: <FormattedMessage id="pages.alert.productType" defaultMessage="Product Type" />,
-      dataIndex: 't.product_type_id',
+      dataIndex: 't.product_type',
+      align: "center",
       hideInSearch: true,
-      valueEnum: producttypeList
+     
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.imoNumber" defaultMessage="IMO Number" />,
+      dataIndex: 't.imo_number',
+      align: "center",
+      valueType: 'text',
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.vesselName" defaultMessage="Vessel Name" />,
+      dataIndex: 't.vessel_name',
+      align: "center",
+      valueType: 'text',
     },
     {
       title: <FormattedMessage id="pages.transaction.terminalName" defaultMessage="Terminal Name" />,
       dataIndex: 't.terminal_id',
-      valueEnum: terminalList
+      align: "center",
+      valueEnum: terminalList,
+      fieldProps: {
+        notFoundContent: <Empty />,
+      },
+      search: {
+        transform: (value) => {
+          if (value) {
+            return {
+              't.terminal_id': {
+                'field': 't.terminal_id',
+                'op': 'eq',
+                'data': value
+              }
+            }
+          }
+
+        }
+      }
     },
     {
-      title: <FormattedMessage id="pages.alertrule.ee" defaultMessage="Total nominated quantity (MT)" />,
+      title: <FormattedMessage id="pages.alertrule.ee" defaultMessage="Total Nominated Quantity (MT)" />,
       dataIndex: 't.total_nominated_quantity_m',
       hideInSearch: true,
+      align: "center",
       valueType: "text",
       render: (dom, entity) => {
         if (dom) {
 
 
-          return (dom + "").replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+          return numeral(dom).format('0,0')
         }
 
       },
     },
     {
-      title: <FormattedMessage id="pages.alertrule.ee" defaultMessage="Total nominated quantity (Bal-60-F)" />,
+      title: <FormattedMessage id="pages.alertrule.ee" defaultMessage="Total Nominated Quantity (Bal-60-F)" />,
       dataIndex: 't.total_nominated_quantity_b',
       hideInSearch: true,
+      align:"center",
       valueType: 'text',
       render: (dom, entity) => {
         if (dom) {
-          return (dom + "").replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+          return numeral(dom).format('0,0')
         }
 
       },
     },
     {
       title: <FormattedMessage id="pages.alertrule.vesselSizeLimit" defaultMessage="Size Of Vessel (DWT)" />,
-      dataIndex: 't.product_of_volume',
+      dataIndex: 't.size_of_vessel',
       hideInSearch: true,
+      align: "center",
       valueType: 'text',
       render: (dom, entity) => {
-        if (entity['t.product_of_volume'] ) {
-          return (dom + "").replace(/\B(?=(\d{3})+(?!\d))/g, ',');
+        if (entity['t.size_of_vessel'] ) {
+          return numeral(dom).format('0,0')
         }
 
       },
@@ -439,9 +602,29 @@ const TableList: React.FC = () => {
    
     {
       title: <FormattedMessage id="pages.alert.specificProcess" defaultMessage="Remarks" />,
-      dataIndex: 'product_type',
+      dataIndex: 't.remarks',
       hideInSearch: true,
-      valueType: 'text',
+      valueType: 'textarea',
+      render: (dom, record) => {
+
+        return <div><p dangerouslySetInnerHTML={{ __html: dom.replace(/\n/g, '<br />') }} /><Access accessible={access.canAlertruleMod()} fallback={<div></div>}>
+          <a
+            title={formatMessage({ id: "pages.update", defaultMessage: "Modify" })}
+            key="config"
+            onClick={() => {
+              handleUpdateModalOpen(true);
+
+             
+
+              setCurrentRow(record);
+            }}
+          >
+            <FormOutlined style={{ fontSize: '20px' }} />
+
+          </a>
+        </Access></div>;
+      },
+    
     }/*,
     {
       title: <FormattedMessage id="pages.searchTable.titleOption" defaultMessage="Operating" />,
@@ -453,18 +636,45 @@ const TableList: React.FC = () => {
       ],
     },*/
   ];
+
  
+  const customizeRenderEmpty = () => {
+    var o = formRef.current?.getFieldsValue()
+    var isSearch = false
+    for (var a in o) {
+      if (o[a]) {
+        isSearch = true
+      }
+
+    }
+    if (isSearch) {
+      return <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />
+    } else {
+      return  <Empty />
+    }
+    
+
+  }
+   
+      
+
+     
+   
+  
+
   return (
     <PageContainer header={{
-      title: '',
+      title: isMP ? null : < FormattedMessage id="pages.transactions.alert" defaultMessage="Alerts Of All Transactions" />,
       breadcrumb: {},
+      extra: isMP ? null : []
     }}>
-      {!isMP && ( <ProTable<AlertListItem, API.PageParams>
-        headerTitle={intl.formatMessage({
-          id: 'pages.transactions.alert',
-          defaultMessage: 'Alerts of all transactions',
-        })}
+      {!isMP && (<ConfigProvider renderEmpty={customizeRenderEmpty}> <ProTable<AlertListItem, API.PageParams>
+        
+        bordered size="small"
+        className="mytable"
+        editable={{ type: 'single', editableKeys: ['remarks'] }}
         actionRef={actionRef}
+        formRef={formRef}
         rowKey="id"
         search={{
           labelWidth: 210,
@@ -481,12 +691,13 @@ const TableList: React.FC = () => {
           return beforeList(list)
         }}
         columns={columns}
+        options={false}
         rowSelection={{
           onChange: (_, selectedRows) => {
             setSelectedRows(selectedRows);
           },
         }}
-      />)}
+      /></ConfigProvider >)}
 
       {isMP && (<>
 
@@ -506,7 +717,15 @@ const TableList: React.FC = () => {
             formRef={MPSearchFormRef}
             type={'form'}
             cardBordered={true}
-            form={{}}
+            form={{
+              submitter: {
+                searchConfig: {
+
+                  submitText: < FormattedMessage id="pages.search" defaultMessage="Search" />,
+                }
+
+              }
+            }}
 
             search={{}}
             manualRequest={true}
@@ -596,11 +815,15 @@ const TableList: React.FC = () => {
       />
       <UpdateForm
         onSubmit={async (value) => {
-          value.id = currentRow?.id
+          value.id = currentRow?.transaction_id
           const success = await handleUpdate(value);
           if (success) {
             handleUpdateModalOpen(false);
             setCurrentRow(undefined);
+            if (isMP) {
+              setData([]);
+              getData(1, MPfilter)
+            }
             if (actionRef.current) {
               actionRef.current.reload();
             }

@@ -1,5 +1,5 @@
 import { addTransaction, removeTransaction, transaction, updateTransaction } from './service';
-import { PlusOutlined, SearchOutlined, PrinterOutlined, FileExcelOutlined  } from '@ant-design/icons';
+import { PlusOutlined, SearchOutlined, PrinterOutlined, FileExcelOutlined, ExclamationCircleOutlined, DeleteOutlined } from '@ant-design/icons';
 import type { ActionType, ProColumns, ProDescriptionsItemProps } from '@ant-design/pro-components';
 import { TransactionList, TransactionListItem } from './data.d';
 import FrPrint from "../../components/FrPrint";
@@ -15,14 +15,16 @@ import {
   ModalForm,
   PageContainer,
   ProDescriptions,
+  ProFormDatePicker,
   ProFormText,
+  ProCard,
   ProFormTextArea,
   ProFormInstance,
   Search,
   ProTable,
 } from '@ant-design/pro-components';
-import { FormattedMessage, useIntl } from '@umijs/max';
-import { Button, Drawer, Input, message } from 'antd';
+import { FormattedMessage, useIntl, formatMessage, useLocation } from '@umijs/max';
+import { Button, Drawer, Input, message, Modal, Tooltip, Empty, ConfigProvider } from 'antd';
 import React, { useRef, useState, useEffect } from 'react';
 import CreateForm from './components/CreateForm';
 import UpdateForm from './components/UpdateForm';
@@ -32,6 +34,9 @@ import { terminal } from '../system/terminal/service';
 import { producttype } from '../system/producttype/service';
 import { jetty } from '../system/jetty/service';
 import { isPC } from "@/utils/utils";
+const { confirm } = Modal;
+
+
 //MP
 import { InfiniteScroll, List, NavBar, Space, DotLoading } from 'antd-mobile'
 /**
@@ -92,36 +97,53 @@ const handleUpdate = async (fields: Partial<TransactionListItem> ) => {
   }
 };
 
-/**
- *  Delete node
- * @zh-CN 删除节点
- *
- * @param selectedRows
- */
-const handleRemove = async (selectedRows: TransactionListItem[]) => {
-  const hide = message.loading(<FormattedMessage
-    id="pages.deleting"
-    defaultMessage="Deleting"
-  />);
+const handleRemove = async (selectedRows: TransactionListItem[], callBack: any) => {
   if (!selectedRows) return true;
-  try {
-    await removeTransaction({
-      id: selectedRows.map((row) => row.id),
-    });
-    hide();
-    message.success(<FormattedMessage
-      id="pages.deletedSuccessfully"
-      defaultMessage="Deleted successfully and will refresh soon"
-    />);
-    return true;
-  } catch (error) {
-    hide();
-    message.error(<FormattedMessage
-      id="pages.deleteFailed"
-      defaultMessage="Delete failed, please try again"
-    />);
-    return false;
-  }
+  var open = true
+  confirm({
+    title: 'Delete record?',
+    open: open,
+    icon: <ExclamationCircleOutlined />,
+    content: 'The deleted record cannot be restored. Please confirm!',
+    onOk() {
+
+
+      const hide = message.loading(<FormattedMessage
+        id="pages.deleting"
+        defaultMessage="Deleting"
+      />);
+      try {
+        removeTransaction({
+          id: selectedRows.map((row) => row.id),
+        }).then(() => {
+
+          hide();
+          message.success(<FormattedMessage
+            id="pages.deletedSuccessfully"
+            defaultMessage="Deleted successfully and will refresh soon"
+          />);
+          open = false
+          callBack(true)
+        });
+        
+
+      } catch (error) {
+        hide();
+        message.error(<FormattedMessage
+          id="pages.deleteFailed"
+          defaultMessage="Delete failed, please try again"
+        />);
+        callBack(false)
+      }
+
+    },
+    onCancel() { },
+  });
+
+
+
+
+
 };
 
 
@@ -213,7 +235,10 @@ const exportCSV = (data, columns, filename = `${"Summary of all transactions"+mo
       if (c && !c.hideInTable) {
         if (c.valueType == 'date') {
           n[c.title.props.defaultMessage] = s[k] ? moment(s[k]).format('YYYY/MM/DD') : ""
-        } else if (c.render && k!='id') {
+        } else if (c.renderText) {
+          n[c.title.props.defaultMessage] = "" +c.renderText(s[k], s)
+        }
+        else if (c.render && k != 'id') {
           n[c.title.props.defaultMessage] = c.render(s[k],s)
         } else {
           n[c.title.props.defaultMessage] = c.valueEnum ? (typeof c.valueEnum[s[k]] == 'string' ? c.valueEnum[s[k]] : c.valueEnum[s[k]].text.props.defaultMessage) : s[k]
@@ -229,6 +254,7 @@ const exportCSV = (data, columns, filename = `${"Summary of all transactions"+mo
 
   const parser = new Json2csvParser();
   const csvData = parser.parse(newData);
+
   const blob = new Blob(["\uFEFF" + csvData], {
     type: "text/plain;charset=utf-8;",
   });
@@ -268,6 +294,15 @@ const TableList: React.FC = () => {
   const [showMPSearch, setShowMPSearch] = useState<boolean>(false);
   const [isMP, setIsMP] = useState<boolean>(!isPC());
 
+
+
+  
+  
+
+  const [terminal_id, setTerminal_id] = useState<any>(useLocation()?.state?.terminal_id);
+  const [dateArr, setDateArr] = useState<any>(useLocation()?.state?.dateArr);
+  const [status, setStatus] = useState<any>(useLocation()?.state?.status);
+
   const right = (
     <div style={{ fontSize: 24 }}>
       <Space style={{ '--gap': '16px' }}>
@@ -276,6 +311,11 @@ const TableList: React.FC = () => {
       </Space>
     </div>
   )
+
+
+  const formRef = useRef<ProFormInstance>();
+
+
 
   const onFormSearchSubmit = (a) => {
 
@@ -331,11 +371,18 @@ const TableList: React.FC = () => {
   }
   //--MP end
 
+
+
   useEffect(() => {
+   
+    
+   
+   
+  
 
     flow({ pageSize: 300, current: 1, sorter: { sort: 'ascend' } }).then((res) => {
       var b = {}
-      var p = { "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": "Total Duration" }
+      var p = { "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": "Entire Duration" }
       res.data.forEach((r) => {
         if (r.type == 0) {
 
@@ -386,6 +433,25 @@ const TableList: React.FC = () => {
       })
       setTerminalList(b)
 
+     
+
+      if (status !== "" && status !== undefined) {
+        
+          formRef.current?.setFieldValue('status', status + "")
+        }
+
+        if (terminal_id) {
+        
+          formRef.current?.setFieldValue('terminal_id', terminal_id)
+        }
+        if (dateArr && dateArr[0] && dateArr[1]) {
+          formRef.current?.setFieldValue('start_of_transaction', dateArr)
+        }
+        formRef.current?.submit();
+
+      
+
+
     });
 
 
@@ -407,19 +473,24 @@ const TableList: React.FC = () => {
           defaultMessage="EOS ID"
         />
       ),
-      dataIndex: 'id',
-      hideInSearch:true,
+      dataIndex: 'eos_id',
+      hideInSearch: true,
+      sorter: true,
+      defaultSortOrder: 'descend',
+      renderText: (dom, entity) => {
+        return entity.eos_id
+      },
       render: (dom, entity) => {
         return (
           <a
-            title={entity.id }
+           
             onClick={() => {
               setCurrentRow(entity);
               history.push(`/transaction/detail?transaction_id=` + entity.id);
               // setShowDetail(true);
             }}
           >
-            {entity.id.substr(0, 8) + "..."}
+            {dom}
           </a>
         );
       },
@@ -429,29 +500,44 @@ const TableList: React.FC = () => {
       title: (
         <FormattedMessage
           id="pages.transaction.timeFrame"
-          defaultMessage="Time frame"
+          defaultMessage="Timeframe"
         />
       ),
       sorter: true,
-      hideInForm: true,
+     
       hideInTable: true,
+      fieldProps: { placeholder: ['Date (From) ', 'Date (To) '] },
       defaultSortOrder: 'descend',
       dataIndex: 'start_of_transaction',
       valueType: 'dateRange',
+     
       search: {
         transform: (value) => {
-          return {
-            'start_of_transaction__gt': value[0],
-            'start_of_transaction__lt': value[1],
+          if (value.length > 0) {
+            return {
+              'start_of_transaction': {
+                'field': 'start_of_transaction',
+                'op': 'gt',
+                'data': value[0]
+              },
+              'end_of_transaction': {
+                'field': 'end_of_transaction',
+                'op': 'lt',
+                'data': value[1]
+              },
+            }
           }
+          
         }
       }
 
 
 
     },
+
+
     {
-      title: <FormattedMessage id="pages.transaction.startOfTransaction" defaultMessage="Start of transaction" />,
+      title: <FormattedMessage id="pages.transaction.startOfTransaction" defaultMessage="Start Of Transaction" />,
       dataIndex: 'start_of_transaction',
       sorter: true,
       defaultSortOrder:'descend',
@@ -459,7 +545,7 @@ const TableList: React.FC = () => {
       hideInSearch: true,
     },
     {
-      title: <FormattedMessage id="pages.transaction.endOfTransaction" defaultMessage="End of transaction" />,
+      title: <FormattedMessage id="pages.transaction.endOfTransaction" defaultMessage="End Of Transaction" />,
       dataIndex: 'end_of_transaction',
       valueType: 'date',
       hideInSearch: true,
@@ -467,9 +553,26 @@ const TableList: React.FC = () => {
     {
       title: <FormattedMessage id="pages.transaction.status" defaultMessage="Status" />,
       dataIndex: 'status',
+      search: {
+        transform: (value) => {
+         
+          if (value!==null) {
+            return {
+
+              status: {
+                'field': 'status',
+                'op': 'eq',
+                'data': Number(value)
+              }
+
+            }
+          }
+          
+        }
+      },
       valueEnum: {
         0: {
-          text: <FormattedMessage id="pages.transaction.active" defaultMessage="Active" /> },
+          text: <FormattedMessage id="pages.transaction.active" defaultMessage="Open" /> },
         1: { text: <FormattedMessage id="pages.transaction.closed" defaultMessage="Closed" /> },
         2: { text: <FormattedMessage id="pages.transaction.cancelled" defaultMessage="Cancelled" /> }
       },
@@ -485,34 +588,12 @@ const TableList: React.FC = () => {
       title: <FormattedMessage id="pages.transaction.currentProcess" defaultMessage="Current Process" />,
       dataIndex: 'flow_id',
       valueEnum: flowConf,
-      hideInSearch: true,
-    },
-    /*
-    {
-      title: <FormattedMessage id="pages.transaction.workOrderId" defaultMessage="Work Order ID" />,
-      dataIndex: 'work_order_id',
-      valueType: 'text',
-    },
-    
-    {
-      title: <FormattedMessage id="pages.transaction.productOfVolume" defaultMessage="Volume of Product (A)" />,
-      dataIndex: 'product_of_volume',
-      hideInSearch: true,
-      render: (dom, entity) => {
-        return (
-          <span>
-            {dom} m{< sup > 3</sup>}
-          </span>
-        );
+      fieldProps: {
+        notFoundContent: <Empty />,
       },
-     
-      valueType: 'text',
+      hideInSearch: true,
     },
-    {
-      title: <FormattedMessage id="pages.transaction.traderName" defaultMessage="Trader Name" />,
-      dataIndex: 'trader_name',
-      valueType: 'text',
-    },*/
+   
    
     {
       title: <FormattedMessage id="pages.transaction.imoNumber" defaultMessage="IMO Number" />,
@@ -528,12 +609,46 @@ const TableList: React.FC = () => {
     {
       title: <FormattedMessage id="pages.transaction.terminalName" defaultMessage="Terminal Name" />,
       dataIndex: 'terminal_id',
-      valueEnum: terminalList
+      valueEnum: terminalList,
+      fieldProps: {
+        notFoundContent: <Empty />,
+      },
+      search: {
+        transform: (value) => {
+          if (value) {
+            return {
+              'terminal_id': {
+                'field': 'terminal_id',
+                'op': 'eq',
+                'data': value
+              }
+            }
+          }
+
+        }
+      }
     },
     {
       title: <FormattedMessage id="pages.transaction.jettyName" defaultMessage="Jetty Name" />,
       dataIndex: 'jetty_id',
-      valueEnum: jettyList
+      valueEnum: jettyList,
+      fieldProps: {
+        notFoundContent: <Empty />,
+      },
+      search: {
+        transform: (value) => {
+          if (value) {
+            return {
+              'jetty_id': {
+                'field': 'jetty_id',
+                'op': 'eq',
+                'data': value
+              }
+            }
+          }
+
+        }
+      }
     },
     
    
@@ -543,8 +658,9 @@ const TableList: React.FC = () => {
      // valueEnum: producttypeList,
     },
     {
-      title: <FormattedMessage id="pages.alertrule.totalNominatedQuantityM" defaultMessage="Total nominated quantity (MT)" />,
+      title: <FormattedMessage id="pages.alertrule.totalNominatedQuantityM" defaultMessage="Total Nominated Quantity (MT)" />,
       dataIndex: 'total_nominated_quantity_m',
+      
       hideInSearch: true,
       valueType: "text",
       render: (dom, entity) => {
@@ -557,10 +673,12 @@ const TableList: React.FC = () => {
       },
     },
     {
-      title: <FormattedMessage id="pages.alertrule.totalNominatedQuantityB" defaultMessage="Total nominated quantity (Bal-60-F)" />,
+      title: <FormattedMessage id="pages.alertrule.totalNominatedQuantityB" defaultMessage="Total Nominated Quantity (Bal-60-F)" />,
       dataIndex: 'total_nominated_quantity_b',
       hideInSearch: true,
+     
       valueType: 'text',
+
       render: (dom, entity) => {
         if (dom) {
           return numeral(dom).format('0,0') 
@@ -570,7 +688,7 @@ const TableList: React.FC = () => {
     },
 
     {
-      title: <FormattedMessage id="pages.transaction.totalDuration" defaultMessage="Total Duration (Till Date)" />,
+      title: <FormattedMessage id="pages.transaction.totalDuration" defaultMessage="Entire Duration (Till Date)" />,
       dataIndex: 'total_duration',
       hideInSearch: true,
       render: (dom, entity) => {
@@ -588,7 +706,7 @@ const TableList: React.FC = () => {
       title: (
         <FormattedMessage
           id="pages.alertrule.eee"
-          defaultMessage="Entire transaction and processes"
+          defaultMessage="Entire Transaction And Processes"
         />
       ),
       dataIndex: 'flow_id',
@@ -596,19 +714,34 @@ const TableList: React.FC = () => {
       hideInDescriptions: true,
       valueEnum: processes,
       fieldProps: {
-
+        notFoundContent: <Empty />,
         width: '300px',
         mode: 'multiple',
-        showSearch: true,
+        showSearch: false,
         multiple: true
 
+      },
+      search: {
+        transform: (value) => {
+          if (value.length > 0) {
+            return {
+              'flow_id': {
+                'field': 'flow_id',
+                'op': 'in',
+                'data': value
+              }
+            }
+          }
+
+        }
       }
+
     },
     {
       title: (
         <FormattedMessage
           id="pages.alertrule.eee"
-          defaultMessage="Between two events"
+          defaultMessage="Between Two Events"
         />
       ),
       dataIndex: 'flow_id_to',
@@ -617,12 +750,35 @@ const TableList: React.FC = () => {
       hideInDescriptions: true,
       valueEnum: events,
       fieldProps: {
+        notFoundContent: <Empty />,
         dropdownMatchSelectWidth: false,
         width: '300px',
         mode: 'multiple',
-        showSearch: true,
+        showSearch: false,
         multiple: true
 
+      },
+      search: {
+        transform: (value) => {
+          if (value.length > 0) {
+            return {
+              'flow_id': {
+                'field': 'flow_id',
+                'op': 'in',
+                'data': value.map((a) => {
+                  return a.split('_')[0]
+                })
+              },
+              'flow_id_to': {
+                'field': 'flow_id_to',
+                'op': 'in',
+                'data': value.map((a) => {
+                  return a.split('_')[1]
+                })
+              },
+            }
+          }
+        }
       }
 
 
@@ -652,14 +808,16 @@ const TableList: React.FC = () => {
         );
       },
       valueType: 'text',
-    }*//*,
-    
+    }*/
+    ,
    
     {
       title: <FormattedMessage id="pages.searchTable.titleOption" defaultMessage="Operating" />,
       dataIndex: 'option',
       valueType: 'option',
+      hideInTable: !access.canAdmin,
       render: (_, record) => [
+        <Access accessible={access.canAdmin} fallback={<div></div>}>
         <a
           key="config"
           onClick={() => {
@@ -668,62 +826,98 @@ const TableList: React.FC = () => {
           }}
         >
           <FormattedMessage id="pages.update" defaultMessage="Modify" />
-        </a>,
+          </a></Access>,
+        <Access accessible={access.canAdmin} fallback={<div></div>}>
+          <a
+            title={formatMessage({ id: "pages.delete", defaultMessage: "Delete" })}
+            key="config"
+            onClick={() => {
+
+              handleRemove([record], (success) => {
+                if (success) {
+
+                  actionRef.current?.reloadAndRest?.();
+                }
+              });
+
+
+            }}
+          >
+            <DeleteOutlined style={{ fontSize: '20px', color: 'red' }} />
+
+          </a>
+        </Access>
        
       ],
-    },*/
+    },
   ];
   
+  const customizeRenderEmpty = () => {
+    var o = formRef.current?.getFieldsValue()
+    var isSearch = false
+    for (var a in o) {
+      if (o[a]) {
+        isSearch = true
+      }
 
+    }
+    if (isSearch) {
+      return <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />
+    } else {
+      return <Empty />
+    }
+
+
+  }
   return (
     <PageContainer header={{
-      title: '',
+      title: isMP ? null : < FormattedMessage id="pages.transactions.title" defaultMessage="Summary Of All Transactions" />,
       breadcrumb: {},
+      extra: isMP ? null : [
+        <Access accessible={access.canAdmin} fallback={<div></div>}><Button
+          type="primary"
+          key="primary"
+          onClick={() => {
+            handleModalOpen(true);
+          }}
+        >
+
+          <PlusOutlined /> <FormattedMessage id="pages.searchTable.new" defaultMessage="New" />
+        </Button> </Access>, <Button type="primary" key="print"
+          onClick={() => {
+            if (selectedRowsState.length == 0) {
+              message.error(<FormattedMessage
+                id="pages.selectDataFirst"
+                defaultMessage="Please select data first!"
+              />);
+              return false;
+            }
+            handlePrintModalVisible(true)
+          }}
+        ><PrinterOutlined /> <FormattedMessage id="pages.Print" defaultMessage="Print" />
+        </Button>, <Button type="primary" key="out"
+          onClick={() => exportCSV(selectedRowsState, columns)}
+        ><FileExcelOutlined /> <FormattedMessage id="pages.CSV" defaultMessage="CSV" />
+        </Button>
+
+      ]
     }}>
       
-      {!isMP && (<ProTable<TransactionListItem, API.PageParams>
+      {!isMP && (<ConfigProvider renderEmpty={customizeRenderEmpty}><ProTable<TransactionListItem, API.PageParams>
 
        
-        headerTitle={intl.formatMessage({
-          id: 'pages.transaction.title',
-          defaultMessage: 'Summary of all transactions ',
-        })}
+      
+        formRef={formRef}
         bordered size="small"
         actionRef={actionRef}
         rowKey="id"
+        options={false}
         search={{
           labelWidth: 210,
           span:8,
           searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
         }}
-        toolBarRender={() => [
-          <Access accessible={access.canAdmin} fallback={<div></div>}><Button
-            type="primary"
-            key="primary"
-            onClick={() => {
-              handleModalOpen(true);
-            }}
-          >
-            
-            <PlusOutlined /> <FormattedMessage id="pages.searchTable.new" defaultMessage="New" />
-          </Button> </Access>, <Button type="primary" key="print"
-            onClick={() => {
-              if (selectedRowsState.length == 0) {
-                message.error(<FormattedMessage
-                  id="pages.selectDataFirst"
-                  defaultMessage="Please select data first!"
-                />);
-                return false;
-              }
-              handlePrintModalVisible(true)
-            }}
-          ><PrinterOutlined /> <FormattedMessage id="pages.Print" defaultMessage="Print" />
-          </Button>, <Button type="primary" key="out"
-            onClick={() => exportCSV(selectedRowsState,columns)}
-          ><FileExcelOutlined /> <FormattedMessage id="pages.CSV" defaultMessage="CSV" />
-          </Button>
-
-        ]}
+        className="mytable"
         request={(params, sorter) => transaction({ ...params, sorter })}
         columns={columns}
         rowSelection={{
@@ -731,14 +925,14 @@ const TableList: React.FC = () => {
             setSelectedRows(selectedRows);
           },
         }}
-      />)}
+      /></ConfigProvider >)}
 
       {isMP && (<>
 
         <NavBar backArrow={false} right={right} onBack={back}>
           {intl.formatMessage({
             id: 'pages.transaction.title',
-            defaultMessage: 'Summary of all transactions',
+            defaultMessage: 'Summary Of All Transactions',
           })}
         </NavBar>
 
@@ -751,9 +945,19 @@ const TableList: React.FC = () => {
             formRef={MPSearchFormRef}
             type={'form'}
             cardBordered={true}
-            form={{}}
+            form={{
+              submitter: {
+                searchConfig: {
+                
+                  submitText: < FormattedMessage id="pages.search" defaultMessage="Search" />,
+                }
 
-            search={{}}
+              }
+            }}
+            search={{
+
+            }}
+            
             manualRequest={true}
           />
         </div>
@@ -804,9 +1008,14 @@ const TableList: React.FC = () => {
         >
           <Button
             onClick={async () => {
-              await handleRemove(selectedRowsState);
-              setSelectedRows([]);
-              actionRef.current?.reloadAndRest?.();
+              await handleRemove(selectedRowsState, (success) => {
+                if (success) {
+                  setSelectedRows([]);
+                  actionRef.current?.reloadAndRest?.();
+                }
+                
+              });
+             
             }}
           >
             <FormattedMessage

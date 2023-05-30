@@ -81,7 +81,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
         }}
         title={intl.formatMessage({
           id: 'pages.jetty.add',
-          defaultMessage: 'Add a jetty',
+          defaultMessage: 'Add Jetty',
         })}
       >
         <ProFormText
@@ -147,7 +147,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
         name="mla_envelop_at_mhws_3m"
         label={intl.formatMessage({
           id: 'pages.jetty.mlaEnvelopAtMHWS3m',
-          defaultMessage: 'MLA Envelop at MHWS 3.0m (unless otherwise specified) (M)',
+          defaultMessage: 'MLA Envelop At MHWS 3.0m (Unless Otherwise Specified) (M)',
         })}
         width="md"
         

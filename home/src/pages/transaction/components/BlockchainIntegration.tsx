@@ -110,9 +110,13 @@ const Detail: React.FC<any> = (props) => {
   var transaction_id = useLocation().search.split("=")[1]
   var m = {}
 
-
+  var yesCount=0
   useLocation().state.validateData.forEach((v) => {
     m[v.EventSubStage] = v.Stored
+    if (v.Stored == "True") {
+      yesCount++
+    }
+
 
   })
   const [validateData, setValidateData] = useState<any>(m);
@@ -131,7 +135,7 @@ const Detail: React.FC<any> = (props) => {
           defaultMessage="EOS ID"
         />
       ),
-      dataIndex: 'id',
+      dataIndex: 'eos_id',
        render: (dom, entity) => {
         if (entity.validated) {
           return <div><div style={{ height: isMP ? 'auto' : '60px' }}>{dom}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
@@ -175,7 +179,7 @@ const Detail: React.FC<any> = (props) => {
       title: <FormattedMessage id="pages.transaction.status" defaultMessage="Status" />,
       dataIndex: 'status',
       valueEnum: {
-        0: { text: <FormattedMessage id="pages.transaction.active" defaultMessage="Active" /> },
+        0: { text: <FormattedMessage id="pages.transaction.active" defaultMessage="Open" /> },
         1: { text: <FormattedMessage id="pages.transaction.closed" defaultMessage="Closed" /> },
         2: { text: <FormattedMessage id="pages.transaction.cancelled" defaultMessage="Cancelled" /> }
       },
@@ -287,7 +291,7 @@ const Detail: React.FC<any> = (props) => {
       },
     },
     {
-      title: <FormattedMessage id="pages.alertrule.throughputVolume1" defaultMessage="Total nominated quantity (MT)" />,
+      title: <FormattedMessage id="pages.alertrule.throughputVolume1" defaultMessage="Total Nominated Quantity (MT)" />,
       dataIndex: 'total_nominated_quantity_m',
       hideInSearch: true,
       valueType: "text",
@@ -310,7 +314,7 @@ const Detail: React.FC<any> = (props) => {
       
     },
     {
-      title: <FormattedMessage id="pages.alertrule.throughputVolume1" defaultMessage="Total nominated quantity (Bal-60-F)" />,
+      title: <FormattedMessage id="pages.alertrule.throughputVolume1" defaultMessage="Total Nominated Quantity (Bal-60-F)" />,
       dataIndex: 'total_nominated_quantity_b',
       hideInSearch: true,
       valueType: 'text',
@@ -331,7 +335,7 @@ const Detail: React.FC<any> = (props) => {
     },
 
     {
-      title: <FormattedMessage id="pages.transaction.totalDuration" defaultMessage="Total Duration (Till Date)" />,
+      title: <FormattedMessage id="pages.transaction.totalDuration" defaultMessage="Entire Duration (Till Date)" />,
       dataIndex: 'total_duration',
       hideInSearch: true,
       render: (dom, entity) => {
@@ -379,6 +383,8 @@ const Detail: React.FC<any> = (props) => {
     {
       title: <FormattedMessage id="pages.blockchainIntegration.validated" defaultMessage="Validated ( with Blockchain)" />,
       dataIndex: 'validated',
+      align:"center",
+      
       render: (dom, entity) => {
 
 
@@ -594,6 +600,10 @@ const Detail: React.FC<any> = (props) => {
       {!isMP && (<ProTable<any>
 
         toolBarRender={() => [
+
+          <span>
+            Total: {blockchainRow?.length} &nbsp; &nbsp; Validated <CheckOutlined style={{ color: 'green' }} />: {yesCount}&nbsp; &nbsp; Failed <CloseOutlined style={{ color: 'red' }} />: {blockchainRow?.length - yesCount }
+          </span>,
           <Access accessible={access.canAdmin} fallback={<div></div>}> <Button
             type="primary"
             key="primary"
@@ -611,7 +621,7 @@ const Detail: React.FC<any> = (props) => {
         ]}
 
 
-        headerTitle={"Transaction Stages and Activities"}
+        headerTitle={<span>Transaction Stages and Activities </span>}
         columns={columnsBlockchain}
         dataSource={blockchainRow ? blockchainRow : []}
         rowKey="key"
@@ -624,7 +634,12 @@ const Detail: React.FC<any> = (props) => {
 
       {isMP && (<>
 
-        <div style={{ height: 30, lineHeight: '30px', fontWeight:"bold" }}>Transaction Stages and Activities</div>
+        <div style={{ height: 30, lineHeight: '30px', fontWeight: "bold" }}>Transaction Stages and Activities</div>
+        <div style={{marginBottom:10} }>
+          <span>
+            Total: {blockchainRow?.length} &nbsp; &nbsp; Validated <CheckOutlined style={{ color: 'green' }} />: {yesCount}&nbsp; &nbsp; Failed <CloseOutlined style={{ color: 'red' }} />: {blockchainRow?.length - yesCount}
+          </span>
+        </div>
         <List>
             {blockchainRow.map((item, index) => (
             

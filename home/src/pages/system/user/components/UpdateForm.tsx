@@ -5,6 +5,7 @@ import {
   ProFormText,
   ProFormTextArea,
   ModalForm,
+  ProFormTreeSelect,
   ProFormInstance
   
 } from '@ant-design/pro-components';
@@ -13,8 +14,8 @@ import { FormattedMessage, useIntl } from '@umijs/max';
 import { Modal, Form } from 'antd';
 import React, { useRef } from 'react';
 import { checkEmail } from '../service';
-
-
+import { tree } from "@/utils/utils";
+import { company } from '../../company/service';
 export type UpdateFormProps = {
   onCancel: (flag?: boolean, formVals?: Partial<UserListItem>) => void;
   onSubmit: (values: Partial<UserListItem>) => Promise<void>;
@@ -89,7 +90,28 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         })}
       >
         
-      
+      <ProFormTreeSelect
+        name="company_id"
+        width="md"
+        label={intl.formatMessage({
+          id: 'pages.user.company',
+          defaultMessage: 'Company',
+        })}
+        request={async () => {
+          return company({}).then((res) => {
+
+            res.data = res.data.map((r) => {
+              r['value'] = r.id
+              r['title'] = r.name
+              return r
+            })
+
+            // setFlowList(tree(res.data, "                                    ", 'pid'))
+            return tree(res.data, "                                    ", 'pid')
+          });
+
+        }}
+      />
       <ProFormText
         name="email"
         label={intl.formatMessage({
@@ -117,14 +139,14 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         ]}
       />
       <ProFormText
-        name="phone"
+        name="nickname"
         label={intl.formatMessage({
-          id: 'pages.user.phone',
-          defaultMessage: 'Phone',
+          id: 'pages.user.nickname',
+          defaultMessage: 'Nick Name',
         })}
         width="md"
         rules={[
-          //{ pattern: /^[A-Za-z\d]+([-_.][A-Za-z\d]+)*@([A-Za-z\d]+[-.])+[A-Za-z\d]{2,4}$/, message: 'Incorrect email format' },
+          
         ]}
       />
       <ProFormRadio.Group

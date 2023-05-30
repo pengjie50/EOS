@@ -108,14 +108,15 @@ const handleRemove = async (selectedRows: SysconfigListItem[], callBack: any) =>
       try {
         removeSysconfig({
           id: selectedRows.map((row) => row.id),
+        }).then(() => {
+          hide();
+          message.success(<FormattedMessage
+            id="pages.deletedSuccessfully"
+            defaultMessage="Deleted successfully and will refresh soon"
+          />);
+          open = false
+          callBack(true)
         });
-        hide();
-        message.success(<FormattedMessage
-          id="pages.deletedSuccessfully"
-          defaultMessage="Deleted successfully and will refresh soon"
-        />);
-        open = false
-        callBack(true)
 
       } catch (error) {
         hide();
@@ -303,31 +304,30 @@ const TableList: React.FC = () => {
 
   return (
     <PageContainer header={{
-      title: '',
+      title: isMP ? null : < FormattedMessage id="pages.sysconfig.title" defaultMessage="Security Settings" />,
       breadcrumb: {},
+      extra: isMP ? null : [
+        <Button
+          type="primary"
+          key="primary"
+          onClick={() => {
+            handleModalOpen(true);
+          }}
+        >
+          <PlusOutlined /> <FormattedMessage id="pages.searchTable.new" defaultMessage="New" />
+        </Button>,
+      ]
     }}>
       {!isMP && (<ProTable<SysconfigListItem, API.PageParams>
-        headerTitle={intl.formatMessage({
-          id: 'pages.sysconfig.title',
-          defaultMessage: 'Security Settings',
-        })}
+        
         actionRef={actionRef}
         rowKey="id"
         search={{
           labelWidth: 130,
           searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
         }}
-        toolBarRender={() => [
-          <Button
-            type="primary"
-            key="primary"
-            onClick={() => {
-              handleModalOpen(true);
-            }}
-          >
-            <PlusOutlined /> <FormattedMessage id="pages.searchTable.new" defaultMessage="New" />
-          </Button>,
-        ]}
+        options={false}
+        className="mytable"
         request={(params, sorter) => sysconfig({ ...params, sorter })}
         columns={columns}
         rowSelection={{
@@ -355,7 +355,15 @@ const TableList: React.FC = () => {
             formRef={MPSearchFormRef}
             type={'form'}
             cardBordered={true}
-            form={{}}
+            form={{
+              submitter: {
+                searchConfig: {
+
+                  submitText: < FormattedMessage id="pages.search" defaultMessage="Search" />,
+                }
+
+              }
+            }}
 
             search={{}}
             manualRequest={true}

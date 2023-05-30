@@ -58,7 +58,7 @@ export default {
   'pages.searchTable.config': 'Configuration',
   'pages.searchTable.subscribeAlert': 'Subscribe to alerts',
   'pages.searchTable.title': 'Enquiry Form',
-  'pages.searchTable.new': 'New',
+  'pages.searchTable.new': 'Create New',
   'pages.searchTable.chosen': 'chosen',
   'pages.searchTable.item': 'item',
   'pages.searchTable.totalServiceCalls': 'Total Number of Service Calls',
@@ -97,7 +97,7 @@ export default {
   'pages.error.1008': 'There is no account bound to this email',
   'pages.error.1009': 'Legality check failed',
   'pages.error.1010': 'Failed to verify blockchain data',
-  
+  'pages.error.1011': 'Account logged in on another device, you have been logged out',
   'pages.user.add': 'New User',
   'pages.user.mod': 'Update User',
   'pages.user.username': 'User name',
@@ -123,18 +123,18 @@ export default {
   'pages.user.phone': 'Phone',
   'pages.user.email': 'Email',
   'pages.userSet.basicSettings': 'Basic Settings',
-  'pages.userSet.securitySetting': 'Security setting',
+  'pages.userSet.securitySetting': 'Security Setting',
   'pages.userSet.avatar': 'Avatar',
-  'pages.userSet.uploadAvatar': 'Upload avatar',
+  'pages.userSet.uploadAvatar': 'Upload Avatar',
 
   'pages.userSet.strong': 'Strong',
   'pages.userSet.medium': 'Medium',
   'pages.userSet.weak': 'Weak',
-  'pages.userSet.modPassword': 'Modify account password',
+  'pages.userSet.modPassword': 'Changing Password ',
 
-  'pages.userSet.newPassword': 'New password',
-  'pages.userSet.oldPassword': 'Old password',
-  'pages.userSet.repeatNewPassword': 'Repeat new password',
+  'pages.userSet.newPassword': 'New Password',
+  'pages.userSet.oldPassword': 'Enter Current Password',
+  'pages.userSet.repeatNewPassword': 'Re-enter New Password',
   'pages.userSet.rules.newPassword': 'Please enter new password!',
   'pages.userSet.rules.oldPassword': 'Please enter old password!',
   'pages.userSet.rules.repeatNewPassword': 'Please enter Repeat new password!',
@@ -172,16 +172,16 @@ export default {
   'pages.company.rules.name': 'Please enter a company mame !',
   'pages.company.description': 'Company Description',
 
-  'pages.filterOfTimestamps.add': 'New filter Of Timestamps',
-  'pages.filterOfTimestamps.mod': 'Modify filter Of Timestamps',
+  'pages.filterOfTimestamps.add': 'New Filter Of Timestamps',
+  'pages.filterOfTimestamps.mod': 'Modify Filter Of Timestamps',
   'pages.filterOfTimestamps.name': 'Template Name',
-  'pages.filterOfTimestamps.value': 'Template content',
+  'pages.filterOfTimestamps.value': 'Template Content',
   
 
   
 
-  'pages.alertrule.add': 'New alert rule',
-  'pages.alertrule.mod': 'Modify alert rule',
+  'pages.alertrule.add': 'Threshold Limits - Settings',
+  'pages.alertrule.mod': 'Threshold Limits - Settings',
   'pages.alertrule.rules.flow_id': 'Please select a process !',
   'pages.alertrule.rules.hours': 'Please enter hours !',
   'pages.alertrule.rules.mins': 'Please enter mins !',
@@ -192,7 +192,7 @@ export default {
   'pages.alertrule.singleProcess': 'Single Process',
   'pages.alertrule.betweenTwoEvents': 'Between Two Events',
   'pages.alertrule.entireTransaction': 'Entire Transaction',
-  'pages.alertrule.entireTransactionAndProcesses': 'Entire Transaction and Processes',
+  'pages.alertrule.entireTransactionAndProcesses': 'Entire Transaction And Processes',
   
 
 
@@ -232,9 +232,9 @@ export default {
 
 
 
-  'pages.transaction.timeFrame': 'Time frame',
-  'pages.transaction.startOfTransaction': 'Start of transaction',
-  'pages.transaction.endOfTransaction': 'End of transaction',
+  'pages.transaction.timeFrame': 'Timeframe',
+  'pages.transaction.startOfTransaction': 'Start Of Transaction',
+  'pages.transaction.endOfTransaction': 'End Of Transaction',
   'pages.transaction.transactionID': 'EOS ID',
   'pages.transaction.workOrderId': 'Work Order ID',
   'pages.transaction.arrivalID': 'Arrival ID',
@@ -243,7 +243,7 @@ export default {
   'pages.transaction.traderName': 'Trader Name',
   'pages.transaction.vesselName': 'Vessel Name',
   'pages.transaction.imoNumber': 'IMO Number',
-  'pages.transaction.totalDuration': 'Total Duration (B)',
+  'pages.transaction.totalDuration': 'Entire Duration',
   'pages.transaction.durationPerVolume': 'Duration per Volume (B) / (A)',
   'pages.transaction.averageDurationPerVolumeOfSameProductType': 'Average Duration per Volume of same Product Type',
      

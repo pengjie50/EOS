@@ -32,7 +32,7 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu, childre
    */
   const loginOut = async (a:any) => {
     await outLogin();
-    localStorage.setItem('token', undefined);
+    localStorage.setItem('token', "");
     var url ='/user/login'
     if (a===true) {
       url = "/user/adminlogin"
@@ -123,20 +123,20 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu, childre
   const menuItems = [
     ...(true
       ? [
-          {
+          /*{
             key: 'center',
             icon: <UserOutlined />,
           label: 'Personal Center',
-        },
+        },*/
         {
           key: 'baseSettings',
           icon: <SettingOutlined />,
-          label: 'Personal Basic Settings',
+          label: 'My User Profiles Setting',
         },
           {
             key: 'modPassword',
             icon: <KeyOutlined />,
-            label: 'Modify account password',
+            label: 'Changing Password ',
           },
           {
             type: 'divider' as const,

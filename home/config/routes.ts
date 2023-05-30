@@ -63,13 +63,13 @@ export default [
         path: '/threshold',
         redirect: '/threshold/alert',
       },
-      {
+      /*{
         name: 'Create New',
         access: 'canAlertruleAdd',
         icon: 'ControlOutlined',
         path: '/threshold/createAlertRule',
         component: './alertrule',
-      },
+      },*/
       {
         name: 'Summary',
         key:'Summary',
@@ -79,8 +79,8 @@ export default [
         component: './alertrule',
       },
       {
-        key: 'View triggered alerts',
-        name: 'View triggered alerts',
+        key: 'View Triggered Alerts',
+        name: 'View Triggered Alerts',
         access: 'canAlertList',
         icon: 'AlertOutlined',
         path: '/threshold/alert',
@@ -89,10 +89,28 @@ export default [
     ]
   },
   {
-    path: '/Reports',
-    name: 'Reports',
+    path: '/Report',
+    name: 'Report',
     // icon: 'smile',
-    component: './Reports',
+   // component: './report',
+    routes: [
+      {
+        path: '/Report',
+        redirect: '/Report/ReportList',
+      },
+      {
+        name: 'Report History',
+        path: '/Report/ReportList',
+        component: './report',
+      },
+      {
+        name: 'Create New Report',
+        path: '/Report/add',
+        hideInMenu: true,
+        component: './report/components/CreateForm',
+      }
+   ]
+   
   },
   {
     path: '/IdentityAccessManagement',
@@ -195,6 +213,7 @@ export default [
   {
     path: '/account',
     name: 'Profile & Setting',
+    hideInMenu: true,
     // icon: 'smile',
     //component: './EOSTools',
     routes: [
@@ -205,13 +224,13 @@ export default [
 
       },
       {
-        name: 'Personal Basic Settings',
+        name: 'My User Profiles Setting',
         path: '/account/baseSettings',
         component: './account/settings/components/base'
 
       },
       {
-        name: 'Modify account password',
+        name: 'Changing Password ',
         path: '/account/modPassword',
         component: './account/settings/components/modPassword'
       
