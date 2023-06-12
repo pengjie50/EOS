@@ -194,7 +194,7 @@
           Loading resources
         </div>
         <div class="loading-sub-title">
-          Loading resources for the first time may take a lot of time. Please be patient and wait
+          Loading page, please wait
         </div>
       </div>
     `;

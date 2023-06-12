@@ -1,3 +1,5 @@
+import RcResizeObserver from 'rc-resize-observer';
+
 import { addSysconfig, removeSysconfig, sysconfig, updateSysconfig } from './service';
 import { PlusOutlined, SearchOutlined, FormOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import type { ActionType, ProColumns, ProDescriptionsItemProps } from '@ant-design/pro-components';
@@ -153,7 +155,7 @@ const TableList: React.FC = () => {
   const actionRef = useRef<ActionType>();
   const [currentRow, setCurrentRow] = useState<SysconfigListItem>();
   const [selectedRowsState, setSelectedRows] = useState<SysconfigListItem[]>([]);
-
+  const [resizeObj, setResizeObj] = useState({ searchSpan: 12, tableScrollHeight: 300 });
   /**
    * @en-US International configuration
    * @zh-CN 国际化配置
@@ -194,7 +196,7 @@ const TableList: React.FC = () => {
             <DotLoading />
           </>
         ) : (
-          <span>--- There's no more ---</span>
+          <span>{data.length} items in total</span>
         )}
       </>
     )
@@ -303,6 +305,30 @@ const TableList: React.FC = () => {
   ];
 
   return (
+    <RcResizeObserver
+      key="resize-observer"
+      onResize={(offset) => {
+        const { innerWidth, innerHeight } = window;
+
+        if (offset.width > 1280) {
+          setIsMP(false)
+          setResizeObj({ ...resizeObj, searchSpan: 8, tableScrollHeight: innerHeight - 420 });
+        }
+        if (offset.width < 1280 && offset.width > 900) {
+          setIsMP(false)
+          setResizeObj({ ...resizeObj, searchSpan: 12, tableScrollHeight: innerHeight - 420 });
+        }
+        if (offset.width < 900 && offset.width > 700) {
+          setResizeObj({ ...resizeObj, searchSpan: 24, tableScrollHeight: innerHeight - 420 });
+          setIsMP(false)
+        }
+
+        if (offset.width < 700) {
+          setIsMP(true)
+        }
+
+      }}
+    >
     <PageContainer header={{
       title: isMP ? null : < FormattedMessage id="pages.sysconfig.title" defaultMessage="Security Settings" />,
       breadcrumb: {},
@@ -321,9 +347,11 @@ const TableList: React.FC = () => {
       {!isMP && (<ProTable<SysconfigListItem, API.PageParams>
         
         actionRef={actionRef}
-        rowKey="id"
+          rowKey="id"
+          scroll={{ x: 1800, y: resizeObj.tableScrollHeight }}
         search={{
           labelWidth: 130,
+          span: resizeObj.searchSpan,
           searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
         }}
         options={false}
@@ -403,14 +431,7 @@ const TableList: React.FC = () => {
               <a style={{ fontWeight: 600 }}>{selectedRowsState.length}</a>{' '}
               <FormattedMessage id="pages.searchTable.item" defaultMessage="项" />
               &nbsp;&nbsp;
-              <span>
-                <FormattedMessage
-                  id="pages.searchTable.totalServiceCalls"
-                  defaultMessage="Total number of service calls"
-                />{' '}
-                {selectedRowsState.reduce((pre, item) => pre , 0)}{' '}
-                <FormattedMessage id="pages.searchTable.tenThousand" defaultMessage="万" />
-              </span>
+             
             </div>
           }
         >
@@ -501,7 +522,19 @@ const TableList: React.FC = () => {
           />
         )}
       </Drawer>
-    </PageContainer>
+        {/*
+         <div style={{ marginTop: -45, paddingLeft: 10 }}>
+          <Button
+
+            type="primary"
+            onClick={async () => {
+              history.back()
+            }}
+          >Return to previous page</Button>
+        </div>
+
+        */ }
+      </PageContainer></RcResizeObserver>
   );
 };
 

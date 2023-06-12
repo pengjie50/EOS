@@ -14,8 +14,8 @@ import { FormattedMessage, useIntl } from '@umijs/max';
 import { Modal, Form, TreeSelect, Button } from 'antd';
 import React, { useRef, useState, useEffect  } from 'react';
 import { flow } from '../../../system/flow/service';
-import { tree } from "@/utils/utils";
-
+import { tree, isPC } from "@/utils/utils";
+import { currentUser, fieldUniquenessCheck } from '@/services/ant-design-pro/api';
 
 export type UpdateFormProps = {
   onCancel: (flag?: boolean, formVals?: Partial<FilterOfTimestampsListItem>) => void;
@@ -51,6 +51,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
   const restFormRef = useRef<ProFormInstance>();
   const intl = useIntl();
   const [flowConf, setFlowConf] = useState<any>([]);
+  const [isMP, setIsMP] = useState<boolean>(!isPC());
   const {
     onSubmit,
     onCancel,
@@ -86,6 +87,25 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
     }
 
   }, [props.createModalOpen]);
+
+
+  const onlyCheck = (rule: any, value: any, callback: (arg0: string | undefined) => void) => {
+
+
+    fieldUniquenessCheck({ where: { name: value, type: 0, company_id: currentUser?.company_id }, model: 'Userconfig' }).then((res) => {
+      if (res.data == true) {
+
+        callback(intl.formatMessage({
+          id: 'pages.xxx',
+          defaultMessage: 'This name is already in use',
+        }))
+      } else {
+        callback(undefined); // 必须返回一个callback
+      }
+    });
+
+  }
+
   return (
    
     <ModalForm
@@ -145,14 +165,14 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
        
         title={intl.formatMessage({
           id: 'pages.filterOfTimestamps.yy',
-          defaultMessage: 'Filter Of Timestamps',
+          defaultMessage: 'Create New Timestamp Filter',
         })}
       >
         <ProFormText
           name="name"
           label={intl.formatMessage({
-            id: 'pages.filterOfTimestamps.name',
-            defaultMessage: 'Template Name',
+            id: 'pages.filterOfTimestamps.xxx',
+            defaultMessage: 'Template name (only required if creating a template)',
           })}
           width="md"
           rules={[
@@ -164,14 +184,14 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                 defaultMessage=""
               />
             ),
-          },
+            }, { validator:onlyCheck }
         ]}
       />
       <ProFormTreeSelect
         name="value"
         label={intl.formatMessage({
-          id: 'pages.filterOfTimestamps.value',
-          defaultMessage: 'Template Content',
+          id: 'pages.filterOfTimestamps.xx',
+          defaultMessage: 'Timestamps to be included in the filter/template',
         })}
        
 
@@ -227,7 +247,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           treeCheckable:true,
           multiple: true,
           maxTagCount:0,
-          dropdownMatchSelectWidth: false,
+          dropdownMatchSelectWidth: isMP ? true : false,
           //treeCheckStrictly:true,
           showCheckedStrategy: TreeSelect.SHOW_ALL,
           treeNodeFilterProp: 'name',

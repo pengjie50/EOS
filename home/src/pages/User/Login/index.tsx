@@ -145,7 +145,7 @@ const Login: React.FC = () => {
       },
       [`@media screen and (min-width: ${token.screenMD}px)`]: {
         height: 42,
-        fontSize: '24px',
+        fontSize: '24px !important',
         fontWeight: 'bold',
         lineHeight: '42px',
         color: '#000',
@@ -204,12 +204,12 @@ const Login: React.FC = () => {
       // 如果失败去设置用户错误信息
       setUserLoginState(msg);
     } catch (error) {
-      const defaultLoginFailureMessage = intl.formatMessage({
+      /*const defaultLoginFailureMessage = intl.formatMessage({
         id: 'pages.login.failure',
         defaultMessage: '登录失败，请重试！',
       });
       console.log(error);
-      message.error(defaultLoginFailureMessage);
+      message.error(defaultLoginFailureMessage);*/
     }
   };
 
@@ -271,7 +271,7 @@ const Login: React.FC = () => {
 
 
       <div style={{ position: 'absolute', bottom: 20, left: 20, right:isMP?20:'none', padding: 20, backgroundColor:'rgba(0,0, 0, 0.6)', fontWeight: "bold", borderRadius: 10, }}>
-        <div style={{ fontSize: "50px", color:"#fff" }}>
+        <div className="my-font-size" style={{ fontSize: "50px", color:"#fff" }}>
           EOS
         </div>
         <div style={{ fontSize: "18px", color: "#fff" }}>
@@ -382,7 +382,7 @@ const Login: React.FC = () => {
               name: string;
               company: string;
             }>
-              title="Retrieve password"
+              title="Forgot your password?"
               trigger={
                 <a
                   style={{
@@ -390,7 +390,7 @@ const Login: React.FC = () => {
                     float: 'right',
                   }}
                 >
-                  <FormattedMessage id="pages.login.forgotPassword" defaultMessage="忘记密码" />
+                  <FormattedMessage id="pages.login.forgotPasswordxx" defaultMessage="Forgot your password?" />
                 </a>
               }
              // form={form}
@@ -402,15 +402,15 @@ const Login: React.FC = () => {
               submitTimeout={2000}
               onFinish={async (values) => {
                 retrievePassword(values)
-                message.success('The email has been sent. Please enter the email to retrieve your password');
+                message.success("Thanks! If your email address exists, you'll get an email with a link to reset your password shortly.");
                 return true;
               }}
             >
               <ProFormText
                 width="md"
                 name="email"
-                label="The email number bound to the account"
-                placeholder="Please enter the email number that the account is bound to"
+                  label="Please enter your email address and we will send you a link to reset it"
+                  placeholder="Please enter"
               />
             </ModalForm>
            

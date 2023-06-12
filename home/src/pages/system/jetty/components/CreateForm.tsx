@@ -87,8 +87,8 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
         <ProFormText
           name="name"
           label={intl.formatMessage({
-            id: 'pages.jetty.name',
-            defaultMessage: 'Berth No.',
+            id: 'pages.jetty.xxx',
+            defaultMessage: 'Jetty No.',
           })}
           width="md"
           rules={[

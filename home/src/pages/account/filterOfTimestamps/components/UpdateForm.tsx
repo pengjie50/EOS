@@ -14,7 +14,7 @@ import { FormattedMessage, useIntl } from '@umijs/max';
 import { Modal, Form } from 'antd';
 import React, { useRef, useState, useEffect } from 'react';
 import { flow } from '../../../system/flow/service';
-import { tree } from "@/utils/utils";
+import { tree, isPC } from "@/utils/utils";
 
 export type UpdateFormProps = {
   onCancel: (flag?: boolean, formVals?: Partial<FilterOfTimestampsListItem>) => void;
@@ -26,7 +26,7 @@ export type UpdateFormProps = {
 const UpdateForm: React.FC<UpdateFormProps> = (props) => {
   const restFormRef = useRef<ProFormInstance>();
   const intl = useIntl();
- 
+  const [isMP, setIsMP] = useState<boolean>(!isPC());
   const {
     onSubmit,
     onCancel,
@@ -149,7 +149,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           showArrow: false,
 
           multiple: true,
-          dropdownMatchSelectWidth: false,
+          dropdownMatchSelectWidth: isMP ? true : false,
 
 
           treeNodeFilterProp: 'name',

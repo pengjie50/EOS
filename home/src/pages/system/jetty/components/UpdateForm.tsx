@@ -5,6 +5,7 @@ import {
   ProFormText,
   ProFormTextArea,
   ModalForm,
+  ProFormTreeSelect,
   ProFormInstance
   
 } from '@ant-design/pro-components';
@@ -13,8 +14,8 @@ import { FormattedMessage, useIntl } from '@umijs/max';
 import { Modal, Form } from 'antd';
 import React, { useRef, useState, useEffect } from 'react';
 import { terminal } from '../../../system/terminal/service';
-
-
+import { company } from '../../../system/company/service';
+import { tree } from "@/utils/utils";
 export type UpdateFormProps = {
   onCancel: (flag?: boolean, formVals?: Partial<JettyListItem>) => void;
   onSubmit: (values: Partial<JettyListItem>) => Promise<void>;
@@ -86,8 +87,8 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
       <ProFormText
         name="name"
         label={intl.formatMessage({
-          id: 'pages.jetty.name',
-          defaultMessage: 'Berth No.',
+          id: 'pages.jetty.xxx',
+          defaultMessage: 'Jetty No.',
         })}
         width="md"
         rules={[
@@ -161,6 +162,29 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         width="md"
         valueEnum={terminalList}
       />
+
+      {/*<ProFormTreeSelect
+        name="company_id"
+        width="md"
+        label={intl.formatMessage({
+          id: 'pages.user.company',
+          defaultMessage: 'Company',
+        })}
+        request={async () => {
+          return company({}).then((res) => {
+
+            res.data = res.data.map((r) => {
+              r['value'] = r.id
+              r['title'] = r.name
+              return r
+            })
+
+            // setFlowList(tree(res.data, "                                    ", 'pid'))
+            return tree(res.data, "                                    ", 'pid')
+          });
+
+        }}
+      />*/}
         
     </ModalForm>
      

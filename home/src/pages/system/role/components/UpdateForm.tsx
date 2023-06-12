@@ -52,7 +52,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           searchConfig: {
             resetText: intl.formatMessage({
               id: 'pages.reset',
-              defaultMessage: '重置',
+              defaultMessage: 'Reset',
             }),
           },
           resetButtonProps: {
@@ -64,14 +64,14 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         }}
         title={intl.formatMessage({
           id: 'pages.role.mod',
-          defaultMessage: '角色修改',
+          defaultMessage: 'Modify Role',
         })}
       >
         <ProFormText
           name="name"
           label={intl.formatMessage({
             id: 'pages.role.name',
-            defaultMessage: '角色名称',
+            defaultMessage: 'Role Name',
           })}
           width="md"
           rules={[
@@ -80,7 +80,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
               message: (
                 <FormattedMessage
                   id="pages.role.rules.name"
-                  defaultMessage="角色名称！"
+                  defaultMessage="Please enter a role mame !"
                 />
               ),
             },
@@ -91,7 +91,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           width="md"
           label={intl.formatMessage({
             id: 'pages.role.description',
-            defaultMessage: '角色描述',
+            defaultMessage: 'Role Description',
           })}
          
         />

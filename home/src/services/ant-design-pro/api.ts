@@ -104,3 +104,12 @@ export async function removeRule(options?: { [key: string]: any }) {
     ...(options || {}),
   });
 }
+
+export async function fieldUniquenessCheck(options?: { [key: string]: any }) {
+  return request<any>('/api/system/fieldUniquenessCheck', {
+    method: 'POST',
+    data: options || {}
+  });
+}
+
+

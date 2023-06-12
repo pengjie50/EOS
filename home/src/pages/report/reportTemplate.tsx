@@ -58,7 +58,7 @@ const TableList: React.FC = () => {
   const [flowConf, setFlowConf] = useState<any>({});
   const { initialState } = useModel('@@initialState');
   const { currentUser } = initialState || {};
-
+  const [isMP, setIsMP] = useState<boolean>(!isPC());
 
   const [allcolumns, setAllcolumns] = useState<any>([]);
   const [selectcolumns, setSelectcolumns] = useState<any>([]);
@@ -139,7 +139,7 @@ const TableList: React.FC = () => {
 
         res2.data.forEach((r) => {
 
-          d[r.flow_id + "_" + r.flow_id_to] = b[r.flow_id] + " - " + b[r.flow_id_to]
+          d[r.flow_id + "_" + r.flow_id_to] = b[r.flow_id] + " -> " + b[r.flow_id_to]
         })
 
         setEvents(d)
@@ -426,8 +426,7 @@ const TableList: React.FC = () => {
       hideInDescriptions: true,
       valueEnum: events,
       fieldProps: {
-        dropdownMatchSelectWidth: false,
-        width: '300px',
+        dropdownMatchSelectWidth: isMP ? true : false,
         mode: 'multiple',
         showSearch: false,
         multiple: true

@@ -1,3 +1,5 @@
+import RcResizeObserver from 'rc-resize-observer';
+
 import { addLoginlog, removeLoginlog, loginlog, updateLoginlog } from './service';
 import { PlusOutlined, SearchOutlined, FormOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import type { ActionType, ProColumns, ProDescriptionsItemProps } from '@ant-design/pro-components';
@@ -91,7 +93,7 @@ const TableList: React.FC = () => {
   const actionRef = useRef<ActionType>();
   const [currentRow, setCurrentRow] = useState<LoginlogListItem>();
   const [selectedRowsState, setSelectedRows] = useState<LoginlogListItem[]>([]);
-
+  const [resizeObj, setResizeObj] = useState({ searchSpan: 12, tableScrollHeight: 300 });
   /**
    * @en-US International configuration
    * @zh-CN 国际化配置
@@ -134,7 +136,7 @@ const TableList: React.FC = () => {
             <DotLoading />
           </>
         ) : (
-          <span>--- There's no more ---</span>
+          <span>{data.length} items in total</span>
         )}
       </>
     )
@@ -319,18 +321,44 @@ const TableList: React.FC = () => {
   ];
 
   return (
+    <RcResizeObserver
+      key="resize-observer"
+      onResize={(offset) => {
+        const { innerWidth, innerHeight } = window;
+
+        if (offset.width > 1280) {
+          setIsMP(false)
+          setResizeObj({ ...resizeObj, searchSpan: 8, tableScrollHeight: innerHeight - 420 });
+        }
+        if (offset.width < 1280 && offset.width > 900) {
+          setIsMP(false)
+          setResizeObj({ ...resizeObj, searchSpan: 12, tableScrollHeight: innerHeight - 420 });
+        }
+        if (offset.width < 900 && offset.width > 700) {
+          setResizeObj({ ...resizeObj, searchSpan: 24, tableScrollHeight: innerHeight - 420 });
+          setIsMP(false)
+        }
+
+        if (offset.width < 700) {
+          setIsMP(true)
+        }
+
+      }}
+    >
     <PageContainer header={{
       title: isMP ? null : < FormattedMessage id="pages.loginlog.title" defaultMessage="Login log" />,
       breadcrumb: {},
       
     }} >
       {!isMP && (<ProTable<LoginlogListItem, API.PageParams>
-        scroll={{  y: 300 }}
+       
        
         actionRef={actionRef}
-        rowKey="id"
+          rowKey="id"
+          scroll={{ x: 1800, y: resizeObj.tableScrollHeight }}
         search={{
           labelWidth: 120,
+          span: resizeObj.searchSpan,
           searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
         }}
         toolBarRender={() => [
@@ -466,7 +494,19 @@ const TableList: React.FC = () => {
           />
         )}
       </Drawer>
-    </PageContainer>
+        {/*
+         <div style={{ marginTop: -45, paddingLeft: 10 }}>
+          <Button
+
+            type="primary"
+            onClick={async () => {
+              history.back()
+            }}
+          >Return to previous page</Button>
+        </div>
+
+        */ }
+      </PageContainer></RcResizeObserver>
   );
 };
 

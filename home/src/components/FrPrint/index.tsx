@@ -31,15 +31,30 @@ const FrPrint: React.FC<UpdateFrPrintProps> = (props) => {
   const { initialState } = useModel('@@initialState');
   const componentRef = useRef();
   const handlePrint = useReactToPrint({
+    
     content: () => (componentRef.current != undefined) ? componentRef.current : null,
     onBeforeGetContent: () => (props.onCancel())
   });
   //console.log('columns', props.columns);
+  var columns=[]
+
+  
+
+    props.columns.forEach((a) => {
+      if (a.dataIndex != 'option') {
+        columns.push(a)
+      }
+      
+    })
+  
+
+
 
   const date = moment().format('YYYY-MM-DD HH:mm:ss').toString();
   return (
     <Modal
-      width="80%"
+      width="100%"
+     
       centered
       destroyOnClose
       title={false}
@@ -56,17 +71,19 @@ const FrPrint: React.FC<UpdateFrPrintProps> = (props) => {
       keyboard={true}
     >
 
-      <div className={csstyle.backgroud} ref={componentRef}>
-        <WaterMark content={initialState?.currentUser?.username}>
-          <div style={{ padding: 30 }}>
+      <div className={csstyle.backgroud} style={{ height:'600px' }}>
+        {/*<WaterMark content={initialState?.currentUser?.username}>*/}
+          <div style={{ paddingTop: 20, width: '100%', height:'580px', overflow: 'auto' }}>
             {/*<div style={{ width: '100%', textAlign: "center", color: '#aaaaaa' }}>西藏大麦 · Dmart</div>
             <h3 style={{ width: '100%', textAlign: "center" }}>{props.title}</h3>
             <h4>{props.subTitle}</h4>*/}
             {/* 普通 Table columns 不支持 valueType 属性
               <Table className={csstyle.table} columns={props.columns} dataSource={props.dataSource} pagination={false} bordered size="small" />
           */}
+            <div ref={componentRef}>
             <ProTable<any>
-              columns={props.columns}
+              
+              columns={columns}
               dataSource={props.dataSource}
               rowKey="key"
               pagination={false}
@@ -74,10 +91,11 @@ const FrPrint: React.FC<UpdateFrPrintProps> = (props) => {
               toolBarRender={false}
               bordered size="small"
 
-            />
+              />
+              </div>
             {/*<div style={{ width: '100%', paddingTop: 30, textAlign: "center", color: '#aaaaaa', fontSize: 10 }}>打印日期:{date}</div>*/}
           </div>
-        </WaterMark>
+        {/*</WaterMark>*/}
       </div>
 
     </Modal >

@@ -214,8 +214,8 @@ const BaseView: React.FC = () => {
     
     await updateUser({ ...values });
     message.success(<FormattedMessage
-      id="pages.modifySuccessful"
-      defaultMessage="Modify is successful"
+      id="pages.modifySuccessfulX"
+      defaultMessage="User Profile modified successfully"
     />);
    // message.success('更新基本信息成功');
   };
@@ -268,17 +268,9 @@ const BaseView: React.FC = () => {
                   },
                 ]}
               />
-              <ProFormTextArea
-                  name="profile"
-                 
-                label={<FormattedMessage
-                  id="pages.user.profile"
-                  defaultMessage="Profile"
-                />}
-              
-              />
+             
               <ProFormText
-                 
+                disabled={true}
                 name="email"
                 rules={[
                 
@@ -299,11 +291,11 @@ const BaseView: React.FC = () => {
 
               />
               <ProFormText
-                  
-                name="phone"
+                disabled={true }
+                name="role_name"
                 label={<FormattedMessage
-                  id="pages.user.phone"
-                  defaultMessage="Phone"
+                  id="pages.user.xxx"
+                  defaultMessage="System Role Name "
                 />}
                
               />

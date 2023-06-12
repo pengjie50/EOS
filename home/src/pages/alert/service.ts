@@ -3,7 +3,7 @@ import { AlertList, AlertListItem, AlertListParams } from './data.d';
 
 /** 获取规则列表 GET /api/rule */
 export async function alert(params?: AlertListParams) {
-  console.log(params)
+ console.log("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
   return request('/api/alert/list', {
     method: 'POST',
     data: {
@@ -24,6 +24,7 @@ export async function getAlertBytransactionId(params?: AlertListParams) {
   });
 }
 export async function getUserUnreadAlertCount(options?: { [key: string]: any }) {
+
   return request<AlertListItem>('/api/alert/getUserUnreadAlertCount', {
     method: 'POST',
     data: options || {}

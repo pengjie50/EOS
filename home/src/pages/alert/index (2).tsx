@@ -5,7 +5,7 @@ import { addAlert, removeAlert, alert as getAlert, updateAlert } from './service
 import { updateTransaction } from '../transaction/service';
 
 import { Empty } from 'antd';
-import { PlusOutlined, SearchOutlined, ExclamationCircleOutlined, FormOutlined, DeleteOutlined } from '@ant-design/icons';
+import { PlusOutlined, SearchOutlined, ExclamationCircleOutlined, FormOutlined } from '@ant-design/icons';
 import { ActionType, ProColumns, ProDescriptionsItemProps, ProCard } from '@ant-design/pro-components';
 import { AlertList, AlertListItem } from './data.d';
 import { flow } from '../system/flow/service';
@@ -28,7 +28,7 @@ import {
   ProTable,
 } from '@ant-design/pro-components';
 import { FormattedMessage, useIntl, useLocation, formatMessage } from '@umijs/max';
-import { Button, Drawer, Input, message, Modal, ConfigProvider, FloatButton } from 'antd';
+import { Button, Drawer, Input, message, Modal, ConfigProvider } from 'antd';
 import React, { useRef, useState, useEffect } from 'react';
 import CreateForm from './components/CreateForm';
 import UpdateForm from './components/UpdateForm';
@@ -101,7 +101,7 @@ const handleUpdate = async (fields: Partial<any>) => {
   />);
   try {
     
-    await updateAlert({ remarks: fields['t.remarks'], id: fields.id });
+    await updateTransaction({ remarks: fields['t.remarks'], id: fields.id });
     hide();
 
     message.success(<FormattedMessage
@@ -162,7 +162,7 @@ const TableList: React.FC = () => {
   const formRef = useRef<ProFormInstance>();
   const [resizeObj, setResizeObj] = useState({ searchSpan: 12, tableScrollHeight: 300 });
   //--MP start
-  //const MPSearchFormRef = useRef<ProFormInstance>();
+  const MPSearchFormRef = useRef<ProFormInstance>();
 
   const [showMPSearch, setShowMPSearch] = useState<boolean>(false);
   const [isMP, setIsMP] = useState<boolean>(!isPC());
@@ -199,7 +199,7 @@ const TableList: React.FC = () => {
             <DotLoading />
           </>
         ) : (
-            <span>{data.length} items in total</span>
+          <span>{data.length} items in total</span>
         )}
       </>
     )
@@ -224,7 +224,7 @@ const TableList: React.FC = () => {
    
     const append1 = await getAlert(d)
 
-    const append=append1
+    const append=beforeList(append1)
     console.log(append)
     setData(val => [...val, ...append.data])
     setHasMore(10 * (page - 1) + append.data.length < append.total)
@@ -235,7 +235,40 @@ const TableList: React.FC = () => {
     setCurrentPage(currentPage + 1)
   }
 
-  
+  const beforeList = (list) => {
+    var map = new Map()
+    list.data.forEach((al) => {
+
+      var a = map.get(al.transaction_id)
+      if (!a) {
+        a = al
+        a.red = []
+        a.amber = []
+
+      }
+
+
+      if (al['type'] == 0) {
+        a.amber.push({ flow_id: al['flow_id'], flow_id_to: al['flow_id_to'] })
+
+      } else {
+        a.red.push({ flow_id: al['flow_id'], flow_id_to: al['flow_id_to'] })
+
+      }
+      map.set(al.transaction_id, a)
+
+    })
+    var arr = []
+
+    console.log(map)
+    for (let [k, v] of map) {
+      arr.push(v)
+    }
+
+    var b = { success: true, total: arr.length, data: arr }
+
+    return b
+  }
 
   
   useEffect(() => {
@@ -282,9 +315,8 @@ const TableList: React.FC = () => {
  
 
   if (status !== "" && status !== undefined) {
-   
 
-    formRef.current?.setFieldValue('t.status', status+"")
+    formRef.current?.setFieldValue('t.status', status + "")
   }
 
   if (terminal_id) {
@@ -435,13 +467,12 @@ const TableList: React.FC = () => {
       title: (
         <FormattedMessage
           id="pages.alert.transactionId"
-          defaultMessage="Alert ID"
+          defaultMessage="EOS ID"
         />
       ),
      
-      dataIndex: 'alert_id',
-      hideInSearch: true,
-      sorter: true,
+      dataIndex: 't.eos_id',
+      hideInSearch:true,
       align: "center",
       render: (dom, entity) => {
         return (
@@ -457,162 +488,96 @@ const TableList: React.FC = () => {
         );
       },
     },
-    {
-      title: <FormattedMessage id="pages.alertrule.xxx" defaultMessage="Threshold Triggered Time" />,
-      dataIndex: 'created_at',
-      width: 200,
-      hideInSearch: true,
-      defaultSortOrder: 'descend',
-      sorter: true,
-      valueType: 'dateTime',
-    },
-    {
-      title: <FormattedMessage id="pages.alertrule.type" defaultMessage="Threshold Type" />,
-      dataIndex: 'alertrule_type',
-      sorter: true,
-      hideInSearch: true,
-      defaultSortOrder: 'ascend',
-     
-      valueEnum: {
-        0: { text: <FormattedMessage id="pages.alertrule.singleProcess" defaultMessage="Single Process" /> },
-        1: { text: <FormattedMessage id="pages.alertrule.betweenTwoEvents" defaultMessage="Between Two Events" /> },
-        2: { text: <FormattedMessage id="pages.alertrule.entireTransaction" defaultMessage="Entire Transaction" /> },
-      }
-
-    },
-    {
-      title: (
-        <FormattedMessage
-          id="pages.alertrule.eee"
-          defaultMessage="Threshold Process/Events"
-        />
-      ),
-      dataIndex: 'flow_id',
-      width:300,
-      hideInSearch: true,
-      valueEnum: flowConf,
-      render: (dom, entity) => {
-        if (entity.alertrule_type == 0) {
-          return flowConf[entity.flow_id]
-        } else if (entity.alertrule_type == 1) {
-          return flowConf[entity.flow_id] + " -> " + flowConf[entity.flow_id_to]
-        } else {
-          return '-'
-        }
-
-      }
-
-    },
-    {
-      title: <FormattedMessage id="pages.alertrule.xxx" defaultMessage="Alert Raised" />,
-      dataIndex: 'type',
-      hideInSearch: true,
-      valueType: 'text',
-      render: (dom, entity) => {
-
-        return (<div><div style={{ display: dom == 0 ? "block" : "none" }}> <SvgIcon style={{ color: "#DE8205" }} type="icon-yuan" /> Amber</div>
-          <div style={{ display: dom == 1 ? "block" : "none" }}><SvgIcon style={{ color: "red" }} type="icon-yuan" /> Red</div></div>)
-      },
-    },
-    {
-      title: <FormattedMessage id="pages.alertrule.thresholdLimit" defaultMessage="Threshold Limit" />,
-      dataIndex: 'ar.amber_hours',
-      hideInSearch: true,
-      valueType: 'text',
-      render: (dom, entity) => {
-        entity.amber_hours = entity['ar.amber_hours']
-        entity.amber_mins = entity['ar.amber_mins']
-        entity.red_hours = entity['ar.red_hours']
-        entity.red_mins = entity['ar.red_mins']
-        return (<div><div style={{ display: entity.amber_hours || entity.amber_mins ? "block" : "none" }}> <SvgIcon style={{ color: "#DE8205" }} type="icon-yuan" />{" " + (entity.amber_hours ? entity.amber_hours : '0') + "h " + (entity.amber_mins ? entity.amber_mins : '0') + "m"}</div>
-          <div style={{ display: entity.red_hours || entity.red_mins ? "block" : "none" }}><SvgIcon style={{ color: "red" }} type="icon-yuan" />{" " + (entity.red_hours ? entity.red_hours : '0') + "h " + (entity.red_mins ? entity.red_mins : '0') + "m"}</div></div>)
-      },
-    },
-    {
-      title: <FormattedMessage id="pages.transaction.xxx" defaultMessage="Total/Current Duration" />,
-      dataIndex: 'total_duration',
-      sorter: true,
-      hideInSearch: true,
-      render: (dom, entity) => {
-      
-          return parseInt((dom / 3600) + "") + "h " + parseInt((dom % 3600) / 60) + "m"
-        
-
-
-      },
-      valueType: 'text',
-    },
-
-    {
-      title: <FormattedMessage id="pages.alertrule.vesselSizeLimit" defaultMessage="Vessel Size Limit (DWT)" />,
-      dataIndex: 'ar.size_of_vessel_from',
-      onFilter: true,
-     
-      hideInSearch: true,
-      valueType: 'text',
-
-      render: (dom, entity) => {
-        if (entity['ar.size_of_vessel_from'] != null && entity['ar.size_of_vessel_to']) {
-
-          var valueEnum = {
-            "0-25": "GP",
-            "25-45": "MR",
-            "45-80": "LR1",
-            "80-120": "AFRA",
-            "120-160": "LR2",
-            "160-320": "VLCC",
-            "320-1000000": "ULCC",
-          }
-
-          return valueEnum[numeral(entity['ar.size_of_vessel_from']).format('0,0') + "-" + numeral(entity['ar.size_of_vessel_to']).format('0,0')];
-        } else {
-          return '-'
-        }
-
-      },
-    },
-
-    {
-      title: <FormattedMessage id="pages.alertrule.ee" defaultMessage="Total Nominated Quantity (Bal-60-F)" />,
-      dataIndex: 'ar.total_nominated_quantity_b',
-      hideInSearch: true,
-      width: 200,
-      align: "center",
-      valueType: 'text',
-      render: (dom, entity) => {
-        if (dom) {
-          return numeral(dom).format('0,0')
-        }
-
-      },
-    },/*
-    {
-      title: <FormattedMessage id="pages.alertrule.ee" defaultMessage="Total Nominated Quantity (MT)" />,
-      dataIndex: 't.total_nominated_quantity_m',
-      hideInSearch: true,
-      width: 200,
-      align: "center",
-      valueType: "text",
-      render: (dom, entity) => {
-        if (dom) {
-
-
-          return numeral(dom).format('0,0')
-        }
-
-      },
-    },*/
    
-
-    
-    
     {
-      title: <FormattedMessage id="pages.transaction.imoNumber" defaultMessage="IMO Number" />,
-      dataIndex: 't.imo_number',
+      title: <FormattedMessage id="pages.alert.NumberProcessThresholdBreach" defaultMessage="Total Number Of Process Threshold Breach" />,
+      dataIndex: 'product_type',
       align: "center",
+      width: 250,
+      hideInSearch: true,
+      render: (dom, entity) => {
+        return (
+          
+            entity.red.length + entity.amber.length
+         
+        );
+      },
       valueType: 'text',
     },
+    {
+      title: <FormattedMessage id="pages.alert.specificProcess" defaultMessage="Number Of Amber And Red Alert With Related Processes
+" />,
+      dataIndex: 'product_type',
+      hideInSearch: true,
+      width: 300,
+      valueType: 'text',
+      width:300,
+      render: (dom, entity) => {
+        return (
+          <div>
+            <ProCard
+              headStyle={{ padding: 5 }}
+              bodyStyle={{ paddingLeft: 20 }}
+              ghost={true}
+              title={
 
+                <><SvgIcon  style={{ color: "#DE8205" }} type="icon-yuan" /><span style={{ marginLeft: "10px", display: "inline-block", width: '100px' }}>Amber ( {entity.amber.length} )</span></>
+              
+            }
+              extra={
+                ""
+                /* <span style={{ display: "inline-block", padding: "3px 8px 3px 8px", border: '1px solid #aaa' }}>{entity.amber.length}</span>*/
+
+             
+            }
+              
+              style={{ maxWidth: 300 }}
+              
+            >
+              <span style={{ marginLeft: "10px", display: entity.amber.length>0?"inline-block":"none" }}>
+                {
+                  entity.amber.map((p) => {
+                    return <div style={{ position: 'relative' }}><i className="dot"></i>{" " + flowConf[p.flow_id] + (flowConf[p.flow_id_to] ? " -> " + flowConf[p.flow_id_to] : "")}</div>
+                  })
+                }
+
+
+              </span>
+            </ProCard>
+
+
+            <ProCard
+              ghost={true}
+              headStyle={{ padding: 5, borderTop: "1px solid #ddd" }}
+              title={
+                <div>
+                  <SvgIcon  style={{ color: "red" }} type="icon-yuan" /><span style={{ marginLeft: "10px", display: "inline-block", width: '100px' }}>Red  ( {entity.red.length} )</span>  
+                  </div>
+               
+              }
+              extra={
+                ""
+                 /*<span style={{ display: "inline-block", padding: "3px 8px 3px 8px", border: '1px solid #aaa' }}>{entity.red.length}</span>*/
+              
+              }
+              bodyStyle={{ paddingLeft:20 }}
+              style={{ maxWidth: 300 }}
+              
+            >
+              <span style={{ marginLeft: "10px", display: entity.red.length >0? "inline-block" : "none" }}>
+              {
+                entity.red.map((p) => {
+                  return <div style={{ position: 'relative' }}><i className="dot"></i>{" "+flowConf[p.flow_id] + (flowConf[p.flow_id_to] ? " -> " + flowConf[p.flow_id_to] : "")}</div>
+                })
+                }
+              </span>
+            </ProCard>
+
+            </div>
+         
+        );
+      },
+    },
     {
       title: <FormattedMessage id="pages.alert.productType" defaultMessage="Product Type" />,
       dataIndex: 't.product_type',
@@ -620,13 +585,18 @@ const TableList: React.FC = () => {
       hideInSearch: true,
      
     },
-    
-  /*  {
+    {
+      title: <FormattedMessage id="pages.transaction.imoNumber" defaultMessage="IMO Number" />,
+      dataIndex: 't.imo_number',
+      align: "center",
+      valueType: 'text',
+    },
+    {
       title: <FormattedMessage id="pages.transaction.vesselName" defaultMessage="Vessel Name" />,
       dataIndex: 't.vessel_name',
       align: "center",
       valueType: 'text',
-    },*/
+    },
     {
       title: <FormattedMessage id="pages.transaction.terminalName" defaultMessage="Terminal Name" />,
       dataIndex: 't.terminal_id',
@@ -649,6 +619,50 @@ const TableList: React.FC = () => {
 
         }
       }
+    },
+    {
+      title: <FormattedMessage id="pages.alertrule.ee" defaultMessage="Total Nominated Quantity (MT)" />,
+      dataIndex: 't.total_nominated_quantity_m',
+      hideInSearch: true,
+      width: 200,
+      align: "center",
+      valueType: "text",
+      render: (dom, entity) => {
+        if (dom) {
+
+
+          return numeral(dom).format('0,0')
+        }
+
+      },
+    },
+    {
+      title: <FormattedMessage id="pages.alertrule.ee" defaultMessage="Total Nominated Quantity (Bal-60-F)" />,
+      dataIndex: 't.total_nominated_quantity_b',
+      hideInSearch: true,
+      width:200,
+      align:"center",
+      valueType: 'text',
+      render: (dom, entity) => {
+        if (dom) {
+          return numeral(dom).format('0,0')
+        }
+
+      },
+    },
+    {
+      title: <FormattedMessage id="pages.alertrule.vesselSizeLimit" defaultMessage="Size Of Vessel (DWT)" />,
+      dataIndex: 't.size_of_vessel',
+      hideInSearch: true,
+    
+      align: "center",
+      valueType: 'text',
+      render: (dom, entity) => {
+        if (entity['t.size_of_vessel'] ) {
+          return numeral(dom).format('0,0')
+        }
+
+      },
     },
     {
       title: (
@@ -690,21 +704,12 @@ const TableList: React.FC = () => {
     //  sorter: true,
      // defaultSortOrder: 'descend',
       valueType: 'date',
-      hideInTable: true,
       hideInSearch: true,
     },
     {
       title: <FormattedMessage id="pages.transaction.status" defaultMessage="Status" />,
       dataIndex: 't.status',
-      hideInTable:true,
       sorter: true,
-      valueEnum: {
-        0: {
-          text: <FormattedMessage id="pages.transaction.active" defaultMessage="Open" />
-        },
-        1: { text: <FormattedMessage id="pages.transaction.closed" defaultMessage="Closed" /> },
-        2: { text: <FormattedMessage id="pages.transaction.cancelled" defaultMessage="Cancelled" /> }
-      },
       search: {
         transform: (value) => {
 
@@ -725,39 +730,40 @@ const TableList: React.FC = () => {
     },
     {
       title: <FormattedMessage id="pages.alert.specificProcess" defaultMessage="Remarks" />,
-      dataIndex: 'remarks',
+      dataIndex: 't.remarks',
       hideInSearch: true,
       
       valueType: 'textarea',
       render: (dom, record) => {
 
-        return <div style={{ position: 'relative',width:'100%' }}><p dangerouslySetInnerHTML={{ __html: dom?.replace(/\n/g, '<br />') }} />
+        return <div><p dangerouslySetInnerHTML={{ __html: dom.replace(/\n/g, '<br />') }} /><Access accessible={access.canAlertruleMod()} fallback={<div></div>}>
+          <a
+            title={formatMessage({ id: "pages.update", defaultMessage: "Modify" })}
+            key="config"
+            onClick={() => {
+              handleUpdateModalOpen(true);
 
-         
+             
 
-          <div style={{ position: 'absolute', right: 10, bottom:0 }}>
-            <Access accessible={access.canAlertMod()} fallback={<div></div>}>
-              <a
-                title={formatMessage({ id: "pages.update", defaultMessage: "Modify" })}
-                key="config"
-                onClick={() => {
-                  handleUpdateModalOpen(true);
+              setCurrentRow(record);
+            }}
+          >
+            <FormOutlined style={{ fontSize: '20px' }} />
 
-
-
-                  setCurrentRow(record);
-                }}
-              >
-                <FormOutlined style={{ fontSize: '20px' }} />
-
-              </a>
-            </Access>
-          </div>
-        </div>;
+          </a>
+        </Access></div>;
       },
     
-    },
-    
+    }/*,
+    {
+      title: <FormattedMessage id="pages.searchTable.titleOption" defaultMessage="Operating" />,
+      dataIndex: 'option',
+      valueType: 'option',
+      render: (_, record) => [
+       
+       
+      ],
+    },*/
   ];
 
  
@@ -812,14 +818,13 @@ const TableList: React.FC = () => {
       }}
     >
     <PageContainer header={{
-        title: isMP ? null : < FormattedMessage id="pages.transactions.xxx" defaultMessage="Threshold Triggered Alerts" />,
+      title: isMP ? null : < FormattedMessage id="pages.transactions.alert" defaultMessage="Alerts of All Transactions" />,
       breadcrumb: {},
       extra: isMP ? null : []
     }}>
       {!isMP && (<ConfigProvider renderEmpty={customizeRenderEmpty}> <ProTable<AlertListItem, API.PageParams>
-          scroll={{ x: 2500, y: resizeObj.tableScrollHeight }}
-          bordered size="small"
-          
+          scroll={{ x: 1900, y: resizeObj.tableScrollHeight }}
+        bordered size="small"
         className="mytable"
         editable={{ type: 'single', editableKeys: ['remarks'] }}
         actionRef={actionRef}
@@ -845,20 +850,24 @@ const TableList: React.FC = () => {
             var list = await getAlert(d)
 
         
-            return list
+          return beforeList(list)
         }}
         columns={columns}
        
         options={false}
-        rowSelection={false}
+        rowSelection={{
+          onChange: (_, selectedRows) => {
+            setSelectedRows(selectedRows);
+          },
+        }}
         /></ConfigProvider >)}
 
       {isMP && (<>
 
         <NavBar backArrow={false} right={right} onBack={back}>
           {intl.formatMessage({
-            id: 'pages.alert.xx',
-            defaultMessage: 'Threshold Triggered Alerts',
+            id: 'pages.alert.title',
+            defaultMessage: 'Alerts of all transactions',
           })}
         </NavBar>
 
@@ -868,7 +877,7 @@ const TableList: React.FC = () => {
             onFormSearchSubmit={onFormSearchSubmit}
 
             dateFormatter={'string'}
-              formRef={formRef}
+            formRef={MPSearchFormRef}
             type={'form'}
             cardBordered={true}
             form={{
@@ -909,10 +918,35 @@ const TableList: React.FC = () => {
         </List>
         <InfiniteScroll loadMore={loadMore} hasMore={hasMore}>
           <InfiniteScrollContent hasMore={hasMore} />
-          </InfiniteScroll>
-          <FloatButton.BackTop visibilityHeight={0} />
+        </InfiniteScroll>
       </>)}
-      
+      {selectedRowsState?.length > 0 && (
+        <FooterToolbar
+          extra={
+            <div>
+              <FormattedMessage id="pages.searchTable.chosen" defaultMessage="Chosen" />{' '}
+              <a style={{ fontWeight: 600 }}>{selectedRowsState.length}</a>{' '}
+              <FormattedMessage id="pages.searchTable.item" defaultMessage="项" />
+              &nbsp;&nbsp;
+             
+            </div>
+          }
+        >
+          <Button
+            onClick={async () => {
+              await handleRemove(selectedRowsState);
+              setSelectedRows([]);
+              actionRef.current?.reloadAndRest?.();
+            }}
+          >
+            <FormattedMessage
+              id="pages.searchTable.batchDeletion"
+              defaultMessage="Batch deletion"
+            />
+          </Button>
+          
+        </FooterToolbar>
+      )}
       
       <CreateForm
         onSubmit={async (value) => {
@@ -937,7 +971,7 @@ const TableList: React.FC = () => {
       />
       <UpdateForm
         onSubmit={async (value) => {
-          value.id = currentRow?.id
+          value.id = currentRow?.transaction_id
           const success = await handleUpdate(value);
           if (success) {
             handleUpdateModalOpen(false);

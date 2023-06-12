@@ -1,3 +1,4 @@
+import RcResizeObserver from 'rc-resize-observer';
 import { addReport, removeReport, report, updateReport, updateReportMenu } from './service';
 import { PlusOutlined, SearchOutlined, FormOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import type { ActionType, ProColumns, ProDescriptionsItemProps } from '@ant-design/pro-components';
@@ -28,6 +29,8 @@ import { InfiniteScroll, List, NavBar, Space, DotLoading } from 'antd-mobile'
  * @zh-CN 添加节点
  * @param fields
  */
+
+
 const handleAdd = async (fields: ReportListItem) => {
   const hide = message.loading(<FormattedMessage
     id="pages.adding"
@@ -95,10 +98,10 @@ const handleRemove = async (selectedRows: ReportListItem[], callBack: any) => {
   if (!selectedRows) return true;
   var open = true
   confirm({
-    title: 'Delete record?',
+    title: 'Delete Report?',
     open: open,
     icon: <ExclamationCircleOutlined />,
-    content: 'The deleted record cannot be restored. Please confirm!',
+    content: 'Please note that the deleted Report cannot be restored!',
     onOk() {
 
 
@@ -163,6 +166,8 @@ const TableList: React.FC = () => {
    * @zh-CN 国际化配置
    * */
   const intl = useIntl();
+
+  const [resizeObj, setResizeObj] = useState({ searchSpan: 12, tableScrollHeight: 300 });
   //--MP start
   const MPSearchFormRef = useRef<ProFormInstance>();
 
@@ -173,7 +178,7 @@ const TableList: React.FC = () => {
     <div style={{ fontSize: 24 }}>
       <Space style={{ '--gap': '16px' }}>
         <SearchOutlined onClick={e => { setShowMPSearch(!showMPSearch) }} />
-        <PlusOutlined onClick={() => { handleModalOpen(true) }} />
+        <PlusOutlined onClick={() => { history.push(`/Report/add`); }} />
       </Space>
     </div>
   )
@@ -198,7 +203,7 @@ const TableList: React.FC = () => {
             <DotLoading />
           </>
         ) : (
-          <span>--- There's no more ---</span>
+          <span>{data.length} items in total</span>
         )}
       </>
     )
@@ -245,7 +250,9 @@ const TableList: React.FC = () => {
           <a
             onClick={() => {
               setCurrentRow(entity);
-              setShowDetail(true);
+
+              history.push(`/Report/ReportSummary`, entity);
+             
             }}
           >
             {dom}
@@ -299,11 +306,28 @@ const TableList: React.FC = () => {
 
     },
     {
-      title: <FormattedMessage id="pages.report.description" defaultMessage="Description" />,
-      dataIndex: 'description',
-      valueType: 'textarea',
+      title: <FormattedMessage id="pages.report.xxx" defaultMessage="Template  Name" />,
+      dataIndex: 'template_name',
+      valueType: 'text',
+      render: (dom, entity) => {
+        return (
+          
+          
+            dom?<a
+            onClick = {
+              () => {
+                setCurrentRow(entity);
+
+                history.push(`/Report/Detail`, entity);
+
+          }}
+          >{dom} </a > : 'N.A.'
+         
+        );
+      },
+   
     },
-    {
+    /*{
       title: <FormattedMessage id="pages.searchTable.titleOption" defaultMessage="Operating" />,
       dataIndex: 'option',
       valueType: 'option',
@@ -344,7 +368,7 @@ const TableList: React.FC = () => {
        
        
       ],
-    },
+    },*/
   ];
   const customizeRenderEmpty = () => {
     var o = formRef.current?.getFieldsValue()
@@ -364,6 +388,8 @@ const TableList: React.FC = () => {
 
   }
   return (
+
+  
     <PageContainer header={{
       title: isMP ? null : < FormattedMessage id="pages.report.title" defaultMessage="Report" />,
       breadcrumb: {},
@@ -381,12 +407,39 @@ const TableList: React.FC = () => {
         </Button>,
       ]
     }}>
-      {!isMP && (<ConfigProvider renderEmpty={customizeRenderEmpty}><ProTable<ReportListItem, API.PageParams>
-        formRef={formRef}
-        actionRef={actionRef}
+      {!isMP && (<ConfigProvider renderEmpty={customizeRenderEmpty}><RcResizeObserver
+        key="resize-observer"
+        onResize={(offset) => {
+          const { innerWidth, innerHeight } = window;
+
+          if (offset.width > 1280) {
+            setIsMP(false)
+            setResizeObj({ ...resizeObj, searchSpan: 8, tableScrollHeight: innerHeight - 420 });
+          }
+          if (offset.width < 1280 && offset.width > 900) {
+            setIsMP(false)
+            setResizeObj({ ...resizeObj, searchSpan: 12, tableScrollHeight: innerHeight - 420 });
+          }
+          if (offset.width < 900 && offset.width > 700) {
+            setResizeObj({ ...resizeObj, searchSpan: 24, tableScrollHeight: innerHeight - 420 });
+            setIsMP(false)
+          }
+
+          if (offset.width < 700) {
+            setIsMP(true)
+          }
+
+        }}
+      ><ProTable<ReportListItem, API.PageParams>
+          formRef={formRef}
+          bordered
+          actionRef={actionRef}
+          scroll={{ x: columns.length*150, y: resizeObj.tableScrollHeight }}
+        
         rowKey="id"
         search={{
-          labelWidth: 155,
+          labelWidth: 18 * 12,
+          span: resizeObj.searchSpan,
           searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
         }}
         options={false}
@@ -398,7 +451,7 @@ const TableList: React.FC = () => {
             setSelectedRows(selectedRows);
           },
         }}
-      /></ConfigProvider >)}
+        /></RcResizeObserver></ConfigProvider >)}
 
       {isMP && (<>
 
@@ -466,14 +519,7 @@ const TableList: React.FC = () => {
               <a style={{ fontWeight: 600 }}>{selectedRowsState.length}</a>{' '}
               <FormattedMessage id="pages.searchTable.item" defaultMessage="项" />
               &nbsp;&nbsp;
-              <span>
-                <FormattedMessage
-                  id="pages.searchTable.totalServiceCalls"
-                  defaultMessage="Total number of service calls"
-                />{' '}
-                {selectedRowsState.reduce((pre, item) => pre , 0)}{' '}
-                <FormattedMessage id="pages.searchTable.tenThousand" defaultMessage="万" />
-              </span>
+             
             </div>
           }
         >
@@ -551,7 +597,19 @@ const TableList: React.FC = () => {
           />
         )}
       </Drawer>
-    </PageContainer>
+      {/*
+         <div style={{ marginTop: -45, paddingLeft: 10 }}>
+          <Button
+
+            type="primary"
+            onClick={async () => {
+              history.back()
+            }}
+          >Return to previous page</Button>
+        </div>
+
+        */ }
+      </PageContainer> 
   );
 };
 

@@ -128,9 +128,9 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         })}
         width="md"
         valueEnum={{
-          0: { text: <FormattedMessage id="pages.transaction.active" defaultMessage="Active" /> },
-          1: { text: <FormattedMessage id="pages.transaction.closed" defaultMessage="Closed" /> },
-          2: { text: <FormattedMessage id="pages.transaction.cancelled" defaultMessage="Cancelled" /> }
+          0: "Active" ,
+          1: "Closed",
+          2: "Cancelled" 
         }}
       />
 
@@ -222,7 +222,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         name="total_duration"
         label={intl.formatMessage({
           id: 'pages.transaction.name',
-          defaultMessage: 'Entire Duration',
+          defaultMessage: 'Entire Duration (s)',
         })}
         width="md"
 

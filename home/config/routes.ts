@@ -31,14 +31,14 @@ export default [
   {
     path: '/Dashboard',
     name: 'Dashboard',
-    icon: null,
+    icon: 'TableOutlined',
     component: './Dashboard',
   },
 
   {
     path: '/Transactions',
     name: 'Transactions',
-   // icon: 'smile',
+    icon: 'ReconciliationOutlined',
     component: './transaction',
   },
   {
@@ -56,7 +56,7 @@ export default [
     path: '/threshold',
     access: 'canEOSTools',
     name: 'Threshold',
-    // icon: 'smile',
+    icon: 'FileExclamationOutlined',
     //component: './EOSTools',
     routes: [
       {
@@ -85,14 +85,23 @@ export default [
         icon: 'AlertOutlined',
         path: '/threshold/alert',
         component: './alert'
+      },
+      {
+        key: 'View Triggered Alerts Noread',
+        name: 'View Triggered Alerts Noread',
+        access: 'canAlertList',
+        hideInMenu: true,
+        icon: 'AlertOutlined',
+        path: '/threshold/alertNoread',
+        component: './alert'
       }
+     
     ]
   },
   {
     path: '/Report',
     name: 'Report',
-    // icon: 'smile',
-   // component: './report',
+    icon: 'FileZipOutlined',
     routes: [
       {
         path: '/Report',
@@ -100,58 +109,97 @@ export default [
       },
       {
         name: 'Report History',
+        key: 'Report History',
+        hideInMenu: true,
         path: '/Report/ReportList',
         component: './report',
       },
       {
-        name: 'Create New Report',
-        path: '/Report/add',
+        name: 'Summary of All Transactions',
         hideInMenu: true,
+        key: 'Summary of All Transactions',
+        path: '/Report/ReportSummary',
+        component: './report/reportSummary',
+      },
+      {
+        name: 'Create New Report',
+        key: 'Create New Report',
+        path: '/Report/add',
+       hideInMenu: true,
         component: './report/components/CreateForm',
+      },
+      {
+        name: 'Report Detail',
+        key: 'Report Detail',
+        path: '/Report/Detail',
+        hideInMenu: true,
+        component: './report/components/DetailForm',
       }
    ]
    
   },
-  {
-    path: '/IdentityAccessManagement',
-    name: 'Identity Access Management',
-    access: 'canAdmin',
-    // icon: 'smile',
+ 
+   {
+     path: '/UserAccessControl',
+     name: 'User Access Control',
+     access: 'canAdmin',
+     icon: 'SolutionOutlined',
     //component: './IdentityAccessManagement',
     routes: [
       {
-        path: '/IdentityAccessManagement',
-        redirect: '/IdentityAccessManagement/RoleList',
+        path: '/UserAccessControl',
+        redirect: '/UserAccessControl/company',
       },
       {
         name: 'Company',
         icon: 'table',
-        path: '/IdentityAccessManagement/company',
+        path: '/UserAccessControl/company',
         component: './system/company',
-      },
-      {
-        name: 'Permissions',
-        icon: 'solution',
-        path: '/IdentityAccessManagement/Permissions',
-        component: './system/permission',
       },
       {
         name: 'Roles',
         icon: 'idcard',
-        path: '/IdentityAccessManagement/RoleList',
+        path: '/UserAccessControl/RoleList',
         component: './system/role',
       },
       {
         name: 'Users',
         icon: 'user',
-        path: '/IdentityAccessManagement/Users',
+        path: '/UserAccessControl/Users',
         component: './system/user',
+      }
+
+      
+    ]
+  },
+
+
+
+  {
+    path: '/SystemManagement',
+    name: 'System Management',
+    access: 'canAdmin',
+    icon: 'SettingOutlined',
+    //component: './IdentityAccessManagement',
+    routes: [
+      {
+        path: '/SystemManagement',
+        redirect: '/SystemManagement/Permissions',
       },
+     
+      {
+        name: 'Permissions',
+        icon: 'solution',
+        path: '/SystemManagement/Permissions',
+        component: './system/permission',
+      },
+     
+    
      
       {
         name: 'Flow',
         icon: 'ApartmentOutlined',
-        path: '/IdentityAccessManagement/flow',
+        path: '/SystemManagement/flow',
         component: './system/flow',
       }/*,
       {
@@ -163,25 +211,25 @@ export default [
       {
         name: 'Terminal',
         icon: 'solution',
-        path: '/IdentityAccessManagement/terminal',
+        path: '/SystemManagement/terminal',
         component: './system/terminal',
       },
       {
         name: 'Login log',
         icon: 'bars',
-        path: '/IdentityAccessManagement/loginlog',
+        path: '/SystemManagement/loginlog',
         component: './system/loginlog',
       },
       {
         name: 'Operation Log',
         icon: 'bars',
-        path: '/IdentityAccessManagement/operlog',
+        path: '/SystemManagement/operlog',
         component: './system/operlog',
       },
       {
         name: 'Security Settings',
         icon: 'safetyCertificate',
-        path: '/IdentityAccessManagement/sysconfig',
+        path: '/SystemManagement/sysconfig',
         component: './system/sysconfig',
       }
       
@@ -192,7 +240,7 @@ export default [
     name: 'Information Page',
     access: 'canJettyList',
    // access: 'canAdmin',
-    // icon: 'smile',
+    icon: 'InfoCircleOutlined',
     //component: './IdentityAccessManagement',
     routes: [
       {
@@ -224,13 +272,13 @@ export default [
 
       },
       {
-        name: 'My User Profiles Setting',
+        name: 'My User Profile',
         path: '/account/baseSettings',
         component: './account/settings/components/base'
 
       },
       {
-        name: 'Changing Password ',
+        name: 'Change Password',
         path: '/account/modPassword',
         component: './account/settings/components/modPassword'
       

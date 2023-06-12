@@ -14,7 +14,7 @@ import { FormattedMessage, useIntl } from '@umijs/max';
 import { Modal, Form, TreeSelect } from 'antd';
 import React, { useRef, useState, useEffect } from 'react';
 import { flow } from '../../../system/flow/service';
-import { tree } from "@/utils/utils";
+import { tree,isPC } from "@/utils/utils";
 
 
 export type UpdateFormProps = {
@@ -28,6 +28,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
   const restFormRef = useRef<ProFormInstance>();
   const intl = useIntl();
   const [flowConf, setFlowConf] = useState<any>([]);
+  const [isMP, setIsMP] = useState<boolean>(!isPC());
   const {
     onSubmit,
     onCancel,
@@ -152,7 +153,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           treeCheckable:true,
           multiple: true,
           maxTagCount:0,
-          dropdownMatchSelectWidth: false,
+          dropdownMatchSelectWidth: isMP ? true : false,
          // treeCheckStrictly:true,
           showCheckedStrategy: TreeSelect.SHOW_ALL,
           treeNodeFilterProp: 'name',

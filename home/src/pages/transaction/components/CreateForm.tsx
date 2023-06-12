@@ -220,7 +220,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         name="total_duration"
         label={intl.formatMessage({
           id: 'pages.transaction.name',
-          defaultMessage: 'Entire Duration',
+          defaultMessage: 'Entire Duration (s)',
         })}
         width="md"
 

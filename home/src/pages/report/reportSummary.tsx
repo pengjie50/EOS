@@ -1,9 +1,16 @@
-import RcResizeObserver from 'rc-resize-observer';
 
-import { addTransaction, removeTransaction, transaction, updateTransaction } from './service';
+import RcResizeObserver from 'rc-resize-observer';
+import { addTransaction, removeTransaction, transaction, updateTransaction } from '../transaction/service';
+
+import { addReport } from '../report/service';
+
+
+import { reportSummary } from './service';
+
+
 import { PlusOutlined, SearchOutlined, PrinterOutlined, FileExcelOutlined, ExclamationCircleOutlined, DeleteOutlined } from '@ant-design/icons';
 import type { ActionType, ProColumns, ProDescriptionsItemProps } from '@ant-design/pro-components';
-import { TransactionList, TransactionListItem } from './data.d';
+import { TransactionList, TransactionListItem } from '../transaction/data.d';
 import FrPrint from "../../components/FrPrint";
 import FileSaver from "file-saver";
 import { history } from '@umijs/max';
@@ -11,9 +18,7 @@ import { GridContent } from '@ant-design/pro-layout';
 import numeral from 'numeral';
 import moment from 'moment'
 import { useAccess, Access } from 'umi';
-
 const Json2csvParser = require("json2csv").Parser;
-
 import {
   FooterToolbar,
   ModalForm,
@@ -28,7 +33,7 @@ import {
   ProTable,
 } from '@ant-design/pro-components';
 import { FormattedMessage, useIntl, formatMessage, useLocation } from '@umijs/max';
-import { Button, Drawer, Input, message, Modal, Tooltip, Empty, ConfigProvider, FloatButton } from 'antd';
+import { Button, Drawer, Input, message, Modal, Tooltip, Empty, ConfigProvider } from 'antd';
 import React, { useRef, useState, useEffect } from 'react';
 import CreateForm from './components/CreateForm';
 import UpdateForm from './components/UpdateForm';
@@ -43,30 +48,29 @@ const { confirm } = Modal;
 
 //MP
 import { InfiniteScroll, List, NavBar, Space, DotLoading } from 'antd-mobile'
-import { parseInt } from 'lodash';
 /**
  * @en-US Add node
  * @zh-CN 添加节点
  * @param fields
  */
-const handleAdd = async (fields: TransactionListItem) => {
+const handleAdd = async (fields: any) => {
   const hide = message.loading(<FormattedMessage
     id="pages.adding"
     defaultMessage="Adding"
   />);
   try {
-    await addTransaction({ ...fields });
+    await addReport({ ...fields });
     hide();
     message.success(<FormattedMessage
-      id="pages.addedSuccessfully"
-      defaultMessage="Added successfully"
+      id="pages.ddd"
+      defaultMessage="Save report successfully"
     />);
     return true;
   } catch (error) {
     hide();
     message.error(<FormattedMessage
-      id="pages.addingFailed"
-      defaultMessage="Adding failed, please try again!"
+      id="pages.xxx"
+      defaultMessage="Save report failed, please try again!"
     />);
     return false;
   }
@@ -78,7 +82,7 @@ const handleAdd = async (fields: TransactionListItem) => {
  *
  * @param fields
  */
-const handleUpdate = async (fields: Partial<TransactionListItem> ) => {
+const handleUpdate = async (fields: Partial<TransactionListItem>) => {
   const hide = message.loading(<FormattedMessage
     id="pages.modifying"
     defaultMessage="Modifying"
@@ -130,7 +134,7 @@ const handleRemove = async (selectedRows: TransactionListItem[], callBack: any) 
           open = false
           callBack(true)
         });
-        
+
 
       } catch (error) {
         hide();
@@ -154,71 +158,11 @@ const handleRemove = async (selectedRows: TransactionListItem[], callBack: any) 
 
 
 
-/*var keysArr = new Array("key0", "key1", "key2");
 
-function TableToJson(tableid){//tableid是你要转化的表的表名，是一个字符串，如"example"
 
-  var rows = document.getElementById(tableid).rows.length;//获得行数(包括thead)
+const exportCSV = (data, columns, filename = `${"Summary of all transactions" + moment(Date.now()).format(' YYYY-MM-DD HH:mm:ss')}.csv`) => {
 
-  var colums = document.getElementById(tableid).rows[0].cells.length;//获得列数
-
-  var json = "[";
-
-  var tdValue;
-
-  for (var i = 1; i < rows; i++) {//每行
-
-    json += "{";
-
-    for (var j = 0; j < colums; j++) {
-
-      tdName = keysArr[j];//Json数据的键
-
-      json += "\"";//加上一个双引号
-
-      json += tdName;
-
-      json += "\"";
-
-      json += ":";
-
-      tdValue = document.getElementById(tableid).rows[i].cells[j].innerHTML;//Json数据的值
-
-      if (j === 1) {//第1列是日期格式，需要按照json要求做如下添加
-
-        tdValue = "\/Date(" + tdValue + ")\/";
-
-      }
-
-      json += "\"";
-
-      json += tdValue;
-
-      json += "\"";
-
-      json += ",";
-
-    }
-
-    json = json.substring(0, json.length - 1);
-
-    json += "}";
-
-    json += ",";
-
-  }
-
-  json = json.substring(0, json.length - 1);
-
-  json += "]";
-
-  return json;
-
-}*/
-
-const exportCSV = (data, columns, filename = `${"Summary of all transactions"+moment(Date.now()).format(' YYYY-MM-DD HH:mm:ss') }.csv`) => {
-
-  if (data.length==0) {
+  if (data.length == 0) {
     message.error(<FormattedMessage
       id="pages.selectDataFirst"
       defaultMessage="Please select data first!"
@@ -233,28 +177,30 @@ const exportCSV = (data, columns, filename = `${"Summary of all transactions"+mo
   })
   data = data.forEach((s) => {
     var n = {}
-    
+   
     for (var k in s) {
-     
+      
       var c = map[k]
       if (c && !c.hideInTable) {
-        if (c.valueType == 'date') {
+        if (c.valueType == 'date' ) {
           n[c.title.props.defaultMessage] = s[k] ? moment(s[k]).format('YYYY/MM/DD') : ""
+        } if (c.valueType == 'dateTime') {
+          n[c.title.props.defaultMessage] = s[k] ? moment(s[k]).format('YYYY/MM/DD HH:mm:ss') : ""
         } else if (c.renderText) {
-          n[c.title.props.defaultMessage] = "" +c.renderText(s[k], s)
+          n[c.title.props.defaultMessage] = "" + c.renderText(s[k], s)
         }
         else if (c.render && k != 'id') {
-          n[c.title.props.defaultMessage] = c.render(s[k],s)
+          n[c.title.props.defaultMessage] = c.render(s[k], s)
         } else {
           n[c.title.props.defaultMessage] = c.valueEnum ? (typeof c.valueEnum[s[k]] == 'string' ? c.valueEnum[s[k]] : c.valueEnum[s[k]].text.props.defaultMessage) : s[k]
         }
-        
-        
+
+
       }
-     
+
     }
     newData.push(n)
-   
+
   })
 
   const parser = new Json2csvParser();
@@ -294,7 +240,6 @@ const TableList: React.FC = () => {
   const [processes, setProcesses] = useState<any>([]);
   const [events, setEvents] = useState<any>([]);
 
-
   const [resizeObj, setResizeObj] = useState({ searchSpan: 12, tableScrollHeight: 300 });
   //--MP start
   const MPSearchFormRef = useRef<ProFormInstance>();
@@ -302,14 +247,156 @@ const TableList: React.FC = () => {
   const [showMPSearch, setShowMPSearch] = useState<boolean>(false);
   const [isMP, setIsMP] = useState<boolean>(!isPC());
 
- 
+  const [formData, setFormData] = useState<any>({});
+
+  const getTimeStr = (time) => {
+    return (time ? parseInt((time / 3600) + "") : 0) + "h " + (time ? parseInt((time % 3600) / 60) : 0) + "m"
+  }
+
+  
+  var value = eval('(' + useLocation()?.state?.value + ')');
+
+  
+  //var value = useLocation()?.state?.value;
+
+
+  var filter = {}
+  if (value.imo_number) {
+    var a = {}
+    a.field = 'imo_number'
+    a.op = 'like'
+    a.data = value.imo_number
+    filter.imo_number = a
+  }
+
+  if (value.vessel_name) {
+    var a = {}
+    a.field ='vessel_name' 
+    a.op = 'like'
+    a.data = value.vessel_name
+    filter.vessel_name = a
+  }
+  var product_type_str ="All Product"
+  if (value.product_type) {
+    var a = {}
+    a.field = 'product_type'
+    a.op = 'like'
+    a.data = value.product_type
+    filter.product_type = a
+
+    product_type_str = value.product_type
+  }
+
+
+  if (value.terminal_id) {
+    var a = {}
+    a.field = 'terminal_id'
+    a.op = 'eq'
+    a.data = value.terminal_id
+    filter.terminal_id = a
+  }
+
+  if (value.jetty_id) {
+    var a = {}
+    a.field = 'jetty_id'
+    a.op = 'eq'
+    a.data = value.jetty_id
+    filter.jetty_id = a
+  }
+  if (value.hasOwnProperty('status')) {
+    var a = {}
+    a.field = 'status'
+    a.op = 'eq'
+    a.data = value.status
+    filter.status = a
+  }
+  if (value.hasOwnProperty('status')) {
+    var a = {}
+    a.field = 'status'
+    a.op = 'eq'
+    a.data = value.status
+    filter.status = a
+  }
 
 
 
+  if (value.flow_id && value.flow_id.length>0) {
+
+    
+    filter.flow_id =  {
+        'field': 'flow_id',
+          'op': 'in',
+          'data': value.flow_id
+      }
+    
+  }
+  
+  if (value.flow_id_to && value.flow_id_to.length > 0) {
+
+    
+    filter.flow_id={
+        'field': 'flow_id',
+          'op': 'in',
+      'data': value.flow_id_to.map((a) => {
+              return a.split('_')[0]
+            })
+      }
+    filter.flow_id_to={
+        'field': 'flow_id_to',
+          'op': 'in',
+      'data': value.flow_id_to.map((a) => {
+              return a.split('_')[1]
+            })
+      }
+  }
+
+
+  var dateStr=""
+
+  if (value.dateArr && value.dateArr.length>0) {
+
+   
+    filter.start_of_transaction={
+        'field': 'start_of_transaction',
+          'op': 'between',
+      'data': value.dateArr
+      }
+     
+    dateStr = moment(value.dateArr[0]).format('YYYY/MM/DD') + " To " + moment(value.dateArr[1]).format('YYYY/MM/DD')
+  }
+
+  if (value.dateRange && value.dateRange.length > 0) {
+
+
+    filter.start_of_transaction = {
+      'field': 'start_of_transaction',
+      'op': 'between',
+      'data': value.dateRange
+    }
+    
+    dateStr = moment(value.dateRange[0]).format('YYYY/MM/DD') + " To " + moment(value.dateRange[1]).format('YYYY/MM/DD')
+  }
+
+
+
+  var Fields = value.selected_fields
+
+  console.log("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", filter)
 
   const [terminal_id, setTerminal_id] = useState<any>(useLocation()?.state?.terminal_id);
   const [dateArr, setDateArr] = useState<any>(useLocation()?.state?.dateArr);
   const [status, setStatus] = useState<any>(useLocation()?.state?.status);
+
+
+
+
+  const [transaction_total_num, setTransaction_total_num] = useState<any>(0);
+  const [transaction_filter_num, setTransaction_filter_num] = useState<any>(0);
+
+
+
+
+
 
   const right = (
     <div style={{ fontSize: 24 }}>
@@ -356,8 +443,8 @@ const TableList: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [MPfilter, setMPfilter] = useState<any>({})
 
-  async function getData(page, filter) {
-    const append = await transaction({
+  async function getData(page, _filter) {
+    const append = await reportSummary({
       ...{
         "current": page,
         "pageSize": 10,
@@ -379,12 +466,12 @@ const TableList: React.FC = () => {
   }
   //--MP end
 
-
+  var fd=useLocation()?.state
 
   useEffect(() => {
 
 
-
+    setFormData(fd)
 
 
 
@@ -455,6 +542,8 @@ const TableList: React.FC = () => {
       if (dateArr && dateArr[0] && dateArr[1]) {
         formRef.current?.setFieldValue('start_of_transaction', dateArr)
       }
+
+
       formRef.current?.submit();
 
 
@@ -473,7 +562,7 @@ const TableList: React.FC = () => {
    * */
   const intl = useIntl();
   const access = useAccess();
-  const columns: ProColumns<TransactionListItem>[] = [
+  var columns: ProColumns<TransactionListItem>[] = [
     {
       title: (
         <FormattedMessage
@@ -483,8 +572,8 @@ const TableList: React.FC = () => {
       ),
       dataIndex: 'eos_id',
       hideInSearch: true,
-     
- 
+      fixed: 'left',
+
       sorter: true,
       defaultSortOrder: 'descend',
       renderText: (dom, entity) => {
@@ -493,7 +582,7 @@ const TableList: React.FC = () => {
       render: (dom, entity) => {
         return (
           <a
-           
+
             onClick={() => {
               setCurrentRow(entity);
               history.push(`/transaction/detail?transaction_id=` + entity.id);
@@ -506,139 +595,55 @@ const TableList: React.FC = () => {
       },
     },
 
-    {
-      title: (
-        <FormattedMessage
-          id="pages.transaction.xxx"
-          defaultMessage="Start Date"
-        />
-      ),
-      sorter: true,
-     
-      hideInTable: true,
-      fieldProps: { placeholder: ['From ', 'To '] },
-      defaultSortOrder: 'descend',
-      dataIndex: 'start_of_transaction',
-      valueType: 'dateRange',
-     
-      search: {
-        transform: (value) => {
-          if (value.length > 0) {
-            return {
-              'start_of_transaction': {
-                'field': 'start_of_transaction',
-                'op': 'between',
-                'data': value
-              }
-            
-            }
-          }
-          
-        }
-      }
-
-
-
-    },
 
 
     {
       title: <FormattedMessage id="pages.transaction.startOfTransaction" defaultMessage="Start Of Transaction" />,
       dataIndex: 'start_of_transaction',
       sorter: true,
-      defaultSortOrder:'descend',
+      defaultSortOrder: 'descend',
       valueType: 'date',
       hideInSearch: true,
     },
     {
       title: <FormattedMessage id="pages.transaction.endOfTransaction" defaultMessage="End Of Transaction" />,
       dataIndex: 'end_of_transaction',
-      valueType: 'text',
-      sorter: true,
+      valueType: 'date',
       hideInSearch: true,
-      render: (dom, entity) => {
-        if (entity.status == 1) {
-          return dom ? moment(new Date(dom)).format('YYYY-MM-DD'):"-"
-        } else {
-          return ""
-        }
-      }
-
-
-      
-    },
-    {
-      title: <FormattedMessage id="pages.transaction.status" defaultMessage="Status" />,
-      dataIndex: 'status',
-      sorter: true,
-      search: {
-        transform: (value) => {
-         
-          if (value!==null) {
-            return {
-
-              status: {
-                'field': 'status',
-                'op': 'eq',
-                'data': Number(value)
-              }
-
-            }
-          }
-          
-        }
-      },
-      valueEnum: {
-        0: {
-          text: <FormattedMessage id="pages.transaction.active" defaultMessage="Open" /> },
-        1: { text: <FormattedMessage id="pages.transaction.closed" defaultMessage="Closed" /> },
-        2: { text: <FormattedMessage id="pages.transaction.cancelled" defaultMessage="Cancelled" /> }
-      },
-    },
-    {
-      title: <FormattedMessage id="pages.transaction.arrivalID" defaultMessage="Arrival ID" />,
-      dataIndex: 'arrival_id',
-      sorter: true,
-      hideInSearch: true
     },
     
     {
-     
+      title: <FormattedMessage id="pages.transaction.arrivalID" defaultMessage="Arrival ID" />,
+      dataIndex: 'arrival_id',
+      hideInSearch: true
+    },
+
+    {
+
       title: <FormattedMessage id="pages.transaction.currentProcess" defaultMessage="Current Process" />,
-      dataIndex: 'flow_id',
-     // valueEnum: flowConf,
-      sorter: true,
+      dataIndex: 'flow_pid',
+      valueEnum: flowConf,
       fieldProps: {
         notFoundContent: <Empty />,
       },
-      render: (dom, entity) => {
-        if (entity.status == 0) {
-          return flowConf[dom]
-        } else {
-          return ""
-        }
-      },
       hideInSearch: true,
     },
-   
-   
+
+
     {
       title: <FormattedMessage id="pages.transaction.imoNumber" defaultMessage="IMO Number" />,
       dataIndex: 'imo_number',
-      sorter: true,
       valueType: 'text',
     },
     {
       title: <FormattedMessage id="pages.transaction.vesselName" defaultMessage="Vessel Name" />,
       dataIndex: 'vessel_name',
-      sorter: true,
       valueType: 'text',
     },
 
     {
       title: <FormattedMessage id="pages.transaction.terminalName" defaultMessage="Terminal Name" />,
       dataIndex: 'terminal_id',
-      sorter: true,
       valueEnum: terminalList,
       fieldProps: {
         notFoundContent: <Empty />,
@@ -661,7 +666,6 @@ const TableList: React.FC = () => {
     {
       title: <FormattedMessage id="pages.transaction.jettyName" defaultMessage="Jetty Name" />,
       dataIndex: 'jetty_id',
-      sorter: true,
       valueEnum: jettyList,
       fieldProps: {
         notFoundContent: <Empty />,
@@ -681,189 +685,94 @@ const TableList: React.FC = () => {
         }
       }
     },
-    
-   
+
+
     {
       title: <FormattedMessage id="pages.transaction.productType" defaultMessage="Product Type" />,
       dataIndex: 'product_type',
-      sorter: true,
-     // valueEnum: producttypeList,
+      // valueEnum: producttypeList,
+    },
+    
+
+   
+
+
+    {
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Activity (From)" />,
+      dataIndex: 'flow_id',
+      valueEnum: flowConf,
+    
     },
     {
-      title: <FormattedMessage id="pages.alertrule.totalNominatedQuantityM" defaultMessage="Total Nominated Quantity (MT)" />,
-      dataIndex: 'total_nominated_quantity_m',
-      sorter: true,
-      width:200,
-      hideInSearch: true,
-      valueType: "text",
-      render: (dom, entity) => {
-        if (dom ) {
 
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Activity (To)" />,
+      dataIndex: 'flow_id_to',
+      valueEnum: flowConf
+    
+    },
 
-          return numeral(dom).format('0,0') 
-        }
-
-      },
+    {
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Timestamp" />,
+      dataIndex: 'event_time',
+      valueType: 'dateTime',
     },
     {
-      title: <FormattedMessage id="pages.alertrule.totalNominatedQuantityB" defaultMessage="Total Nominated Quantity (Bal-60-F)" />,
-      dataIndex: 'total_nominated_quantity_b',
-      hideInSearch: true,
-      width: 200,
-      sorter: true,
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Total Duration By Process" />,
+      dataIndex: 'duration',
       valueType: 'text',
-
       render: (dom, entity) => {
-        if (dom) {
-          return numeral(dom).format('0,0') 
-        }
+        
+          return getTimeStr(dom)
+      
+
 
       },
     },
 
+    {
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Number of Amber Alert Breached" />,
+      dataIndex: 'amber_alert_num',
+      valueType: 'text',
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Number of Red Alert Breached" />,
+      dataIndex: 'red_alert_num',
+      valueType: 'text',
+    },
     {
       title: <FormattedMessage id="pages.transaction.totalDuration" defaultMessage="Entire Duration (Till Date)" />,
       dataIndex: 'total_duration',
-      sorter: true,
       hideInSearch: true,
       render: (dom, entity) => {
         if (dom > 0 && entity.status == 1) {
-          return parseInt((dom / 3600) + "") + "h " + parseInt((dom % 3600) / 60) + "m"
+          return getTimeStr(dom)
         } else {
           return '-'
         }
-        
+
 
       },
       valueType: 'text',
     },
-    {
-      title: (
-
-        <FormattedMessage
-          id="pages.alertrule.eee"
-          defaultMessage="Entire Transaction And Processes"
-        />
-      ),
-      dataIndex: 'flow_id',
-      hideInTable: true,
-      hideInDescriptions: true,
-      valueEnum: processes,
-      fieldProps: {
-        notFoundContent: <Empty />,
-        width: '300px',
-        dropdownMatchSelectWidth: isMP ? true : false,
-        mode: 'multiple',
-        showSearch: false,
-        multiple: true
-
-      },
-      search: {
-        transform: (value) => {
-          if (value.length > 0) {
-            return {
-              'flow_id': {
-                'field': 'flow_id',
-                'op': 'in',
-                'data': value
-              }
-            }
-          }
-
-        }
-      }
-
-    },
-    {
-      title: (
-        <FormattedMessage
-          id="pages.alertrule.eee"
-          defaultMessage="Between Two Events"
-        />
-      ),
-      dataIndex: 'flow_id_to',
-      hideInTable: true,
-      width: 200,
-      hideInDescriptions: true,
-      valueEnum: events,
-      fieldProps: {
-        notFoundContent: <Empty />,
-        dropdownMatchSelectWidth: isMP ? true : false,
-        width: '300px',
-        mode: 'multiple',
-        showSearch: false,
-        multiple: true
-
-      },
-      search: {
-        transform: (value) => {
-          if (value.length > 0) {
-            return {
-              'flow_id': {
-                'field': 'flow_id',
-                'op': 'in',
-                'data': value.map((a) => {
-                  return a.split('_')[0]
-                })
-              },
-              'flow_id_to': {
-                'field': 'flow_id_to',
-                'op': 'in',
-                'data': value.map((a) => {
-                  return a.split('_')[1]
-                })
-              },
-            }
-          }
-        }
-      }
-
-
-    },/*,
-    {
-      title: <FormattedMessage id="pages.transaction.durationPerVolume" defaultMessage="Duration per Volume (B) / (A)" />,
-      dataIndex: 'duration_per_volume',
-      hideInSearch: true,
-      render: (dom, entity) => {
-        return (
-          <span>
-            {dom} mins/m{< sup > 3</sup>}
-          </span>
-        );
-      },
-      valueType: 'text',
-    },
-    {
-      title: <FormattedMessage id="pages.transaction.averageDurationPerVolumeOfSameProductType" defaultMessage="Average Duration per Volume of same Product Type" />,
-      dataIndex: 'average_duration_per_volume_of_same_product_type',
-      hideInSearch: true,
-      render: (dom, entity) => {
-        return (
-          <span>
-            {dom} mins/m{< sup > 3</sup>}
-          </span>
-        );
-      },
-      valueType: 'text',
-    }*/
-    ,
    
-    {
+
+    /*{
       title: <FormattedMessage id="pages.searchTable.titleOption" defaultMessage="Operating" />,
       dataIndex: 'option',
       valueType: 'option',
       hideInTable: !access.canAdmin,
       render: (_, record) => [
         <Access accessible={access.canAdmin} fallback={<div></div>}>
-        <a
-          key="config"
-          onClick={() => {
-            handleUpdateModalOpen(true);
-            record.status = record.status+""
-            setCurrentRow(record);
-          }}
-        >
-          <FormattedMessage id="pages.update" defaultMessage="Modify" />
+          <a
+            key="config"
+            onClick={() => {
+              handleUpdateModalOpen(true);
+              setCurrentRow(record);
+            }}
+          >
+            <FormattedMessage id="pages.update" defaultMessage="Modify" />
           </a></Access>,
         <Access accessible={access.canAdmin} fallback={<div></div>}>
           <a
@@ -885,13 +794,24 @@ const TableList: React.FC = () => {
 
           </a>
         </Access>
-       
+
       ],
-    },
+    },*/
   ];
-  
+  if (Fields.length>0) {
+    columns = columns.filter((c) => {
+
+      return Fields.some((b) => {
+        return b == c.dataIndex
+      })
+
+    })
+  }
+
+ 
+
   const customizeRenderEmpty = () => {
-    var o = formRef.current?.getFieldsValue()
+    var o = filter
     var isSearch = false
     for (var a in o) {
       if (o[a]) {
@@ -908,22 +828,25 @@ const TableList: React.FC = () => {
 
   }
   return (
-
-   
     <PageContainer header={{
-      title: isMP ? null : < FormattedMessage id="pages.transactions.title" defaultMessage="Summary Of All Transactions" />,
+      title: isMP ? null : <>< FormattedMessage id="pages.transactions.title" defaultMessage="Summary Of All Transactions" /> {dateStr + " - " + product_type_str}<div>{"Total count of transactions filtered: " + transaction_filter_num + " out of " + transaction_total_num}</div></>,
       breadcrumb: {},
       extra: isMP ? null : [
-        <Access accessible={access.canAdmin} fallback={<div></div>}><Button
+       /* <Access accessible={!formData.id} fallback={<div></div>}>
+        <Button
+
           type="primary"
           key="primary"
           onClick={() => {
-            handleModalOpen(true);
+            var d = { ...formData }
+           d.value= JSON.stringify(d.value)
+            handleAdd(d);
           }}
         >
-
-          <PlusOutlined /> <FormattedMessage id="pages.searchTable.new" defaultMessage="New" />
-        </Button> </Access>, <Button type="primary" key="print"
+          <PlusOutlined /> <FormattedMessage id="pages.searchTable.xxxx" defaultMessage="Save" />
+        </Button>
+      </Access>,*/
+        <Button type="primary" key="print"
           onClick={() => {
             if (selectedRowsState.length == 0) {
               message.error(<FormattedMessage
@@ -942,12 +865,15 @@ const TableList: React.FC = () => {
 
       ]
     }}>
-      
-      {!isMP && (<ConfigProvider renderEmpty={customizeRenderEmpty}> <RcResizeObserver
+
+      {!isMP && (<ConfigProvider renderEmpty={customizeRenderEmpty}><RcResizeObserver
         key="resize-observer"
         onResize={(offset) => {
           const { innerWidth, innerHeight } = window;
-          var h = document.getElementsByClassName("ant-table-thead")?.[0]?.offsetHeight +300
+          
+          var h=document.getElementsByClassName("ant-table-thead")?.[0]?.offsetHeight+230
+          
+
           if (offset.width > 1280) {
             setIsMP(false)
             setResizeObj({ ...resizeObj, searchSpan: 8, tableScrollHeight: innerHeight - h });
@@ -969,19 +895,23 @@ const TableList: React.FC = () => {
       ><ProTable<TransactionListItem, API.PageParams>
 
           scroll={{ x: columns.length*140, y: resizeObj.tableScrollHeight }}
-          
+        
+      
         formRef={formRef}
         bordered size="small"
         actionRef={actionRef}
         rowKey="id"
         options={false}
-        search={{
-          labelWidth: 210,
-          span: resizeObj.searchSpan,
-          searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
-        }}
+        search={false}
         className="mytable"
-        request={(params, sorter) => transaction({ ...params, sorter })}
+        request={async (params, sorter) => {
+
+
+         var ss = await reportSummary({ ...params, sorter, ...filter })
+          setTransaction_total_num(ss.transaction_total_num)
+          setTransaction_filter_num(ss.transaction_filter_num)
+          return ss
+        }}
         columns={columns}
         rowSelection={{
           onChange: (_, selectedRows) => {
@@ -992,38 +922,16 @@ const TableList: React.FC = () => {
 
       {isMP && (<>
 
-        <NavBar backArrow={false} right={right} onBack={back}>
+        <NavBar backArrow={false}  onBack={back}>
           {intl.formatMessage({
             id: 'pages.transaction.title',
             defaultMessage: 'Summary Of All Transactions',
           })}
         </NavBar>
 
-        <div style={{ padding: '20px', backgroundColor: "#5187c4", display: showMPSearch ? 'block' : 'none' }}>
-          <Search columns={columns.filter(a => !a.hasOwnProperty('hideInSearch'))} action={actionRef} loading={false}
+        <div>{dateStr + " - " + product_type_str}</div><div>{"Total count of transactions filtered: " + transaction_filter_num + " out of " + transaction_total_num}</div>
 
-            onFormSearchSubmit={onFormSearchSubmit}
-
-            dateFormatter={'string'}
-            formRef={formRef}
-            type={'form'}
-            cardBordered={true}
-            form={{
-              submitter: {
-                searchConfig: {
-                
-                  submitText: < FormattedMessage id="pages.search" defaultMessage="Search" />,
-                }
-
-              }
-            }}
-            search={{
-
-            }}
-            
-            manualRequest={true}
-          />
-        </div>
+       
         <List>
           {data.map((item, index) => (
             <List.Item key={index}>
@@ -1049,10 +957,8 @@ const TableList: React.FC = () => {
         <InfiniteScroll loadMore={loadMore} hasMore={hasMore}>
           <InfiniteScrollContent hasMore={hasMore} />
         </InfiniteScroll>
-        <FloatButton.BackTop visibilityHeight={0} />
       </>)}
       {selectedRowsState?.length > 0 && (
-        <Access accessible={access.canAdmin} fallback={<div></div>}>
         <FooterToolbar
           extra={
             <div>
@@ -1064,94 +970,28 @@ const TableList: React.FC = () => {
             </div>
           }
         >
-          <Button
-            onClick={async () => {
-              await handleRemove(selectedRowsState, (success) => {
-                if (success) {
-                  setSelectedRows([]);
-                  actionRef.current?.reloadAndRest?.();
-                }
-                
-              });
-             
-            }}
-          >
-            <FormattedMessage
-              id="pages.searchTable.batchDeletion"
-              defaultMessage="Batch deletion"
-            />
-          </Button>
-          
-          </FooterToolbar>
-          </Access>
-      )}
-      
-      <CreateForm
-        onSubmit={async (value) => {
-          value.id = currentRow?.id
-          const success = await handleAdd(value as TransactionListItem);
-          if (success) {
-            handleModalOpen(false);
-            setCurrentRow(undefined);
-            if (actionRef.current) {
-              actionRef.current.reload();
-            }
-          }
-        }}
-        onCancel={() => {
-          handleModalOpen(false);
-          if (!showDetail) {
-            setCurrentRow(undefined);
-          }
-        }}
-        createModalOpen={createModalOpen}
-        values={currentRow || {}}
-      />
-      <UpdateForm
-        onSubmit={async (value) => {
-          value.id = currentRow?.id
-          const success = await handleUpdate(value);
-          if (success) {
-            handleUpdateModalOpen(false);
-            setCurrentRow(undefined);
-            if (actionRef.current) {
-              actionRef.current.reload();
-            }
-          }
-        }}
-        onCancel={() => {
-          handleUpdateModalOpen(false);
-          if (!showDetail) {
-            setCurrentRow(undefined);
-          }
-        }}
-        updateModalOpen={updateModalOpen}
-        values={currentRow || {}}
-      />
+         
 
-      <Drawer
-        width={isMP ? '100%' : 600}
-        open={showDetail}
-        onClose={() => {
-          setCurrentRow(undefined);
-          setShowDetail(false);
-        }}
-        closable={isMP ? true : false}
-      >
-        {currentRow?.name && (
-          <ProDescriptions<TransactionListItem>
-            column={isMP ? 1 : 2}
-            title={currentRow?.name}
-            request={async () => ({
-              data: currentRow || {},
-            })}
-            params={{
-              id: currentRow?.name,
-            }}
-            columns={columns as ProDescriptionsItemProps<TransactionListItem>[]}
-          />
-        )}
-      </Drawer>
+        </FooterToolbar>
+      )}
+      <div style={{ marginTop: -45, paddingLeft: 10 }}>
+         <Button
+
+          type="primary"
+          onClick={async () => {
+            history.back()
+          }}
+        >Return to previous page</Button>
+
+        {/* <Button
+          style={{ marginLeft:10 }}
+          type="primary"
+          onClick={async () => {
+            history.push("/Report/ReportList")
+          }}
+        >Return To Report History</Button>*/}
+      </div>
+
       {/* 调用打印模块 */}
       <FrPrint
         title={""}
@@ -1163,19 +1003,7 @@ const TableList: React.FC = () => {
         }}
         printModalVisible={printModalVisible}
       />
-      {/*
-         <div style={{ marginTop: -45, paddingLeft: 10 }}>
-          <Button
-
-            type="primary"
-            onClick={async () => {
-              history.back()
-            }}
-          >Return to previous page</Button>
-        </div>
-
-        */ }
-      </PageContainer>
+    </PageContainer>
   );
 };
 

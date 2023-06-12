@@ -64,14 +64,14 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         }}
         title={intl.formatMessage({
           id: 'pages.report.mod',
-          defaultMessage: '角色修改',
+          defaultMessage: 'Modify Report',
         })}
       >
         <ProFormText
           name="name"
           label={intl.formatMessage({
             id: 'pages.report.name',
-            defaultMessage: '角色名称',
+            defaultMessage: 'Report Name',
           })}
           width="md"
           rules={[
@@ -80,7 +80,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
               message: (
                 <FormattedMessage
                   id="pages.report.rules.name"
-                  defaultMessage="角色名称！"
+                  defaultMessage="Report Name"
                 />
               ),
             },
@@ -91,7 +91,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           width="md"
           label={intl.formatMessage({
             id: 'pages.report.description',
-            defaultMessage: '角色描述',
+            defaultMessage: 'Report Description',
           })}
          
         />

@@ -1,10 +1,12 @@
+
+import RcResizeObserver from 'rc-resize-observer';
 import { addAlertrule, removeAlertrule, alertrule, updateAlertrule } from './service';
-import { PlusOutlined, SearchOutlined, MoreOutlined, FormOutlined, DeleteOutlined, InfoCircleOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { PlusOutlined, SearchOutlined, MoreOutlined, FormOutlined, DeleteOutlined, InfoCircleOutlined, ExclamationCircleOutlined, PrinterOutlined } from '@ant-design/icons';
 import type { ActionType, ProColumns, ProDescriptionsItemProps, ProTableProps } from '@ant-design/pro-components';
 import { AlertruleList, AlertruleListItem } from './data.d';
 import { GridContent } from '@ant-design/pro-layout';
 import { flow } from '../system/flow/service';
-
+import FrPrint from "../../components/FrPrint";
 //MP
 import { InfiniteScroll, List, NavBar, Space, DotLoading } from 'antd-mobile'
 
@@ -26,7 +28,7 @@ import {
 } from '@ant-design/pro-components';
 
 import { FormattedMessage, useIntl, useLocation, formatMessage } from '@umijs/max';
-import { Button, Drawer, Input, message, TreeSelect, Modal, Space as SpaceA, Empty, ConfigProvider } from 'antd';
+import { Button, Drawer, Input, message, TreeSelect, Modal, Space as SpaceA, Empty, ConfigProvider, FloatButton } from 'antd';
 import React, { useRef, useState, useEffect } from 'react';
 import CreateForm from './components/CreateForm';
 import UpdateForm from './components/UpdateForm';
@@ -69,18 +71,19 @@ const handleAdd = async (fields: any) => {
     delete d.total_nominated_quantity_from_m
     delete d.total_nominated_quantity_to_m
   }
-  
+
   if (d.from_to) {
     d.size_of_vessel_from = Number(d.from_to.split("-")[0])
     d.size_of_vessel_to = Number(d.from_to.split("-")[1])
   }
  
   
-  Number(d.from_to.split("-")[0])
-
+ 
   delete d.total_nominated_quantity_unit
   delete d.from_to
   try {
+
+    
     await addAlertrule(d);
     hide();
     message.success(<FormattedMessage
@@ -192,10 +195,10 @@ const handleRemove = async (selectedRows: AlertruleListItem[],callBack:any) => {
   if (!selectedRows) return true;
   var open=true
   confirm({
-    title: 'Delete record?',
+    title: 'Delete threshold? ',
     open: open,
     icon: <ExclamationCircleOutlined />,
-    content: 'The deleted record cannot be restored. Please confirm!',
+    content: 'Please note that the deleted threshold cannot be restored!',
     onOk() {
 
 
@@ -257,13 +260,13 @@ const TableList: React.FC = () => {
   const [flowTree, setFlowTree] = useState<any>([]);
   const [processes, setProcesses] = useState<any>([]);
   const restFormRef = useRef<ProFormInstance>();
-
+  const [resizeObj, setResizeObj] = useState({ searchSpan: 12, tableScrollHeight: 300, width:0 });
   //--MP start
   const MPSearchFormRef = useRef<ProFormInstance>();
-
+  const [printModalVisible, handlePrintModalVisible] = useState<boolean>(false);
   const [showMPSearch, setShowMPSearch] = useState<boolean>(false);
   const [isMP, setIsMP] = useState<boolean>(!isPC());
-
+  const [paramsText, setParamsText] = useState<string>('');
   const right = (
     <div style={{ fontSize: 24 }}>
       <Space style={{ '--gap': '16px' }}>
@@ -294,7 +297,7 @@ const TableList: React.FC = () => {
             <DotLoading />
           </>
         ) : (
-            <span>--- There's no more ---</span>
+            <span>{data.length} items in total</span>
         )}
       </>
     )
@@ -379,7 +382,7 @@ const TableList: React.FC = () => {
 
         res2.data.forEach((r) => {
 
-          d[r.flow_id + "_" + r.flow_id_to] = b[r.flow_id] + " - " + b[r.flow_id_to]
+          d[r.flow_id + "_" + r.flow_id_to] = b[r.flow_id] + " -> " + b[r.flow_id_to]
         })
 
         setEvents(d)
@@ -401,7 +404,7 @@ const TableList: React.FC = () => {
       dataIndex: 'type',
       sorter: true,
       hideInSearch: true,
-      defaultSortOrder: 'ascend',
+      defaultSortOrder: 'ascend', 
       valueEnum: {
         0: { text: <FormattedMessage id="pages.alertrule.singleProcess" defaultMessage="Single Process" /> },
         1: { text: <FormattedMessage id="pages.alertrule.betweenTwoEvents" defaultMessage="Between Two Events" /> },
@@ -426,6 +429,7 @@ const TableList: React.FC = () => {
       fieldProps: {
         notFoundContent: <Empty />,
         width: '300px',
+        dropdownMatchSelectWidth: isMP ? true : false,
         mode: 'multiple',
         showSearch: false,
         multiple: true
@@ -462,7 +466,8 @@ const TableList: React.FC = () => {
       valueEnum: events,
       fieldProps: {
         notFoundContent: <Empty />,
-        dropdownMatchSelectWidth:false,
+       
+        dropdownMatchSelectWidth:isMP?true:false,
         width: '300px',
           mode: 'multiple',
           showSearch: false,
@@ -502,10 +507,10 @@ const TableList: React.FC = () => {
       hideInDescriptions: true,
       fieldProps: {
 
-        dropdownMatchSelectWidth: false,
+        dropdownMatchSelectWidth: isMP ? true : false,
         width: '300px',
         
-        showSearch: true,
+       // showSearch: true,
 
 
       },
@@ -571,24 +576,27 @@ const TableList: React.FC = () => {
       title: (
         <FormattedMessage
           id="pages.alertrule.eee"
-          defaultMessage="Flow (From)"
+          defaultMessage="Threshold Process/Events"
         />
       ),
       dataIndex: 'flow_id',
       hideInSearch: true,
       valueEnum: flowConf ,
-      tip: '',
+      render: (dom, entity) => {
+        if (entity.type == 0) {
+          return flowConf[entity.flow_id]
+        } else if (entity.type == 1) {
+          return flowConf[entity.flow_id] + " -> "+ flowConf[entity.flow_id_to]
+        }else{
+          return '-'
+        }
+       
+      }
       
     },
 
    
-    {
-      title: <FormattedMessage id="pages.alertrule.eee" defaultMessage="Flow (To)" />,
-      dataIndex: 'flow_id_to',
-      hideInSearch: true,
-      valueEnum: flowConf
-     
-    },
+    
 
 
 
@@ -600,11 +608,24 @@ const TableList: React.FC = () => {
       sorter: true,
       hideInSearch: true,
       valueType: 'text',
+      
       render: (dom, entity) => {
-        if (entity.size_of_vessel_from !=null && entity.size_of_vessel_to) {
+        if (entity.size_of_vessel_from != null && entity.size_of_vessel_to) {
 
-          return numeral(entity.size_of_vessel_from).format('0,0') + " - " + numeral(entity.size_of_vessel_to-0.01).format('0,0.00');
-        } 
+          var valueEnum = {
+            "0-25": "GP",
+            "25-45": "MR",
+            "45-80": "LR1",
+            "80-120": "AFRA",
+            "120-160": "LR2",
+            "160-320": "VLCC",
+            "320-1000000": "ULCC",
+          }
+
+          return valueEnum[numeral(entity.size_of_vessel_from).format('0,0') + "-" + numeral(entity.size_of_vessel_to).format('0,0')];
+        } else {
+          return '-'
+        }
         
       },
     },
@@ -613,28 +634,30 @@ const TableList: React.FC = () => {
       dataIndex: 'total_nominated_quantity_from_m',
       fieldProps: { placeholder: ['From', 'To'] },
       valueType: "digitRange",
+      width: 200,
       sorter: true,
       render: (dom, entity) => {
         if (entity.total_nominated_quantity_from_m  && entity.total_nominated_quantity_to_m) {
 
        
           return numeral(entity.total_nominated_quantity_from_m).format('0,0') + " - " + numeral(entity.total_nominated_quantity_to_m).format('0,0')
+        } else {
+          return '-'
         }
        
       },
       search: {
         transform: (value) => {
-          if (value.length>0) {
+          if (value.length > 0) {
+
+            var a = value[0] || 0
+            var b = value[1] || 1000000000
+           
             return {
               'total_nominated_quantity_from_m': {
                 'field': 'total_nominated_quantity_from_m',
-                'op': 'gte',
-                'data': value[0]
-              },
-              'total_nominated_quantity_to_m': {
-                'field': 'total_nominated_quantity_to_m',
-                'op': 'lt',
-                'data': value[1]
+                'op': 'between',
+                'data': [a,b]
               }
             }
           }
@@ -644,31 +667,32 @@ const TableList: React.FC = () => {
     },
    
     {
-      title: <div style={{ lineHeight:"14px" }}>Total Nominated Quantity<br/>(Bal-60-F)</div>,
+      title:"Total Nominated Quantity (Bal-60-F)",
       dataIndex: 'total_nominated_quantity_from_b',
       fieldProps: { placeholder:['From','To']},
       valueType: "digitRange",
+      width:200,
       sorter: true,
       render: (dom, entity) => {
         if (entity.total_nominated_quantity_from_b && entity.total_nominated_quantity_to_b ) {
           return numeral(entity.total_nominated_quantity_from_b).format('0,0') + " - " + numeral(entity.total_nominated_quantity_to_b).format('0,0')
-        } 
+        } else {
+          return '-'
+        }
        
       },
       search: {
         transform: (value) => {
           if (value.length > 0) {
+            var a = value[0] || 0
+            var b = value[1] || 1000000000
             return {
               'total_nominated_quantity_from_b': {
                 'field': 'total_nominated_quantity_from_b',
-                'op': 'gte',
-                'data': value[0]
-              },
-              'total_nominated_quantity_to_b': {
-                'field': 'total_nominated_quantity_to_b',
-                'op': 'lt',
-                'data': value[1]
+                'op': 'between',
+                'data': [a,b]
               }
+             
             }
           }
 
@@ -691,9 +715,10 @@ const TableList: React.FC = () => {
       dataIndex: 'email',
       hideInSearch: true,
       hideInTable: true,
+      hideInDescriptions:true,
       valueType: 'text',
     },
-    {
+   /* {
       title: <FormattedMessage id="pages.alertrule.sendEmailSelect" defaultMessage="Send Email Select" />,
       dataIndex: 'send_email_select',
       hideInSearch: true,
@@ -702,7 +727,7 @@ const TableList: React.FC = () => {
 
         return dom;
       },
-    },
+    },*/
 
 
     {
@@ -715,12 +740,14 @@ const TableList: React.FC = () => {
     {
       title: <FormattedMessage id="pages.alertrule.userName" defaultMessage="Date of Threshold Alert Creation" />,
       dataIndex: 'created_at',
+      width: 200,
       hideInSearch: true,
-     
+      sorter: true,
       valueType: 'dateTime',
     },
     
     
+   
     {
       title: <FormattedMessage id="pages.searchTable.titleOption" defaultMessage="Operating" />,
       dataIndex: 'option',
@@ -733,33 +760,49 @@ const TableList: React.FC = () => {
             key="config"
             onClick={() => {
               handleUpdateModalOpen(true);
-             
+
               try {
                 if (record.size_of_vessel_from == null && record.size_of_vessel_to == null) {
                   record.from_to = null
                 } else {
                   record.from_to = record.size_of_vessel_from + "-" + record.size_of_vessel_to
                 }
-                
-                record.send_email_select = record.send_email_select.split(",")
+                record.emailArr = []
+                record.typeArr = [1]
+                record.email = record.email.split(";")
+                record.email.forEach((v, i) => {
+                  var a = '' + (new Date()).getTime() + i
+                  v = v.split(',')
+                  record[a + '_email'] = v[0]
+                  v.splice(0, 1)
+                  record[a + '_send_type_select'] = v
+
+                  record.emailArr.push(a)
+
+                })
+
+                // record.send_email_select = record.send_email_select.split(",")
+
+
+
               } catch (e) {
 
               }
-             
+
               setCurrentRow(record);
             }}
           >
-            <FormOutlined style={{ fontSize: '20px' }} /> 
-           
+            <FormOutlined style={{ fontSize: '20px' }} />
+
           </a>
         </Access>
         ,
-        <Access accessible={access.canAlertruleMod()} fallback={<div></div>}>
+        <Access accessible={access.canAlertruleDel()} fallback={<div></div>}>
           <a
             title={formatMessage({ id: "pages.delete", defaultMessage: "Delete" })}
             key="config"
             onClick={() => {
-             
+
               handleRemove([record], (success) => {
                 if (success) {
                   if (isMP) {
@@ -769,15 +812,15 @@ const TableList: React.FC = () => {
                   actionRef.current?.reloadAndRest?.();
                 }
               });
-              
+
 
             }}
           >
-            <DeleteOutlined  style={{ fontSize: '20px', color: 'red' }} />
+            <DeleteOutlined style={{ fontSize: '20px', color: 'red' }} />
 
           </a>
         </Access>
-        ,
+        /*,
           <Access accessible={access.canAlertruleMod()} fallback={<div></div>}>
             <a
               title={formatMessage({ id: "pages.details", defaultMessage: "Details" })  }
@@ -791,14 +834,16 @@ const TableList: React.FC = () => {
               <InfoCircleOutlined style={{ fontSize:'20px'} } /> 
            
           </a>
-        </Access>
+        </Access>*/
 
 
 
-       ,
-       
+        
+
       ],
-    },
+    }
+
+
   ];
   const customizeRenderEmpty = () => {
     var o = formRef.current?.getFieldsValue()
@@ -817,9 +862,35 @@ const TableList: React.FC = () => {
 
 
   }
-  return  (
-    <PageContainer header={{
-      title: isMP ? null : < FormattedMessage id="pages.alertrule.title" defaultMessage="Threshold Limit List" />,
+  return (
+    <RcResizeObserver
+      key="resize-observer"
+      onResize={(offset) => {
+        const { innerWidth, innerHeight } = window;
+       
+        var h = document.getElementsByClassName("ant-table-thead")?.[0]?.offsetHeight + 300
+        if (offset.width > 1280) {
+          setIsMP(false)
+          setResizeObj({ ...resizeObj, searchSpan: 8, tableScrollHeight: innerHeight - h });
+        }
+        if (offset.width < 1280 && offset.width > 900) {
+          setIsMP(false)
+          setResizeObj({ ...resizeObj, searchSpan: 12, tableScrollHeight: innerHeight - h });
+        }
+        if (offset.width < 900 && offset.width > 700) {
+          setResizeObj({ ...resizeObj, searchSpan: 24, tableScrollHeight: innerHeight - h });
+          setIsMP(false)
+        }
+       
+        if (offset.width <700) {
+          setIsMP(true)
+        }
+
+        
+      }}
+    >
+      <PageContainer header={{
+        title: isMP ? null : < FormattedMessage id="pages.alertrule.title" defaultMessage="Threshold Limit List" /> ,
       breadcrumb: {},
       extra: isMP?null:[<Access accessible={access.canAlertruleAdd()} fallback={<div></div>}>
         <Button
@@ -832,7 +903,19 @@ const TableList: React.FC = () => {
         >
           <PlusOutlined /> <FormattedMessage id="pages.searchTable.new" defaultMessage="Create New" />
         </Button>
-      </Access>]
+      </Access>, <Button type="primary" key="print"
+        onClick={() => {
+          if (selectedRowsState.length == 0) {
+            message.error(<FormattedMessage
+              id="pages.selectDataFirst"
+              defaultMessage="Please select data first!"
+            />);
+            return false;
+          }
+          handlePrintModalVisible(true)
+        }}
+      ><PrinterOutlined /> <FormattedMessage id="pages.Print" defaultMessage="Print" />
+        </Button>]
     }}>
       {!isMP && (<ConfigProvider renderEmpty={customizeRenderEmpty}><ProTable<AlertruleListItem, API.PageParams>
        
@@ -840,11 +923,11 @@ const TableList: React.FC = () => {
         className="mytable"
         actionRef={actionRef}
         rowKey="id"
-        scroll={{ y: 300 }}
+         scroll={{ x: 1800, y: resizeObj.tableScrollHeight }}
         bordered size="small"
         search={{
           labelWidth: 210,
-          span: 8,
+          span: resizeObj.searchSpan,
           searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
         }}
         options={false }
@@ -853,11 +936,11 @@ const TableList: React.FC = () => {
         }
         request={(params, sorter) => alertrule({ ...params, sorter })}
         columns={columns}
-        rowSelection={{
+        rowSelection={access.canAlertruleDel()?{
           onChange: (_, selectedRows) => {
             setSelectedRows(selectedRows);
           },
-        }}
+        }:false}
       /></ConfigProvider >)}
 
       {isMP && (<>
@@ -865,7 +948,7 @@ const TableList: React.FC = () => {
         <NavBar backArrow={false} right={right} onBack={back}>
           {intl.formatMessage({
             id: 'pages.alertrule.title',
-            defaultMessage: 'Threshold Limits - Summry',
+            defaultMessage: 'Threshold Limit List',
           })}
         </NavBar>
 
@@ -916,53 +999,11 @@ const TableList: React.FC = () => {
         </List>
         <InfiniteScroll loadMore={loadMore} hasMore={hasMore}>
           <InfiniteScrollContent hasMore={hasMore} />
-        </InfiniteScroll>
+          </InfiniteScroll>
+
+          <FloatButton.BackTop visibilityHeight={0} />
       </>)}
-      {selectedRowsState?.length > 0 && (
-        <FooterToolbar
-          extra={
-            <div>
-              <FormattedMessage id="pages.searchTable.chosen" defaultMessage="Chosen" />{' '}
-              <a style={{ fontWeight: 600 }}>{selectedRowsState.length}</a>{' '}
-              <FormattedMessage id="pages.searchTable.item" defaultMessage="项" />
-              &nbsp;&nbsp;
-              <span>
-                <FormattedMessage
-                  id="pages.searchTable.totalServiceCalls"
-                  defaultMessage="Total number of service calls"
-                />{' '}
-                {selectedRowsState.reduce((pre, item) => pre , 0)}{' '}
-                <FormattedMessage id="pages.searchTable.tenThousand" defaultMessage="万" />
-              </span>
-            </div>
-          }
-        >
-
-          <Access accessible={access.canAlertruleDel()} fallback={<div></div>}>
-            <Button
-              onClick={async () => {
-                await handleRemove(selectedRowsState, () => {
-
-                  setSelectedRows([]);
-                  if (isMP) {
-                    setData([]);
-                    getData(1, MPfilter)
-                  }
-                  actionRef.current?.reloadAndRest?.();
-                });
-                
-              }}
-            >
-              <FormattedMessage
-                id="pages.searchTable.batchDeletion"
-                defaultMessage="Batch deletion"
-              />
-            </Button>
-          </Access>
-          
-          
-        </FooterToolbar>
-      )}
+     
       
       <CreateForm
         onSubmit={async (value) => {
@@ -1027,19 +1068,52 @@ const TableList: React.FC = () => {
       >
         {currentRow?.id && (
           <ProDescriptions<AlertruleListItem>
-            column={isMP ? 1 : 2}
+            column={isMP ? 1 : 1}
             title={currentRow?.process_name}
-            request={async () => ({
-              data: currentRow || {},
-            })}
+            request={async () => {
+              var d = { ...currentRow }
+              d.email = d.email.split(";").map((a) => {
+                a = a.replace(',a', ',Amber')
+                a = a.replace(',r', ',Red')
+                return a
+              })
+               d.email=d.email.join(";")
+              return { data: d || {} }
+
+
+            }}
             params={{
               id: currentRow?.id,
             }}
             columns={columns as ProDescriptionsItemProps<AlertruleListItem>[]}
           />
         )}
-      </Drawer>
-    </PageContainer>
+        </Drawer>
+        {/* 调用打印模块 */}
+        <FrPrint
+          title={""}
+          subTitle={paramsText}
+          columns={columns}
+          dataSource={[...selectedRowsState/*, sumRow*/]}
+          onCancel={() => {
+            handlePrintModalVisible(false);
+          }}
+          printModalVisible={printModalVisible}
+        />
+        {/*
+         <div style={{ marginTop: -45, paddingLeft: 10 }}>
+          <Button
+
+            type="primary"
+            onClick={async () => {
+              history.back()
+            }}
+          >Return to previous page</Button>
+        </div>
+
+        */ }
+      </PageContainer>
+      </RcResizeObserver>
   )
 };
 

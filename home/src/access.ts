@@ -47,6 +47,22 @@ export default function access(initialState: { currentUser?: API.CurrentUser } |
         return a == 'alertrule_mod' 
       }) || currentUser?.role_name === 'super'
     },
+
+
+    canAlertDel: () => {
+      return currentUser && currentUser.permissions.some((a) => {
+        return a == 'alert_del'
+      }) || currentUser?.role_name === 'super'
+    },
+
+    canAlertMod: () => {
+      return currentUser && currentUser.permissions.some((a) => {
+        return a == 'alert_mod'
+      }) || currentUser?.role_name === 'super'
+    },
+
+
+
     canAlertList: () => {
       return currentUser && currentUser.permissions.some((a) => {
         return a == 'alert_list'

@@ -6,6 +6,20 @@
   "description": "",
   "glyphs": [
     {
+      "icon_id": "35897468",
+      "name": "barrels (3)",
+      "font_class": "zhuanyunche",
+      "unicode": "e60d",
+      "unicode_decimal": 58893
+    },
+    {
+      "icon_id": "35791480",
+      "name": "Picture1-_2_",
+      "font_class": "habor",
+      "unicode": "e60a",
+      "unicode_decimal": 58890
+    },
+    {
       "icon_id": "35732224",
       "name": "Picture2 (1)",
       "font_class": "terminal",
@@ -137,13 +151,6 @@
       "font_class": "matou1",
       "unicode": "e942",
       "unicode_decimal": 59714
-    },
-    {
-      "icon_id": "15628595",
-      "name": "转运车",
-      "font_class": "zhuanyunche",
-      "unicode": "e6b5",
-      "unicode_decimal": 59061
     }
   ]
 }

@@ -15,11 +15,11 @@ import {
 } from '@ant-design/pro-components';
 import { AlertruleListItem } from '../data.d';
 import { FormattedMessage, useIntl } from '@umijs/max';
-import { Modal, Form, Divider } from 'antd';
+import { Modal, Form, Divider, Button } from 'antd';
 import { flow } from '../../system/flow/service';
 import { tree, isPC } from "@/utils/utils";
 import React, { useRef, useState, useEffect } from 'react';
-import { PlusCircleOutlined, PlusOutlined,MinusOutlined, MinusCircleOutlined } from '@ant-design/icons';
+import { PlusCircleOutlined, PlusOutlined, MinusOutlined, MinusCircleOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { SvgIcon } from '@/components' // 自定义组件
 
 export type CreateFormProps = {
@@ -35,7 +35,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
   restFormRef?.current?.setFieldsValue({ events: [] })
   const intl = useIntl();
   const [flowConf, setFlowConf] = useState<any>({});
-
+  const [templateList, setTemplateList] = useState<any>([]);
   const [flowMap, setFlowMap] = useState<any>({});
   const [flowList, setFlowList] = useState<any>([]);
   const [isMP, setIsMP] = useState<boolean>(!isPC());
@@ -51,6 +51,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
 
 
     } else {
+
       flow({ pageSize: 300, current: 1, type: 0, sorter: { sort: 'ascend' } }).then((res) => {
         var b = {
           /*"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": intl.formatMessage({
@@ -113,13 +114,13 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
         }}
         title={intl.formatMessage({
           id: 'pages.alertrule.add',
-          defaultMessage: 'Threshold Limits - Settings',
+          defaultMessage: 'Creat new threshold limit setting',
         })}
     >
 
       <div style={{ float: 'left', width: '100%', display: "block",marginBottom:"10px" }}>
         <div style={{ fontWeight: 500, fontSize: "14px" }}>Input Applicable Condition(s) For Threshold To Be Applied</div>
-        <span style={{ fontSize: "12px" }}>If more than one condition is selected, threshold defined is only applicable to transactions that fulfil ALL of the specified conditions</span>
+        <span><ExclamationCircleOutlined /> If more than one condition is selected, threshold defined is only applicable to transactions that fulfil ALL of the specified conditions</span>
       </div>
 
      
@@ -132,10 +133,10 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
       width="lg"
       label={intl.formatMessage({
         id: 'pages.alertrule.sizeOfVessel',
-        defaultMessage: 'Size Of Vessel',
+        defaultMessage: 'Condition:  Size Of Vessel',
       })}
      
-      initialValue={"0-25"}
+     
       valueEnum={{
         "0-25": "1. GP (General Purpose): Less than 24.99 DWT",
         "25-45": "2. MR (Medium Range): 25 to 44.99 DWT",
@@ -148,7 +149,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
 
           
       </ProFormGroup>
-      <div>Total Nominated Quantity</div>
+      <div>Condition:  Total Nominated Quantity</div>
       <ProFormGroup>
 
 
@@ -175,7 +176,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
 
             }
           ]}
-          name="total_nominated_quantity_from_m" width="sm" min={1} max={10000000}
+          name="total_nominated_quantity_from_m" width="xs" min={1} max={10000000}
 
         />
 
@@ -196,18 +197,36 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
 
             }
           ]}
-          name="total_nominated_quantity_to_m" width="sm" min={1} max={10000000} />
+          name="total_nominated_quantity_to_m" width="xs" min={1} max={10000000} />
 
         <ProFormSelect
           name="total_nominated_quantity_unit"
-                  width={180}
+                  width={280}
                   allowClear={false}
           label={intl.formatMessage({
             id: 'pages.alertrule.unitOfMeasurement',
             defaultMessage: 'Unit of Measurement (UOM)',
           })}
 
-          initialValue={"m"}
+                  rules={[
+
+                    {
+                      validator: (rule, value, callback) => {
+                        if (total_nominated_quantity_from_m != null && total_nominated_quantity_to_m != null) {
+                          if (!value) {
+                            callback("Please Select Unit of Measurement")
+                          } else {
+                            callback()
+                          }
+
+                          
+                        } else {
+                          callback()
+                        }
+                      }
+
+                    }
+                  ]}
           valueEnum={{ m: "Metric Tonnes (MT)", b:"Barrels (Bal-60-F)" } }
 
 
@@ -222,6 +241,10 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
 
 
         </ProFormDependency>
+
+        <div>
+          <ExclamationCircleOutlined /> Note: Total Nominated Quantity refers to the sum of all quantity of operations for the vessel arrival at one jetty (e.g., 100 MT of discharge + 100 MT of loading = 200 MT of Total Nominated Quantity
+        </div>
         <ProFormCheckbox.Group
           name="typeArr"
           hidden
@@ -272,17 +295,21 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
         colSpan={12}
 
         title={<div style={{ float: 'left', width: '100%', display: "block", marginBottom: "10px" }}>
-          <div style={{ fontWeight: "500",fontSize:'14px' }}>Define Threshold Duration</div>
-          <span style={{ fontSize: "12px" }}>Select threshold based on process type (single – inclusive of ‘entire transaction’, or between two events).</span>
+          <div style={{ fontWeight: "500", fontSize: '14px' }}>Define Threshold Duration</div>
+          <span style={{ fontSize: "12px", fontWeight: "normal" }}><ExclamationCircleOutlined /> Select threshold type</span>
         </div>}
-        extra={<PlusOutlined onClick={() => {
+        extra={
+          <PlusCircleOutlined style={{ display:'inline-block', paddingTop: 26 }} onClick={() => {
           var arr = restFormRef?.current?.getFieldValue('typeArr')
           if (!arr) {
             arr = []
           }
           arr.push(new Date().getTime())
           restFormRef?.current?.setFieldsValue({ typeArr: arr })
-        }} />}
+        }} />
+          
+
+          }
 
       />
       <ProFormDependency name={['typeArr']}>
@@ -291,19 +318,27 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
           typeArr?.map((ta, index) => {
             arr.push(<>
 
-              {index>0 && <><Divider style={{ backgroundColor: "#d2d2d2" }}></Divider><MinusOutlined style={{ float: 'right', marginTop: -20 }} onClick={() => {
+              {index > 0 && <><Divider style={{ backgroundColor: "#d2d2d2" }}></Divider>
+                <MinusCircleOutlined style={{ float: 'right', marginTop: -20 }} onClick={() => {
 
-                var arr = restFormRef?.current?.getFieldValue('typeArr')
-                arr.splice(index, 1)
-                restFormRef?.current?.setFieldsValue({ typeArr: arr })
+                  var arr = restFormRef?.current?.getFieldValue('typeArr')
+                  arr.splice(index, 1)
+                  restFormRef?.current?.setFieldsValue({ typeArr: arr })
 
-              }} /></>}
+                }} />
+
+
+              
+
+
+
+               </>}
 
               <ProFormGroup>
               <ProFormSelect
                 name={ta+"_type"}
                 width="md"
-                label="Process Type"
+                  label="Threshold Type"
                 rules={[
                   {
                     required: true,
@@ -343,88 +378,152 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
                     var am = ta + "_amber_mins" 
                     var rh = ta + "_red_hours" 
                     var rm = ta + "_red_mins"
+
+
+
                     return <ProFormDependency name={[ah, am, rh, rm]} >
                       {(aa) => {
+                        var isShowRed = true
+                        if (!aa[ah] && !aa[am] && !aa[rh] && !aa[rm]) {
+                          isShowRed = false
+                        } else {
 
-                        return [<div style={{ width: '100%' }}>
+                          if ((aa[rh] || aa[rm]) && (aa[ah] || aa[am])) {
 
-                          <div style={{ float: 'left', width: '265px', fontWeight: "bold", color: "#DE8205" }}>
-                            <SvgIcon style={{ color: "#DE8205" }} type="icon-yuan" /> Amber
-                          </div>
-                          <div style={{ float: 'left', width: '30%', fontWeight: "bold", color: "red" }}>
-                            <SvgIcon style={{ color: "red" }} type="icon-yuan" /> Red
-                          </div>
-
-                        </div>, <ProFormGroup>
-
-                          <ProFormDigit label={<FormattedMessage
-                            id="pages.alertrule.hours"
-                            defaultMessage="Hours"
-                          />} name={ah} rules={[
-                            {
-                              validator: (rule, value, callback) => {
-                                if (aa[ah] > 0 || aa[am] > 0 || aa[rh] > 0 || aa[rm] > 0) {
-                                  callback()
-                                } else {
-                                  callback(" ")
-                                }
-                              }
-
+                            if ((aa[ah] ? aa[ah] * 3600 : 0) + (aa[am] ? aa[am] * 60 : 0) >= (aa[rh] ? aa[rh] * 3600 : 0) + (aa[rm] ? aa[rm] * 60 : 0)) {
+                              isShowRed = true
+                            } else {
+                              isShowRed = false
                             }
-                          ]} width={100} min={0} max={1000} />
-
-                          <ProFormDigit label={<FormattedMessage
-                            id="pages.alertrule.mins"
-                            defaultMessage="To"
-                          />} name={am} rules={[
-                            {
-                              validator: (rule, value, callback) => {
-                                if (aa[ah] > 0 || aa[am] > 0 || aa[rh] > 0 || aa[rm] > 0) {
-                                  callback()
-                                } else {
-                                  callback(" ")
-                                }
-                              }
-
-                            }
-                          ]} width={100} min={0} max={60} />
 
 
-                          <ProFormDigit label={<FormattedMessage
-                            id="pages.alertrule.hours"
-                            defaultMessage="Size Of Vessel From"
-                          />} name={rh} rules={[
-                            {
-                              validator: (rule, value, callback) => {
-                                if (aa[ah] > 0 || aa[am] > 0 || aa[rh] > 0 || aa[rm] > 0) {
-                                  callback()
-                                } else {
-                                  callback(" ")
-                                }
-                              }
-
-                            }
-                          ]} width={100} min={0} max={1000} />
-
-                          <ProFormDigit label={<FormattedMessage
-                            id="pages.alertrule.mins"
-                            defaultMessage="To"
-                          />} name={rm} rules={[
-                            {
-                              validator: (rule, value, callback) => {
-                                if (aa[ah] > 0 || aa[am] > 0 || aa[rh] > 0 || aa[rm] > 0) {
-                                  callback()
-                                } else {
-                                  callback(" ")
-                                }
-                              }
-
-                            }
-                          ]} width={100} min={0} max={60} />
+                          } else {
+                            isShowRed = false
+                          }
 
 
 
-                          </ProFormGroup>, <div style={{ marginLeft: '0px', marginTop: '-20px', color: 'red', display: aa[ah] > 0 || aa[am] > 0 || aa[rh] > 0 || aa[rm] > 0 ? 'none' : "block" }}>Please enter compulsory threshold alert field for either Amber or Red</div>]
+                        }
+                        return [
+                          <ProCard ghost={true} wrap={isMP?true:false}>
+                            <ProCard wrap={true} ghost={true}>
+                                <ProCard ghost={true }>
+                                 <SvgIcon style={{ color: "#DE8205" }} type="icon-yuan" /> Amber
+                                </ProCard>
+                                <ProCard ghost={true}>
+                                 <ProFormGroup>
+                                   <ProFormDigit label={<FormattedMessage
+                                      id="pages.alertrule.hours"
+                                      defaultMessage="Hours"
+                                    />} name={ah} rules={[
+                                      {
+                                        validator: (rule, value, callback) => {
+                                          if (aa[ah] > 0 || aa[am] > 0 || aa[rh] > 0 || aa[rm] > 0) {
+                                            callback()
+                                          } else {
+                                            callback(" ")
+                                          }
+                                        }
+
+                                      },
+                            
+                                      {
+                                        validator: (rule, value, callback) => {
+                                          if (isShowRed) {
+                                            callback(" ")
+                                          } else {
+                                            callback()
+                                          }
+                                        }
+
+                                      }
+                                    ]} width={120} min={0} max={1000} />
+
+                                    <ProFormDigit label={<FormattedMessage
+                                      id="pages.alertrule.mins"
+                                      defaultMessage="Mins"
+                                    />} name={am} rules={[
+                                      {
+                                        validator: (rule, value, callback) => {
+                                          if (aa[ah] > 0 || aa[am] > 0 || aa[rh] > 0 || aa[rm] > 0) {
+                                            callback()
+                                          } else {
+                                            callback(" ")
+                                          }
+                                        }
+
+                                      },
+                                      {
+                                        validator: (rule, value, callback) => {
+                                          if (isShowRed) {
+                                            callback(" ")
+                                          } else {
+                                            callback()
+                                          }
+                                        }
+
+                                      }
+                                    ]} width={120} min={0} max={60} />
+                                  </ProFormGroup>
+
+                                </ProCard>
+
+                               
+                              
+                            </ProCard>
+                            <ProCard wrap={true} ghost={true}>
+                              <ProCard ghost={true}>
+                                <SvgIcon style={{ color: "red" }} type="icon-yuan" /> Red
+                              </ProCard>
+                              <ProCard ghost={true}>
+                                <ProFormGroup>
+                                  <ProFormDigit label={<FormattedMessage
+                                    id="pages.alertrule.hours"
+                                    defaultMessage="Hours"
+                                  />} name={rh} rules={[
+                                    {
+                                      validator: (rule, value, callback) => {
+                                        if (aa[ah] > 0 || aa[am] > 0 || aa[rh] > 0 || aa[rm] > 0) {
+                                          callback()
+                                        } else {
+                                          callback(" ")
+                                        }
+                                      }
+
+                                    }
+                                  ]} width={120} min={0} max={1000} />
+
+                                  <ProFormDigit label={<FormattedMessage
+                                    id="pages.alertrule.mins"
+                                    defaultMessage="Mins"
+                                  />} name={rm} rules={[
+                                    {
+                                      validator: (rule, value, callback) => {
+                                        if (aa[ah] > 0 || aa[am] > 0 || aa[rh] > 0 || aa[rm] > 0) {
+                                          callback()
+                                        } else {
+                                          callback(" ")
+                                        }
+                                      }
+
+                                    }
+                                  ]} width={120} min={0} max={60} />
+                                </ProFormGroup>
+
+                              </ProCard>
+
+
+
+                            </ProCard>
+                           
+                          </ProCard>,
+
+
+
+
+                         , <div style={{ marginLeft: '0px', marginTop: '-20px', color: 'red', display: aa[ah] > 0 || aa[am] > 0 || aa[rh] > 0 || aa[rm] > 0 ? 'none' : "block" }}>Duration for at least "Amber" or "Red" threshold must be entered</div>,
+                          <div style={{ marginLeft: '0px', marginTop: '-10px', color: 'red', display: isShowRed ? 'block' : "none" }}>Duration for "Red" should not be shorter than "Amber" status</div>
+                        ]
 
                       }
                       }
@@ -460,7 +559,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
                             }
 
                           ]}
-                          value
+                          
                           valueEnum={flowConf}
 
                         />
@@ -475,88 +574,160 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
                           var am = ta + "_amber_mins"
                           var rh = ta + "_red_hours"
                           var rm = ta + "_red_mins"
+
+
+                         
+
+
+
                           return <ProFormDependency name={[ah, am, rh, rm]} >
                             {(aa) => {
 
-                              return [<div style={{ width: '100%' }}>
 
-                                <div style={{ float: 'left', width: '265px', fontWeight: "bold", color: "#DE8205" }}>
-                                  <SvgIcon style={{ color: "#DE8205" }} type="icon-yuan" /> Amber
-                                </div>
-                                <div style={{ float: 'left', width: '30%', fontWeight: "bold", color: "red" }}>
-                                  <SvgIcon style={{ color: "red" }} type="icon-yuan" /> Red
-                                </div>
+                              var isShowRed = true
+                              if (!aa[ah] && !aa[am] && !aa[rh] && !aa[rm]) {
+                                isShowRed = false
+                              } else {
 
-                              </div>, <ProFormGroup>
+                                if ((aa[rh] || aa[rm]) && (aa[ah] || aa[am])) {
 
-                                <ProFormDigit label={<FormattedMessage
-                                  id="pages.alertrule.hours"
-                                  defaultMessage="Hours"
-                                />} name={ah} rules={[
-                                  {
-                                    validator: (rule, value, callback) => {
-                                      if (aa[ah] > 0 || aa[am] > 0 || aa[rh] > 0 || aa[rm] > 0) {
-                                        callback()
-                                      } else {
-                                        callback(" ")
-                                      }
-                                    }
-
+                                  if ((aa[ah] ? aa[ah] * 3600 : 0) + (aa[am] ? aa[am] * 60 : 0) >= (aa[rh] ? aa[rh] * 3600 : 0) + (aa[rm] ? aa[rm] * 60 : 0)) {
+                                    isShowRed = true
+                                  } else {
+                                    isShowRed = false
                                   }
-                                ]} width={100} min={0} max={1000} />
-
-                                <ProFormDigit label={<FormattedMessage
-                                  id="pages.alertrule.mins"
-                                  defaultMessage="To"
-                                />} name={am} rules={[
-                                  {
-                                    validator: (rule, value, callback) => {
-                                      if (aa[ah] > 0 || aa[am] > 0 || aa[rh] > 0 || aa[rm] > 0) {
-                                        callback()
-                                      } else {
-                                        callback(" ")
-                                      }
-                                    }
-
-                                  }
-                                ]} width={100} min={0} max={60} />
 
 
-                                <ProFormDigit label={<FormattedMessage
-                                  id="pages.alertrule.hours"
-                                  defaultMessage="Size Of Vessel From"
-                                />} name={rh} rules={[
-                                  {
-                                    validator: (rule, value, callback) => {
-                                      if (aa[ah] > 0 || aa[am] > 0 || aa[rh] > 0 || aa[rm] > 0) {
-                                        callback()
-                                      } else {
-                                        callback(" ")
-                                      }
-                                    }
+                                } else {
+                                  isShowRed = false
+                                } 
 
-                                  }
-                                ]} width={100} min={0} max={1000} />
+                                
 
-                                <ProFormDigit label={<FormattedMessage
-                                  id="pages.alertrule.mins"
-                                  defaultMessage="To"
-                                />} name={rm} rules={[
-                                  {
-                                    validator: (rule, value, callback) => {
-                                      if (aa[ah] > 0 || aa[am] > 0 || aa[rh] > 0 || aa[rm] > 0) {
-                                        callback()
-                                      } else {
-                                        callback(" ")
-                                      }
-                                    }
-
-                                  }
-                                ]} width={100} min={0} max={60} />
+                              }
 
 
+                             
 
-                              </ProFormGroup>, <div style={{ marginLeft: '0px', marginTop: '-20px', color: 'red', display: aa[ah] > 0 || aa[am] > 0 || aa[rh] > 0 || aa[rm] > 0 ? 'none' : "block" }}>Please enter compulsory threshold alert field for either Amber or Red</div>]
+                              return [
+                                <ProCard ghost={true} wrap={isMP ? true : false}>
+                                  <ProCard wrap={true} ghost={true}>
+                                    <ProCard ghost={true}>
+                                      <SvgIcon style={{ color: "#DE8205" }} type="icon-yuan" /> Amber
+                                    </ProCard>
+                                    <ProCard ghost={true}>
+                                      <ProFormGroup>
+                                        <ProFormDigit label={<FormattedMessage
+                                          id="pages.alertrule.hours"
+                                          defaultMessage="Hours"
+                                        />} name={ah} rules={[
+                                          {
+                                            validator: (rule, value, callback) => {
+                                              if (aa[ah] > 0 || aa[am] > 0 || aa[rh] > 0 || aa[rm] > 0) {
+                                                callback()
+                                              } else {
+                                                callback(" ")
+                                              }
+                                            }
+
+                                          },
+                                          {
+                                            validator: (rule, value, callback) => {
+                                              if (isShowRed) {
+                                                callback(" ")
+                                              } else {
+                                                callback()
+                                              }
+                                            }
+
+                                          }
+                                        ]} width={120} min={0} max={1000} />
+
+                                        <ProFormDigit label={<FormattedMessage
+                                          id="pages.alertrule.mins"
+                                          defaultMessage="Mins"
+                                        />} name={am} rules={[
+                                          {
+                                            validator: (rule, value, callback) => {
+                                              if (aa[ah] > 0 || aa[am] > 0 || aa[rh] > 0 || aa[rm] > 0) {
+                                                callback()
+                                              } else {
+                                                callback(" ")
+                                              }
+                                            }
+
+                                          },
+                                          {
+                                            validator: (rule, value, callback) => {
+                                              if (isShowRed) {
+                                                callback(" ")
+                                              } else {
+                                                callback()
+                                              }
+                                            }
+
+                                          }
+                                        ]} width={120} min={0} max={60} />
+                                      </ProFormGroup>
+
+                                    </ProCard>
+
+
+
+                                  </ProCard>
+                                  <ProCard wrap={true} ghost={true}>
+                                    <ProCard ghost={true}>
+                                      <SvgIcon style={{ color: "red" }} type="icon-yuan" /> Red
+                                    </ProCard>
+                                    <ProCard ghost={true}>
+                                      <ProFormGroup>
+                                        <ProFormDigit label={<FormattedMessage
+                                          id="pages.alertrule.hours"
+                                          defaultMessage="Hours"
+                                        />} name={rh} rules={[
+                                          {
+                                            validator: (rule, value, callback) => {
+                                              if (aa[ah] > 0 || aa[am] > 0 || aa[rh] > 0 || aa[rm] > 0) {
+                                                callback()
+                                              } else {
+                                                callback(" ")
+                                              }
+                                            }
+
+                                          }
+                                        ]} width={120} min={0} max={1000} />
+
+                                        <ProFormDigit label={<FormattedMessage
+                                          id="pages.alertrule.mins"
+                                          defaultMessage="Mins"
+                                        />} name={rm} rules={[
+                                          {
+                                            validator: (rule, value, callback) => {
+                                              if (aa[ah] > 0 || aa[am] > 0 || aa[rh] > 0 || aa[rm] > 0) {
+                                                callback()
+                                              } else {
+                                                callback(" ")
+                                              }
+                                            }
+
+                                          }
+                                        ]} width={120} min={0} max={60} />
+
+                                      </ProFormGroup>
+
+                                    </ProCard>
+
+
+
+                                  </ProCard>
+
+                                </ProCard>
+
+
+                              , <div style={{ marginLeft: '0px', marginTop: '-20px', color: 'red', display: aa[ah] > 0 || aa[am] > 0 || aa[rh] > 0 || aa[rm] > 0 ? 'none' : "block" }}>Please enter compulsory threshold alert field for either Amber or Red</div>,
+                                <div style={{ marginLeft: '0px', marginTop: '-10px', color: 'red', display: isShowRed ? 'block' : "none" }}>Duration for "Red" should not be shorter than "Amber" status</div>
+
+                              ]
 
                             }
                             }
@@ -578,7 +749,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
                           id: 'pages.alertrule.from',
                           defaultMessage: 'From',
                         })}
-
+                        
                         placeholder="Please select"
                         allowClear
                         width="md"
@@ -595,15 +766,29 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
                           {
                             validator: (rule, value, callback) => {
 
-                              if (value && flowMap[value].pid == '                                    ') {
-                                callback("Please select Event")
-                              }
+                              
 
-                              if (dd[ta + "_to"] && value && (flowMap[dd[ta + "_to"]].sort <= flowMap[value].sort)) {
-                                callback("Wrong sequence of events")
+                              if (dd[ta + "_to"] && value) {
+
+                                if (flowMap[dd[ta + "_to"]].sort < flowMap[value].sort) {
+                                 
+                                  callback('Events in "From" field cannot be later than Events in "To" field')
+                                 
+                                } else if (flowMap[dd[ta + "_to"]].sort == flowMap[value].sort) {
+                                  callback('Events cannot be the same')
+                                  
+                                } else {
+                                  callback()
+                                }
+                                
+
                               } else {
+                                
                                 callback()
+
                               }
+                             
+                              
                             }
                           }
                         ]}
@@ -612,7 +797,12 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
 
                             res.data = res.data.map((r) => {
                               r['value'] = r.id
-                              r['title'] = r.name
+                              r['key'] = r.id
+                              if (r.type==0) {
+                                r['disabled'] = true
+                              }
+                             
+                              
                               return r
                             })
 
@@ -625,9 +815,11 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
                         // tree-select args
                         fieldProps={{
                           showArrow: false,
+                          onChange: () => {
+                            restFormRef.current?.validateFields([ta + "_to"], { force: true });
+                          },
 
-
-                          dropdownMatchSelectWidth: false,
+                          dropdownMatchSelectWidth: isMP ? true : false,
 
 
                           treeNodeFilterProp: 'name',
@@ -658,14 +850,25 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
                           },
                           {
                             validator: (rule, value, callback) => {
-                              if (value && flowMap[value].pid == '                                    ') {
-                                callback("Please select Event")
-                              }
-                              if (dd[ta + "_from"] && value && (flowMap[dd[ta + "_from"]].sort >= flowMap[value].sort)) {
-                                callback("Wrong sequence of events")
+                              if (dd[ta + "_from"] && value) {
+
+                                if ( flowMap[value].sort < flowMap[dd[ta + "_from"]].sort) {
+                                  callback('Events in "From" field cannot be later than Events in "To" field')
+                                 
+                                } else if (flowMap[dd[ta + "_from"]].sort == flowMap[value].sort) {
+                                  callback('Events cannot be the same')
+                                 
+                                } else {
+                                  callback()
+                                }
+
+
                               } else {
+                                
                                 callback()
+
                               }
+                              
                             }
                           }
                         ]}
@@ -674,7 +877,11 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
 
                             res.data = res.data.map((r) => {
                               r['value'] = r.id
-                              r['title'] = r.name
+                              r['key'] = r.id
+                              
+                              if (r.type == 0) {
+                                r['disabled'] = true
+                              }
                               return r
                             })
 
@@ -689,8 +896,10 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
                           showArrow: false,
 
 
-                          dropdownMatchSelectWidth: false,
-
+                          dropdownMatchSelectWidth: isMP ? true : false,
+                          onChange: () => {
+                            restFormRef.current?.validateFields([ta + "_from"], { force: true });
+                          },
 
                           treeNodeFilterProp: 'name',
                           fieldNames: {
@@ -700,7 +909,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
                       />
                     </ProFormGroup><ProFormDependency name={[ta + "_from", ta + "_to"]} >
                         {(ee) => {
-                          if (!ee[ta + "_from"] || !ee[ta + "_to"]) {
+                          if (!(ee[ta + "_from"] && ee[ta + "_to"] && flowMap[dd[ta + "_from"]].sort < flowMap[dd[ta + "_to"]].sort) ) {
                             return []
                           }
                           var flow_id = ee[ta + "_from"]
@@ -711,19 +920,35 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
                           var rm = ta + "_red_mins"
                           return <ProFormDependency name={[ah, am, rh, rm]} >
                             {(aa) => {
+                              var isShowRed = true
+                              if (!aa[ah] && !aa[am] && !aa[rh] && !aa[rm]) {
+                                isShowRed = false
+                              } else {
 
-                              return [<div style={{ width: '100%' }}>
+                                if ((aa[rh] || aa[rm]) && (aa[ah] || aa[am])) {
 
-                                <div style={{ float: 'left', width: '265px', fontWeight: "bold", color: "#DE8205" }}>
-                                  <SvgIcon style={{ color: "#DE8205" }} type="icon-yuan" /> Amber
-                                </div>
-                                <div style={{ float: 'left', width: '30%', fontWeight: "bold", color: "red" }}>
-                                  <SvgIcon style={{ color: "red" }} type="icon-yuan" /> Red
-                                </div>
+                                  if ((aa[ah] ? aa[ah] * 3600 : 0) + (aa[am] ? aa[am] * 60 : 0) >= (aa[rh] ? aa[rh] * 3600 : 0) + (aa[rm] ? aa[rm] * 60 : 0)) {
+                                    isShowRed = true
+                                  } else {
+                                    isShowRed = false
+                                  }
 
-                              </div>, <ProFormGroup>
 
-                                <ProFormDigit label={<FormattedMessage
+                                } else {
+                                  isShowRed = false
+                                }
+
+
+
+                              }
+                              return [<ProCard ghost={true} wrap={isMP ? true : false}>
+                                  <ProCard wrap={true} ghost={true}>
+                                    <ProCard ghost={true}>
+                                      <SvgIcon style={{ color: "#DE8205" }} type="icon-yuan" /> Amber
+                                    </ProCard>
+                                    <ProCard ghost={true}>
+                                      <ProFormGroup>
+                                         <ProFormDigit label={<FormattedMessage
                                   id="pages.alertrule.hours"
                                   defaultMessage="Hours"
                                 />} name={ah} rules={[
@@ -736,8 +961,18 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
                                       }
                                     }
 
+                                  },
+                                  {
+                                    validator: (rule, value, callback) => {
+                                      if (isShowRed) {
+                                        callback(" ")
+                                      } else {
+                                        callback()
+                                      }
+                                    }
+
                                   }
-                                ]} width={100} min={0} max={1000} />
+                                ]} width={120} min={0} max={1000} />
 
                                 <ProFormDigit label={<FormattedMessage
                                   id="pages.alertrule.mins"
@@ -752,11 +987,32 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
                                       }
                                     }
 
+                                  },
+                                  {
+                                    validator: (rule, value, callback) => {
+                                      if (isShowRed) {
+                                        callback(" ")
+                                      } else {
+                                        callback()
+                                      }
+                                    }
+
                                   }
-                                ]} width={100} min={0} max={60} />
+                                ]} width={120} min={0} max={60} />
+                                      </ProFormGroup>
+
+                                    </ProCard>
 
 
-                                <ProFormDigit label={<FormattedMessage
+
+                                  </ProCard>
+                                  <ProCard wrap={true} ghost={true}>
+                                    <ProCard ghost={true}>
+                                      <SvgIcon style={{ color: "red" }} type="icon-yuan" /> Red
+                                    </ProCard>
+                                    <ProCard ghost={true}>
+                                      <ProFormGroup>
+                                          <ProFormDigit label={<FormattedMessage
                                   id="pages.alertrule.hours"
                                   defaultMessage="Size Of Vessel From"
                                 />} name={rh} rules={[
@@ -770,7 +1026,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
                                     }
 
                                   }
-                                ]} width={100} min={0} max={1000} />
+                                ]} width={120} min={0} max={1000} />
 
                                 <ProFormDigit label={<FormattedMessage
                                   id="pages.alertrule.mins"
@@ -786,11 +1042,25 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
                                     }
 
                                   }
-                                ]} width={100} min={0} max={60} />
+                                ]} width={120} min={0} max={60} />
+
+                                      </ProFormGroup>
+
+                                    </ProCard>
 
 
 
-                              </ProFormGroup>, <div style={{ marginLeft: '0px', marginTop: '-20px', color: 'red', display: aa[ah] > 0 || aa[am] > 0 || aa[rh] > 0 || aa[rm] > 0 ? 'none' : "block" }}>Please enter compulsory threshold alert field for either Amber or Red</div>]
+                                  </ProCard>
+
+                                </ProCard>,
+
+
+
+
+                                <div style={{ marginLeft: '0px', marginTop: '-20px', color: 'red', display: aa[ah] > 0 || aa[am] > 0 || aa[rh] > 0 || aa[rm] > 0 ? 'none' : "block" }}>Please enter compulsory threshold alert field for either Amber or Red</div>
+                                , <div style={{ marginLeft: '0px', marginTop: '-10px', color: 'red', display: isShowRed ? 'block' : "none" }}>Duration for "Red" should not be shorter than "Amber" status</div>
+
+                              ]
 
                             }
                             }
@@ -842,11 +1112,12 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
 
       <div style={{ float: 'left', width: '100%', display: "block", marginBottom: "10px" }}>
         <div style={{ fontWeight: "500",fontSize:'14px' }}>Email Notification</div>
-        <span style={{ fontSize: "12px" }}>Specify the type of alert that applies, and state whom the alert should be sent to when triggered.      </span>
+        <span ><ExclamationCircleOutlined /> Specify the email address and which level of alert they should be notified of.
+      </span>
       </div>
 
      
-      <ProFormGroup>
+      {/* <ProFormGroup>
        
         <ProFormDependency name={['typeArr']} >
 
@@ -901,23 +1172,29 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
 
 
        
-      </ProFormGroup>
+      </ProFormGroup>*/}
 
 
       <ProCard ghost={true}>
         <ProCard
           ghost={true}
-          colSpan={isMP?20: 12}
+          colSpan={isMP?20: 20}
 
           title={<span style={{ fontWeight: 'initial' }}>Email Address</span>}
-          extra={<PlusOutlined onClick={() => {
-            var arr = restFormRef?.current?.getFieldValue('emailArr')
-            if (!arr) {
-              arr = []
-            }
-            arr.push(new Date().getTime())
-            restFormRef?.current?.setFieldsValue({ emailArr: arr })
-          }} />}
+          extra={
+
+            <PlusCircleOutlined onClick={() => {
+              var arr = restFormRef?.current?.getFieldValue('emailArr')
+              if (!arr) {
+                arr = []
+              }
+              arr.push(new Date().getTime())
+              restFormRef?.current?.setFieldsValue({ emailArr: arr })
+            }} />
+           
+
+
+           }
 
         >
 
@@ -931,9 +1208,12 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
                 aa.emailArr.map((a, index) => {
 
                   arr.push(<ProFormGroup><ProFormText
-
+                   
                     fieldProps={{
-                      addonAfter: index >0?(<MinusOutlined onClick={() => {
+                     
+                      addonAfter: index > 0 ? (
+
+                        <MinusOutlined onClick={() => {
 
                         var arr = restFormRef?.current?.getFieldValue('emailArr')
                         arr.splice(index, 1)
@@ -942,13 +1222,13 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
                       }} />):null
 } }
                     width="md"
-                    name={"email" + a}
+                    name={a+"_email"}
                     label=""
                     rules={[
                       {
                         validator: (rule, value, callback) => {
                           if (!value) {
-                            value = ""
+                            callback()
                           }
                           var emailReg = /^\w{3,}(\.\w+)*@[A-z0-9]+(\.[A-z]{2,5}){1,2}$/;
 
@@ -965,7 +1245,72 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
 
                       }
                     ]}
-                  /></ProFormGroup>)
+                  />
+
+                    <ProFormDependency name={['typeArr']} >
+
+                      {(cc) => {
+                        var v = []
+                        cc.typeArr?.forEach((f) => {
+
+                          v.push(f + "_amber_" + 'hours')
+                          v.push(f + "_amber_" + 'mins')
+                          v.push(f + "_red_" + 'hours')
+                          v.push(f + "_red_" + 'mins')
+                        })
+
+
+                        return <ProFormDependency name={v} >
+                          {(cc) => {
+
+                            var isAmber = false
+                            var isRed = false
+
+                            for (var i in cc) {
+                              if (i.indexOf("_amber_") > -1 && cc[i]) {
+                                isAmber = true
+                              }
+
+                              if (i.indexOf("_red_") > -1 && cc[i]) {
+                                isRed = true
+                              }
+                            }
+                            var arr1 = []
+                            if (isAmber) {
+
+                              arr1.push({
+                                label: <><SvgIcon style={{ color: "#DE8205" }} type="icon-yuan" /> Amber</>,
+                                value: 'a',
+                               
+                              })
+                            }
+                            if (isRed) {
+
+                              arr1.push({
+                                label: <><SvgIcon style={{ color: "red" }} type="icon-yuan" /> Red</>,
+                                value: 'r',
+
+                              })
+                            }
+                            return <ProFormCheckbox.Group
+
+                              name={a + "_send_type_select" }
+                              label=""
+                              options={arr1}
+                            />
+
+                            
+                          }
+                          }
+                        </ProFormDependency>
+
+
+                      }}
+
+                    </ProFormDependency>
+
+
+                  </ProFormGroup>)
                 })
                 return arr
               }

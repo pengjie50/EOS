@@ -82,10 +82,11 @@ const Detail: React.FC<any> = (props) => {
 
   const [currentFilter, setCurrentFilter] = useState<any>();
   const [currentRow, setCurrentRow] = useState<TransactionListItem>();
+  const [currentRow2, setCurrentRow2] = useState<TransactionListItem>();
   const [blockchainRow, setBlockchainRowRow] = useState<any>([
-    
+
   ]);
-  
+
   const [flowTree, setFlowTree] = useState<any>([]);
   const [flowTreeAll, setFlowTreeAll] = useState<any>([]);
   const [flowList, setFlowList] = useState<any>([]);
@@ -110,10 +111,10 @@ const Detail: React.FC<any> = (props) => {
   var transaction_id = useLocation().search.split("=")[1]
   var m = {}
 
-  var yesCount=0
+  var yesCount = 0
   useLocation().state.validateData.forEach((v) => {
-    m[v.EventSubStage] = v.Stored
-    if (v.Stored == "True") {
+    m[v.EventSubStage] = v.Verified
+    if (v.Verified == "True") {
       yesCount++
     }
 
@@ -127,6 +128,55 @@ const Detail: React.FC<any> = (props) => {
 
   const [flowConf, setFlowConf] = useState<any>({});
   const [isMP, setIsMP] = useState<boolean>(!isPC());
+
+
+
+  const columns2: ProColumns<TransactionListItem>[] = [
+    {
+      title: (
+        <FormattedMessage
+          id="pages.xxx"
+          defaultMessage="Transaction Data"
+        />
+      ),
+      dataIndex: 'title'
+    
+      
+    },
+    {
+      title: (
+        <FormattedMessage
+          id="pages.xxx"
+          defaultMessage="Details"
+        />
+      ),
+      dataIndex: 'value'
+
+
+    },
+    {
+      title: (
+        <FormattedMessage
+          id="pages.xxx"
+          defaultMessage="Validation Status"
+        />
+      ),
+      align: 'center',
+      dataIndex: 'validation_status',
+      render: (dom, entity) => {
+
+
+        if (dom=== 1) {
+          return <span><CheckOutlined style={{ color: 'green' }} /></span>
+        } else {
+          return <span><CloseOutlined style={{ color: 'red' }} /></span>
+        }
+      }
+
+    },
+
+
+    ]
   const columns: ProColumns<TransactionListItem>[] = [
     {
       title: (
@@ -136,7 +186,10 @@ const Detail: React.FC<any> = (props) => {
         />
       ),
       dataIndex: 'eos_id',
-       render: (dom, entity) => {
+      render: (dom, entity) => {
+        if(!isMP){
+          return dom
+        }
         if (entity.validated) {
           return <div><div style={{ height: isMP ? 'auto' : '60px' }}>{dom}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
         } else {
@@ -153,6 +206,9 @@ const Detail: React.FC<any> = (props) => {
       valueType: 'dateTime',
       hideInSearch: true,
       render: (dom, entity) => {
+        if (!isMP) {
+          return moment(new Date(dom)).format('DD/MM/YYYY HH:mm') 
+        }
         if (entity.validated) {
           return <div><div style={{ height: isMP?'auto': '60px' }}>{dom}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
         } else {
@@ -167,6 +223,10 @@ const Detail: React.FC<any> = (props) => {
       valueType: 'dateTime',
       hideInSearch: true,
       render: (dom, entity) => {
+        if (!isMP) {
+
+          return dom?moment(new Date(dom)).format('DD/MM/YYYY HH:mm') :"-"
+        }
         if (entity.validated) {
           return <div><div style={{ height: isMP?'auto': '60px' }}>{dom}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
         } else {
@@ -184,6 +244,9 @@ const Detail: React.FC<any> = (props) => {
         2: { text: <FormattedMessage id="pages.transaction.cancelled" defaultMessage="Cancelled" /> }
       },
       render: (dom, entity) => {
+        if (!isMP) {
+          return dom
+        }
         if (entity.validated) {
           return <div><div style={{ height: isMP?'auto': '60px' }}>{dom}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
         } else {
@@ -197,6 +260,9 @@ const Detail: React.FC<any> = (props) => {
       dataIndex: 'arrival_id',
       hideInSearch: true,
       render: (dom, entity) => {
+        if (!isMP) {
+          return dom
+        }
         if (entity.validated) {
           return <div><div style={{ height: isMP?'auto': '60px' }}>{dom}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
         } else {
@@ -206,11 +272,14 @@ const Detail: React.FC<any> = (props) => {
       },
     },
 
-    {
+   /* {
       title: <FormattedMessage id="pages.transaction.currentProcess" defaultMessage="Current Process" />,
       dataIndex: 'flow_id',
      // valueEnum: flowConf,
       render: (dom, entity) => {
+        if (!isMP) {
+          return dom
+        }
         if (entity.validated) {
           return <div><div style={{ height: isMP?'auto': '60px' }}>{flowConf[dom]}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
         } else {
@@ -219,7 +288,7 @@ const Detail: React.FC<any> = (props) => {
 
       },
 
-    },
+    },*/
    
 
     {
@@ -228,6 +297,9 @@ const Detail: React.FC<any> = (props) => {
       hideInSearch: true,
       valueType: 'text',
       render: (dom, entity) => {
+        if (!isMP) {
+          return dom
+        }
         if (entity.validated) {
           return <div><div style={{ height: isMP?'auto': '60px' }}>{dom}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
         } else {
@@ -241,6 +313,9 @@ const Detail: React.FC<any> = (props) => {
       dataIndex: 'vessel_name',
       valueType: 'text',
       render: (dom, entity) => {
+        if (!isMP) {
+          return dom
+        }
         if (entity.validated) {
           return <div><div style={{ height: isMP?'auto': '60px' }}>{dom}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
         } else {
@@ -254,6 +329,9 @@ const Detail: React.FC<any> = (props) => {
       dataIndex: 'terminal_id',
      // valueEnum: terminalList,
       render: (dom, entity) => {
+        if (!isMP) {
+          return terminalList[dom]
+        }
         if (entity.validated) {
           return <div><div style={{ height: isMP?'auto': '60px' }}>{terminalList[dom]}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
         } else {
@@ -267,6 +345,9 @@ const Detail: React.FC<any> = (props) => {
       dataIndex: 'jetty_id',
       //valueEnum: jettyList,
       render: (dom, entity) => {
+        if (!isMP) {
+          return jettyList[dom]
+        }
         if (entity.validated) {
           return <div><div style={{ height: isMP?'auto': '60px' }}>{jettyList[dom]}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
         } else {
@@ -282,6 +363,9 @@ const Detail: React.FC<any> = (props) => {
       dataIndex: 'product_type',
      // valueEnum: producttypeList,
       render: (dom, entity) => {
+        if (!isMP) {
+          return dom
+        }
         if (entity.validated) {
           return <div><div style={{ height: isMP?'auto': '60px' }}>{dom}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
         } else {
@@ -303,6 +387,9 @@ const Detail: React.FC<any> = (props) => {
         } else {
           dom = ''
         }
+        if (!isMP) {
+          return dom
+        }
         if (entity.validated) {
           return <div><div style={{ height: isMP?'auto': '60px' }}>{dom}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
         } else {
@@ -323,6 +410,9 @@ const Detail: React.FC<any> = (props) => {
           dom = numeral(dom).format('0,0')
         } else {
           dom=''
+        }
+        if (!isMP) {
+          return dom
         }
         if (entity.validated) {
           return <div><div style={{ height: isMP?'auto': '60px' }}>{dom}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
@@ -347,7 +437,9 @@ const Detail: React.FC<any> = (props) => {
         } else {
           dom='-'
         }
-
+        if (!isMP) {
+          return dom
+        }
         if (entity.validated) {
           return <div><div style={{ height: isMP?'auto': '60px' }}>{dom}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
         } else {
@@ -381,7 +473,7 @@ const Detail: React.FC<any> = (props) => {
       hideInSearch: true
     },
     {
-      title: <FormattedMessage id="pages.blockchainIntegration.validated" defaultMessage="Validated ( with Blockchain)" />,
+      title: <FormattedMessage id="pages.blockchainIntegration.validated" defaultMessage="Validation Status" />,
       dataIndex: 'validated',
       align:"center",
       
@@ -487,7 +579,7 @@ const Detail: React.FC<any> = (props) => {
 
           var blockchainRow = res.data.map((a) => {
             var b = {
-              stage: a.flow_pid, time_stamp: a.event_time, activity: a.flow_id, validated: a.bliockchain_hex_key ? 1 : 0
+              stage: a.flow_pid, time_stamp: a.event_time, activity: a.flow_id, validated: yesCount ? 1 : 0
             }
             return b
           })
@@ -533,7 +625,29 @@ const Detail: React.FC<any> = (props) => {
     transaction({ pageSize: 1, current: 1, id: transaction_id }).then((res) => {
 
      
-      res.data[0].validated=true
+      res.data[0].validated = yesCount ? 1 : 0
+
+      var arr=[]
+      for (var k in res.data[0]) {
+
+        var c = columns.find((a) => { return a.dataIndex == k })
+        if (c) {
+          var r = {}
+          
+          r['title'] = c.title
+          r['validated'] = false
+
+          r['value'] = c.render ? c.render(res.data[0][k], res.data[0]) : res.data[0][k]
+          r['validation_status'] = 1
+
+          arr.push(r)
+        }
+        
+
+      }
+      
+      setCurrentRow2(arr)
+
       setCurrentRow(res.data[0])
 
     });
@@ -547,7 +661,7 @@ const Detail: React.FC<any> = (props) => {
   var color = {
     'icon-daojishimeidian': '#A13736',
     'icon-matou': '#ED7D31',
-    'icon-a-tadiao_huaban1': '#70AD47',
+    'icon-habor': '#70AD47',
     'icon-zhuanyunche': '#70AD47',
     'icon-matou1': '#595959'
   }
@@ -560,16 +674,16 @@ const Detail: React.FC<any> = (props) => {
     <PageContainer
 
       header={{
-        title: "Transactions Validation"
+        title: "Status Of Transactions Data Verified Against Polygon Blockchain"
 
       }}
 
     >
      
       {!isMP && (<ProTable<any>
-        headerTitle="Transaction"
-        columns={columns}
-        dataSource={currentRow ? [currentRow]: []}
+        headerTitle="Transaction Information"
+        columns={columns2}
+        dataSource={currentRow2 ? currentRow2: []}
         rowKey="key"
         pagination={false}
         search={false}
@@ -676,7 +790,15 @@ const Detail: React.FC<any> = (props) => {
 
 
 
+      <div style={{ marginTop: 15, paddingLeft: 0 }}>
+        <Button
 
+          type="primary"
+          onClick={async () => {
+            history.back()
+          }}
+        >Return to previous page</Button>
+      </div>
 
 
 

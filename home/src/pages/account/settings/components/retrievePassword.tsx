@@ -3,7 +3,7 @@ import type { ProFormInstance } from '@ant-design/pro-form';
 
 import { UploadOutlined } from '@ant-design/icons';
 import { Button, Input, Upload, message, Form } from 'antd';
-import { FormattedMessage, useIntl, useLocation } from '@umijs/max';
+import { FormattedMessage, useIntl, useLocation, history } from '@umijs/max';
 import {
   ProFormDependency,
   ProFormFieldSet,
@@ -53,9 +53,11 @@ const BaseView: React.FC = () => {
 
     await modifyPassword(d);
     message.success(<FormattedMessage
-      id="pages.modifySuccessful"
-      defaultMessage="Modify is successful"
+      id="pages.sss"
+      defaultMessage="Password is updated successfully"
     />);
+
+    history.push(`/user/login`);
     // message.success('更新基本信息成功');
   };
   
@@ -103,10 +105,10 @@ const BaseView: React.FC = () => {
                 rules={[
                   {
                     required: true, pattern: new RegExp(/((?=.*\d)(?=.*\D)|(?=.*[a-zA-Z])(?=.*[^a-zA-Z]))(?!^.*[\u4E00-\u9FA5].*$)^\S{8,22}$/),
-                    message: <FormattedMessage
-                      id="pages.userSet.rules.generatePassword"
-                      defaultMessage="Two or more types of letters, numbers, and special characters with 8-22 digits"
-                    />
+                    message: <>Your password should be at least eight characters and include at least the following:<br />
+                      a) At least letters in both upper- and lowercase<br />
+                      b) At least one number<br />
+                      c) At least one special character</>
                   }
 
                 ]}
@@ -123,10 +125,10 @@ const BaseView: React.FC = () => {
                       { required: true },
                       {
                         pattern: new RegExp(/((?=.*\d)(?=.*\D)|(?=.*[a-zA-Z])(?=.*[^a-zA-Z]))(?!^.*[\u4E00-\u9FA5].*$)^\S{8,22}$/),
-                        message: <FormattedMessage
-                          id="pages.userSet.rules.generatePassword"
-                          defaultMessage="Two or more types of letters, numbers, and special characters with 8-22 digits"
-                        />
+                        message: <>Your password should be at least eight characters and include at least the following:<br />
+                          a) At least letters in both upper- and lowercase<br />
+                          b) At least one number<br />
+                          c) At least one special character</>
                       },
                       {   //在这里使用antd 的validator通过promise去校验重复输入的密码和新密码是否一致
                         validator: (rule, value) =>

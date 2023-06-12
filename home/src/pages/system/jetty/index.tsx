@@ -1,3 +1,5 @@
+import RcResizeObserver from 'rc-resize-observer';
+
 import { addJetty, removeJetty, jetty, updateJetty } from './service';
 import { PlusOutlined, SearchOutlined, FormOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import type { ActionType, ProColumns, ProDescriptionsItemProps } from '@ant-design/pro-components';
@@ -15,7 +17,7 @@ import {
   ProTable,
 } from '@ant-design/pro-components';
 import { FormattedMessage, useIntl, formatMessage } from '@umijs/max';
-import { Button, Drawer, Input, message, Upload, Tooltip, Modal, Empty, ConfigProvider } from 'antd';
+import { Button, Drawer, Input, message, Upload, Tooltip, Modal, Empty, ConfigProvider, FloatButton } from 'antd';
 import React, { useRef, useState, useEffect } from 'react';
 import CreateForm from './components/CreateForm';
 import UpdateForm from './components/UpdateForm';
@@ -159,12 +161,15 @@ const TableList: React.FC = () => {
   const [currentRow, setCurrentRow] = useState<JettyListItem>();
   const [selectedRowsState, setSelectedRows] = useState<JettyListItem[]>([]);
   const [terminalList, setTerminalList] = useState<any>({});
+
   /**
    * @en-US International configuration
    * @zh-CN 国际化配置
    * */
   const intl = useIntl();
   const access = useAccess();
+
+  const [resizeObj, setResizeObj] = useState({ searchSpan: 12, tableScrollHeight: 300 });
   //--MP start
   const MPSearchFormRef = useRef<ProFormInstance>();
 
@@ -200,7 +205,7 @@ const TableList: React.FC = () => {
             <DotLoading />
           </>
         ) : (
-          <span>--- There's no more ---</span>
+          <span>{data.length} items in total</span>
         )}
       </>
     )
@@ -315,8 +320,8 @@ const TableList: React.FC = () => {
     {
       title: (
         <FormattedMessage
-          id="pages.jetty.berthNo"
-          defaultMessage="Berth No."
+          id="pages.jetty.xxx"
+          defaultMessage="Jetty No."
         />
       ),
       sorter: true,
@@ -363,38 +368,46 @@ const TableList: React.FC = () => {
       title: <FormattedMessage id="pages.jetty.depthAlongside" defaultMessage="Depth Alongside (M)" />,
       dataIndex: 'depth_alongside',
       valueType: 'text',
+      sorter: true,
       hideInSearch: true,
     },
     {
       title: <FormattedMessage id="pages.jetty.depthApproaches" defaultMessage="Depth Approaches (M)" />,
       dataIndex: 'depth_approaches',
       valueType: 'text',
+      sorter: true,
       hideInSearch: true,
     },
     {
       title: <FormattedMessage id="pages.jetty.maxLOA" defaultMessage="Max. LOA (M)" />,
       dataIndex: 'max_loa',
       valueType: 'text',
+      sorter: true,
       hideInSearch: true,
     },
     {
       title: <FormattedMessage id="pages.jetty.minLOA" defaultMessage="Min. LOA (M)" />,
       dataIndex: 'min_loa',
       valueType: 'text',
+      sorter: true,
       hideInSearch: true,
     },
     {
       title: <FormattedMessage id="pages.jetty.maxDisplacement" defaultMessage="Max. Displacement (MT)D
 " />,
       dataIndex: 'max_displacement',
+      width: 200,
       valueType: 'text',
+      sorter: true,
       hideInSearch: true,
     },
     {
       title: <FormattedMessage id="pages.jetty.mlaEnvelopAtMHWS3m" defaultMessage="MLA Envelop At MHWS 3.0m (Unless Otherwise Specified) (M)
 " />,
+      width:320,
       dataIndex: 'mla_envelop_at_mhws_3m',
       valueType: 'text',
+      sorter: true,
       hideInSearch: true,
     },
     
@@ -459,8 +472,32 @@ const TableList: React.FC = () => {
 
   }
   return (
+    <RcResizeObserver
+      key="resize-observer"
+      onResize={(offset) => {
+        const { innerWidth, innerHeight } = window;
+
+        if (offset.width > 1280) {
+          setIsMP(false)
+          setResizeObj({ ...resizeObj, searchSpan: 8, tableScrollHeight: innerHeight - 420 });
+        }
+        if (offset.width < 1280 && offset.width > 900) {
+          setIsMP(false)
+          setResizeObj({ ...resizeObj, searchSpan: 12, tableScrollHeight: innerHeight - 420 });
+        }
+        if (offset.width < 900 && offset.width > 700) {
+          setResizeObj({ ...resizeObj, searchSpan: 24, tableScrollHeight: innerHeight - 420 });
+          setIsMP(false)
+        }
+
+        if (offset.width < 700) {
+          setIsMP(true)
+        }
+
+      }}
+    >
     <PageContainer header={{
-      title: isMP ? null : < FormattedMessage id="'pages.jetty.title" defaultMessage="Jetty Criteria – Advario" />,
+      title: isMP ? null : < FormattedMessage id="'pages.jetty.title" defaultMessage="Jetty Criteria" />,
       breadcrumb: {},
       extra: isMP ? null : [
         <Access accessible={access.canJettyAdd()} fallback={<div></div>}> <Button
@@ -482,21 +519,24 @@ const TableList: React.FC = () => {
     }}>
       {!isMP && (<ConfigProvider renderEmpty={customizeRenderEmpty}><ProTable<JettyListItem, API.PageParams>
         formRef={formRef }
-        className="mytable"
+          className="mytable"
+          bordered
         actionRef={actionRef}
-        rowKey="id"
+          rowKey="id"
+          scroll={{ x: 1800, y: resizeObj.tableScrollHeight }}
         search={{
           labelWidth: 80,
+          span: resizeObj.searchSpan,
           searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
         }}
         options={false }
         request={(params, sorter) => jetty({ ...params, sorter })}
         columns={columns}
-        rowSelection={{
+        rowSelection={access.canJettyDel() ?{ 
           onChange: (_, selectedRows) => {
             setSelectedRows(selectedRows);
           },
-        }}
+        }:false}
       /></ConfigProvider >)}
 
       {isMP && (<>
@@ -556,9 +596,12 @@ const TableList: React.FC = () => {
         </List>
         <InfiniteScroll loadMore={loadMore} hasMore={hasMore}>
           <InfiniteScrollContent hasMore={hasMore} />
-        </InfiniteScroll>
+          </InfiniteScroll>
+          <FloatButton.BackTop visibilityHeight={0} />
       </>)}
       {selectedRowsState?.length > 0 && (
+
+        <Access accessible={access.canJettyDel()} fallback={<div></div>}>
         <FooterToolbar
           extra={
             <div>
@@ -566,14 +609,7 @@ const TableList: React.FC = () => {
               <a style={{ fontWeight: 600 }}>{selectedRowsState.length}</a>{' '}
               <FormattedMessage id="pages.searchTable.item" defaultMessage="项" />
               &nbsp;&nbsp;
-              <span>
-                <FormattedMessage
-                  id="pages.searchTable.totalServiceCalls"
-                  defaultMessage="Total number of service calls"
-                />{' '}
-                {selectedRowsState.reduce((pre, item) => pre , 0)}{' '}
-                <FormattedMessage id="pages.searchTable.tenThousand" defaultMessage="万" />
-              </span>
+              
             </div>
           }
         >
@@ -599,7 +635,8 @@ const TableList: React.FC = () => {
             />
           </Button>
           
-        </FooterToolbar>
+          </FooterToolbar>
+          </Access>
       )}
       
       <CreateForm
@@ -675,8 +712,20 @@ const TableList: React.FC = () => {
             columns={columns as ProDescriptionsItemProps<JettyListItem>[]}
           />
         )}
-      </Drawer>
-    </PageContainer>
+        </Drawer>
+        {/*
+         <div style={{ marginTop: -45, paddingLeft: 10 }}>
+          <Button
+
+            type="primary"
+            onClick={async () => {
+              history.back()
+            }}
+          >Return to previous page</Button>
+        </div>
+
+        */ }
+      </PageContainer></RcResizeObserver>
   );
 };
 

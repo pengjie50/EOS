@@ -6,6 +6,7 @@ import {
   ProFormTextArea,
   ProFormDependency,
   ModalForm,
+  ProCard,
   ProFormGroup,
   ProFormDigit,
   ProFormTreeSelect,
@@ -15,12 +16,12 @@ import {
 } from '@ant-design/pro-components';
 import { AlertruleListItem } from '../data.d';
 import { FormattedMessage, useIntl } from '@umijs/max';
-import { Modal, Form } from 'antd';
+import { Modal, Form, Button } from 'antd';
 import { flow } from '../../system/flow/service';
 import { tree, isPC } from "@/utils/utils";
 import React, { useRef, useState, useEffect } from 'react';
 import { SvgIcon } from '@/components' // 自定义组件
-
+import { PlusCircleOutlined, PlusOutlined, MinusOutlined, MinusCircleOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 
 export type UpdateFormProps = {
   onCancel: (flag?: boolean, formVals?: any) => void;
@@ -153,7 +154,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                 width="lg"
                 label={intl.formatMessage({
                   id: 'pages.alertrule.sizeOfVessel',
-                  defaultMessage: 'Size Of Vessel',
+                  defaultMessage: 'Condition:  Size Of Vessel',
                 })}
 
                 initialValue={"0-25"}
@@ -171,7 +172,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
             </ProFormGroup>)
           }}
         </ProFormDependency>
-        
+      <div>Condition:  Total Nominated Quantity</div>
      
         <ProFormDependency name={[ 'total_nominated_quantity_to_m', 'total_nominated_quantity_from_m']}>
           {({  total_nominated_quantity_to_m, total_nominated_quantity_from_m }) => {
@@ -179,11 +180,12 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         
               return (
                 <ProFormGroup>
-                  <ProFormDigit label={<FormattedMessage
+                  <ProFormDigit  label={<FormattedMessage
                     id="pages.alertrule.from"
-                    defaultMessage="Total Nominated Quantity From"
+                    defaultMessage="From"
+                    
                   />}
-                    name="total_nominated_quantity_from_m" width="sm" min={1} max={10000000}
+                    name="total_nominated_quantity_from_m" width="xs" min={1} max={10000000}
                     rules={[
                      
                       {
@@ -199,7 +201,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                     ]}
                   />
 
-                  <ProFormDigit label={<FormattedMessage
+                  <ProFormDigit width={100} label={<FormattedMessage
                     id="pages.alertrule.to"
                     defaultMessage="To"
                   />}
@@ -216,10 +218,10 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
                       }
                     ]}
-                    name="total_nominated_quantity_to_m" width="sm" min={1} max={10000000} />
+                    name="total_nominated_quantity_to_m" width="xs" min={1} max={10000000} />
                   <ProFormSelect
                     name="total_nominated_quantity_unit"
-                    width={180}
+                    width={280}
                     allowClear={false}
                     label={intl.formatMessage({
                       id: 'pages.alertrule.unitOfMeasurement',
@@ -372,7 +374,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                   }
 
                   if (aa["flow_id_to"] && value && (flowMap[aa[ "flow_id_to"]].sort <= flowMap[value].sort)) {
-                    callback("Wrong sequence of events")
+                    callback((flowMap[dd[ta + "_to"]].sort == flowMap[value].sort) ? "Events cannot be the same" : 'Events in "From" field cannot be later than Events in "To" field')
                   } else {
                     callback()
                   }
@@ -399,7 +401,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
               showArrow: false,
 
 
-              dropdownMatchSelectWidth: false,
+              dropdownMatchSelectWidth: isMP ? true : false,
 
 
               treeNodeFilterProp: 'name',
@@ -434,7 +436,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                     callback("Please select Event")
                   }
                   if (aa["flow_id_"] && value && (flowMap[aa[ "flow_id_"]].sort >= flowMap[value].sort)) {
-                    callback("Wrong sequence of events")
+                    callback((flowMap[dd[ta + "_from"]].sort == flowMap[value].sort) ? "Events cannot be the same" : 'Events in "From" field cannot be later than Events in "To" field')
                   } else {
                     callback()
                   }
@@ -461,7 +463,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
               showArrow: false,
 
 
-              dropdownMatchSelectWidth: false,
+              dropdownMatchSelectWidth: isMP ? true : false,
 
 
               treeNodeFilterProp: 'name',
@@ -490,11 +492,38 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
       <ProFormDependency name={["amber_" + 'hours', "amber_" + 'mins',  "red_" + 'hours',  "red_" + 'mins']} >
         {(aa) => {
+
+
+          var isShowRed = true
+          var ah = "amber_" + 'hours'
+          var am = "amber_" + 'mins'
+          var rh = "red_" + 'hours'
+          var rm = "red_" + 'mins'
+          if (!aa[ah] && !aa[am] && !aa[rh] && !aa[rm]) {
+            isShowRed = false
+          } else {
+
+            if ((aa[rh] || aa[rm]) && (aa[ah] || aa[am])) {
+
+              if ((aa[ah] ? aa[ah] * 3600 : 0) + (aa[am] ? aa[am] * 60 : 0) >= (aa[rh] ? aa[rh] * 3600 : 0) + (aa[rm] ? aa[rm] * 60 : 0)) {
+                isShowRed = true
+              } else {
+                isShowRed = false
+              }
+
+
+            } else {
+              isShowRed = false
+            }
+
+
+
+          }
           return ([<ProFormGroup>
        
             <ProFormDigit label={<FormattedMessage
               id="pages.alertrule.hours"
-              defaultMessage="Size Of Vessel From"
+              defaultMessage="Hours"
             />} name={"amber_" + 'hours'} rules={[
               {
                 validator: (rule, value, callback) => {
@@ -505,12 +534,22 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                   }
                 }
 
+              },
+              {
+                validator: (rule, value, callback) => {
+                  if (isShowRed) {
+                    callback(" ")
+                  } else {
+                    callback()
+                  }
+                }
+
               }
               ]} width={ 100} min={0} max={1000} />
 
         <ProFormDigit label={<FormattedMessage
           id="pages.alertrule.mins"
-          defaultMessage="To"
+              defaultMessage="Mins"
             />} name={"amber_" + 'mins'} rules={[
               {
                 validator: (rule, value, callback) => {
@@ -521,13 +560,23 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                   }
                 }
 
+              },
+              {
+                validator: (rule, value, callback) => {
+                  if (isShowRed) {
+                    callback(" ")
+                  } else {
+                    callback()
+                  }
+                }
+
               }
               ]} width={100} min={0} max={60}/>
 
 
         <ProFormDigit label={<FormattedMessage
           id="pages.alertrule.hours"
-          defaultMessage="Size Of Vessel From"
+              defaultMessage="Hours"
             />} name={"red_" + 'hours'} rules={[
               {
                 validator: (rule, value, callback) => {
@@ -543,7 +592,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
         <ProFormDigit label={<FormattedMessage
           id="pages.alertrule.mins"
-          defaultMessage="To"
+              defaultMessage="Mins"
             />} name={"red_" + 'mins'} rules={[
               {
                 validator: (rule, value, callback) => {
@@ -556,85 +605,157 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
               }
               ]} width={100} min={0} max={60}  />
-          </ProFormGroup>, <div style={{  marginTop: '-20px', color: 'red', display: aa["amber_" + 'hours'] > 0 || aa[ "amber_" + 'mins'] > 0 || aa["red_" + 'hours'] > 0 || aa["red_" + 'mins'] > 0 ? 'none' : "block" }}>Please enter compulsory threshold alert field for either Amber or Red</div>])
+          </ProFormGroup>, <div style={{ marginTop: '-20px', color: 'red', display: aa["amber_" + 'hours'] > 0 || aa["amber_" + 'mins'] > 0 || aa["red_" + 'hours'] > 0 || aa["red_" + 'mins'] > 0 ? 'none' : "block" }}>Please enter compulsory threshold alert field for either Amber or Red</div>,
+
+            <div style={{ marginLeft: '0px', marginTop: '-10px', color: 'red', display: isShowRed ? 'block' : "none" }}>Duration for "Red" should not be shorter than "Amber" status</div>
+          ])
         }}
       </ProFormDependency>
       <div style={{ float: 'left', width: '100%', display: "block", marginBottom: "10px" }}>
-        <div style={{ fontWeight: "bold" }}>Email Notification</div>
-        <span style={{ fontSize: "12px" }}>Please use commas to separate multiple email addresses</span>
+        <div style={{ fontWeight: "500", fontSize: '14px' }}>Email Notification</div>
+        <span ><ExclamationCircleOutlined /> Specify the email address and which level of alert they should be notified of.
+        </span>
       </div>
-      <ProFormGroup>
-        
-        <ProFormText
-          width="md"
-          name="email"
-          label={<FormattedMessage
-            id="pages.alertrule.email1"
-            defaultMessage="Email Address of Users to Receive Notifications"
-          />}
-          rules={[
+      <ProCard ghost={true}>
+        <ProCard
+          ghost={true}
+          colSpan={isMP ? 20 : 20}
+
+          title={<span style={{ fontWeight: 'initial' }}>Email Address</span>}
+          extra={
+            <Button type="primary" shape="circle" onClick={() => {
+              var arr = restFormRef?.current?.getFieldValue('emailArr')
+              if (!arr) {
+                arr = []
+              }
+              arr.push(new Date().getTime())
+              restFormRef?.current?.setFieldsValue({ emailArr: arr })
+            }} icon={<PlusOutlined />} />
+
+
+          }
+
+        >
+
+
+          <ProFormDependency name={['emailArr']} >
+
+
             {
-              validator: (rule, value, callback) => {
-                if (value) {
-                  var emailReg = /^\w{3,}(\.\w+)*@[A-z0-9]+(\.[A-z]{2,5}){1,2}$/;
-                  var arr = value.split(',')
-                  var isFalse = arr.some((email) => {
-
-                    return !emailReg.test(email)
-
-                  })
-                  if (isFalse) {
-                    callback(" Invalid email address is entered. ")
-                  } else {
-                    callback()
-                  }
-
-                } else {
-                  callback()
-                }
-
-              }
-
-            }
-          ]}
-        />
-        <ProFormDependency name={["amber_" + 'hours', "amber_" + 'mins', "red_" + 'hours', "red_" + 'mins', 'email']} >
-              {(aa) => {
-
-                var isAmber = false
-                var isRed = false
-
-                for (var i in aa) {
-                  if (i.indexOf("amber_") > -1 && aa[i]) {
-                    isAmber = true
-                  }
-
-                  if (i.indexOf("red_") > -1 && aa[i]) {
-                    isRed = true
-                  }
-                }
+              (aa) => {
                 var arr = []
-            if (isAmber && aa.email) {
+                aa?.emailArr?.map((a, index) => {
 
-                  arr.push('Amber')
-                }
-            if (isRed && aa.email) {
+                  arr.push(<ProFormGroup><ProFormText
 
-                  arr.push('Red')
-                }
-                return <ProFormCheckbox.Group
-                  name="send_email_select"
-                  label="Threshold Exceeded"
-                  options={arr}
-                />
+                    fieldProps={{
+
+                      addonAfter: index > 0 ? (
+
+                        <MinusOutlined onClick={() => {
+
+                          var arr = restFormRef?.current?.getFieldValue('emailArr')
+                          arr.splice(index, 1)
+                          restFormRef?.current?.setFieldsValue({ emailArr: arr })
+
+                        }} />) : null
+                    }}
+                    width="md"
+                    name={a + "_email"}
+                    label=""
+                    rules={[
+                      {
+                        validator: (rule, value, callback) => {
+                          if (!value) {
+                            callback()
+                          }
+                          var emailReg = /^\w{3,}(\.\w+)*@[A-z0-9]+(\.[A-z]{2,5}){1,2}$/;
+
+                          var isFalse = !emailReg.test(value)
+                          if (isFalse) {
+                            callback(" Invalid email address is entered. ")
+                          } else {
+                            callback()
+                          }
+
+
+                        }
+
+
+                      }
+                    ]}
+                  />
+
+                    <ProFormDependency name={['typeArr']} >
+
+                      {(cc) => {
+                        var v = []
+                        cc.typeArr?.forEach((f) => {
+
+                          v.push("amber_" + 'hours')
+                          v.push( "amber_" + 'mins')
+                          v.push( "red_" + 'hours')
+                          v.push( "red_" + 'mins')
+                        })
+
+
+                        return <ProFormDependency name={v} >
+                          {(cc) => {
+
+                            var isAmber = false
+                            var isRed = false
+
+                            for (var i in cc) {
+                              if (i.indexOf("amber_") > -1 && cc[i]) {
+                                isAmber = true
+                              }
+
+                              if (i.indexOf("red_") > -1 && cc[i]) {
+                                isRed = true
+                              }
+                            }
+                            var arr1 = []
+                            if (isAmber) {
+
+                              arr1.push({
+                                label: 'Amber',
+                                value: 'a',
+
+                              })
+                            }
+                            if (isRed) {
+
+                              arr1.push({
+                                label: 'Red',
+                                value: 'r',
+
+                              })
+                            }
+                            return <ProFormCheckbox.Group
+
+                              name={a + "_send_type_select"}
+                              label=""
+                              options={arr1}
+                            />
+                          }
+                          }
+                        </ProFormDependency>
+
+
+                      }}
+
+                    </ProFormDependency>
+
+
+                  </ProFormGroup>)
+                })
+                return arr
               }
-              }
-            </ProFormDependency>
+            }
 
-
-      
-
-      </ProFormGroup>
+          </ProFormDependency>
+        </ProCard>
+      </ProCard>
     </ModalForm>
      
   );

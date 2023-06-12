@@ -16,7 +16,7 @@ import { Modal, Form } from 'antd';
 import React, { useRef, useState, useEffect } from 'react';
 
 import { flow } from '../service';
-import { tree } from "@/utils/utils";
+import { tree, isPC } from "@/utils/utils";
 
 
 export type UpdateFormProps = {
@@ -30,6 +30,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
   const restFormRef = useRef<ProFormInstance>();
   const intl = useIntl();
   const [flowConf, setFlowConf] = useState<any>([]);
+  const [isMP, setIsMP] = useState<boolean>(!isPC());
   const {
     onSubmit,
     onCancel,
@@ -142,7 +143,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           showArrow: false,
 
 
-          dropdownMatchSelectWidth: false,
+          dropdownMatchSelectWidth: isMP ? true : false,
 
 
           treeNodeFilterProp: 'name',

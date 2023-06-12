@@ -17,7 +17,7 @@ import {
   ProFormInstance,
   ProTable,
 } from '@ant-design/pro-components';
-import { FormattedMessage, useIntl, useModel, formatMessage, history } from '@umijs/max';
+import { FormattedMessage, useIntl, useModel, formatMessage, history, useLocation } from '@umijs/max';
 import { FileTextOutlined, FileAddOutlined, ArrowRightOutlined, DeleteOutlined, ExclamationCircleOutlined,CloseOutlined} from '@ant-design/icons';
 import { reportTemplate, addReportTemplate,updateReportTemplate, removeReportTemplate,addReport } from '../service';
 
@@ -258,8 +258,45 @@ const TableList: React.FC = () => {
 
     });
   }
+
+
+  var fd = useLocation()?.state
   useEffect(() => {
 
+
+  
+
+    var value = eval('(' + fd.value + ')');
+    value.template_name = fd.template_name
+    formRef.current?.setFieldsValue(value)
+
+    if (!value.selected_fields) {
+      value.selected_fields = []
+    }
+    var arr = columns.filter((c) => {
+
+      return value.selected_fields.some((cc) => {
+        return cc == c.dataIndex
+      })
+    })
+    setSelectedColumns(arr)
+    setSelectedFilterColumns(arr)
+
+
+
+    setAvailableColumns(columns.filter((a) => {
+      return !arr.some((b) => {
+        return a.dataIndex == b.dataIndex
+      })
+    }))
+
+    setAvailableFilterColumns(columns.filter((a) => {
+      return !arr.some((b) => {
+        return a.dataIndex == b.dataIndex
+      })
+    }))
+
+    setFields(value.selected_fields)
 
    
     getReportTemplate()
@@ -303,7 +340,7 @@ const TableList: React.FC = () => {
         })
       }
 
-
+     
       res.data.forEach((r) => {
         if (r.type == 0) {
 
@@ -493,6 +530,11 @@ const TableList: React.FC = () => {
 
   const formRef = useRef<ProFormInstance>();
 
+
+  
+
+
+
   return (
     <PageContainer header={{
     //  title: 'Report Template',
@@ -519,187 +561,23 @@ const TableList: React.FC = () => {
 
 
          
-            <Button style={{ width: isMP ? '100%' : null }} onClick={() => {
-
-
-
-              formRef.current?.resetFields()
-              setSelectedColumns([])
-              setSelectedFilterColumns([])
-          } }>
-            Reset
-          </Button>
-
-          <Button style={{ marginLeft: isMP ? 0 : 20, marginTop: isMP ? 20 : 0,width: isMP ? '100%' : null }} icon={<FileTextOutlined />}  type="primary" onClick={ async () => {
-            var reportName = formRef.current?.getFieldValue("name")
-            var templateName = formRef.current?.getFieldValue("templateName")
-            var data = formRef.current?.getFieldsValue()
-            data.selected_fields = fields
-
-
-            if (data.time_period && data.time_period != '0') {
-             
-              data.dateArr = [new Date((new Date()).getTime() - 3600 *24* 1000 * parseInt(data.time_period)), new Date()]
-
-              if (data.dateRange) {
-                delete data.dateRange
-              }
-              
-            }
-             // var ok = { name: reportName, value: JSON.stringify(data) , template_name: templateName ? templateName : null }
-
-            var ok = await handleAGenerateReport({ name: reportName, value: data, template_name: templateName ? templateName : null })
            
-           if (ok) {
-              history.push(`/Report/ReportSummary`, ok);
-           }
-
-           
-
-          } }>Generate Report</Button>
-          <Button style={{ marginLeft: isMP ? 0 : 20, marginTop: isMP ? 20 : 0, width: isMP ? '100%' : null }} onClick={() => {
-            setIsModalOpen(true)
-
-           
-
-          }} type="primary" icon={<FileAddOutlined />}>Save Template</Button>
-        </div> <Modal title="Save Template" open={isModalOpen} onOk={async () => {
-
-            var templateName = formRef.current?.getFieldValue("templateName")
-            var data=formRef.current?.getFieldsValue()
-            data.selected_fields = fields
-
-            if (data.time_period && data.time_period != '0') {
-
-              data.dateArr = [new Date((new Date()).getTime() - 3600*24 * 1000 * parseInt(data.time_period)), new Date()]
-
-              if (data.dateRange) {
-                delete data.dateRange
-              }
-
-            }
-            
-            if (data.save_type=='b') {
-              await handleUpdate({ name: templateName, value: data, id: data.template_name })
-            } else {
-             await handleAdd({ name: templateName, value: data })
-            }
-            
-            getReportTemplate()
-            setIsModalOpen(false)
-
-          }} onCancel={() => { setIsModalOpen(false) }}>
-
-            <ProFormDependency name={['template_name','save_type']}>
-              {({ template_name, save_type }) => {
-
-               
-                if (template_name) {
-                  if (save_type == "b") {
-                    formRef.current?.setFieldValue("templateName", templateMap[template_name].name)
-                  } else {
-                    formRef.current?.setFieldValue("templateName", null)
-                  }
-                
-                  return (<><ProForm.Group >
-
-                    <ProFormRadio.Group
-                      radioType="button"
-                      
-                      name="save_type"
-                      label=""
-                      initialValue="a"
-                      options={[
-                        {
-                          label: 'New Template',
-                          value: 'a',
-                        },
-                        {
-                          label: 'Replace Existing Template',
-                          value: 'b',
-                        },
-                      
-                      ]}
-                    />
-                    
-                  </ProForm.Group >
-
-
-                    <ProForm.Group  >
-                    
-                    
-                     <ProFormText label="Template Name"  name="templateName" width="md" />
-
-                   
-                    
-                    </ProForm.Group >
-                    </>
-                  )
-                
-                   
-
-
-                  
-
-
-                } else {
-                  formRef.current?.setFieldValue("templateName", null)
-                  return (<ProForm.Group style={{ marginTop: 20 }} >
-                    <ProFormText label="Template Name" name="templateName" width="md" />
-                  </ProForm.Group >)
-                }
-
-              }}
-             </ProFormDependency>
-
-
-            
-           
-          </Modal></div>,
+        </div> </div>,
       }}>
-      <ProCard title="Select Saved Template" colSpan={24} headerBordered headStyle={{ backgroundColor: "#d4d4d4" }}>
+      <ProCard title="Saved Template" colSpan={24} headerBordered headStyle={{ backgroundColor: "#d4d4d4" }}>
           <ProForm.Group >
-            <ProFormSelect name="template_name" label="Name of Template:" fieldProps={{ options: templateList, onChange:(()=>{
-              var id = formRef.current?.getFieldValue("template_name")
-              try {
-                var value = eval('(' + templateMap[id].value + ')');
-
-                formRef.current?.setFieldsValue(value)
-
-                if (!value.selected_fields) {
-                  value.selected_fields=[]
-                }
-               var arr= columns.filter((c) => {
-
-                  return value.selected_fields.some((cc) => {
-                    return cc == c.dataIndex
-                  })
-                })
-                setSelectedColumns(arr)
-                setSelectedFilterColumns(arr)
-
-
-
-                setAvailableColumns(columns.filter((a) => {
-                  return !arr.some((b) => {
-                    return a.dataIndex == b.dataIndex
-                  })
-                }))
-
-                setAvailableFilterColumns(columns.filter((a) => {
-                  return !arr.some((b) => {
-                    return a.dataIndex == b.dataIndex
-                  })
-                }))
-
-                setFields(value.selected_fields)
-
-              } catch (e) {
-
+            <ProFormText name="template_name" label="Template Name:"  width={250} rules={[
+              {
+                required: true,
+                message: (
+                  <FormattedMessage
+                    id="pages.rules.required"
+                    defaultMessage="This field cannot be empty！"
+                  />
+                ),
               }
-             
 
-            }) }} width={250} />
+            ]} />
 
 
 
@@ -879,70 +757,12 @@ const TableList: React.FC = () => {
                 <ProList<any>
 
                   rowKey="dataIndex"
-                  rowSelection={rowSelection}
+                 
                 onItem={(record, index) => {
                   console.log(record)
                 }}
 
-                  toolBarRender={() => {
-                    return [
-                      <Button key="3" type="primary" onClick={() => {
-
-
-                      var arr1=[]
-
-                        selectedRowKeys.forEach((a) => {
-                          arr1.push(availableFilterColumns[a].dataIndex)
-                        })
-
-                       
-                        
-
-                        var arr = fields.map((a) => { return a })
-                        arr = arr.concat(arr1)
-                       
-                        var arr2 = columns.filter((c) => {
-
-                          return arr.some((a) => {
-                            return a == c.dataIndex
-                          })
-                        })
-
-                       
-                        setSelectedColumns(arr2)
-
-                        setSelectedFilterColumns(arr2)
-
-                        setAvailableColumns(columns.filter((a) => {
-                          return !arr.some((b) => {
-                            return a.dataIndex == b
-                          })
-                        }))
-                        
-                        setAvailableFilterColumns(availableFilterColumns.filter((a) => {
-                          return !arr.some((b) => {
-                            return a.dataIndex == b
-                          })
-                        }))
-
-                      } }>
-                        {'>>' }
-                      </Button>,
-                    ];
-                  }}
-
-                toolbar={{
-
-                  search: {
-                    onSearch: (value: string) => {
-                      setAvailableFilterColumns(availableColumns.filter((a) => {
-                        console.log(a)
-                        return a.title.props.defaultMessage.indexOf(value) > -1
-                      }))
-                    },
-                  }
-
-                }}
+                 
                 onRow={(record: any) => {
                   return {
                     onMouseEnter: () => {
@@ -966,42 +786,8 @@ const TableList: React.FC = () => {
                     dataIndex: 'title',
                   },
 
-                    actions:{
-                      render: (text, row) => {
-                        return <ArrowRightOutlined onClick={() => {
-
-
-                          var arr = fields.map((a) => { return a })
-                          arr.push(text.props.record.dataIndex)
-                          setFields(arr)
-                          var arr2=columns.filter((c) => {
-
-                            return arr.some((a) => {
-                              return a == c.dataIndex
-                            })
-                          })
-                          setSelectedColumns(arr2)
-
-                          setSelectedFilterColumns(arr2)
-
-                          setAvailableColumns(columns.filter((a) => {
-                            return !arr.some((b) => {
-                              return a.dataIndex == b
-                            })
-                          }))
-
-                          setAvailableFilterColumns(availableFilterColumns.filter((a) => {
-                            return !arr.some((b) => {
-                              return a.dataIndex == b
-                            })
-                          }))
-                          
-
-                          
-
-                        } } />;
-                    }
-                  }
+                    
+                 
                 
                 }}
               />
@@ -1016,72 +802,9 @@ const TableList: React.FC = () => {
                   onItem={(record, index) => {
                     console.log(record)
                   }}
-                  rowSelection={rowSelection1}
-                  toolBarRender={() => {
-                    return [
-                      <Button key="3" type="primary" onClick={() => {
-
-
-                        var arr1 = []
-
-                        selectedRowKeys1.forEach((a) => {
-                          arr1.push(selectedFilterColumns[a].dataIndex)
-                        })
-                        
-
-                        var arr = fields.filter((a) => {
-
-                          return !arr1.some((g) => {
-                           
-                            return g==a
-                          })
-
-                        })
-
-
-                        
-
-                        setFields(arr)
-
-
-                        var arr2 = columns.filter((c) => {
-
-                          return arr.some((a) => {
-                            return a == c.dataIndex
-                          })
-                        })
-                        setSelectedColumns(arr2)
-
-                        setSelectedFilterColumns(arr2)
-
-
-                        var arr3 = columns.filter((a) => {
-                          return !arr.some((b) => {
-                            return a.dataIndex == b
-                          })
-                        })
-
-                        setAvailableColumns(arr3)
-
-                        setAvailableFilterColumns(arr3)
-
-                      }}>
-                        {'<<'}
-                      </Button>,
-                    ];
-                  }}
-                  toolbar={{
-
-                    search: {
-                      onSearch: (value: string) => {
-                        setSelectedFilterColumns(selectedColumns.filter((a) => {
-                          console.log(a)
-                          return a.title.props.defaultMessage.indexOf(value) > -1
-                        }))
-                      },
-                    }
-
-                  }}
+                 
+                  
+                 
                   onRow={(record: any) => {
                     return {
                       onMouseEnter: () => {
@@ -1105,42 +828,7 @@ const TableList: React.FC = () => {
                       dataIndex: 'title',
                     },
 
-                    actions: {
-                      render: (text, row) => {
-                        return <CloseOutlined onClick={() => {
-
-                          var arr = fields.filter((a) => {
-
-                            return a != text.props.record.dataIndex
-
-                          })
-                          setFields(arr)
-
-
-                          var arr2 = columns.filter((c) => {
-
-                            return arr.some((a) => {
-                              return a == c.dataIndex
-                            })
-                          })
-                          setSelectedColumns(arr2)
-
-                          setSelectedFilterColumns(arr2)
-
-
-                          var arr3=columns.filter((a) => {
-                            return !arr.some((b) => {
-                              return a.dataIndex == b
-                            })
-                          })
-
-                          setAvailableColumns(arr3)
-
-                          setAvailableFilterColumns(arr3)
-
-                        }} />;
-                      }
-                    }
+                    
 
                   }}
                 />

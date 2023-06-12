@@ -45,8 +45,13 @@ export const Alert = () => {
         height: 26,
       }}
       onClick={() => {
-      
-        history.push(`/threshold/alert`);
+        if (currentUser.userUnreadAlertCount>0) {
+          history.push(`/threshold/alertNoread`, {showNoRead:true});
+        } else {
+          history.push(`/threshold/alert`);
+        }
+       
+        currentUser.userUnreadAlertCount = 0
         //window.open('https://pro.ant.design/docs/getting-started');
       }}
     >

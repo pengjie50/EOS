@@ -199,7 +199,7 @@ const TableList: React.FC = () => {
             <DotLoading />
           </>
         ) : (
-          <span>--- There's no more ---</span>
+          <span>{data.length} items in total</span>
         )}
       </>
     )

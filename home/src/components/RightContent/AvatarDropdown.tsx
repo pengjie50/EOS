@@ -35,7 +35,7 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu, childre
     localStorage.setItem('token', "");
     var url ='/user/login'
     if (a===true) {
-      url = "/user/adminlogin"
+      url = "/user/login"
      
     
     }
@@ -131,12 +131,12 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu, childre
         {
           key: 'baseSettings',
           icon: <SettingOutlined />,
-          label: 'My User Profiles Setting',
+          label: 'My User Profile',
         },
           {
             key: 'modPassword',
             icon: <KeyOutlined />,
-            label: 'Changing Password ',
+            label: 'Change Password',
           },
           {
             type: 'divider' as const,

@@ -88,9 +88,9 @@ export default {
   'pages.deletedSuccessfully': 'Deleted successfully and will refresh soon',
   'pages.deleteFailed': 'Delete failed, please try again!',
   'pages.error.1001': 'Incorrect User or Password',
-  'pages.error.1002': 'Password error',
+  'pages.error.1002': 'Your password is incorrect, please input valid password or contact the administrator of this system for assistance',
   'pages.error.1003': 'Password continuous input error, account locked',
-  'pages.error.1004': 'Account disabled',
+  'pages.error.1004': 'Your account is disabled, please contact the administrator of this system for assistance',
   'pages.error.1005': 'Login status has expired',
   'pages.error.1006': 'Token error',
   'pages.error.1007': 'Incorrect old password',
@@ -130,7 +130,7 @@ export default {
   'pages.userSet.strong': 'Strong',
   'pages.userSet.medium': 'Medium',
   'pages.userSet.weak': 'Weak',
-  'pages.userSet.modPassword': 'Changing Password ',
+  'pages.userSet.modPassword': 'Change Password',
 
   'pages.userSet.newPassword': 'New Password',
   'pages.userSet.oldPassword': 'Enter Current Password',
@@ -138,7 +138,7 @@ export default {
   'pages.userSet.rules.newPassword': 'Please enter new password!',
   'pages.userSet.rules.oldPassword': 'Please enter old password!',
   'pages.userSet.rules.repeatNewPassword': 'Please enter Repeat new password!',
-  'pages.userSet.rules.generatePassword': 'Two or more types of letters, numbers, and special characters with 8-22 digits!',
+  'pages.userSet.rules.generatePassword': 'Your password should be at least eight characters and include at least the following: a) At least letters in both upper- and lowercase b) At least one number c) At least one special character',
   'pages.userSet.rules.twoPasswordsNotMatch': 'The two passwords do not match',
 
   'pages.userSet.passwordStrength': 'Current password strength',
@@ -180,8 +180,8 @@ export default {
 
   
 
-  'pages.alertrule.add': 'Threshold Limits - Settings',
-  'pages.alertrule.mod': 'Threshold Limits - Settings',
+  'pages.alertrule.add': 'Creat New Threshold Limit Setting',
+  'pages.alertrule.mod': 'Modify Alert Threshold Settings',
   'pages.alertrule.rules.flow_id': 'Please select a process !',
   'pages.alertrule.rules.hours': 'Please enter hours !',
   'pages.alertrule.rules.mins': 'Please enter mins !',
