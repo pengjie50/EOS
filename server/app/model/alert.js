@@ -15,6 +15,12 @@ module.exports = app => {
             defaultValue: DataTypes.UUIDV4
            
         },
+       alert_id: {
+            type: INTEGER,
+            allowNull: false,
+            autoIncrement: true
+           
+        },
         company_id: {
             type: UUID
 
@@ -44,26 +50,36 @@ module.exports = app => {
             type: TINYINT
            
         },
+
         type: {
             type: TINYINT
           
         },
+        total_duration: {
+            type: INTEGER
+        },
+        remarks: {
+            type: TEXT
 
+        }
         
        
     }, {
+        initialAutoIncrement: 1000,
         indexes: [
             {
                 
-                fields: ['transaction_id', 'user_id', 'company_id','type']
+                fields: ['transaction_id', 'user_id', 'company_id', 'type', 'alert_rule_transaction_id', 'flow_id','flow_id_to']
         }],
         
-        timestamps: false,
+        timestamps: true,
+        paranoid: false,
         tableName: 'alert'
         
     });
     Model.associate = function () {
         app.model.Alert.belongsTo(app.model.Transaction, { foreignKey: 'transaction_id', as: 't' });
+        app.model.Alert.belongsTo(app.model.AlertruleTransaction, { foreignKey: 'alert_rule_transaction_id', as: 'ar' });
         
     };
     return Model;

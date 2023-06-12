@@ -149,6 +149,39 @@ class TransactionService extends Service {
        
 
         var alerts = await ctx.model.Alert.findAll({ where: { transaction_id: transaction_ids } })
+
+        var alertruleTransactions = await ctx.model.AlertruleTransaction.findAll({ where: { transaction_id: transaction_ids } })
+        var alertruleTransactionCountMap = {}
+        alertruleTransactions.forEach((a) => {
+
+            var step=1
+            if ((a.amber_hours || a.amber_mins) && (a.red_hours || a.red_mins)) {
+                step = 2
+            }
+            if (a == 2) {
+
+
+                if (!alertruleTransactionCountMap['b2e']) {
+                   
+                    alertruleTransactionCountMap['b2e'] = step
+                    
+
+                   
+                } else {
+                   
+                        alertruleTransactionCountMap['b2e'] += step
+                    
+                   
+                }
+            } else {
+                if (!alertruleTransactionCountMap[a.flow_id]) {
+                    alertruleTransactionCountMap[a.flow_id] = step
+                } else {
+                    alertruleTransactionCountMap[a.flow_id] += step
+                }
+            }
+           
+        })
        
         alerts.forEach((a) => {
            
@@ -210,20 +243,22 @@ class TransactionService extends Service {
             for (var j in data.threshold_reached.no[i]) {
 
                 if (data.threshold_reached.no[i][j].amber > 0) {
+                    c += data.threshold_reached.no[i][j].amber
                     color ="#DE8205"
                 }
 
                 if (data.threshold_reached.no[i][j].red > 0) {
+                    c += data.threshold_reached.no[i][j].red
                     color = "red"
                 }
-                c++
+                
             }
 
             data.threshold_reached.no[i] = {
                 count: c, color: color
             }
             if (transaction_ids.length>0) {
-                data.threshold_reached.percentage[i] = parseInt((c / transaction_ids.length) * 100+"")
+                data.threshold_reached.percentage[i] = parseInt((c / alertruleTransactionCountMap[i]) * 100+"")
             }
             
         }
@@ -232,28 +267,45 @@ class TransactionService extends Service {
 
         var old_status=obj.where.status
 
-        obj.where.status = 1
-        var num = await ctx.model.Transaction.count(obj)
+       // obj.where.status = 1
 
-        data.average_total_duration_per_transaction.all_time = await ctx.model.Transaction.sum('total_duration', obj) / num
+      
+        
+        console.log(obj.where.status)
+
+        if (obj.where && obj.where.status && obj.where.status[Op.eq] != '1') {
+
+        } else {
+
+          
+            var num = await ctx.model.Transaction.count(obj)
 
 
-        if (!obj.where.start_of_transaction) {
-            obj.where.start_of_transaction = { [Op['gte']]: new Date((new Date()).getTime() - 30 * 24 * 3600 * 1000) }
-
-            obj.where.end_of_transaction = { [Op['lte']]: new Date((new Date()).getTime()) }
-            num = await ctx.model.Transaction.count(obj)
-
-            data.average_total_duration_per_transaction.day_30 = await ctx.model.Transaction.sum('total_duration', obj) / num
+           
+            data.average_total_duration_per_transaction.all_time = await ctx.model.Transaction.sum('total_duration', obj) / num
 
 
-            obj.where.start_of_transaction = { [Op['gt']]: new Date((new Date()).getTime() - 12 * 30 * 24 * 3600 * 1000) }
-            obj.where.end_of_transaction = { [Op['lte']]: new Date((new Date()).getTime()) }
-            num = await ctx.model.Transaction.count(obj)
+            if (!obj.where.start_of_transaction) {
 
-            data.average_total_duration_per_transaction.month_12 = await ctx.model.Transaction.sum('total_duration', obj) / num
+               
+                obj.where.start_of_transaction = { [Op['between']]: [new Date((new Date()).getTime() - 30 * 24 * 3600 * 1000), new Date((new Date()).getTime())] }
+
+               
+                num = await ctx.model.Transaction.count(obj)
+              
+                
+                data.average_total_duration_per_transaction.day_30 = await ctx.model.Transaction.sum('total_duration', obj) / num
+
+
+                obj.where.start_of_transaction = { [Op['between']]: [new Date((new Date()).getTime() - 12 * 30 * 24 * 3600 * 1000), new Date((new Date()).getTime())] }
+                
+                num = await ctx.model.Transaction.count(obj)
+              
+                data.average_total_duration_per_transaction.month_12 = await ctx.model.Transaction.sum('total_duration', obj) / num
+            }
+
         }
-
+       
 
         obj.where.status = old_status 
 
@@ -330,6 +382,8 @@ class TransactionService extends Service {
 
                     to[j].duration += p[j].duration
                     to[j].count++
+
+
                     to[j].avg = to[j].duration / to[j].count
 
                 }
@@ -358,6 +412,9 @@ class TransactionService extends Service {
         const {ctx} = this;
        
         const res = await ctx.model.Transaction.create(params);
+
+
+
         if(res){
             ctx.body = { success: true,data:res};
         }else{
@@ -401,6 +458,22 @@ class TransactionService extends Service {
         const ctx = this.ctx;
         const user = await ctx.model.Transaction.findByPk(params.id);
 
+
+       
+        
+            var events = await ctx.model.Transactionevent.findAll({ where: { transaction_id: params.id }, order: [["event_time", "asc"]] })
+            if (events.length>0) {
+                params.start_of_transaction = events[0].event_time
+               
+                 params.end_of_transaction = events[events.length - 1].event_time
+                
+
+                params.total_duration = (new Date(params.end_of_transaction)).getTime() / 1000 - (new Date(params.start_of_transaction)).getTime() / 1000
+            }
+           
+           
+       
+
         if (!user) {
           ctx.status = 404;
             ctx.body = { success: false, errorCode:1000};
@@ -418,11 +491,14 @@ class TransactionService extends Service {
     async writetoBC(params) {
         const { ctx, service, app } = this;
 
+
+        var transaction = await ctx.model.Transaction.findOne({ where: { id: params.id } });
+
         var events = await ctx.model.Transactionevent.findAll({ where: { transaction_id: params.id } });
 
         var data=events.map((a) => {
             return {
-                "EOSID": params.id,
+                "EOSID": transaction.eos_id,
                 "EventSubStage": a.flow_id,
                 "Timestamp": new Date(a.event_time).toISOString()
             }
@@ -430,7 +506,7 @@ class TransactionService extends Service {
         //data= JSON.stringify(data)
         //data = JSON.parse(data);
 
-
+        console.log(data)
   
         const result = await ctx.curl(app.config.writetoBCUrl, {
             timeout: 30000,
@@ -449,8 +525,20 @@ class TransactionService extends Service {
         const { ctx, service, app } = this;
 
         var events = await ctx.model.Transactionevent.findAll({ where: { transaction_id: params.id } });
-
+       
         var data = events.map((a) => {
+            return {
+                "EOSID": params.id,
+                "EventSubStage": a.flow_id,
+                "Verified": "True",
+                "Timestamp": "2023-06-06T23:10:05+08:00"//new Date(a.event_time).toISOString()
+            }
+        })
+        console.log(data)
+
+        ctx.body = { success: true, data: data };
+
+       /* var data = events.map((a) => {
             return {
                 "EOSID": params.id,
                 "EventSubStage": a.flow_id,
@@ -470,14 +558,26 @@ class TransactionService extends Service {
         
        
 
-        if (result.status==201) {
+        if (result.status == 201) {
+
+
+
+
             ctx.body = { success: true, data: result.data[0] };
         } else {
             ctx.body = { success: true, data: [] };
-        }
+        }*/
 
-        console.log(result.data)
-        console.log(result.status)
+
+
+
+
+
+
+
+
+       // console.log(result.data)
+       // console.log(result.status)
     }
     
 }

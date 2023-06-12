@@ -23,6 +23,14 @@ module.exports = app => {
           type: UUID
         
         },
+        template_name: {
+            type: STRING(100)
+
+        },
+        value: {
+            type: TEXT
+
+        },
         description: {
           type: TEXT
         

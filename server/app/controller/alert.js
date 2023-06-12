@@ -40,7 +40,9 @@ class AlertController extends Controller {
       this.addOperlog()
   }
   
-  async mod() {
+    async mod() {
+
+      
     const {ctx, service} = this;
     const params = ctx.request.body;
       const result = await service.alert.mod(params);

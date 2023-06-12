@@ -23,7 +23,12 @@ module.exports = app => {
             type: UUID
 
         },
-        alert_type: {
+        amber: {
+            type: TINYINT
+
+
+        },
+        red: {
             type: TINYINT
 
 

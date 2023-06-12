@@ -11,14 +11,19 @@ const createRule = {
 
 class ReportController extends Controller {
   
-  async list() {
+    async summary() {
     const {ctx, service,app} = this;
     const params = ctx.request.body;
-    const res = await service.report.list(params);
+        const res = await service.report.summary(params);
 
     }
 
-   
+    async list() {
+        const { ctx, service, app } = this;
+        const params = ctx.request.body;
+        const res = await service.report.list(params);
+
+    }
     
   async info() {
     const {ctx, service,app} = this;
@@ -30,7 +35,7 @@ class ReportController extends Controller {
   async add() {
     const {ctx, service} = this;
     var params = ctx.request.body;
-    console.log(params)
+      params.value = JSON.stringify(params.value); 
     const result = await service.report.add(params);
       this.addOperlog()
   }

@@ -16,7 +16,9 @@ module.exports = app => {
            
         },
         eos_id: {
-            type: STRING(20)
+            type: INTEGER,
+            allowNull: false,
+            autoIncrement: true
             
         },
         status: {

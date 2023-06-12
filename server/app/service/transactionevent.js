@@ -66,7 +66,7 @@ class TransactioneventService extends Service {
 
 
         var transaction = await ctx.model.Transaction.findOne({ where: { id: params.transaction_id } })
-        params.event_time = transaction.start_of_transaction
+        params.event_time = new Date()
 
         var flow = await ctx.model.Flow.findOne({ where: { id: params.flow_id } })
         params.flow_pid = flow.pid
@@ -77,59 +77,24 @@ class TransactioneventService extends Service {
         if (events.length > 0) {
             var last = events[events.length - 1].event_time
 
-            var r = Math.random(); 
-            if (r==0) {
-                r=1
+            var r = Math.random();
+            if (r == 0) {
+                r = 1
             }
 
             params.event_time = new Date((new Date(last)).getTime() + 3600 * 1000 * 2 * r)
 
-            
-        }
+
+        } 
 
        
 
-        if (params.flow_id == 'e63c92e0-d748-11ed-b978-63067b0b1a2b') {
-            await ctx.model.Transaction.update({ start_of_transaction: params.event_time }, { where: { id: params.transaction_id } });
-
-        } else {
-
-
-            
-            var last = events[events.length - 1].event_time
-            var total_duration = (new Date(params.event_time)).getTime() / 1000 - (new Date(transaction.start_of_transaction)).getTime() / 1000
-
-            console.log((new Date(transaction.start_of_transaction)).getTime())
-            await ctx.model.Transaction.update({ total_duration: total_duration }, { where: { id: params.transaction_id } });
-        }
-
-
-        if (events && events.length > 0) {
-            /*var duration=  params.event_time.getTime() / 1000- (new Date(events[0].event_time)).getTime() / 1000
-            var alertrule = await  ctx.model.Alertrule.findOne({ where: { flow_id: flow.pid } })
-            if (alertrule) {
-                if (duration > alertrule.hours * 3600 + alertrule.mins * 60) {
-                    //±¨¾¯
-
-                    await ctx.model.Alert.create({
-                        flow_id: flow.pid, transaction_id: params.transaction_id })
-
-                }
-            }*/
-
-        }
-        const res = await ctx.model.Transactionevent.create(params);
-
-        
-        if (params.flow_id == '66ba5680-d912-11ed-a7e5-47842df0d9cc') {
+         var total_duration = (new Date(params.event_time)).getTime() / 1000 - (new Date(transaction.start_of_transaction)).getTime() / 1000
 
            
-            await ctx.model.Transaction.update({ flow_id: "", end_of_transaction: new Date(), status: 1 }, { where: { id: params.transaction_id } });
-        } else {
-            await ctx.model.Transaction.update({ flow_id: params.flow_pid }, { where: { id: params.transaction_id } });
-        }
-
-
+         await ctx.model.Transaction.update({ total_duration: total_duration, flow_id: params.flow_pid }, { where: { id: params.transaction_id } });
+        
+        var res = await ctx.model.Transactionevent.create(params)
         if (res) {
             ctx.body = { success: true, data: res };
         } else {

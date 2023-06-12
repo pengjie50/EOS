@@ -124,6 +124,12 @@ class AlertruleService extends Service {
 
             var alertruleTransaction = await ctx.model.AlertruleTransaction.findAll(obj)
 
+            alertruleList=alertruleList.filter((a) => {
+                return !alertruleTransaction.find((b) => {
+                  return  a.id==b.alert_rule_id
+                })
+            })
+
            
             list.rows = alertruleTransaction.concat(alertruleList)
             list.count = list.rows.length
@@ -164,10 +170,34 @@ class AlertruleService extends Service {
         var arr=[]
         
         if (params.typeArr) {
-            var email=[]
+            var email = []
+
+            var map = {}
+            for (var k in params) {
+                if (k.indexOf("_send_type_select") > -1) {
+
+                   
+                    map[k.split("_")[0]] = params[k]
+
+                }
+            }
+
+          
             for(var k in params) {
-                if (k.indexOf("email")>-1) {
-                    email.push(params[k])
+                if (k.indexOf("_email") > -1) {
+                    if (params[k]) {
+                        var v = map[k.split("_")[0]]
+                        var arr2 = [params[k]]
+                        if (v) {
+
+                            console.log(v)
+                            arr2 = arr2.concat(v)
+                        }
+                       
+                       
+                        email.push(arr2.join(','))
+                    }
+                    
                 }
             }
 
@@ -185,16 +215,16 @@ class AlertruleService extends Service {
                      total_nominated_quantity_to_m: params.total_nominated_quantity_to_m,
                      total_nominated_quantity_from_b: params.total_nominated_quantity_from_b,
                      total_nominated_quantity_to_b: params.total_nominated_quantity_to_b,
-                    size_of_vessel_from: params.size_of_vessel_from,
-                    size_of_vessel_to: params.size_of_vessel_to,
+                     size_of_vessel_from: params.size_of_vessel_from,
+                     size_of_vessel_to: params.size_of_vessel_to,
                      flow_id: params[a + '_type'] == '1'?params[a + '_from']:params[a + '_flow_id'],
                      flow_id_to: params[a + '_type'] == '1'?params[a + '_to']:null,
 
                      
 
                      type: params[a + '_type'],
-                     email: email.join(','),
-                     send_email_select: params.send_email_select ? params.send_email_select.join(','):null,
+                     email: email.join(';'),
+                   //  send_email_select: params.send_email_select ? params.send_email_select.join(','):null,
                     'amber_hours': params[a + '_amber_hours'],
                     'amber_mins': params[a + '_amber_mins'],
                     'red_hours': params[a + '_red_hours'],
@@ -249,9 +279,41 @@ class AlertruleService extends Service {
            
         }
 
-        if (params.send_email_select) {
-            params.send_email_select = params.send_email_select.join(',')
-        }
+
+        
+            var email = []
+
+            var map = {}
+            for (var k in params) {
+                if (k.indexOf("_send_type_select") > -1) {
+
+
+                    map[k.split("_")[0]] = params[k]
+
+                }
+            }
+
+            for (var k in params) {
+                if (k.indexOf("_email") > -1) {
+                    if (params[k]) {
+                        var v = map[k.split("_")[0]]
+                        var arr = [params[k]]
+                        if (v) {
+
+                            console.log(v)
+                            arr = arr.concat(v)
+                        }
+
+
+                        email.push(arr.join(','))
+                    }
+
+                }
+            }
+
+            params.email= email.join(';')
+
+        
         
         const res = await user.update(params);
         if(res){

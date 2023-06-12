@@ -18,7 +18,7 @@ module.exports = appInfo => {
             delegate: 'model', // 加载所有的模型到 app.Model and ctx.Model
             baseDir: 'model', // 要加载的模型目录 `app/model/*.js`
             dialect: 'mssql', // support: mysql, mariadb, postgres, mssql
-            database: 'dms_development',
+            database: 'eos_development',
             host: 'woke.qinqinwater.cn',
             port: 1433,
             timezone: '+08:00',// 保存为本地时区
@@ -100,8 +100,8 @@ module.exports = appInfo => {
     };
   // add your user config here
     const userConfig = {
-        writetoBCUrl: "http://165.232.172.190:3010/eos/batch-WritetoBCV2",
-        validateBCUrl: "http://165.232.172.190:3010/eos/batch-ValidateBCV2",
+        writetoBCUrl: "http://165.232.172.190:3011/eos/WritetoBC",
+        validateBCUrl: "http://165.232.172.190:3011/eos/ValidateBC",
         user_email: "504475705@qq.com",
         auth_code:"adiclzwfzscxbggi"
     // myAppName: 'egg',

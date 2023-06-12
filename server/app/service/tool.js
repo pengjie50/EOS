@@ -13,7 +13,7 @@ const auth_code = 'adiclzwfzscxbggi';// 授权码
 class ToolService extends Service {
    
     async sendMail(email, subject, html) {
-
+       
         const { ctx, service, app } = this;
         const transporter = nodemailer.createTransport({
             service: 'qq',// 调用qq服务器
@@ -33,13 +33,15 @@ class ToolService extends Service {
             subject,   // 标题
             html,
         };
-
+       
         try {
             // 调用函数，发送邮件
             var s = await transporter.sendMail(mailOptions);
+           
             console.log(s)
             return true;
         } catch (err) {
+            console.log(err)
             return false;
         }
     }

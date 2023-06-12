@@ -6,7 +6,7 @@
 module.exports = app => {
     const { router, controller } = app;
     app.beforeStart(async () => {
-        await app.model.Report.sync({ alter: true });//force  false 为不覆盖 true会删除再创建; alter true可以 添加或删除字段;
+       //await app.model.Transaction.sync({ alter: true });//force  false 为不覆盖 true会删除再创建; alter true可以 添加或删除字段;
     });
     
     router.get('/', controller.home.index);
@@ -74,10 +74,20 @@ module.exports = app => {
     router.post('/api/sysconfig/mod', controller.sysconfig.mod);
     router.post('/api/sysconfig/del', controller.sysconfig.del);
 
+
+    router.post('/api/system/fieldUniquenessCheck', controller.system.fieldUniquenessCheck);
+
     router.post('/api/filterOfTimestamps/list', controller.filterOfTimestamps.list);
     router.post('/api/filterOfTimestamps/add', controller.filterOfTimestamps.add);
     router.post('/api/filterOfTimestamps/mod', controller.filterOfTimestamps.mod);
     router.post('/api/filterOfTimestamps/del', controller.filterOfTimestamps.del);
+
+
+
+    router.post('/api/reportTemplate/list', controller.reportTemplate.list);
+    router.post('/api/reportTemplate/add', controller.reportTemplate.add);
+    router.post('/api/reportTemplate/mod', controller.reportTemplate.mod);
+    router.post('/api/reportTemplate/del', controller.reportTemplate.del);
 
 
     router.post('/api/alert/list', controller.alert.list);
@@ -98,7 +108,7 @@ module.exports = app => {
     router.post('/api/flow/mod', controller.flow.mod);
     router.post('/api/flow/del', controller.flow.del);
 
-
+    router.post('/api/reportSummary/list', controller.report.summary);
 
     router.post('/api/report/list', controller.report.list);
     router.post('/api/report/add', controller.report.add);

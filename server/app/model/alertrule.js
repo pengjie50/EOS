@@ -73,13 +73,10 @@ module.exports = app => {
            
         },
         email: {
-            type: STRING(2000),
+            type: TEXT,
            
         },
-        send_email_select: {
-            type: STRING(100),
-           
-        },
+      
         type: {
             type: TINYINT
            

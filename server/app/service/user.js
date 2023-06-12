@@ -290,7 +290,16 @@ class UserService extends Service {
             ctx.body = { success: false, errorCode: 1008 };
             return;
         }
-        var res = service.tool.sendMail(params.email, "EOS - Retrieve password", "<a href='" + ctx.request.header.origin +"/#/user/retrievePassword?check=" + user.password+"'>Click to retrieve</a>")
+
+
+
+        var str = "<div><p>Hi,</p>";
+        str += "<p>You've just indicated to us that you would like to reset the password for your EOS account. You can do this by clicking the link below:</p>" 
+        str += "<p><a href='" + ctx.request.header.origin + "/#/user/retrievePassword?check=" + user.password + "'>Click here to reset</a></p>"
+        str += "<p>If you did not request to reset your EOS password, simply ignore this e-mail and we will not change anything.</p>"
+        str += "<p>Thanks.</p></div>"
+                        
+        var res = service.tool.sendMail(params.email, "EOS- Reset password", str )
         if (res) {
             ctx.body = { success: true, data: res };
         } else {
