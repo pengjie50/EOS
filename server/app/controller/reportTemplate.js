@@ -29,7 +29,7 @@ class UserconfigController extends Controller {
     const {ctx, service} = this;
       var params = ctx.request.body;
       params.user_id = ctx.user.user_id
-      params.type=1
+      //params.type=1
       params.value = JSON.stringify(params.value); 
     console.log(params)
     const result = await service.userconfig.add(params);

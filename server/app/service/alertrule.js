@@ -18,12 +18,14 @@ class AlertruleService extends Service {
         ctx.body ={success:true,data:res} 
     }
     async list(params) {
-        const {ctx} = this;
+        const {ctx,app} = this;
         
         let obj={}  
 
-        if(params.where){
+        if (params.where) {
             obj.where = params.where
+        } else {
+            obj.where = {}
         }
         if(params.order){
             obj.order = params.order
@@ -31,6 +33,39 @@ class AlertruleService extends Service {
 
        
        
+           if (ctx.user.role_type == 'Super') {
+               if (obj.where.organization_id) {
+                   obj.where.company_id = obj.where.organization_id
+               }
+
+                
+            } else if (ctx.user.role_type == 'Trader') {
+
+                
+            } else if (ctx.user.role_type == 'Terminal') {
+
+                if (obj.where.tab) {
+                    if (obj.where.tab[app.Sequelize.Op.like] == '%Trader%') {
+                        if (!obj.where.organization_id) {
+                            obj.where.company_id = {
+                                [app.Sequelize.Op['in']]: ctx.user.accessible_organization
+                            }
+                        } else {
+                            obj.where.company_id = obj.where.organization_id
+                        }
+
+                    } else if (obj.where.tab[app.Sequelize.Op.like] == '%All%') {
+                        obj.where.company_id = {
+                            [app.Sequelize.Op['in']]: [...ctx.user.accessible_organization, ctx.user.company_id]
+                        }
+                    }
+
+                }
+               
+            }
+           delete obj.where.organization_id
+           delete obj.where.tab
+        
         
         if(params.page && params.limit){
             obj.offset = parseInt((params.page - 1)) * parseInt(params.limit)
@@ -53,7 +88,13 @@ class AlertruleService extends Service {
 
                 var alertruleList = await ctx.model.Alertrule.findAll({ where: { user_id: ctx.user.user_id } })
               
-                alertruleList = alertruleList.filter((ar) => {
+            alertruleList = alertruleList.filter((ar) => {
+
+
+                    if (ar.company_id != transaction.trader_id && ar.company_id != transaction.terminal_id) {
+                    
+                        return false
+                    }
                     var t1 = false
                     if ((ar.size_of_vessel_from == null && ar.size_of_vessel_to == null)
                         || (ar.size_of_vessel_from <= transaction.size_of_vessel && transaction.size_of_vessel < ar.size_of_vessel_to)) {
@@ -269,18 +310,18 @@ class AlertruleService extends Service {
             ctx.body = { success: false, errorCode:1000};
           return;
         }
-        if (params.flow_id && !params.flow_id_to) {
-            params.type = params.flow_id == 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' ? 2 : 0
-           
-        }
+      
 
-        if (params.flow_id && params.flow_id_to) {
-            params.type = 1
-           
+        if (params.type =='2') {
+            params.flow_id = 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+            params.flow_id_to=null
         }
 
 
-        
+        if (params.type == '0') {
+           
+            params.flow_id_to = null
+        }
             var email = []
 
             var map = {}

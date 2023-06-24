@@ -161,68 +161,62 @@ class UserService extends Service {
         });
         ctx.body = { success: true, data: res?true:false } 
     }
-    async checkUsername(username) {
-        const ctx = this.ctx;
-        var res = await ctx.model.User.findOne({
-            where: {
-
-                username: username,
-            },
-            raw: true
-        });
-        ctx.body = { success: true, data: res ? true : false }
-    }
+   
     async getUserInfo(user_id) {
         const ctx = this.ctx;
         var res = await ctx.model.User.findOne({
+            attributes: [[ctx.model.col('c.name'), 'company_name'], [ctx.model.col('r.type'), 'role_type'], [ctx.model.col('r.name'), 'role_name'], 'user.*'],
             where: {
 
                 id: user_id,
             },
-            raw: true
-        });
-        return res
-    }
-    async findOne(params) {
-
-      
-        const ctx = this.ctx;
-        var res = await ctx.model.User.findOne({
-            attributes: [[ctx.model.col('r.name'), 'role_name'],'user.*'],
-            where: {
-
-             id: params.id,
-         },
             include: [{
                 as: 'r',
                 model: ctx.model.Role
+
+            }, {
+                as: 'c',
+                model: ctx.model.Company
 
             }],
             raw: true
         });
 
         const list = await ctx.model.Rolepermission.findAll({
-            attributes: [[ctx.model.col('p.name'),'name']],
-            where:{role_id:res.role_id},
+            attributes: [[ctx.model.col('p.permission_key'), 'permission_key']],
+            where: { role_id: res.role_id },
             include: [{
-                as:'p',
+                as: 'p',
                 model: ctx.model.Permission
-               
+
             }],
-            raw:true
-            
+            raw: true
+
         })
 
-        res.permissions=list.map((p)=>{
-            return p.name
+        res.permissions = list.map((p) => {
+            return p.permission_key
         })
-       
-       
+
+
         if (!res.avatar) {
-            res.avatar ='avatar_1.jpeg'
-            
-        } 
+            res.avatar = 'avatar_1.jpeg'
+
+        }
+
+        res.accessible_feature = res['r.accessible_feature']?.split(',') || []
+        res.accessible_organization = res['r.accessible_organization']?.split(',') || []
+        res.accessible_timestamp = res['r.accessible_timestamp']?.split(',') || []
+
+
         res.avatar = ctx.request.header.origin + "/upload/avatar/" + res.avatar
+        return res
+    }
+    async findOne(params) {
+
+      
+        const ctx = this.ctx;
+        var res = await this.getUserInfo(params.id)
         //获取未读消息数
         const userUnreadAlertCount = await ctx.service.alert.getUserUnreadAlertCount()
         console.log(userUnreadAlertCount)
@@ -313,7 +307,7 @@ class UserService extends Service {
 
     async modifyPassword(params) {
 
-
+        
         const ctx = this.ctx;
         const user = await ctx.model.User.findOne({ where: { password: params.check } });
         if (!user) {
@@ -325,7 +319,7 @@ class UserService extends Service {
             const salt = uuid.v4();
             params.password = salt + "&" + md5(params.newPassword + salt)
         }
-
+       
         const res = await user.update({ password:params.password });
         if (res) {
             ctx.body = { success: true, data: res };
@@ -341,8 +335,19 @@ class UserService extends Service {
  
         const { ctx } = this;
         const salt = uuid.v4();
-        params.password = salt+"&"+ md5(params.password + salt)
        
+        params.password='123456'
+        params.password = salt+"&"+ md5(params.password + salt)
+        params.email = params.username
+
+
+
+
+
+
+
+
+
         const res = await ctx.model.User.create(params);
         if(res){
             ctx.body = { success: true,data:res};
@@ -392,7 +397,7 @@ class UserService extends Service {
         }else{
             delete params.password
         }
-
+      
         if (params.oldPassword) {
             const salt2 = user.password.split('&')[0]
             if (user.password!=salt2 + "&" + md5(params.oldPassword + salt2)) {

@@ -19,12 +19,14 @@ class AlertService extends Service {
         ctx.body ={success:true,data:res} 
     }
     async list(params) {
-        const {ctx} = this;
+        const {ctx,app} = this;
         
         let obj={}  
 
-        if(params.where){
-           obj.where = params.where
+        if (params.where) {
+            obj.where = params.where
+        } else {
+            obj.where = {}
         }
         if(params.order){
             obj.order = params.order
@@ -35,7 +37,7 @@ class AlertService extends Service {
         }
       
            
-        var t_where = null
+        var t_where = {}
         for (var i in obj.where) {
             if (i.indexOf("t.")>-1) {
                 if (!t_where) {
@@ -47,6 +49,49 @@ class AlertService extends Service {
             }
             
         }
+
+
+
+        var Op = app.Sequelize.Op
+
+        if (ctx.user.role_type == 'Super') {
+
+            if (obj.where.organization_id) {
+                obj.where.company_id = obj.where.organization_id
+            } 
+
+        } else if (ctx.user.role_type == 'Trader') {
+            if (obj.where.organization_id) {
+                obj.where.company_id = obj.where.organization_id
+            } else {
+         
+                obj.where.company_id = {
+                    [app.Sequelize.Op['in']]: [...ctx.user.accessible_organization, ctx.user.company_id]
+                }
+             
+            }
+
+
+        } else if (ctx.user.role_type == 'Terminal') {
+            if (obj.where.tab[app.Sequelize.Op.like] == '%Trader%') {
+                if (obj.where.organization_id) {
+                    obj.where.company_id = obj.where.organization_id
+                } else {
+                    obj.where.company_id = {
+                        [app.Sequelize.Op['in']]: ctx.user.accessible_organization
+                    }
+                }
+
+            }
+
+        }
+
+
+
+      
+        delete obj.where.tab
+        delete obj.where.organization_id
+
         
         obj.include = [{
             as: 't',
@@ -110,9 +155,26 @@ class AlertService extends Service {
         
     }
     async getUserUnreadAlertCount(params) {
-        const { ctx, sequelize } = this;
-   
-        var count = await ctx.model.query("select count(*) as count FROM alert where id not in (select alert_id from alert_user_read where user_id='" + ctx.user.user_id + "')", { type: Sequelize.QueryTypes.SELECT })
+        const { ctx, sequelize,app } = this;
+
+        var obj = { where: {}, raw :true }
+        if (ctx.user.role_type == 'Trader') {
+
+            obj.where.trader_id = ctx.user.company_id
+            obj.where.terminal_id = {
+                [app.Sequelize.Op['in']]: ctx.user.accessible_organization
+            }
+        } else if (ctx.user.role_type == 'Terminal') {
+            obj.where.terminal_id = ctx.user.company_id
+            obj.where.trader_id = {
+                [app.Sequelize.Op['in']]: ctx.user.accessible_organization
+            }
+        }
+        var tarr =await ctx.model.Transaction.findAll(obj);
+       var tids=  tarr.map((a) => {
+            return a.id
+        })
+        var count = await ctx.model.query("select count(*) as count FROM alert where id not in (select alert_id from alert_user_read where user_id='" + ctx.user.user_id + "') and transaction_id in ('" + tids.join("','")+"')", { type: Sequelize.QueryTypes.SELECT })
         return count[0]['count']
     }
     

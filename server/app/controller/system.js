@@ -18,7 +18,12 @@ class SystemController extends Controller {
 
     }
 
-   
+    async fieldSelectData() {
+        const { ctx, service, app } = this;
+        const params = ctx.request.body;
+        const res = await service.system.fieldSelectData(params);
+
+    }
     
   
   

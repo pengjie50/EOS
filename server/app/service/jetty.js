@@ -18,12 +18,14 @@ class JettyService extends Service {
         ctx.body ={success:true,data:res} 
     }
     async list(params) {
-        const {ctx} = this;
+        const {ctx,app} = this;
         
         let obj={}  
 
-        if(params.where){
+        if (params.where) {
             obj.where = params.where
+        } else {
+            obj.where = {}
         }
         if(params.order){
             obj.order = params.order
@@ -32,7 +34,27 @@ class JettyService extends Service {
             obj.offset = parseInt((params.page - 1)) * parseInt(params.limit)
             obj.limit = parseInt(params.limit)
         }
-        
+        var Op = app.Sequelize.Op
+        if (obj.where.terminal_id) {
+            if (ctx.user.role_type == 'Super') {
+                
+            } else if (ctx.user.role_type == 'Trader') {
+
+                
+            } 
+           
+        } else {
+            if (ctx.user.role_type == 'Trader') {
+
+              
+                obj.where.terminal_id = {
+                    [app.Sequelize.Op['in']]: ctx.user.accessible_organization
+                }
+            } else if (ctx.user.role_type == 'Terminal') {
+                obj.where.terminal_id = ctx.user.company_id
+               
+            }
+        }
         const list = await ctx.model.Jetty.findAndCountAll(obj)
 
         ctx.status = 200;
@@ -63,7 +85,9 @@ class JettyService extends Service {
        
 
 
-
+        if (!params.terminal_id) {
+            params.terminal_id = ctx.user.company_id
+        } 
         params.company_id= ctx.user.company_id
         const res = await ctx.model.Jetty.create(params);
         if(res){

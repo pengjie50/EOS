@@ -29,7 +29,7 @@ const createContent = (alert, alertrule, transaction, flowMap) => {
     str += '<td>Jetty Number</td><td>' + transaction.jetty_name + '</td>'
     str += '</tr>'
     str += '</table>'
-    str += '<div><a href="https://woke.qinqinwater.cn:7002/#/user/login"> Please Login to EOS system for more details.</a></div>'
+    str += '<div><a href="http://eosuat.southeastasia.cloudapp.azure.com/#/user/login?redirect=/threshold/alert"> Please Login to EOS system for more details.</a></div>'
     str += '<div>I am an auto-generated email alert from the EOS system. Please do not reply to me.</div>'
     str += '</div>'
     return str
@@ -134,7 +134,10 @@ class SendAlarmEmail extends Subscription {
             alert.type = type
 
            
-            await ctx.model.Alert.create(alert);
+            var ba = await ctx.model.Alert.create(alert);
+            if (ba) {
+                alert.alert_id = ba.alert_id
+            }
 
 
             
@@ -183,7 +186,7 @@ class SendAlarmEmail extends Subscription {
 
 
 
-        var terminalList = await ctx.model.Terminal.findAll({ raw: true })
+        var terminalList = await ctx.model.Company.findAll({ raw: true })
         var terminalMap = {}
          terminalList.map((f, index) => {
           
@@ -285,6 +288,12 @@ class SendAlarmEmail extends Subscription {
             var transaction = transactionList[step]
 
             var ar = alertruleList[step1]
+
+            if (ar.company_id != transaction.trader_id && ar.company_id != transaction.terminal_id) {
+                step1++
+                await oneDo()
+                return
+            }
 
            
 

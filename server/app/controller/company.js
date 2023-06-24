@@ -18,7 +18,15 @@ class CompanyController extends Controller {
     const res = await service.company.list(params);
 
   }
+  async organization() {
+    const { ctx, service, app } = this;
+    const params = ctx.request.body;
 
+      const res = await service.company.organization(params);
+
+  }
+
+    
   async info() {
     const {ctx, service,app} = this;
     const params = {id:ctx.company.company_id};

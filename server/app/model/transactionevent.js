@@ -38,7 +38,7 @@ module.exports = app => {
             type: INTEGER
            
         },
-        unit_of_Measurement: {
+        unit_of_measurement: {
             type: STRING(20)
            
         },

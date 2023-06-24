@@ -30,14 +30,20 @@ class RoleController extends Controller {
   async add() {
     const {ctx, service} = this;
     var params = ctx.request.body;
-    console.log(params)
+    
+      params.accessible_organization = params.accessible_organization.join(",")
+      params.accessible_timestamp = params.accessible_timestamp.join(",")
+      params.accessible_feature = params.accessible_feature.join(",")
     const result = await service.role.add(params);
       this.addOperlog()
   }
   
   async mod() {
     const {ctx, service} = this;
-    const params = ctx.request.body;
+      const params = ctx.request.body;
+      params.accessible_organization = params.accessible_organization.join(",")
+      params.accessible_timestamp = params.accessible_timestamp.join(",")
+      params.accessible_feature = params.accessible_feature.join(",")
       const result = await service.role.mod(params);
       this.addOperlog()
   }

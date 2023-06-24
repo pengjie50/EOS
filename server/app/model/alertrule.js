@@ -15,6 +15,12 @@ module.exports = app => {
             defaultValue: DataTypes.UUIDV4
            
         },
+        alertrule_id: {
+            type: INTEGER,
+            allowNull: false,
+            autoIncrement: true
+
+        },
         user_id: {
             type: UUID
            
@@ -87,10 +93,10 @@ module.exports = app => {
     }, {
         indexes: [
             {
-                fields: ['company_id']
+                fields: ['company_id', 'alertrule_id']
             },
             {
-                fields: ['flow_id', 'type', 'user_id', 'size_of_vessel_from', 'size_of_vessel_to']
+                fields: ['flow_id', 'type', 'user_id' ,'size_of_vessel_from', 'size_of_vessel_to']
             },
             {
                 fields: [ 'total_nominated_quantity_from_m', 'total_nominated_quantity_to_m']

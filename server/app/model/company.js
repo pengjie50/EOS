@@ -27,6 +27,10 @@ module.exports = app => {
           type: STRING(100)
          
         },
+        type: {
+            type: STRING(100)
+
+        },
         phone: {
           type: STRING(12)
        

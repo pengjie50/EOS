@@ -54,12 +54,21 @@ class RoleService extends Service {
     async add(params) {
 
      
- 
-        const {ctx} = this;
+
+        const { ctx, service } = this;
        
-        params.company_id ='cccccccc-cccc-cccc-cccc-cccccccccccc'
+        params.company_id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
+
+
         const res = await ctx.model.Role.create(params);
-        if(res){
+
+       
+
+        if (res) {
+            if (params.accessible_permissions) {
+                await service.rolepermission.add({ role_id: res.id, permission_ids: params.accessible_permissions });
+            }
+           
             ctx.body = { success: true,data:res};
         }else{
             ctx.body = { success: false, errorCode:1000};
@@ -84,7 +93,7 @@ class RoleService extends Service {
     }
     async mod(params) {
 
-        const ctx = this.ctx;
+        const { ctx, service } = this;
         const user = await ctx.model.Role.findByPk(params.id);
 
         if (!user) {
@@ -94,7 +103,11 @@ class RoleService extends Service {
         }
 
         const res = await user.update(params);
-        if(res){
+        if (res) {
+            if (!params.accessible_permissions) {
+                params.accessible_permissions=[]
+            }
+            await service.rolepermission.add({ role_id: user.id, permission_ids: params.accessible_permissions });
             ctx.body = { success: true,data:res};
         }else{
             ctx.body = { success: false, errorCode:1000};

@@ -6,7 +6,7 @@
 */
 'use strict'
 module.exports = app => {
-    const { DATE, STRING, INTEGER, UUID, TINYINT, DataTypes } = app.Sequelize;
+    const { DATE, STRING, INTEGER, UUID, TINYINT, DataTypes, TEXT } = app.Sequelize;
     const Model = app.model.define('oper_log', {
         id: {
             type: UUID,
@@ -67,6 +67,10 @@ module.exports = app => {
         oper_time: {
             type: DATE
            
+        },
+        remarks: {
+            type: TEXT
+
         }
 
     }, {

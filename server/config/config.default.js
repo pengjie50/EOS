@@ -103,7 +103,7 @@ module.exports = appInfo => {
         writetoBCUrl: "http://165.232.172.190:3011/eos/WritetoBC",
         validateBCUrl: "http://165.232.172.190:3011/eos/ValidateBC",
         user_email: "504475705@qq.com",
-        auth_code:"adiclzwfzscxbggi"
+        auth_code:"gatvtdmruiwjbiih"
     // myAppName: 'egg',
     };
 
@@ -115,7 +115,7 @@ module.exports = appInfo => {
     };
     config.multipart = {
         whitelist: [
-            '.png', '.jpg'
+            '.png', '.jpg','.mp4'
         ],
         mode: 'file',
         fileSize: '100mb'

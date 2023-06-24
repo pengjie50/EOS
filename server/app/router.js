@@ -6,7 +6,7 @@
 module.exports = app => {
     const { router, controller } = app;
     app.beforeStart(async () => {
-       //await app.model.Transaction.sync({ alter: true });//force  false 为不覆盖 true会删除再创建; alter true可以 添加或删除字段;
+       // await app.model.Role.sync({ alter: true });//force  false 为不覆盖 true会删除再创建; alter true可以 添加或删除字段;
     });
     
     router.get('/', controller.home.index);
@@ -20,7 +20,7 @@ module.exports = app => {
     router.post('/api/user/retrievePassword', controller.user.retrievePassword);
     router.post('/api/user/modifyPassword', controller.user.modifyPassword);
     router.post('/api/user/checkEmail', controller.user.checkEmail);
-    router.post('/api/user/checkUsername', controller.user.checkUsername);
+    
     
 
     
@@ -39,6 +39,8 @@ module.exports = app => {
     router.post('/api/company/add', controller.company.add);
     router.post('/api/company/mod', controller.company.mod);
     router.post('/api/company/del', controller.company.del);
+
+    router.post('/api/company/organization', controller.company.organization);
 
     router.post('/api/permission/list', controller.permission.list);
     router.post('/api/permission/add', controller.permission.add);
@@ -68,6 +70,7 @@ module.exports = app => {
 
     router.post('/api/loginlog/list', controller.loginlog.list);
     router.post('/api/operlog/list', controller.operlog.list);
+    router.post('/api/operlog/mod', controller.operlog.mod);
 
     router.post('/api/sysconfig/list', controller.sysconfig.list);
     router.post('/api/sysconfig/add', controller.sysconfig.add);
@@ -76,6 +79,9 @@ module.exports = app => {
 
 
     router.post('/api/system/fieldUniquenessCheck', controller.system.fieldUniquenessCheck);
+
+    router.post('/api/system/fieldSelectData', controller.system.fieldSelectData);
+    
 
     router.post('/api/filterOfTimestamps/list', controller.filterOfTimestamps.list);
     router.post('/api/filterOfTimestamps/add', controller.filterOfTimestamps.add);

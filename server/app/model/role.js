@@ -6,7 +6,7 @@
 */
 'use strict'
 module.exports = app => {
-    const { DATE, STRING, INTEGER, UUID, TEXT, DataTypes } = app.Sequelize;
+    const { DATE, STRING, INTEGER, UUID, TEXT, DataTypes, TINYINT } = app.Sequelize;
     const Model = app.model.define('role', {
         id: {
             type: UUID,
@@ -19,9 +19,27 @@ module.exports = app => {
           type: STRING(100)
           
         },
+        type: {
+            type: STRING(100)
+
+        },
         company_id: {
           type: UUID
         
+        },
+        accessible_organization: {
+            type: TEXT
+
+        },
+        accessible_feature: {
+            type: TEXT
+
+        },
+        
+        
+        accessible_timestamp: {
+            type: TEXT
+
         },
         description: {
           type: TEXT
@@ -31,9 +49,10 @@ module.exports = app => {
     }, {
         indexes: [
         {
-          fields: ['name']
+          fields: ['name','type']
         }],
-        timestamps: false,
+        timestamps: true,
+        paranoid: false,
         tableName: 'role',
        
     });

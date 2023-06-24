@@ -66,6 +66,10 @@ module.exports = app => {
             type: UUID
            
         },
+        trader_id: {
+            type: UUID
+
+        },
         jetty_id: {
             type: UUID
             

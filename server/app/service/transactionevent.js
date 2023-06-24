@@ -66,6 +66,14 @@ class TransactioneventService extends Service {
 
 
         var transaction = await ctx.model.Transaction.findOne({ where: { id: params.transaction_id } })
+
+
+
+        params.work_order_id = Math.ceil(Math.random() * 1000);
+        params.product_type = transaction.product_type
+        params.tank_id = Math.ceil(Math.random() * 1000);
+        params.volume = transaction.total_nominated_quantity_m
+        params.unit_of_measurement="MT"
         params.event_time = new Date()
 
         var flow = await ctx.model.Flow.findOne({ where: { id: params.flow_id } })
@@ -106,8 +114,18 @@ class TransactioneventService extends Service {
     
     async mod(params) {
 
+        
+
         const ctx = this.ctx;
         const user = await ctx.model.Transactionevent.findByPk(params.id);
+
+        var transaction = await ctx.model.Transaction.findOne({ where: { id: user.transaction_id } })
+
+        params.work_order_id = Math.ceil(Math.random() * 100000);
+        params.product_type = transaction.product_type
+        params.tank_id = Math.ceil(Math.random() * 100000);
+        params.volume = transaction.total_nominated_quantity_m
+        params.unit_of_measurement = "MT"
 
         if (!user) {
             ctx.status = 404;
@@ -121,6 +139,37 @@ class TransactioneventService extends Service {
         } else {
             ctx.body = { success: false, errorCode: 1000 };
         }
+
+
+
+
+
+       /*var step = 0
+        var arr = await ctx.model.Transactionevent.findAll({ raw: true })
+        var a = async () => {
+          var params= arr[step]
+
+            const user = await ctx.model.Transactionevent.findByPk(params.id);
+
+            var transaction = await ctx.model.Transaction.findOne({ where: { id: user.transaction_id } })
+
+            params.work_order_id = Math.ceil(Math.random() * 100000);
+            params.product_type = transaction.product_type
+            params.tank_id = Math.ceil(Math.random() * 100000);
+            params.volume = transaction.total_nominated_quantity_m
+            params.unit_of_measurement = "MT"
+
+            console.log("sssssssssssssssssssssssss")
+
+            const res = await user.update(params);
+            if (step < arr.length) {
+                step++
+                await a()
+            }
+
+           
+        }
+        await a()*/
 
     }
 

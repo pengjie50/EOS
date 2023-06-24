@@ -32,12 +32,16 @@ class ReportService extends Service {
             obj.offset = parseInt((params.page - 1)) * parseInt(params.limit)
             obj.limit = parseInt(params.limit)
         }
-        obj.attributes= [[ctx.model.col('c.name'),'company_name'],'report.*']
+        obj.attributes = [[ctx.model.col('u.username'), 'username'], [ctx.model.col('c.name'),'company_name'],'report.*']
         obj.include=[{
             as:'c',
             model: ctx.model.Company
           
-        }]
+        }, {
+                as: 'u',
+                model: ctx.model.User
+
+            }]
         obj.raw=true
         const list = await ctx.model.Report.findAndCountAll(obj)
 
@@ -55,7 +59,7 @@ class ReportService extends Service {
 
 
     async summary(params) {
-        const { ctx } = this;
+        const { ctx,app } = this;
         var transaction_filter_num=0
         var transaction_total_num=0
         let obj = {}
@@ -90,7 +94,31 @@ class ReportService extends Service {
             obj.where.id = ids
         }
 
+        var Op = app.Sequelize.Op
+        if (obj.where.organization_id) {
+            if (ctx.user.role_type == 'Super') {
+                obj.where[Op['or']] = [{ terminal_id: obj.where.organization_id }, { trader_id: obj.where.organization_id }]
+            } else if (ctx.user.role_type == 'Trader') {
 
+                obj.where.terminal_id = obj.where.organization_id
+            } else if (ctx.user.role_type == 'Terminal') {
+                obj.where.trader_id = obj.where.organization_id
+            }
+            delete obj.where.organization_id
+        } else {
+            if (ctx.user.role_type == 'Trader') {
+
+                obj.where.trader_id = ctx.user.company_id
+                obj.where.terminal_id = {
+                    [app.Sequelize.Op['in']]: ctx.user.accessible_organization
+                }
+            } else if (ctx.user.role_type == 'Terminal') {
+                obj.where.terminal_id = ctx.user.company_id
+                obj.where.trader_id = {
+                    [app.Sequelize.Op['in']]: ctx.user.accessible_organization
+                }
+            }
+        }
        
         obj.raw= true
 

@@ -27,6 +27,10 @@ module.exports = app => {
             type: TINYINT
          
         },
+        code: {
+            type: INTEGER
+
+        },
         sort: {
             type: INTEGER
           
@@ -42,7 +46,7 @@ module.exports = app => {
     }, {
         indexes: [
         {
-          fields: ['name']
+                fields: ['name','code']
         }],
         tableName: 'flow'
     });

@@ -19,12 +19,14 @@ class TransactionService extends Service {
         ctx.body ={success:true,data:res} 
     }
     async list(params) {
-        const {ctx} = this;
+        const {ctx,app} = this;
         
         let obj={}  
 
-        if(params.where){
+        if (params.where) {
             obj.where = params.where
+        } else {
+            obj.where = {}
         }
         if(params.order){
             obj.order = params.order
@@ -52,9 +54,34 @@ class TransactionService extends Service {
             delete obj.where.flow_id_to
             obj.where.id=ids
         }
+        var Op = app.Sequelize.Op
+        if (obj.where.organization_id) {
+            if (ctx.user.role_type == 'Super') {
+                obj.where[Op['or']] = [{ terminal_id: obj.where.organization_id }, { trader_id: obj.where.organization_id }]
+            } else if (ctx.user.role_type == 'Trader') {
+                obj.where.trader_id = ctx.user.company_id
+                obj.where.terminal_id = obj.where.organization_id
+            } else if (ctx.user.role_type == 'Terminal') {
+                obj.where.trader_id = obj.where.organization_id
+                obj.where.terminal_id = ctx.user.company_id
+            }
+            delete obj.where.organization_id
+        } else {
+            if (ctx.user.role_type == 'Trader') {
+
+                obj.where.trader_id = ctx.user.company_id
+                obj.where.terminal_id = {
+                    [app.Sequelize.Op['in']]: ctx.user.accessible_organization
+                }
+            } else if (ctx.user.role_type == 'Terminal') {
+                obj.where.terminal_id = ctx.user.company_id
+                obj.where.trader_id = {
+                    [app.Sequelize.Op['in']]: ctx.user.accessible_organization
+                }
+            }
+        }
         
-
-
+       
         
         const list = await ctx.model.Transaction.findAndCountAll(obj)
 
@@ -70,13 +97,15 @@ class TransactionService extends Service {
 
     async statistics(params) {
 
-        const { ctx } = this;
+        const { ctx,app } = this;
 
         let obj = {
             where: {}
         }
         if (params.where) {
             obj.where = params.where
+        } else {
+            obj.where = {}
         }
        
         var data={
@@ -107,8 +136,64 @@ class TransactionService extends Service {
             obj.where.end_of_transaction = { [Op.lte]: dateArr[1] }
 
         }*/
-        
+        var Op = app.Sequelize.Op
+        var awhere = { transaction_id: null }
+        if (ctx.user.role_type == 'Super') {
+            if (obj.where.organization_id) {
+                obj.where[Op['or']] = [{ terminal_id: obj.where.organization_id }, { trader_id: obj.where.organization_id }]
+            }
+        } else if (ctx.user.role_type == 'Trader') {
+
+            if (obj.where.organization_id) {
+
+
+                obj.where.terminal_id = obj.where.organization_id
+                obj.where.trader_id = ctx.user.company_id
+
+
+            } else {
+                obj.where.trader_id = ctx.user.company_id
+                obj.where.terminal_id = {
+                    [app.Sequelize.Op['in']]: ctx.user.accessible_organization
+                }
+
+            }
+        } else if (ctx.user.role_type == 'Terminal') {
+
+            if (obj.where.organization_id) {
+
+
+                obj.where.trader_id = obj.where.organization_id
+                obj.where.terminal_id = ctx.user.company_id
+
+
+            } else {
+                obj.where.terminal_id = ctx.user.company_id
+                obj.where.trader_id = {
+                    [app.Sequelize.Op['in']]: ctx.user.accessible_organization
+                }
+
+            }
+
+
+
+
+            if (obj.where.tab[app.Sequelize.Op.like] == '%Trader%') {
+                awhere.company_id = {
+                    [app.Sequelize.Op['in']]: ctx.user.accessible_organization
+                }
+            } else {
+                awhere.company_id = ctx.user.company_id
+            }
+
+        }
+
+
+
+
        
+        delete obj.where.organization_id
+        delete obj.where.tab
         if (obj.where && obj.where.status && obj.where.status[Op.eq] == '0') {
             data.no_of_transaction.total = await ctx.model.Transaction.count(obj)
             data.no_of_transaction.open = data.no_of_transaction.total
@@ -138,7 +223,7 @@ class TransactionService extends Service {
             
         }
         
-        
+       
 
        // obj.where.status = 1
         var transactions = await ctx.model.Transaction.findAll( obj)
@@ -146,11 +231,14 @@ class TransactionService extends Service {
         var transaction_ids= transactions.map((a) => {
             return a.id
         })
-       
+        awhere.transaction_id = transaction_ids
 
-        var alerts = await ctx.model.Alert.findAll({ where: { transaction_id: transaction_ids } })
 
-        var alertruleTransactions = await ctx.model.AlertruleTransaction.findAll({ where: { transaction_id: transaction_ids } })
+
+        
+        var alerts = await ctx.model.Alert.findAll({ where: awhere })
+
+        var alertruleTransactions = await ctx.model.AlertruleTransaction.findAll({ where: awhere })
         var alertruleTransactionCountMap = {}
         alertruleTransactions.forEach((a) => {
 

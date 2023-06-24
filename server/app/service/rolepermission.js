@@ -72,10 +72,12 @@ class RolepermissionService extends Service {
         const res = await ctx.model.Rolepermission.bulkCreate(arr);
         
 
-        if(res){
-            ctx.body = { success: true, }
-        }else{
-            ctx.body = { success: false, errorCode:1000}
+        if (res) {
+            return true
+            //ctx.body = { success: true, }
+        } else {
+            return false
+            //ctx.body = { success: false, errorCode:1000}
         }
 
        

@@ -16,8 +16,12 @@ module.exports = app => {
 
         },
         name: {
-          type: STRING(100)
+          type: STRING(200)
         
+        },
+        permission_key: {
+           type: STRING(100)
+
         },
         description: {
           type: TEXT
@@ -29,7 +33,7 @@ module.exports = app => {
     }, {
         indexes: [
         {
-          fields: ['name']
+                fields: ['name','permission_key']
         }],
         
         timestamps: false,

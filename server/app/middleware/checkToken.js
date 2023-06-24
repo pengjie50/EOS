@@ -25,7 +25,7 @@ module.exports = (options, app) => {
               
                 ctx.user = login_user
                 ctx.user.user_id = login_user.id
-                if (login_user.role_id =='rrrrrrrr-rrrr-rrrr-rrrr-rrrrrrrrrrrr') {
+                if (login_user.role_type =='Super') {
                     ctx.user.isAdmin=true
                 }
 

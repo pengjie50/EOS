@@ -18,7 +18,12 @@ class OperlogController extends Controller {
 
     }
 
-
+    async mod() {
+        const { ctx, service } = this;
+        const params = ctx.request.body;
+        const result = await service.operlog.mod(params);
+        //this.addOperlog()
+    }
 
 }
 

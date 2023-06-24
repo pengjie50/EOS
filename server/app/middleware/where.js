@@ -98,7 +98,7 @@ module.exports = (options, app) => {
 					|| ctx.request.url == '/api/permission/list'
 
 					|| ctx.request.url == '/api/rolepermission/list'
-					//|| ctx.request.url == '/api/jetty/list'
+					|| ctx.request.url == '/api/jetty/list'
 					|| ctx.request.url == '/api/producttype/list'
 					|| ctx.request.url == '/api/terminal/list'
 					// || ctx.request.url == '/api/filterOfTimestamps/list'
