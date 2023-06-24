@@ -122,9 +122,9 @@ const BaseView: React.FC = () => {
                     />}
                     name="repeatNewPassword"
                     rules={[
-                      { required: true },
+                     
                       {
-                        pattern: new RegExp(/((?=.*\d)(?=.*\D)|(?=.*[a-zA-Z])(?=.*[^a-zA-Z]))(?!^.*[\u4E00-\u9FA5].*$)^\S{8,22}$/),
+                        required: true, pattern: new RegExp(/((?=.*\d)(?=.*\D)|(?=.*[a-zA-Z])(?=.*[^a-zA-Z]))(?!^.*[\u4E00-\u9FA5].*$)^\S{8,22}$/),
                         message: <>Your password should be at least eight characters and include at least the following:<br />
                           a) At least letters in both upper- and lowercase<br />
                           b) At least one number<br />

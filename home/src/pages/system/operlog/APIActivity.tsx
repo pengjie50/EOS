@@ -1,91 +1,30 @@
 import RcResizeObserver from 'rc-resize-observer';
 
-import { addRole, removeRole, role, updateRole, updateRoleMenu } from './service';
+import { addOperlog, removeOperlog, operlog, updateOperlog } from './service';
 import { PlusOutlined, SearchOutlined, FormOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import type { ActionType, ProColumns, ProDescriptionsItemProps } from '@ant-design/pro-components';
-import { RoleList, RoleListItem } from './data.d';
-import MenuForm from './components/MenuForm';
+import { OperlogList, OperlogListItem } from './data.d';
 import {
   FooterToolbar,
   ModalForm,
   PageContainer,
   ProDescriptions,
   ProFormText,
-  Search,
-  ProFormInstance,
   ProFormTextArea,
   ProTable,
+  Search,
+  ProFormInstance
 } from '@ant-design/pro-components';
 import { FormattedMessage, useIntl, formatMessage } from '@umijs/max';
 import { Button, Drawer, Input, message, Modal } from 'antd';
 import React, { useRef, useState } from 'react';
 import CreateForm from './components/CreateForm';
 import UpdateForm from './components/UpdateForm';
-import { isPC } from "@/utils/utils";
+
 const { confirm } = Modal;
 //MP
 import { InfiniteScroll, List, NavBar, Space, DotLoading } from 'antd-mobile'
-/**
- * @en-US Add node
- * @zh-CN 添加节点
- * @param fields
- */
-const handleAdd = async (fields: RoleListItem) => {
-  const hide = message.loading(<FormattedMessage
-    id="pages.adding"
-    defaultMessage="Adding"
-  />);
-  try {
-    await addRole({ ...fields });
-    hide();
-    message.success(<FormattedMessage
-      id="pages.addedSuccessfully"
-      defaultMessage="Added successfully"
-    />);
-    return true;
-  } catch (error) {
-    hide();
-    message.error(<FormattedMessage
-      id="pages.addingFailed"
-      defaultMessage="Adding failed, please try again!"
-    />);
-    return false;
-  }
-};
-
-/**
- * @en-US Update node
- * @zh-CN 更新节点
- *
- * @param fields
- */
-const handleUpdate = async (fields: Partial<RoleListItem> ) => {
-  const hide = message.loading(<FormattedMessage
-    id="pages.modifying"
-    defaultMessage="Modifying"
-  />);
- 
-  try {
-    await updateRole({
-      ...fields
-    }
-    );
-    hide();
-
-    message.success(<FormattedMessage
-      id="pages.modifySuccessful"
-      defaultMessage="Modify is successful"
-    />);
-    return true;
-  } catch (error) {
-    hide();
-    message.error(<FormattedMessage
-      id="pages.modifyFailed"
-      defaultMessage="Modify failed, please try again!"
-    />);
-    return false;
-  }
-};
+import { isPC } from "@/utils/utils";
 
 /**
  *  Delete node
@@ -93,7 +32,7 @@ const handleUpdate = async (fields: Partial<RoleListItem> ) => {
  *
  * @param selectedRows
  */
-const handleRemove = async (selectedRows: RoleListItem[], callBack: any) => {
+const handleRemove = async (selectedRows: OperlogListItem[], callBack: any) => {
   if (!selectedRows) return true;
   var open = true
   confirm({
@@ -109,7 +48,7 @@ const handleRemove = async (selectedRows: RoleListItem[], callBack: any) => {
         defaultMessage="Deleting"
       />);
       try {
-        removeRole({
+        removeOperlog({
           id: selectedRows.map((row) => row.id),
         }).then(() => {
           hide();
@@ -139,6 +78,36 @@ const handleRemove = async (selectedRows: RoleListItem[], callBack: any) => {
 
 
 };
+/**
+ * @en-US Update node
+ * @zh-CN 更新节点
+ *
+ * @param fields
+ */
+const handleUpdate = async (fields: Partial<any>) => {
+  const hide = message.loading(<FormattedMessage
+    id="pages.modifying"
+    defaultMessage="Modifying"
+  />);
+  try {
+
+    await updateOperlog({ remarks: fields['remarks'], id: fields.id });
+    hide();
+
+    message.success(<FormattedMessage
+      id="pages.modifySuccessful"
+      defaultMessage="Modify is successful"
+    />);
+    return true;
+  } catch (error) {
+    hide();
+    message.error(<FormattedMessage
+      id="pages.modifyFailed"
+      defaultMessage="Modify failed, please try again!"
+    />);
+    return false;
+  }
+};
 const TableList: React.FC = () => {
   /**
    * @en-US Pop-up window of new window
@@ -153,18 +122,16 @@ const TableList: React.FC = () => {
 
   const [showDetail, setShowDetail] = useState<boolean>(false);
 
-  const [stepMenuFormValues, setMenuStepFormValues] = useState({});
-  const [updateMenuModalVisible, handleUpdateMenuModalVisible] = useState<boolean>(false);
-
   const actionRef = useRef<ActionType>();
-  const [currentRow, setCurrentRow] = useState<RoleListItem>();
-  const [selectedRowsState, setSelectedRows] = useState<RoleListItem[]>([]);
+  const [currentRow, setCurrentRow] = useState<OperlogListItem>();
+  const [selectedRowsState, setSelectedRows] = useState<OperlogListItem[]>([]);
   const [resizeObj, setResizeObj] = useState({ searchSpan: 12, tableScrollHeight: 300 });
   /**
    * @en-US International configuration
    * @zh-CN 国际化配置
    * */
   const intl = useIntl();
+
   //--MP start
   const MPSearchFormRef = useRef<ProFormInstance>();
 
@@ -175,7 +142,7 @@ const TableList: React.FC = () => {
     <div style={{ fontSize: 24 }}>
       <Space style={{ '--gap': '16px' }}>
         <SearchOutlined onClick={e => { setShowMPSearch(!showMPSearch) }} />
-        <PlusOutlined onClick={() => { handleModalOpen(true) }} />
+
       </Space>
     </div>
   )
@@ -212,7 +179,7 @@ const TableList: React.FC = () => {
   const [MPfilter, setMPfilter] = useState<any>({})
 
   async function getData(page, filter) {
-    const append = await role({
+    const append = await operlog({
       ...{
         "current": page,
         "pageSize": 10
@@ -231,115 +198,202 @@ const TableList: React.FC = () => {
     setCurrentPage(currentPage + 1)
   }
   //--MP end
-  const columns: ProColumns<RoleListItem>[] = [
+  const columns: ProColumns<OperlogListItem>[] = [
+    
     {
-      title: (
-        <FormattedMessage
-          id="pages.role.name"
-          defaultMessage="Role name"
-        />
-      ),
-      sorter: true,
-      dataIndex: 'name',
-     
-      render: (dom, entity) => {
-        return (
-          <a
-            onClick={() => {
-              setCurrentRow(entity);
-              setShowDetail(true);
-            }}
-          >
-            {dom}
-          </a>
-        );
+      title: <FormattedMessage id="pages.user.username" defaultMessage="username" />,
+      dataIndex: 'username',
+      valueType: 'text',
+    },
+   
+    {
+      title: <FormattedMessage id="pages.operlog.module" defaultMessage="module" />,
+      dataIndex: 'module',
+      valueType: 'text',
+    },
+    {
+      title: <FormattedMessage id="pages.operlog.action" defaultMessage="Action Type" />,
+      dataIndex: 'action',
+      valueType: 'text',
+    },
+    {
+      title: <FormattedMessage id="pages.operlog.xxx" defaultMessage="Action Description" />,
+      dataIndex: 'param',
+      valueType: 'text',
+    },
+
+    {
+      title: <FormattedMessage id="pages.operlog.url" defaultMessage="url" />,
+      dataIndex: 'url',
+      valueType: 'text',
+    },
+    {
+      title: <FormattedMessage id="pages.operlog.ip" defaultMessage="Ip" />,
+      dataIndex: 'ip',
+      valueType: 'text',
+    },
+   /* {
+      title: <FormattedMessage id="pages.operlog.param" defaultMessage="param" />,
+      dataIndex: 'param',
+      ellipsis:true,
+      valueType: 'text',
+    },
+    {
+      title: <FormattedMessage id="pages.operlog.result" defaultMessage="result" />,
+      dataIndex: 'result',
+      ellipsis: true,
+      valueType: 'text',
+    },*/
+    {
+      title: <FormattedMessage id="pages.loginlog.status" defaultMessage="Status" />,
+      dataIndex: 'status',
+      hideInForm: true,
+      search: {
+        transform: (value) => {
+          alert(value)
+          if (value !== null) {
+            return {
+
+              status: {
+                'field': 'status',
+                'op': 'eq',
+                'data': Number(value)
+              }
+
+            }
+          }
+
+        }
       },
-    },
-
-    {
-      title: <FormattedMessage id="pages.xxx" defaultMessage="Role Type" />,
-      dataIndex: 'type',
-      sorter: true,
       valueEnum: {
-        "Surveyor": "Surveyor",
-        "Trader": "Trader",
-        "Agent": "Agent",
-        "Terminal": "Oil Terminal",
-        "Pilot": "Pilot",
-        "Super": "Super",
+        0: {
+          text: (
+            <FormattedMessage
+              id="pages.loginlog.Success"
+              defaultMessage="Success"
+            />
+          ),
+          status: 'Success',
+        },
+        1: {
+          text: (
+            <FormattedMessage id="pages.loginlog.error" defaultMessage="Error" />
+          ),
+          status: 'Error',
+        }
 
-
-      }
-    },
-
+      },
+    }/*,
     {
-      title: <FormattedMessage id="pages.role.description" defaultMessage="Description" />,
-      dataIndex: 'description',
+      title: (
+        <FormattedMessage
+          id="pages.loginlog.information"
+          defaultMessage="Information"
+        />
+      ),
+      dataIndex: 'err_code',
+      sorter: true,
+      hideInForm: true,
+      renderText: (val: Number) => {
+        if (val == 0) {
+          return ''
+        }
+        return `${intl.formatMessage({
+          id: 'pages.error.' + val,
+          defaultMessage: '',
+        })}`
+      }
+      ,
+    }*/,
+    {
+      title: (
+        <FormattedMessage
+          id="pages.operlog.operTime"
+          defaultMessage="Oper time"
+        />
+      ),
+      sorter: true,
       hideInSearch:true,
-      valueType: 'textarea',
+      dataIndex: 'oper_time',
+      valueType: 'dateTime'
+
     },
     {
       title: (
         <FormattedMessage
-          id="pages.createdAt"
-          defaultMessage="Created at"
+          id="pages.operlog.operTime"
+          defaultMessage="Oper time"
         />
       ),
       sorter: true,
-      dataIndex: 'created_at',
-      valueType: 'dateTime',
-      hideInSearch: true
+      hideInForm: true,
+      hideInTable: true,
+      defaultSortOrder: 'descend',
+      dataIndex: 'oper_time',
+      valueType: 'dateRange',
+      search: {
+        transform: (value) => {
+          if (value.length > 0) {
+            return {
+              'oper_time': {
+                'field': 'oper_time',
+                'op': 'between',
+                'data': value
+              }
+            }
+          }
+
+        }
+      }
+
+
 
     },
     {
+      title: <FormattedMessage id="pages.alert.specificProcess" defaultMessage="Remarks" />,
+      dataIndex: 'remarks',
+      hideInSearch: true,
+
+      valueType: 'textarea',
+      render: (dom, record) => {
+
+        return <div style={{ position: 'relative', width: '100%' }}><p dangerouslySetInnerHTML={{ __html: dom?.replace(/\n/g, '<br />') }} />
+
+
+
+         <div>
+          
+              <a
+                title={formatMessage({ id: "pages.update", defaultMessage: "Modify" })}
+                key="config"
+                onClick={() => {
+                  setCurrentRow(record);
+                  handleUpdateModalOpen(true);
+
+
+
+
+                }}
+              >
+                <FormOutlined style={{ fontSize: '20px' }} />
+
+              </a>
+
+            
+          </div>
+        </div>;
+      },
+
+    },
+    /*{
       title: <FormattedMessage id="pages.searchTable.titleOption" defaultMessage="Operating" />,
       dataIndex: 'option',
-      width:80,
       valueType: 'option',
       render: (_, record) => [
-        <a
-          key="config"
-          onClick={() => {
-            handleUpdateModalOpen(true);
-            setCurrentRow(record);
-          }}
-        >
-          <FormOutlined style={{ fontSize: '20px' }} />
-        </a>,
-        
-          <a
-            title={formatMessage({ id: "pages.delete", defaultMessage: "Delete" })}
-            key="config"
-            onClick={() => {
-              setCurrentRow(record);
-              handleRemove([record], (success) => {
-                if (success) {
-                  if (isMP) {
-                    setData([]);
-                    getData(1, MPfilter)
-                  }
-                  actionRef.current?.reloadAndRest?.();
-                }
-              });
-
-
-            }}
-          >
-            <DeleteOutlined style={{ fontSize: '20px', color: 'red' }} />
-
-          </a>,
-       /* <a
-          
-          onClick={() => {
-            handleUpdateMenuModalVisible(true);
-            setMenuStepFormValues(record);
-          }}
-        >
-          Assign permissions
-          </a>*/
+       
        
       ],
-    },
+    },*/
   ];
 
   return (
@@ -349,11 +403,11 @@ const TableList: React.FC = () => {
         const { innerWidth, innerHeight } = window;
 
         if (offset.width > 1280) {
-          
+         
           setResizeObj({ ...resizeObj, searchSpan: 8, tableScrollHeight: innerHeight - 420 });
         }
         if (offset.width < 1280 && offset.width > 900) {
-          
+        
           setResizeObj({ ...resizeObj, searchSpan: 12, tableScrollHeight: innerHeight - 420 });
         }
         if (offset.width < 900 && offset.width > 700) {
@@ -361,48 +415,45 @@ const TableList: React.FC = () => {
          
         }
 
-       
+        
 
       }}
     >
       <PageContainer className="myPage" header={{
-      title: isMP ? null : < FormattedMessage id="pages.role.title" defaultMessage="Role" />,
+        title: isMP ? null : < FormattedMessage id="pages.operlog.xxx" defaultMessage="API Activity" />,
       breadcrumb: {},
-      extra: isMP ? null : [
-        <Button
-          type="primary"
-          key="primary"
-          onClick={() => {
-            handleModalOpen(true);
-          }}
-        >
-          <PlusOutlined /> <FormattedMessage id="pages.xxx" defaultMessage="Create New Role" />
-        </Button>,
-      ]
-    }}>
-      {!isMP && ( <ProTable<RoleListItem, API.PageParams>
+    }} >
+      {!isMP && (<ProTable<OperlogListItem, API.PageParams>
+        //scroll={{ x: 2500, y: 300 }}
        
         actionRef={actionRef}
           rowKey="id"
-          scroll={{ x: '100%', y: resizeObj.tableScrollHeight }}
+          scroll={{ x: 1800, y: resizeObj.tableScrollHeight }}
         search={{
           labelWidth: 120,
           span: resizeObj.searchSpan,
           searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
         }}
+        toolBarRender={() => [
+         
+        ]}
         options={false}
         className="mytable"
-        request={(params, sorter) => role({ ...params, sorter })}
-          columns={columns}
-          bordered
+        request={(params, sorter) => operlog({ ...params, sorter })}
+        columns={columns}
+        rowSelection={{
+          onChange: (_, selectedRows) => {
+            setSelectedRows(selectedRows);
+          },
+        }}
       />)}
 
       {isMP && (<>
 
         <NavBar backArrow={false} right={right} onBack={back}>
           {intl.formatMessage({
-            id: 'pages.role.title',
-            defaultMessage: 'Role',
+            id: 'pages.operlog.xxx',
+            defaultMessage: 'API Activity',
           })}
         </NavBar>
 
@@ -455,77 +506,60 @@ const TableList: React.FC = () => {
           <InfiniteScrollContent hasMore={hasMore} />
         </InfiniteScroll>
       </>)}
-      
-      
-      <CreateForm
-        onSubmit={async (value) => {
-          value.id = currentRow?.id
-          const success = await handleAdd(value as RoleListItem);
-          if (success) {
-            handleModalOpen(false);
-            setCurrentRow(undefined);
-            if (isMP) {
-              setData([]);
-              getData(1, MPfilter)
-            }
-            if (actionRef.current) {
-              actionRef.current.reload();
-            }
+      {selectedRowsState?.length > 0 && (
+        <FooterToolbar
+          extra={
+            <div>
+              <FormattedMessage id="pages.searchTable.chosen" defaultMessage="Chosen" />{' '}
+              <a style={{ fontWeight: 600 }}>{selectedRowsState.length}</a>{' '}
+              <FormattedMessage id="pages.searchTable.item" defaultMessage="项" />
+              &nbsp;&nbsp;
+             
+            </div>
           }
-        }}
-        onCancel={() => {
-          handleModalOpen(false);
-          if (!showDetail) {
-            setCurrentRow(undefined);
-          }
-        }}
-        createModalOpen={createModalOpen}
-        
-      />
-      <UpdateForm
-        onSubmit={async (value) => {
+        >
+          <Button
+            onClick={async () => {
+              await handleRemove(selectedRowsState);
+              setSelectedRows([]);
+              actionRef.current?.reloadAndRest?.();
+            }}
+          >
+            <FormattedMessage
+              id="pages.searchTable.batchDeletion"
+              defaultMessage="Batch deletion"
+            />
+          </Button>
+          
+        </FooterToolbar>
+      )}
+        <UpdateForm
+          onSubmit={async (value) => {
             value.id = currentRow?.id
-
-          const success = await handleUpdate(value);
-          if (success) {
+            const success = await handleUpdate(value);
+            if (success) {
+              handleUpdateModalOpen(false);
+              setCurrentRow(undefined);
+              if (isMP) {
+                setData([]);
+                getData(1)
+              }
+              if (actionRef.current) {
+                actionRef.current.reload();
+              }
+            }
+          }}
+          onCancel={() => {
             handleUpdateModalOpen(false);
-            setCurrentRow(undefined);
-            if (isMP) {
-              setData([]);
-              getData(1, MPfilter)
+            if (!showDetail) {
+              setCurrentRow(undefined);
             }
-            if (actionRef.current) {
-              actionRef.current.reload();
-            }
-          }
-        }}
-        onCancel={() => {
-          handleUpdateModalOpen(false);
-          if (!showDetail) {
-            setCurrentRow(undefined);
-          }
-        }}
-        updateModalOpen={updateModalOpen}
-          values={{ ...currentRow, accessible_feature: currentRow?.accessible_feature?.split(","), accessible_timestamp: currentRow?.accessible_timestamp?.split(","), accessible_organization: currentRow?.accessible_organization?.split(",") } || {}}
-      />
-      <MenuForm
-        onSubmit={async (value) => {
-          const success = await updateRoleMenu(value);
-          if (success) {
-            handleUpdateMenuModalVisible(false);
-            setMenuStepFormValues({});
-            if (actionRef.current) {
-              actionRef.current.reload();
-            }
-          }
-        }}
-        onCancel={() => {
-          handleUpdateMenuModalVisible(false);
-          setMenuStepFormValues({});
-        }}
-        updateMenuModalVisible={updateMenuModalVisible}
-        currentData={stepMenuFormValues}
-      />
+          }}
+          updateModalOpen={updateModalOpen}
+          values={currentRow || {}}
+        />
+      
+
       <Drawer
         width={isMP ? '100%' : 600}
         open={showDetail}
@@ -536,9 +570,8 @@ const TableList: React.FC = () => {
         closable={isMP ? true : false}
       >
         {currentRow?.name && (
-          <ProDescriptions<RoleListItem>
+          <ProDescriptions<OperlogListItem>
             column={isMP ? 1 : 2}
-           
             title={currentRow?.name}
             request={async () => ({
               data: currentRow || {},
@@ -546,7 +579,7 @@ const TableList: React.FC = () => {
             params={{
               id: currentRow?.name,
             }}
-            columns={columns as ProDescriptionsItemProps<RoleListItem>[]}
+            columns={columns as ProDescriptionsItemProps<OperlogListItem>[]}
           />
         )}
       </Drawer>

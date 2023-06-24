@@ -16,7 +16,7 @@ import {
 } from '@ant-design/pro-components';
 import { AlertruleListItem } from '../data.d';
 import { FormattedMessage, useIntl } from '@umijs/max';
-import { Modal, Form, Button } from 'antd';
+import { Modal, Form, Button, Divider } from 'antd';
 import { flow } from '../../system/flow/service';
 import { tree, isPC } from "@/utils/utils";
 import React, { useRef, useState, useEffect } from 'react';
@@ -52,10 +52,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
     } else {
       flow({ pageSize: 300, current: 1, type: 0, sorter: { sort: 'ascend' } }).then((res) => {
         var b = {
-          "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": intl.formatMessage({
-            id: 'pages.alertrule.entireTransaction',
-            defaultMessage: 'Entire Transaction',
-          })
+         
         }
         res.data.forEach((r) => {
           b[r.id] = r.name
@@ -138,8 +135,8 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
       />*/}
 
       <div style={{ float: 'left', width: '100%', display: "block", marginBottom: "10px" }}>
-        <div style={{ fontWeight: "bold" }}>Input applicable condition(s) for threshold to be applied</div>
-        <span style={{ fontSize: "12px" }}>If no conditions are input, threshold defined will be applied to all transactions</span>
+        <div style={{ fontWeight: 500, fontSize: "14px" }}>Input Applicable Condition(s) For Threshold To Be Applied</div>
+        <span><ExclamationCircleOutlined /> If more than one condition is selected, threshold defined is only applicable to transactions that fulfil ALL of the specified conditions</span>
       </div>
 
       
@@ -305,13 +302,51 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           }
         </ProFormDependency>
       )}
-      
-
-      <div style={{ float: 'left', width: '100%', display: "block", marginBottom: "10px" }}>
-        <div style={{ fontWeight: "bold" }}>Define Threshold Duration</div>
-        {values.type != 1 && (<span style={{ fontSize: "12px" }}>Select for one process or for the entire transaction</span>)}
+      <div>
+        <ExclamationCircleOutlined /> Note: Total Nominated Quantity refers to the sum of all quantity of operations for the vessel arrival at one jetty (e.g., 100 MT of discharge + 100 MT of loading = 200 MT of Total Nominated Quantity
       </div>
-      {values.type != 1 && (<ProFormGroup>
+      < Divider style={{ backgroundColor: "#000" }} ></ Divider>
+      <ProCard
+        ghost={true}
+        colSpan={12}
+
+        title={<div style={{ float: 'left', width: '100%', display: "block", marginBottom: "10px" }}>
+          <div style={{ fontWeight: "500", fontSize: '14px' }}>Define Threshold Duration</div>
+          <span style={{ fontSize: "12px", fontWeight: "normal" }}><ExclamationCircleOutlined /> Select threshold type</span>
+        </div>}
+       
+
+      />
+      <ProFormGroup>
+        <ProFormSelect
+          name="type"
+          width="md"
+          label="Threshold Type"
+          rules={[
+            {
+              required: true,
+              message: (
+                <FormattedMessage
+                  id="pages.rules.required"
+                  defaultMessage="This field cannot be empty！"
+                />
+              ),
+            }
+
+          ]}
+         
+          valueEnum={{
+            '0': "Single Process",
+            '1': "Between Two Events",
+            '2': "Entire Transaction"
+
+          }}
+        />
+      </ProFormGroup>
+      <ProFormDependency name={["type"]} >
+        {({ type }) => {
+        
+          return (type == '0'?<ProFormGroup>
             <ProFormSelect
               name="flow_id"
               width="md"
@@ -338,11 +373,8 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
               }}
 
             />
-          </ProFormGroup>)
-        }
-
-
-      {values.type == 1 && (< ProFormDependency name={["flow_id",  "flow_id_to"]} >
+          </ProFormGroup>
+         :type == '1'?< ProFormDependency name={["flow_id",  "flow_id_to"]} >
         {(aa) => {
 
           return (<ProFormGroup>
@@ -475,7 +507,10 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         </ProFormGroup>)
 
 
-        }}</ProFormDependency>)}
+          }}</ProFormDependency>:null
+
+
+        ) }}</ProFormDependency>
      
       <div style={{ width: '100%' }}>
         
@@ -605,12 +640,14 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
               }
               ]} width={100} min={0} max={60}  />
-          </ProFormGroup>, <div style={{ marginTop: '-20px', color: 'red', display: aa["amber_" + 'hours'] > 0 || aa["amber_" + 'mins'] > 0 || aa["red_" + 'hours'] > 0 || aa["red_" + 'mins'] > 0 ? 'none' : "block" }}>Please enter compulsory threshold alert field for either Amber or Red</div>,
+          </ProFormGroup>, <div style={{ marginTop: '-20px', color: 'red', display: aa["amber_" + 'hours'] > 0 || aa["amber_" + 'mins'] > 0 || aa["red_" + 'hours'] > 0 || aa["red_" + 'mins'] > 0 ? 'none' : "block" }}>Duration for at least Amber" or "Red" threshold must be entered</div>,
 
             <div style={{ marginLeft: '0px', marginTop: '-10px', color: 'red', display: isShowRed ? 'block' : "none" }}>Duration for "Red" should not be shorter than "Amber" status</div>
           ])
         }}
       </ProFormDependency>
+
+      < Divider style={{ backgroundColor: "#000" }} ></ Divider>
       <div style={{ float: 'left', width: '100%', display: "block", marginBottom: "10px" }}>
         <div style={{ fontWeight: "500", fontSize: '14px' }}>Email Notification</div>
         <span ><ExclamationCircleOutlined /> Specify the email address and which level of alert they should be notified of.
@@ -623,14 +660,14 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
           title={<span style={{ fontWeight: 'initial' }}>Email Address</span>}
           extra={
-            <Button type="primary" shape="circle" onClick={() => {
+           <PlusCircleOutlined onClick={() => {
               var arr = restFormRef?.current?.getFieldValue('emailArr')
               if (!arr) {
                 arr = []
               }
               arr.push(new Date().getTime())
               restFormRef?.current?.setFieldsValue({ emailArr: arr })
-            }} icon={<PlusOutlined />} />
+            }} />
 
 
           }

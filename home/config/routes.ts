@@ -98,22 +98,8 @@ export default [
      
     ]
   },
-  {
-    path: '/Report',
-    name: 'Report',
-    icon: 'FileZipOutlined',
-    routes: [
-      {
-        path: '/Report',
-        redirect: '/Report/ReportList',
-      },
-      {
-        name: 'Report History',
-        key: 'Report History',
-        hideInMenu: true,
-        path: '/Report/ReportList',
-        component: './report',
-      },
+
+
       {
         name: 'Summary of All Transactions',
         hideInMenu: true,
@@ -121,21 +107,14 @@ export default [
         path: '/Report/ReportSummary',
         component: './report/reportSummary',
       },
-      {
-        name: 'Create New Report',
-        key: 'Create New Report',
-        path: '/Report/add',
-       hideInMenu: true,
-        component: './report/components/CreateForm',
-      },
-      {
-        name: 'Report Detail',
-        key: 'Report Detail',
-        path: '/Report/Detail',
-        hideInMenu: true,
-        component: './report/components/DetailForm',
-      }
-   ]
+     
+  {
+    path: '/Report',
+    key:'Report',
+    name: 'Report History',
+    icon: 'FileZipOutlined',
+    component: './report',
+   
    
   },
  
@@ -151,7 +130,7 @@ export default [
         redirect: '/UserAccessControl/company',
       },
       {
-        name: 'Company',
+        name: 'Organizations List',
         icon: 'table',
         path: '/UserAccessControl/company',
         component: './system/company',
@@ -167,7 +146,13 @@ export default [
         icon: 'user',
         path: '/UserAccessControl/Users',
         component: './system/user',
-      }
+      },
+        {
+        name: 'Permissions',
+        icon: 'solution',
+          path: '/UserAccessControl/Permissions',
+        component: './system/permission',
+      },
 
       
     ]
@@ -177,27 +162,25 @@ export default [
 
   {
     path: '/SystemManagement',
-    name: 'System Management',
+    name: 'Audit log',
     access: 'canAdmin',
-    icon: 'SettingOutlined',
+    icon: 'SolutionOutlined',
     //component: './IdentityAccessManagement',
     routes: [
       {
         path: '/SystemManagement',
-        redirect: '/SystemManagement/Permissions',
+        redirect: '/SystemManagement/flow',
+      },
+
+      {
+        name: 'Super User Activity Log',
+        icon: 'table',
+        path: '/SystemManagement/SuperUserActivityLog',
+        component: './system/operlog/SuperUserActivity',
       },
      
       {
-        name: 'Permissions',
-        icon: 'solution',
-        path: '/SystemManagement/Permissions',
-        component: './system/permission',
-      },
-     
-    
-     
-      {
-        name: 'Flow',
+        name: 'Transaction Flow',
         icon: 'ApartmentOutlined',
         path: '/SystemManagement/flow',
         component: './system/flow',
@@ -207,13 +190,13 @@ export default [
         icon: 'table',
         path: '/IdentityAccessManagement/producttype',
         component: './system/producttype',
-      }*/,
+      },
       {
         name: 'Terminal',
         icon: 'solution',
         path: '/SystemManagement/terminal',
         component: './system/terminal',
-      },
+      }*/,
       {
         name: 'Login log',
         icon: 'bars',
@@ -227,11 +210,19 @@ export default [
         component: './system/operlog',
       },
       {
+        name: 'API Activity Log',
+        icon: 'bars',
+        path: '/SystemManagement/APIActivity',
+        component: './system/operlog/APIActivity',
+      }
+
+      /*,
+      {
         name: 'Security Settings',
         icon: 'safetyCertificate',
         path: '/SystemManagement/sysconfig',
         component: './system/sysconfig',
-      }
+      }*/
       
     ]
   },
@@ -241,6 +232,8 @@ export default [
     access: 'canJettyList',
    // access: 'canAdmin',
     icon: 'InfoCircleOutlined',
+    component: './system/jetty',
+    className:"dddddddd",
     //component: './IdentityAccessManagement',
     routes: [
       {
@@ -251,6 +244,9 @@ export default [
       {
         name: 'Jetty',
         icon: 'idcard',
+        onclick: () => {
+          alert(1)
+        },
         path: '/InformationPage/jetty',
         component: './system/jetty',
       }
@@ -324,6 +320,6 @@ export default [
   {
     path: '*',
     layout: false,
-    component: './404',
+    redirect: '/Dashboard',
   },
 ];

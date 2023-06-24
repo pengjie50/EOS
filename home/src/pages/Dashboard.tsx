@@ -1,7 +1,7 @@
 import { GridContent, ProFormSelect, ProFormDateRangePicker, ProCard, ProFormInstance,ProFormDatePicker, ProTable, ProForm } from '@ant-design/pro-components';
 import { useModel } from '@umijs/max';
 import { EyeOutlined } from '@ant-design/icons';
-import { Card, theme, Progress, Statistic, Badge, message, Tooltip, Button, Empty, ConfigProvider } from 'antd';
+import { Card, theme, Progress, Statistic, Badge, message, Tooltip, Button, Empty, ConfigProvider, Steps } from 'antd';
 import React, { useEffect, useState, useRef } from 'react';
 const { Divider } = ProCard;
 import { flow } from './system/flow/service';
@@ -9,7 +9,7 @@ import { jetty } from './system/jetty/service';
 import { getAlertBytransactionId } from './alert/service';
 import { producttype } from './system/producttype/service';
 import { alertrule } from './alertrule/service';
-import { terminal } from './system/terminal/service';
+import { organization } from './system/company/service';
 import { transaction, transactionevent, statistics } from './transaction/service';
 import { SvgIcon } from '@/components' // 自定义组件
 import { isPC, tree } from "@/utils/utils";
@@ -17,15 +17,17 @@ import { Calendar } from 'antd-mobile'
 import { history, FormattedMessage } from '@umijs/max';
 import numeral from 'numeral';
 
+import KeepAlive, { withAliveScope, useAliveController } from 'react-activation'
 
+const { Step } = Steps;
 // use your custom format
 numeral().format('0%');
 import moment from 'moment';
 import { read } from 'xlsx';
 
-const getFilterStr = (terminal_id, terminalList, dateArr,status,title) => {
+const getFilterStr = (organization_id, organizationList, dateArr,status,title) => {
   var dateStr = dateArr[0] && dateArr[1] ? ' - ' + moment(dateArr[0]).format('DD/MM/YYYY') + ' to ' + moment(dateArr[1]).format('DD/MM/YYYY') :''
-  var terminalStr = (terminal_id ? terminalList[terminal_id] : "")
+  var terminalStr = (organization_id ? organizationList[organization_id] : "")
 
   var statusStr = (status === '' ? '' : (status == 1 ? 'Closed' : 'Open'))
   if (terminalStr || dateStr) {
@@ -36,17 +38,51 @@ const getFilterStr = (terminal_id, terminalList, dateArr,status,title) => {
   
  
 }
+
+/*
+ *
+  import { KeepAliveContext, useLocation } from '@umijs/max';
+import { useContext } from 'react';
+
+function xxxx() {
+  const KeepAlive = useContext(KeepAliveContext);
+  const location = useLocation();
+  
+  // 取消（去新的页面并且，关闭 tabs）
+  function cancelControl() {
+    delete KeepAlive.keepElements.current[location.pathname];
+    history.push('/administer');
+  }
+	
+  return (<></>)
+}
+
+export default xxxx;
+
+ * 
+ */
+
+
+
+
+
+
+
+
 const getTimeStr = (time) => {
   return (time ? parseInt((time / 3600) + "") : 0) + "h " + (time ? parseInt((time % 3600) / 60) : 0) + "m"
 }
 const Welcome: React.FC = () => {
+
+
+  
   const { token } = theme.useToken();
   const { initialState } = useModel('@@initialState');
   const [flowList, setFlowList] = useState<any>([]);
   const [isMP, setIsMP] = useState<boolean>(!isPC());
   const [transactionList, setTransactionList] = useState<any>([]);
   const [transactionMap, setTransactionMap] = useState<any>({});
-  const [terminalList, setTerminalList] = useState<any>({});
+  const [organizationList, setOrganizationList] = useState<any>({});
   const [jettyList, setJettyList] = useState<any>({});
   
   const [flowTreeAll, setFlowTreeAll] = useState<any>([]);
@@ -62,15 +98,16 @@ const Welcome: React.FC = () => {
   const [collapsed4, setCollapsed4] = useState<boolean>(localStorage.getItem('collapsed4') ==='true');
 
 
-  const [terminal_id, setTerminal_id] = useState<any>("");
+  const [organization_id, setOrganization_id] = useState<any>("");
   const [dateArr, setDateArr] = useState<any>(['', '']);
   const [status, setStatus] = useState<any>("");
  
   const formRef = useRef<ProFormInstance>();
  // const [terminal_id, setTerminal_id] = useState(false);
+  const [tab, setTab] = useState('Terminal');
 
-
-
+ 
+  const { currentUser } = initialState || {};
   const [statisticsObj, setStatisticsObj] = useState<any>([]);
   useEffect(() => {
 
@@ -87,11 +124,11 @@ const Welcome: React.FC = () => {
 
 
     let p = { pageSize: 100000, current: 1 }
-    if (terminal_id) {
-      p.terminal_id = {
-          'field': 'terminal_id',
+    if (organization_id) {
+      p.organization_id = {
+        'field': 'organization_id',
           'op': 'eq',
-          'data': terminal_id
+        'data': organization_id
         } 
     }
 
@@ -118,7 +155,7 @@ const Welcome: React.FC = () => {
     } 
 
 
-    statistics(p).then((res) => {
+    statistics({ ...p, tab }).then((res) => {
       
       setStatisticsObj(res.data)
 
@@ -237,7 +274,7 @@ const Welcome: React.FC = () => {
 
     
 
-    jetty({ pageSize: 3000, current: 1, sorter: { name: 'ascend' } }).then((res) => {
+    jetty({ sorter: { name: 'ascend' } }).then((res) => {
       var b = {}
       res.data.forEach((r) => {
         b[r.id] = r.name
@@ -246,7 +283,7 @@ const Welcome: React.FC = () => {
 
     });
 
-    producttype({ pageSize: 3000, current: 1, sorter: { name: 'ascend' } }).then((res) => {
+    producttype({ sorter: { name: 'ascend' } }).then((res) => {
       var b = {}
       res.data.forEach((r) => {
         b[r.id] = r.name
@@ -254,15 +291,15 @@ const Welcome: React.FC = () => {
       setProducttypeList(b)
 
     });
-    terminal({ pageSize: 3000, current: 1, sorter: { name: 'ascend' } }).then((res) => {
+    organization({  sorter: { name: 'ascend' } }).then((res) => {
       var b = {}
       res.data.forEach((r) => {
         b[r.id] = r.name
       })
-      setTerminalList(b)
+      setOrganizationList(b)
 
     });
-    flow({ pageSize: 300, current: 1, type: 0, sorter: { sort: 'ascend' } }).then((res) => {
+    flow({  type: 0, sorter: { sort: 'ascend' } }).then((res) => {
       res.data.push({ name: 'Entire Duration', icon: 'icon-daojishi', pid: '                                    ',id:'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' })
       res.data.push({ name: 'Between 2 Events', icon: 'icon-yundongguiji', pid: '                                    ',id:'b2e' })
       var ss = res.data.map((bb) => { return { ...bb } })
@@ -280,7 +317,7 @@ const Welcome: React.FC = () => {
 
     })
     const getAlertrule = (flowTreeAll)=>{
-      alertrule({ pageSize: 3000,transaction_id:"", current: 1 }).then((res) => {
+      alertrule({transaction_id:"", tab }).then((res) => {
         var b = {}
         res.data.forEach((r) => {
           b[r.id] = r
@@ -297,7 +334,7 @@ const Welcome: React.FC = () => {
    
 
     const get = () => {
-      getAlertBytransactionId({ pageSize: 300, current: 1 }).then((res) => {
+      getAlertBytransactionId({tab }).then((res) => {
         var m = {}
         
        
@@ -350,7 +387,7 @@ const Welcome: React.FC = () => {
     
 
    
-  }, [terminal_id, dateArr,status])
+  }, [organization_id, dateArr,status,tab])
   var color = {
     'icon-daojishimeidian': '#70AD47',
     'icon-matou': '#70AD47',
@@ -360,7 +397,17 @@ const Welcome: React.FC = () => {
     'icon-daojishi': '#13C2C2',
     'icon-yundongguiji': '#13C2C2'
   }
-
+  const getOrganizationName = () => {
+    if (currentUser?.role_type == "Super") {
+      return 'Organization'
+    }
+    if (currentUser?.role_type == "Trader") {
+      return 'Terminal'
+    }
+    if (currentUser?.role_type == "Terminal") {
+      return 'Customer'
+    }
+  }
 
   const customizeRenderEmpty = () => {
    
@@ -371,11 +418,41 @@ const Welcome: React.FC = () => {
 
   }
   return (
-    <GridContent  className="dashboard">
 
+            
+                
+
+    <GridContent  className="dashboard">
+      {currentUser?.role_type == "Terminal" && <ProCard
+
+        title={<div className="my-font-size" style={{ height: 14, lineHeight: '14px', fontSize: 12 }}>Threshold set by</div>}
+        headStyle={{ height: 14, lineHeight: '14px', fontSize: 12 }}
+        className="my-tab"
+        tabs={{
+          type: 'card',
+          //tabPosition,
+          activeKey: tab,
+          items: [
+            {
+              label: `Terminal`,
+              key: 'Terminal',
+              children: null,
+            },
+            {
+              label: `Customer`,
+              key: 'Trader',
+              children: null,
+            }
+          ],
+          onChange: (key) => {
+            setTab(key);
+           
+          },
+        }}
+      />}  
       <ProCard ghost={true} bodyStyle={isMP ? { padding: '5px' } : {}} wrap >
         <ProCard  colSpan={ 24} bodyStyle={{ padding: '5px 0px 5px 25px', fontWeight: '500' }} >
-          {getFilterStr(terminal_id, terminalList, dateArr, status, "Transactions Overview")}
+          {getFilterStr(organization_id, organizationList, dateArr, status, "Transactions Overview")}
         </ProCard>
 
         <ProCard wrap={isMP} gutter={8}>
@@ -383,7 +460,7 @@ const Welcome: React.FC = () => {
           <ProForm<any> formRef={formRef} layout={'inline'}
             grid={true}
             onReset={() => {
-              setTerminal_id("")
+              setOrganization_id("")
               setStatus("")
               setDateArr([])
             } }
@@ -397,19 +474,19 @@ const Welcome: React.FC = () => {
             }}>
             <ProFormSelect
               colProps={{ md: 12, xl: 8 }}
-              name="terminals_id"
+              name="organization_id"
               label=""
               onChange={(a) => {
                 if (a) {
-                  setTerminal_id(a)
+                  setOrganization_id(a)
                 } else {
-                  setTerminal_id("")
+                  setOrganization_id("")
 
                 }
 
               }}
-              valueEnum={terminalList}
-              placeholder="Filter By: Terminals"
+              valueEnum={organizationList}
+              placeholder={"Filter By: " + getOrganizationName() }
 
             />
             <ProFormSelect
@@ -457,7 +534,7 @@ const Welcome: React.FC = () => {
 
             <ProCard colSpan={24} ghost={true} bodyStyle={{ fontSize: '30px', lineHeight: '30px', height: '30px' }} >
               <div onClick={() => {
-                history.push(`/Transactions`, { terminal_id, dateArr, status: "" });
+                history.push(`/Transactions`, { organization_id, dateArr, status: "" });
 
               }} style={{ cursor: 'pointer', float: 'left', lineHeight: '22px', height: '22px', fontSize: '14px', marginRight: '16px', width: isMP ? '100%' : 'auto' }}>
                 <span style={{ fontWeight: 500 }}>Total</span><span style={{ marginLeft: '8px' }}>{statisticsObj?.no_of_transaction?.total}</span>
@@ -510,19 +587,19 @@ const Welcome: React.FC = () => {
             <ProCard ghost={true} style={{ marginBlockStart: 22 }} gutter={2}>
               
               <div onClick={() => {
-                history.push(`/Transactions`, { terminal_id, dateArr, status: 1 });
+                history.push(`/Transactions`, { organization_id, dateArr, status: 1 });
 
               }} style={{ cursor: 'pointer', float: 'left', lineHeight: '22px', height: '22px', fontSize: '14px', marginRight: '16px' }}>
                 <span style={{ fontWeight: 500 }}><SvgIcon style={{ color: "rgb(19, 194, 194)" }} type="icon-youjiantou" /> Closed</span> <span style={{ marginLeft: '8px' }}>{statisticsObj?.no_of_transaction?.closed}</span>
               </div>
               <div onClick={() => {
-                history.push(`/Transactions`, { terminal_id, dateArr, status: 0 });
+                history.push(`/Transactions`, { organization_id, dateArr, status: 0 });
 
               }} style={{ cursor: 'pointer', float: 'left', lineHeight: '22px', height: '22px', fontSize: '14px', marginRight: '16px' }}>
                 <span style={{ fontWeight: 500 }}><SvgIcon style={{ color:"#00b578" }}  type="icon-youjiantou" /> Open</span> <span style={{ marginLeft: '8px' }}>{statisticsObj?.no_of_transaction?.open}</span>
               </div>
               <div onClick={() => {
-                history.push(`/Transactions`, { terminal_id, dateArr, status: 2 });
+                history.push(`/Transactions`, {organization_id, dateArr, status: 2 });
 
               }} style={{ cursor: 'pointer', float: 'left', lineHeight: '22px', height: '22px', fontSize: '14px', marginRight: '16px' }}>
                 <span style={{ fontWeight: 500 }}><SvgIcon style={{ color: "#333" }}  type="icon-youjiantou" /> Cancelled</span> <span style={{ marginLeft: '8px' }}>{statisticsObj?.no_of_transaction?.cancelled}</span>
@@ -567,7 +644,84 @@ const Welcome: React.FC = () => {
           localStorage.setItem('collapsed3', !collapsed3);
         }} style={{ fontWeight: 'normal', fontSize: 14 }} />} bordered headerBordered>
 
-          <div style={{ width: '100%', overflow: 'auto' }}>
+
+          {isMP &&   <Steps
+            direction={'vertical'}
+            size="default"
+           
+          >
+            {
+              flowList.map((e, i) => {
+
+                return <Step status="finish" onClick={() => {
+                  history.push(`/threshold/alert`, { organization_id, dateArr, flow_id: e.id, status,tab })
+
+                }} icon={
+
+
+                  <span className="my-font-size" style={{
+                    display: "inline-block",
+                    color: "#fff",
+                    width: '30px',
+                    height: '30px',
+                    fontSize: "20px",
+                  
+                    backgroundColor: statisticsObj?.threshold_reached?.no[e.id]?.color || color[e.icon],
+                    borderRadius: '50%',
+                    textAlign: 'center',
+                    lineHeight: '30px'
+                  }}>
+
+                    <SvgIcon type={e.icon} />
+                  </span>} title={<div style={{ width: '100', display: 'inline-block', marginLeft: 40, marginTop: -70 }}><div style={{ fontWeight: 500, height: '30px', lineHeight:"18px" }}>{e.name}</div>
+
+                    <ProCard ghost={true} wrap={true} bodyStyle={{marginBottom:15} }>
+
+                      <ProCard ghost={true}>
+                        <ProCard ghost={true} colSpan={14}>
+                          No. Of Threshold Breach
+                        </ProCard>
+                        <ProCard ghost={true} colSpan={10}>
+                          {statisticsObj?.threshold_reached?.no[e.id]?.count || 0}
+                        </ProCard>
+
+                      </ProCard>
+                      <ProCard ghost={true}>
+                        <ProCard ghost={true} colSpan={14}>
+                          % Of Breaches
+                        </ProCard>
+                        <ProCard ghost={true} colSpan={10}>
+                          {statisticsObj?.threshold_reached?.percentage[e.id] || 0}%
+                        </ProCard>
+                      </ProCard>
+                      <ProCard ghost={true}>
+                        <ProCard ghost={true} colSpan={14}>
+                          Avg. Duration
+                        </ProCard>
+                        <ProCard ghost={true} colSpan={10}>
+                          {(statisticsObj?.threshold_reached?.avg_duration?.[e.id]) && statisticsObj?.threshold_reached?.avg_duration?.[e.id]?.avg != 0 ? getTimeStr(statisticsObj?.threshold_reached?.avg_duration?.[e.id]?.avg) : '-'}
+                        </ProCard>
+                      </ProCard>
+                    </ProCard>
+
+
+
+                  </div>}  >
+
+
+                  
+                </Step>
+              })
+            }
+           
+          </Steps>}
+
+
+
+
+
+
+          {!isMP &&  <div style={{ width: '100%', overflow: 'auto' }}>
 
             <table className="boder-table" style={{ width: 1300 }} border="0" cellpadding="0" cellspacing="0" >
               <tr>
@@ -584,7 +738,7 @@ const Welcome: React.FC = () => {
                         <div style={{ position: 'absolute', zIndex: 0, top: 20, left: i == 0 ? '50%' : 0, width: i == 0 || i == 4 ? '50%' : (i > 4 ? '0' : '100%'), height: 2, backgroundColor: '#8aabe5', overflow: 'hidden', }}></div>
 
                         <div style={{ position: 'relative', zIndex: 1, cursor: 'pointer' }} onClick={() => {
-                          history.push(`/threshold/alert` , { terminal_id, dateArr, flow_id: e.id ,status})
+                          history.push(`/threshold/alert`, { organization_id, dateArr, flow_id: e.id ,status,tab})
 
                         }}>
                           <span className="my-font-size" style={{
@@ -644,13 +798,13 @@ const Welcome: React.FC = () => {
                 <td></td>
               </tr>
             </table>
-          </div>
+          </div>}
 
           
         </ProCard>
 
 
-        <ProCard collapsed={collapsed4} colSpan={24} style={{ marginBlockStart: 16 }} wrap title={<div style={{ fontWeight: '500', fontSize: 14 }}>  {getFilterStr(terminal_id, terminalList, dateArr, 0, "Transactions")} </div>} extra={< EyeOutlined onClick={() => {
+        <ProCard collapsed={collapsed4} colSpan={24} style={{ marginBlockStart: 16 }} wrap title={<div style={{ fontWeight: '500', fontSize: 14 }}>  {getFilterStr(organization_id, organizationList, dateArr, 0, "Transactions") + " ( Count:" + transactionList.length+" )"} </div>} extra={< EyeOutlined onClick={() => {
           setCollapsed4(!collapsed4);
           localStorage.setItem('collapsed4', !collapsed4);
         }} style={{ fontWeight: 'normal', fontSize: 14 }} />} bordered headerBordered >
@@ -692,7 +846,7 @@ const Welcome: React.FC = () => {
 
                         onClick={() => {
                           
-                          history.push(`/transaction/detail?transaction_id=` + entity.id);
+                          history.push(`/transaction/detail`, { transaction_id: entity.id,tab });
                           // setShowDetail(true);
                         }}
                       >
@@ -714,24 +868,21 @@ const Welcome: React.FC = () => {
                 },
 
                 {
-                  title: <FormattedMessage id="pages.transaction.terminalName" defaultMessage="Terminal Name" />,
-                  dataIndex: 'terminal_id',
-                  valueEnum: terminalList,
+                  title: getOrganizationName(),
+                  dataIndex: 'organization_id',
+                  valueEnum: organizationList,
                 
-                  search: {
-                    transform: (value) => {
-                      if (value) {
-                        return {
-                          'terminal_id': {
-                            'field': 'terminal_id',
-                            'op': 'eq',
-                            'data': value
-                          }
-                        }
-                      }
-
+                  render: (dom, entity) => {
+                    if (currentUser?.role_type == 'Super') {
+                      return organizationList[entity.terminal_id] + "," + organizationList[entity.trader_id]
+                    } else if (currentUser?.role_type == 'Trader') {
+                      return organizationList[entity.terminal_id]
+                    } else if (currentUser?.role_type == 'Terminal') {
+                      return organizationList[entity.trader_id]
+                    } else {
+                      return "-"
                     }
-                  }
+                  },
                 },
                 {
                   title: <FormattedMessage id="pages.transaction.jettyName" defaultMessage="Jetty Name" />,

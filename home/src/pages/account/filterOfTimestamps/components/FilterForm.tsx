@@ -52,7 +52,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
   const intl = useIntl();
   const [flowConf, setFlowConf] = useState<any>([]);
   const [isMP, setIsMP] = useState<boolean>(!isPC());
-  const {
+  var {
     onSubmit,
     onCancel,
     onApply,
@@ -93,11 +93,39 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
 
     fieldUniquenessCheck({ where: { name: value, type: 0, company_id: currentUser?.company_id }, model: 'Userconfig' }).then((res) => {
-      if (res.data == true) {
+      if (values && values.name == value) {
+        callback(undefined);
+      }
+      
+      if (res.data) {
 
         callback(intl.formatMessage({
           id: 'pages.xxx',
           defaultMessage: 'This name is already in use',
+        }))
+      } else {
+        callback(undefined); // 必须返回一个callback
+      }
+    });
+
+  }
+
+
+  const onlyCheck2 = (rule: any, value: any, callback: (arg0: string | undefined) => void) => {
+
+   
+    fieldUniquenessCheck({ where: { value: value.join(','), type: 0, company_id: currentUser?.company_id }, model: 'Userconfig' }).then((res) => {
+     
+      if (values && values.value == value) {
+        callback(undefined);
+      }
+
+      
+      if (res.data) {
+
+        callback(intl.formatMessage({
+          id: 'pages.xxx',
+          defaultMessage:res.data.name +' emplate already uses the same timestamps.',
         }))
       } else {
         callback(undefined); // 必须返回一个callback
@@ -204,7 +232,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                 defaultMessage=""
               />
             ),
-          },
+          }, { validator: onlyCheck2 }
         ]}
         placeholder="Please select"
         allowClear

@@ -3,6 +3,7 @@ import { addCompany, removeCompany, company, updateCompany } from './service';
 import { PlusOutlined, SearchOutlined, FormOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import type { ActionType, ProColumns, ProDescriptionsItemProps } from '@ant-design/pro-components';
 import { CompanyList, CompanyListItem } from './data.d';
+import { fieldSelectData } from '@/services/ant-design-pro/api';
 import {
   FooterToolbar,
   ModalForm,
@@ -15,7 +16,7 @@ import {
   ProTable,
 } from '@ant-design/pro-components';
 import { FormattedMessage, useIntl, formatMessage } from '@umijs/max';
-import { Button, Drawer, Input, message, Modal } from 'antd';
+import { Button, Drawer, Input, message, Modal, Empty } from 'antd';
 import React, { useRef, useState } from 'react';
 import CreateForm from './components/CreateForm';
 import UpdateForm from './components/UpdateForm';
@@ -152,6 +153,9 @@ const TableList: React.FC = () => {
   const [currentRow, setCurrentRow] = useState<CompanyListItem>();
   const [selectedRowsState, setSelectedRows] = useState<CompanyListItem[]>([]);
   const [resizeObj, setResizeObj] = useState({ searchSpan: 12, tableScrollHeight: 300 });
+
+
+  const [nameData, setNameData] = useState<any>({});
   /**
    * @en-US International configuration
    * @zh-CN 国际化配置
@@ -224,37 +228,70 @@ const TableList: React.FC = () => {
   }
   //--MP end
   const columns: ProColumns<CompanyListItem>[] = [
+
     {
-      title: (
-        <FormattedMessage
-          id="pages.company.name"
-          defaultMessage="Company name"
-        />
-      ),
-      dataIndex: 'name',
-      sorter: true,
-      
-      render: (dom, entity) => {
-        return (
-          <a
-            onClick={() => {
-              setCurrentRow(entity);
-              setShowDetail(true);
-            }}
-          >
-            {dom}
-          </a>
-        );
-      },
+      title: 'Series No',
+      dataIndex: 'index',
+      width:100,
+      valueType: 'index',
+     // align: 'center',
+     // render: (dom) => <div style={{ display: 'flex', justifyContent: 'center' }}>{dom}</div>,
     },
     {
-      title: <FormattedMessage id="pages.company.description" defaultMessage="Description" />,
+      title: <FormattedMessage
+        id="pages.company.name"
+        defaultMessage="Organization name"
+      />,
+      dataIndex: 'name',
+      sorter: true,
+      valueEnum: nameData,
+      fieldProps: {
+        notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
+        showSearch: true,
+        allowClear: true,
+        onFocus: () => {
+          fieldSelectData({ model: "Company", value: '', field: 'name' }).then((res) => {
+            setNameData(res.data)
+          })
+        },
+        onSearch: (newValue: string) => {
+
+          fieldSelectData({ model: "Company", value: newValue, field: 'name' }).then((res) => {
+            setNameData(res.data)
+          })
+
+        }
+      }
+    },
+    
+   
+    {
+      title: <FormattedMessage id="pages.company.xxx" defaultMessage="Organization Type" />,
+      dataIndex: 'type',
+      sorter: true,
+      valueEnum:{
+      "Surveyor": "Surveyor",
+      "Trader": "Trader",
+      "Agent": "Agent",
+      "Terminal": "Oil Terminal",
+      "Pilot": "Pilot",
+      "Super": "Super",
+
+
+    }
+      
+    },
+    {
+      title: <FormattedMessage id="pages.company.description" defaultMessage="Organization Description" />,
       dataIndex: 'description',
+      hideInSearch: true,
+     
       valueType: 'textarea',
     },
     {
       title: <FormattedMessage id="pages.searchTable.titleOption" defaultMessage="Operating" />,
       dataIndex: 'option',
+      width: 80,
       valueType: 'option',
       render: (_, record) => [
         <a
@@ -301,26 +338,24 @@ const TableList: React.FC = () => {
         const { innerWidth, innerHeight } = window;
 
         if (offset.width > 1280) {
-          setIsMP(false)
+         
           setResizeObj({ ...resizeObj, searchSpan: 8, tableScrollHeight: innerHeight - 420 });
         }
         if (offset.width < 1280 && offset.width > 900) {
-          setIsMP(false)
+          
           setResizeObj({ ...resizeObj, searchSpan: 12, tableScrollHeight: innerHeight - 420 });
         }
         if (offset.width < 900 && offset.width > 700) {
           setResizeObj({ ...resizeObj, searchSpan: 24, tableScrollHeight: innerHeight - 420 });
-          setIsMP(false)
+         
         }
 
-        if (offset.width < 700) {
-          setIsMP(true)
-        }
+       
 
       }}
     >
-    <PageContainer header={{
-      title: isMP ? null : < FormattedMessage id="pages.company.title" defaultMessage="Company" />,
+      <PageContainer className="myPage" header={{
+        title: isMP ? null : < FormattedMessage id="pages.company.title" defaultMessage="Organization" />,
       breadcrumb: {},
       extra: isMP ? null : [<Button
         type="primary"
@@ -329,32 +364,30 @@ const TableList: React.FC = () => {
           handleModalOpen(true);
         }}
       >
-        <PlusOutlined /> <FormattedMessage id="pages.searchTable.new" defaultMessage="New" />
+        <PlusOutlined /> <FormattedMessage id="pages.xxx" defaultMessage="Add In New Organisation" />
       </Button>]
     }}>
       {!isMP && (<ProTable<CompanyListItem, API.PageParams>
        
         actionRef={actionRef}
           rowKey="id"
+          bordered
           scroll={{ x: '100%', y: resizeObj.tableScrollHeight }}
         search={{
-          labelWidth: 150,
+          labelWidth: 180,
+          span: resizeObj.searchSpan,
           searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
         }}
         className="mytable"
         options={false }
         request={async (params, sorter) => {
           var d = await company({ ...params, sorter })
-          d.data = tree(d.data, "                                    ", 'pid')
+         // d.data = tree(d.data, "                                    ", 'pid')
           return d
         }}
        
         columns={columns}
-        rowSelection={{
-          onChange: (_, selectedRows) => {
-            setSelectedRows(selectedRows);
-          },
-        }}
+       
       />)}
 
       {isMP && (<>
@@ -362,12 +395,12 @@ const TableList: React.FC = () => {
         <NavBar backArrow={false} right={right} onBack={back}>
           {intl.formatMessage({
             id: 'pages.company.title',
-            defaultMessage: 'Company',
+            defaultMessage: 'Organization List',
           })}
         </NavBar>
 
         <div style={{ padding: '20px', backgroundColor: "#5187c4", display: showMPSearch ? 'block' : 'none' }}>
-          <Search columns={columns.filter(a => !a.hasOwnProperty('hideInSearch'))} action={actionRef} loading={false}
+          <Search columns={columns.filter(a => !(a.hasOwnProperty('hideInSearch') && a['hideInSearch']))} action={actionRef} loading={false}
 
             onFormSearchSubmit={onFormSearchSubmit}
 
@@ -415,41 +448,7 @@ const TableList: React.FC = () => {
           <InfiniteScrollContent hasMore={hasMore} />
         </InfiniteScroll>
       </>)}
-      {selectedRowsState?.length > 0 && (
-        <FooterToolbar
-          extra={
-            <div>
-              <FormattedMessage id="pages.searchTable.chosen" defaultMessage="Chosen" />{' '}
-              <a style={{ fontWeight: 600 }}>{selectedRowsState.length}</a>{' '}
-              <FormattedMessage id="pages.searchTable.item" defaultMessage="项" />
-              &nbsp;&nbsp;
-             
-            </div>
-          }
-        >
-          <Button
-            onClick={async () => {
-              await handleRemove(selectedRowsState, (success) => {
-                if (success) {
-                  setSelectedRows([]);
-                  if (isMP) {
-                    setData([]);
-                    getData(1, MPfilter)
-                  }
-                  actionRef.current?.reloadAndRest?.();
-                }
-
-              });
-            }}
-          >
-            <FormattedMessage
-              id="pages.searchTable.batchDeletion"
-              defaultMessage="Batch deletion"
-            />
-          </Button>
-          
-        </FooterToolbar>
-      )}
+      
       
       <CreateForm
         onSubmit={async (value) => {

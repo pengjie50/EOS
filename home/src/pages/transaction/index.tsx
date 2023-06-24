@@ -1,7 +1,7 @@
 import RcResizeObserver from 'rc-resize-observer';
 
 import { addTransaction, removeTransaction, transaction, updateTransaction } from './service';
-import { PlusOutlined, SearchOutlined, PrinterOutlined, FileExcelOutlined, ExclamationCircleOutlined, DeleteOutlined } from '@ant-design/icons';
+import { PlusOutlined, SearchOutlined, PrinterOutlined, FileExcelOutlined, ExclamationCircleOutlined, DeleteOutlined, EllipsisOutlined,SwapOutlined,SortAscendingOutlined, SortDescendingOutlined } from '@ant-design/icons';
 import type { ActionType, ProColumns, ProDescriptionsItemProps } from '@ant-design/pro-components';
 import { TransactionList, TransactionListItem } from './data.d';
 import FrPrint from "../../components/FrPrint";
@@ -11,7 +11,7 @@ import { GridContent } from '@ant-design/pro-layout';
 import numeral from 'numeral';
 import moment from 'moment'
 import { useAccess, Access } from 'umi';
-
+import { fieldSelectData } from '@/services/ant-design-pro/api';
 const Json2csvParser = require("json2csv").Parser;
 
 import {
@@ -27,14 +27,14 @@ import {
   Search,
   ProTable,
 } from '@ant-design/pro-components';
-import { FormattedMessage, useIntl, formatMessage, useLocation } from '@umijs/max';
-import { Button, Drawer, Input, message, Modal, Tooltip, Empty, ConfigProvider, FloatButton } from 'antd';
+import { FormattedMessage, useIntl, formatMessage, useLocation, useModel } from '@umijs/max';
+import { Button, Drawer, Input, message, Modal, Tooltip, Empty, ConfigProvider, FloatButton, SelectProps, Popover } from 'antd';
 import React, { useRef, useState, useEffect } from 'react';
 import CreateForm from './components/CreateForm';
 import UpdateForm from './components/UpdateForm';
 import { flow } from '../system/flow/service';
 import { alertrule } from '../alertrule/service';
-import { terminal } from '../system/terminal/service';
+import { organization } from '../system/company/service';
 import { producttype } from '../system/producttype/service';
 import { jetty } from '../system/jetty/service';
 import { isPC } from "@/utils/utils";
@@ -246,7 +246,22 @@ const exportCSV = (data, columns, filename = `${"Summary of all transactions"+mo
         else if (c.render && k != 'id') {
           n[c.title.props.defaultMessage] = c.render(s[k],s)
         } else {
-          n[c.title.props.defaultMessage] = c.valueEnum ? (typeof c.valueEnum[s[k]] == 'string' ? c.valueEnum[s[k]] : c.valueEnum[s[k]].text.props.defaultMessage) : s[k]
+          if (c.valueEnum) {
+            if (c.valueEnum[s[k]]) {
+              if (typeof c.valueEnum[s[k]] == 'string') {
+                n[c.title.props.defaultMessage] = c.valueEnum[s[k]]
+              } else {
+                n[c.title.props.defaultMessage] = c.valueEnum[s[k]].text.props.defaultMessage
+              }
+
+            } else {
+              n[c.title.props.defaultMessage] = s[k]
+            }
+           
+          } else {
+            n[c.title.props.defaultMessage] = s[k]
+          }
+         // n[c.title.props.defaultMessage] = c.valueEnum ? (typeof c.valueEnum[s[k]] == 'string' ? c.valueEnum[s[k]] : c.valueEnum[s[k]].text.props.defaultMessage) : s[k]
         }
         
         
@@ -287,7 +302,7 @@ const TableList: React.FC = () => {
   const [paramsText, setParamsText] = useState<string>('');
   const [flowConf, setFlowConf] = useState<any>({});
 
-  const [terminalList, setTerminalList] = useState<any>({});
+  const [organizationList, setOrganizationList] = useState<any>({});
   const [jettyList, setJettyList] = useState<any>({});
   const [producttypeList, setProducttypeList] = useState<any>({});
   const [sumRow, setSumRow] = useState<TransactionListItem>();
@@ -304,18 +319,38 @@ const TableList: React.FC = () => {
 
  
 
+  const [MPSorter, setMPSorter] = useState<any>({});
 
 
-
-  const [terminal_id, setTerminal_id] = useState<any>(useLocation()?.state?.terminal_id);
+  const [organization_id, setOrganization_id] = useState<any>(useLocation()?.state?.organization_id);
   const [dateArr, setDateArr] = useState<any>(useLocation()?.state?.dateArr);
   const [status, setStatus] = useState<any>(useLocation()?.state?.status);
-
+  const [moreOpen, setMoreOpen] = useState<boolean>(false);
   const right = (
     <div style={{ fontSize: 24 }}>
       <Space style={{ '--gap': '16px' }}>
         <SearchOutlined onClick={e => { setShowMPSearch(!showMPSearch) }} />
 
+
+        <Popover onOpenChange={(v) => { setMoreOpen(v) }} open={moreOpen}  placement="bottom" title={""} content={<div><Button type="primary" style={{ width: "100%" }} key="print"
+          onClick={() => {
+            setMoreOpen(false)
+            handlePrintModalVisible(true)
+          }}
+        ><PrinterOutlined /> <FormattedMessage id="pages.Print" defaultMessage="Print" />
+        </Button>, <Button style={{ width: "100%" }} type="primary" key="out"
+          onClick={() => exportCSV(data, columns)}
+        ><FileExcelOutlined /> <FormattedMessage id="pages.CSV" defaultMessage="CSV" />
+          </Button>
+
+        </div>} trigger="click">
+          <EllipsisOutlined />
+
+
+        </Popover>
+
+
+       
       </Space>
     </div>
   )
@@ -355,8 +390,24 @@ const TableList: React.FC = () => {
   const [hasMore, setHasMore] = useState(true)
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [MPfilter, setMPfilter] = useState<any>({})
+  const { initialState, setInitialState } = useModel('@@initialState');
+  const { currentUser } = initialState || {};
+  async function getData(page, filter__) {
 
-  async function getData(page, filter) {
+    var sorter = {}
+    await setMPSorter((sorter_) => {
+      sorter = sorter_
+      return sorter_
+    })
+    var filter = {}
+    await setMPfilter((filter_) => {
+      filter = filter_
+      return filter_
+    })
+
+  
+
+
     const append = await transaction({
       ...{
         "current": page,
@@ -364,13 +415,18 @@ const TableList: React.FC = () => {
         "sorter": {
           "start_of_transaction": "descend"
         }
-      }, ...filter
+      }, ...filter, sorter
     })
 
-
+    if (page == 1) {
+      setData([]);
+    }
     console.log(append)
     setData(val => [...val, ...append.data])
     setHasMore(10 * (page - 1) + append.data.length < append.total)
+       
+
+    
   }
   async function loadMore(isRetry: boolean) {
 
@@ -379,13 +435,24 @@ const TableList: React.FC = () => {
   }
   //--MP end
 
+  const getOrganizationName = () => {
+    if (currentUser?.role_type=="Super") {
+      return 'Organization'
+    }
+    if (currentUser?.role_type == "Trader") {
+      return 'Terminal'
+    }
+    if (currentUser?.role_type == "Terminal") {
+      return 'Customer'
+    }
+  }
 
 
   useEffect(() => {
 
 
 
-
+   
 
 
     flow({ pageSize: 300, current: 1, sorter: { sort: 'ascend' } }).then((res) => {
@@ -401,7 +468,7 @@ const TableList: React.FC = () => {
       setFlowConf(b)
       setProcesses(p)
 
-      alertrule({ pageSize: 300, current: 1, type: 1 }).then((res2) => {
+      alertrule({  type: 1,tab:'All' }).then((res2) => {
         var d = {}
 
 
@@ -417,7 +484,7 @@ const TableList: React.FC = () => {
       });
     });
 
-    jetty({ pageSize: 3000, current: 1, sorter: { name: 'ascend' } }).then((res) => {
+    jetty({  sorter: { name: 'ascend' } }).then((res) => {
       var b = {}
       res.data.forEach((r) => {
         b[r.id] = r.name
@@ -426,7 +493,7 @@ const TableList: React.FC = () => {
 
     });
 
-    producttype({ pageSize: 3000, current: 1, sorter: { name: 'ascend' } }).then((res) => {
+    producttype({  sorter: { name: 'ascend' } }).then((res) => {
       var b = {}
       res.data.forEach((r) => {
         b[r.id] = r.name
@@ -434,12 +501,12 @@ const TableList: React.FC = () => {
       setProducttypeList(b)
 
     });
-    terminal({ pageSize: 3000, current: 1, sorter: { name: 'ascend' } }).then((res) => {
+    organization({  sorter: { name: 'ascend' } }).then((res) => {
       var b = {}
       res.data.forEach((r) => {
         b[r.id] = r.name
       })
-      setTerminalList(b)
+      setOrganizationList(b)
 
 
 
@@ -448,9 +515,9 @@ const TableList: React.FC = () => {
         formRef.current?.setFieldValue('status', status + "")
       }
 
-      if (terminal_id) {
+      if (organization_id) {
 
-        formRef.current?.setFieldValue('terminal_id', terminal_id)
+        formRef.current?.setFieldValue('organization_id', organization_id)
       }
       if (dateArr && dateArr[0] && dateArr[1]) {
         formRef.current?.setFieldValue('start_of_transaction', dateArr)
@@ -473,6 +540,9 @@ const TableList: React.FC = () => {
    * */
   const intl = useIntl();
   const access = useAccess();
+  const [imo_numberData, setImo_numberData] = useState<any>({});
+  const [vessel_nameData, setVessel_nameData] = useState<any>({});
+  const [product_typeData, setProduct_typeData] = useState<any>({});
   const columns: ProColumns<TransactionListItem>[] = [
     {
       title: (
@@ -486,7 +556,7 @@ const TableList: React.FC = () => {
      
  
       sorter: true,
-      defaultSortOrder: 'descend',
+     
       renderText: (dom, entity) => {
         return entity.eos_id
       },
@@ -496,7 +566,7 @@ const TableList: React.FC = () => {
            
             onClick={() => {
               setCurrentRow(entity);
-              history.push(`/transaction/detail?transaction_id=` + entity.id);
+              history.push(`/transaction/detail`,{ transaction_id: entity.id});
               // setShowDetail(true);
             }}
           >
@@ -514,7 +584,7 @@ const TableList: React.FC = () => {
         />
       ),
       sorter: true,
-     
+      hideInDescriptions: true,
       hideInTable: true,
       fieldProps: { placeholder: ['From ', 'To '] },
       defaultSortOrder: 'descend',
@@ -571,6 +641,7 @@ const TableList: React.FC = () => {
       title: <FormattedMessage id="pages.transaction.status" defaultMessage="Status" />,
       dataIndex: 'status',
       sorter: true,
+      defaultSortOrder: 'ascend',
       search: {
         transform: (value) => {
          
@@ -626,20 +697,66 @@ const TableList: React.FC = () => {
       title: <FormattedMessage id="pages.transaction.imoNumber" defaultMessage="IMO Number" />,
       dataIndex: 'imo_number',
       sorter: true,
-      valueType: 'text',
+      valueEnum:imo_numberData,
+      fieldProps: {
+        notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
+        showSearch: true,
+        allowClear: true,
+        onFocus: () => {
+          fieldSelectData({ model: "Transaction", value: '', field: 'imo_number' }).then((res) => {
+            setImo_numberData(res.data)
+          })
+        },
+        onSearch: (newValue: string) => {
+         
+          fieldSelectData({ model: "Transaction", value:  newValue , field: 'imo_number' }).then((res)=>{
+            setImo_numberData(res.data)
+          })
+         
+        }
+      }
+
     },
     {
       title: <FormattedMessage id="pages.transaction.vesselName" defaultMessage="Vessel Name" />,
       dataIndex: 'vessel_name',
       sorter: true,
-      valueType: 'text',
+      valueEnum: vessel_nameData,
+      fieldProps: {
+        notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
+        showSearch: true,
+        allowClear: true,
+        onFocus: () => {
+          fieldSelectData({ model: "Transaction", value: '', field: 'vessel_name' }).then((res) => {
+            setVessel_nameData(res.data)
+          })
+        },
+        onSearch: (newValue: string) => {
+
+          fieldSelectData({ model: "Transaction", value: newValue, field: 'vessel_name' }).then((res) => {
+            setVessel_nameData(res.data)
+          })
+
+        }
+      }
     },
 
     {
-      title: <FormattedMessage id="pages.transaction.terminalName" defaultMessage="Terminal Name" />,
-      dataIndex: 'terminal_id',
+      title: getOrganizationName(),
+      dataIndex: 'organization_id',
       sorter: true,
-      valueEnum: terminalList,
+      valueEnum: organizationList,
+      render: (dom, entity) => {
+        if (currentUser?.role_type == 'Super') {
+          return organizationList[entity.terminal_id] + "," + organizationList[entity.trader_id]
+        } else if (currentUser?.role_type == 'Trader') {
+          return organizationList[entity.terminal_id]
+        } else if (currentUser?.role_type == 'Terminal') {
+          return organizationList[entity.trader_id]
+        } else {
+          return "-"
+        }
+      },
       fieldProps: {
         notFoundContent: <Empty />,
       },
@@ -647,8 +764,8 @@ const TableList: React.FC = () => {
         transform: (value) => {
           if (value) {
             return {
-              'terminal_id': {
-                'field': 'terminal_id',
+              'organization_id': {
+                'field': 'organization_id',
                 'op': 'eq',
                 'data': value
               }
@@ -687,6 +804,25 @@ const TableList: React.FC = () => {
       title: <FormattedMessage id="pages.transaction.productType" defaultMessage="Product Type" />,
       dataIndex: 'product_type',
       sorter: true,
+      valueEnum: product_typeData,
+
+      fieldProps: {
+        notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
+        showSearch: true,
+        allowClear: true,
+        onFocus: () => {
+          fieldSelectData({ model: "Transaction", value: '', field: 'product_type' }).then((res) => {
+            setProduct_typeData(res.data)
+          })
+        },
+        onSearch: (newValue: string) => {
+
+          fieldSelectData({ model: "Transaction", value: newValue, field: 'product_type' }).then((res) => {
+            setProduct_typeData(res.data)
+          })
+
+        }
+      }
      // valueEnum: producttypeList,
     },
     {
@@ -787,6 +923,7 @@ const TableList: React.FC = () => {
       hideInDescriptions: true,
       valueEnum: events,
       fieldProps: {
+       
         notFoundContent: <Empty />,
         dropdownMatchSelectWidth: isMP ? true : false,
         width: '300px',
@@ -909,8 +1046,8 @@ const TableList: React.FC = () => {
   }
   return (
 
-   
-    <PageContainer header={{
+
+    <PageContainer className="myPage" header={{
       title: isMP ? null : < FormattedMessage id="pages.transactions.title" defaultMessage="Summary Of All Transactions" />,
       breadcrumb: {},
       extra: isMP ? null : [
@@ -949,21 +1086,19 @@ const TableList: React.FC = () => {
           const { innerWidth, innerHeight } = window;
           var h = document.getElementsByClassName("ant-table-thead")?.[0]?.offsetHeight +300
           if (offset.width > 1280) {
-            setIsMP(false)
+          
             setResizeObj({ ...resizeObj, searchSpan: 8, tableScrollHeight: innerHeight - h });
           }
           if (offset.width < 1280 && offset.width > 900) {
-            setIsMP(false)
+          
             setResizeObj({ ...resizeObj, searchSpan: 12, tableScrollHeight: innerHeight - h });
           }
           if (offset.width < 900 && offset.width > 700) {
             setResizeObj({ ...resizeObj, searchSpan: 24, tableScrollHeight: innerHeight - h });
-            setIsMP(false)
+            
           }
 
-          if (offset.width < 700) {
-            setIsMP(true)
-          }
+          
 
         }}
       ><ProTable<TransactionListItem, API.PageParams>
@@ -992,7 +1127,30 @@ const TableList: React.FC = () => {
 
       {isMP && (<>
 
-        <NavBar backArrow={false} right={right} onBack={back}>
+        <NavBar backArrow={false} left={<div>  <Popover placement="bottom" title={""} content={<div>{columns.filter(a => (a.hasOwnProperty('sorter') && a['sorter'])).map((a) => {
+
+          return (<div><Button onClick={() => {
+            setMPSorter({ [a.dataIndex]: 'ascend' })
+
+
+            getData(1)
+
+
+          }} icon={<SortAscendingOutlined />} />
+            <Button style={{ margin: 5 }} onClick={() => {
+              setMPSorter({ [a.dataIndex]: 'descend' })
+
+              getData(1)
+
+            }} icon={<SortDescendingOutlined />} />
+            <span>{a.title}</span>
+          </div>)
+
+        })}</div>} trigger="click">
+          <SwapOutlined rotate={90} />
+       
+         
+        </Popover> </div>} right={right} onBack={back}>
           {intl.formatMessage({
             id: 'pages.transaction.title',
             defaultMessage: 'Summary Of All Transactions',
@@ -1000,7 +1158,7 @@ const TableList: React.FC = () => {
         </NavBar>
 
         <div style={{ padding: '20px', backgroundColor: "#5187c4", display: showMPSearch ? 'block' : 'none' }}>
-          <Search columns={columns.filter(a => !a.hasOwnProperty('hideInSearch'))} action={actionRef} loading={false}
+          <Search columns={columns.filter(a => !(a.hasOwnProperty('hideInSearch') && a['hideInSearch']))} action={actionRef} loading={false}
 
             onFormSearchSubmit={onFormSearchSubmit}
 
@@ -1157,7 +1315,7 @@ const TableList: React.FC = () => {
         title={""}
         subTitle={paramsText}
         columns={columns}
-        dataSource={[...selectedRowsState/*, sumRow*/]}
+        dataSource={[...(isMP?data:selectedRowsState)/*, sumRow*/]}
         onCancel={() => {
           handlePrintModalVisible(false);
         }}

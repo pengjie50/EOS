@@ -8,7 +8,7 @@ import { addReport } from '../report/service';
 import { reportSummary } from './service';
 
 
-import { PlusOutlined, SearchOutlined, PrinterOutlined, FileExcelOutlined, ExclamationCircleOutlined, DeleteOutlined } from '@ant-design/icons';
+import { PlusOutlined, SearchOutlined, PrinterOutlined, FileExcelOutlined, ExclamationCircleOutlined, DeleteOutlined, EllipsisOutlined } from '@ant-design/icons';
 import type { ActionType, ProColumns, ProDescriptionsItemProps } from '@ant-design/pro-components';
 import { TransactionList, TransactionListItem } from '../transaction/data.d';
 import FrPrint from "../../components/FrPrint";
@@ -33,7 +33,7 @@ import {
   ProTable,
 } from '@ant-design/pro-components';
 import { FormattedMessage, useIntl, formatMessage, useLocation } from '@umijs/max';
-import { Button, Drawer, Input, message, Modal, Tooltip, Empty, ConfigProvider } from 'antd';
+import { Button, Drawer, Input, message, Modal, Tooltip, Empty, ConfigProvider, Popover } from 'antd';
 import React, { useRef, useState, useEffect } from 'react';
 import CreateForm from './components/CreateForm';
 import UpdateForm from './components/UpdateForm';
@@ -192,7 +192,21 @@ const exportCSV = (data, columns, filename = `${"Summary of all transactions" + 
         else if (c.render && k != 'id') {
           n[c.title.props.defaultMessage] = c.render(s[k], s)
         } else {
-          n[c.title.props.defaultMessage] = c.valueEnum ? (typeof c.valueEnum[s[k]] == 'string' ? c.valueEnum[s[k]] : c.valueEnum[s[k]].text.props.defaultMessage) : s[k]
+          if (c.valueEnum) {
+            if (c.valueEnum[s[k]]) {
+              if (typeof c.valueEnum[s[k]] == 'string') {
+                n[c.title.props.defaultMessage] = c.valueEnum[s[k]]
+              } else {
+                n[c.title.props.defaultMessage] = c.valueEnum[s[k]].text.props.defaultMessage
+              }
+
+            } else {
+              n[c.title.props.defaultMessage] = s[k]
+            }
+
+          } else {
+            n[c.title.props.defaultMessage] = s[k]
+          }
         }
 
 
@@ -256,8 +270,10 @@ const TableList: React.FC = () => {
   
   var value = eval('(' + useLocation()?.state?.value + ')');
 
-  
+  var Fields=[]
   //var value = useLocation()?.state?.value;
+  if(value){
+
 
 
   var filter = {}
@@ -362,7 +378,7 @@ const TableList: React.FC = () => {
       'data': value.dateArr
       }
      
-    dateStr = moment(value.dateArr[0]).format('YYYY/MM/DD') + " To " + moment(value.dateArr[1]).format('YYYY/MM/DD')
+    dateStr = moment(value.dateArr[0]).format('YYYY/MM/DD') + " - " + moment(value.dateArr[1]).format('YYYY/MM/DD')
   }
 
   if (value.dateRange && value.dateRange.length > 0) {
@@ -379,7 +395,10 @@ const TableList: React.FC = () => {
 
 
 
-  var Fields = value.selected_fields
+   Fields = value.selected_fields
+
+
+  }
 
   console.log("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", filter)
 
@@ -394,15 +413,25 @@ const TableList: React.FC = () => {
   const [transaction_filter_num, setTransaction_filter_num] = useState<any>(0);
 
 
-
+  const [moreOpen, setMoreOpen] = useState<boolean>(false);
 
 
 
   const right = (
     <div style={{ fontSize: 24 }}>
-      <Space style={{ '--gap': '16px' }}>
-        <SearchOutlined onClick={e => { setShowMPSearch(!showMPSearch) }} />
+      <Space style={{ '--gap': '10px' }}>
+       <Button type="primary" style={{ width: "100%" }} key="print"
+          onClick={() => {
+            setMoreOpen(false)
+            handlePrintModalVisible(true)
+          }}
+        ><PrinterOutlined /> <FormattedMessage id="pages.Print" defaultMessage="Print" />
+        </Button>, <Button style={{ width: "100%" }} type="primary" key="out"
+          onClick={() => exportCSV(data, columns)}
+        ><FileExcelOutlined /> <FormattedMessage id="pages.CSV" defaultMessage="CSV" />
+          </Button>
 
+       
       </Space>
     </div>
   )
@@ -572,10 +601,10 @@ const TableList: React.FC = () => {
       ),
       dataIndex: 'eos_id',
       hideInSearch: true,
-      fixed: 'left',
+     // fixed: 'left',
 
       sorter: true,
-      defaultSortOrder: 'descend',
+      //defaultSortOrder: 'descend',
       renderText: (dom, entity) => {
         return entity.eos_id
       },
@@ -585,7 +614,8 @@ const TableList: React.FC = () => {
 
             onClick={() => {
               setCurrentRow(entity);
-              history.push(`/transaction/detail?transaction_id=` + entity.id);
+              history.push(`/transaction/detail`, { transaction_id: entity.id });
+             
               // setShowDetail(true);
             }}
           >
@@ -828,8 +858,8 @@ const TableList: React.FC = () => {
 
   }
   return (
-    <PageContainer header={{
-      title: isMP ? null : <>< FormattedMessage id="pages.transactions.title" defaultMessage="Summary Of All Transactions" /> {dateStr + " - " + product_type_str}<div>{"Total count of transactions filtered: " + transaction_filter_num + " out of " + transaction_total_num}</div></>,
+    <PageContainer className="myPage" header={{
+      title:<>{value?.name} - {dateStr}<div>{"Total count of transactions filtered: " + transaction_filter_num + " out of " + transaction_total_num}</div></>,
       breadcrumb: {},
       extra: isMP ? null : [
        /* <Access accessible={!formData.id} fallback={<div></div>}>
@@ -875,20 +905,20 @@ const TableList: React.FC = () => {
           
 
           if (offset.width > 1280) {
-            setIsMP(false)
+          
             setResizeObj({ ...resizeObj, searchSpan: 8, tableScrollHeight: innerHeight - h });
           }
           if (offset.width < 1280 && offset.width > 900) {
-            setIsMP(false)
+            
             setResizeObj({ ...resizeObj, searchSpan: 12, tableScrollHeight: innerHeight - h });
           }
           if (offset.width < 900 && offset.width > 700) {
             setResizeObj({ ...resizeObj, searchSpan: 24, tableScrollHeight: innerHeight - h });
-            setIsMP(false)
+           
           }
 
           if (offset.width < 700) {
-            setIsMP(true)
+            
           }
 
         }}
@@ -922,14 +952,11 @@ const TableList: React.FC = () => {
 
       {isMP && (<>
 
-        <NavBar backArrow={false}  onBack={back}>
-          {intl.formatMessage({
-            id: 'pages.transaction.title',
-            defaultMessage: 'Summary Of All Transactions',
-          })}
+       
+        <NavBar backArrow={false} right={right} onBack={back}>
+         
         </NavBar>
 
-        <div>{dateStr + " - " + product_type_str}</div><div>{"Total count of transactions filtered: " + transaction_filter_num + " out of " + transaction_total_num}</div>
 
        
         <List>
@@ -974,22 +1001,24 @@ const TableList: React.FC = () => {
 
         </FooterToolbar>
       )}
-      <div style={{ marginTop: -45, paddingLeft: 10 }}>
-         <Button
 
+
+
+      <div style={{ marginTop: 15, paddingLeft: 0 }}>
+        <Button
+          style={isMP ? { width: '100%' } : null}
           type="primary"
           onClick={async () => {
-            history.back()
+            history.push('/Report')
           }}
-        >Return to previous page</Button>
-
-        {/* <Button
-          style={{ marginLeft:10 }}
+        >Return to report history</Button>
+        {/*  <Button
+          style={isMP ? { width: '100%', marginTop: 15 } : { marginLeft: 10 }}
           type="primary"
           onClick={async () => {
-            history.push("/Report/ReportList")
+            history.push('/Report/add')
           }}
-        >Return To Report History</Button>*/}
+        >Return to create new report</Button>*/ }
       </div>
 
       {/* 调用打印模块 */}
@@ -997,7 +1026,7 @@ const TableList: React.FC = () => {
         title={""}
         subTitle={paramsText}
         columns={columns}
-        dataSource={[...selectedRowsState/*, sumRow*/]}
+        dataSource={[...(isMP ? data : selectedRowsState)/*, sumRow*/]}
         onCancel={() => {
           handlePrintModalVisible(false);
         }}

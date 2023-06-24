@@ -61,6 +61,9 @@ body,
   }
  }
 @media (max-width: 768px) {
+  .myPage {
+    padding-top: 35px;
+  }
   *:not(.my-font-size,.my-font-size *) {
     font-size: 16px !important;
   }
@@ -97,7 +100,7 @@ body,
     height: 36px;
     padding: 2px 11px;
   }
-
+  
 
 
   .ant-input-group.ant-input-group-compact .ant-input {
@@ -108,7 +111,20 @@ body,
   .ant-select-single:not(.ant-select-customize-input) .ant-select-selector .ant-select-selection-search-input {
     height: 36px;
   }
-}
+
+  .ant-statistic .ant-statistic-content {
+      font-size:18px !important;
+  }
+  .ant-page-header-heading-title {
+    white-space: break-spaces !important;
+  }
+  .ant-pro-page-container-warp-page-header {
+    padding-block-start: 0px !important;
+    padding-block-end: 0px !important;
+    padding-inline-start: 5px !important;
+    padding-inline-end: 0px !important;
+  }
+  }
 .ant-select-selection-item-content {
   overflow-wrap: break-word !important;
   text-overflow: unset !important;
@@ -424,3 +440,40 @@ body,
     *font-size: 0;
   }
 
+.runtime-keep-alive-tabs-layout{
+    height:1px;
+    overflow:hidden;
+}
+.my-tab .ant-pro-card {
+  height: 0px;
+}
+.my-tab .ant-pro-card .ant-pro-card-body {
+  height: 0px;
+}
+.my-tab .ant-tabs .ant-tabs-tabpane {
+  height: 0px;
+}
+
+.adm-nav-bar {
+  position: fixed;
+  top: 50px;
+  z-index:100;
+  background-color: #fff;
+  width:100%;
+  left:0;
+}
+.ant-pro-table-alert{
+    display:none;
+}
+.row-dragging {
+  z-index: 1000;
+}
+.ant-tabs .ant-tabs-tab.ant-tabs-tab-active .ant-tabs-tab-btn {
+ 
+  font-weight: bolder;
+ 
+}
+
+.ant-avatar{
+    display:none;
+}

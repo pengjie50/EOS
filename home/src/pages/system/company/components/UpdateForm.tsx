@@ -89,7 +89,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           },
         ]}
       />
-      <ProFormTreeSelect
+      {/* <ProFormTreeSelect
         name="pid"
         width="md"
         label={intl.formatMessage({
@@ -110,8 +110,36 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           });
 
         }}
-      />
+      />*/ }
+      <ProFormSelect
+        name="type"
+        label={intl.formatMessage({
+          id: 'pages.xxx',
+          defaultMessage: 'Organization Type',
+        })}
+        width="md"
+        rules={[
+          {
+            required: true,
+            message: (
+              <FormattedMessage
+                id="pages.rules.required"
+                defaultMessage=""
+              />
+            ),
+          },
+        ]}
+        valueEnum={{
+          "Surveyor": "Surveyor",
+          "Trader": "Trader",
+          "Agent": "Agent",
+          "Terminal": "Oil Terminal",
+          "Pilot": "Pilot",
+          "Super": "Super",
 
+
+        }}
+      />
       <ProFormTextArea
         name="description"
         width="md"

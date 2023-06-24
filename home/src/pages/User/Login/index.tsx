@@ -102,6 +102,12 @@ const Login: React.FC = () => {
   const [isAdmin, setIsAdmin] = useState<boolean>(useLocation().pathname == "/user/adminlogin" ? true : false);
   const { initialState, setInitialState } = useModel('@@initialState');
   const [isMP, setIsMP] = useState<boolean>(!isPC());
+  const [redirect, setRedirect] = useState<string>(useLocation()?.search?.split("=")[1] || '/');
+  
+ 
+  
+
+
   const containerClassName = useEmotionCss(({ token }) => {
 
     return {
@@ -110,8 +116,8 @@ const Login: React.FC = () => {
         flexDirection: 'column',
         height: '100vh',
         overflow: 'hidden',
-        backgroundImage:
-          "url('/loginbg_xs.jpg')",
+      //  backgroundImage:
+        //  "url('/loginbg_xs.jpg')",
         backgroundSize: '100% 100%',
       },
       [`@media screen and (min-width: ${token.screenMD}px)`]: {
@@ -119,8 +125,8 @@ const Login: React.FC = () => {
         flexDirection: 'column',
         height: '100vh',
         overflow: 'hidden',
-        backgroundImage:
-          "url('/loginbg.jpg')",
+       // backgroundImage:
+        //  "url('/loginbg.jpg')",
         backgroundSize: '100% 100%',
       }
     };
@@ -135,9 +141,9 @@ const Login: React.FC = () => {
         fontSize: '14px',
         fontWeight: 'bold',
         lineHeight: '42px',
-        color: '#000',
+        color: '#fff',
         paddingLeft: `${token.paddingXS}px`,
-        backgroundColor: '#F2F2F2',
+        backgroundColor: 'rgba(0,0, 0, 0.6)',
         top: 0,
         left: 0,
         right: 0,
@@ -148,10 +154,10 @@ const Login: React.FC = () => {
         fontSize: '24px !important',
         fontWeight: 'bold',
         lineHeight: '42px',
-        color: '#000',
+        color: '#FFF',
         paddingLeft: '20px',
       
-        backgroundColor: '#F2F2F2',
+        backgroundColor: 'rgba(0,0, 0, 0.6)',
         top: 0,
         left: 0,
         right: 0,
@@ -196,8 +202,9 @@ const Login: React.FC = () => {
         localStorage.setItem('token', msg?.token || '');
        
         await fetchUserInfo();
-        const urlParams = new URL(window.location.href).searchParams;
-        history.push(urlParams.get('redirect') || '/');
+     
+       
+        history.push(redirect || '/');
         return;
       }
       console.log(msg);
@@ -259,6 +266,12 @@ const Login: React.FC = () => {
 
   return (
     <div className={containerClassName}>
+
+      <div style={{ position: 'fixed', top: 0, width: '100%', height: '100%', zIndex: -1 }}>
+        <video id="video" muted loop={true} height={2000} width={1000} style={{ width: '100%', height: '100%', objectFit: 'fill' }} src="http://eosuat.southeastasia.cloudapp.azure.com/upload/login_bg.mp4" autoPlay={true} controls={false}>
+         
+        </video>
+      </div>
       <div
 
         className={titleClassName}
@@ -270,7 +283,7 @@ const Login: React.FC = () => {
 
 
 
-      <div style={{ position: 'absolute', bottom: 20, left: 20, right:isMP?20:'none', padding: 20, backgroundColor:'rgba(0,0, 0, 0.6)', fontWeight: "bold", borderRadius: 10, }}>
+      <div style={{ position: 'absolute', top: isMP ? 'none' : 70, bottom: !isMP ? 'none' : 20, left: 20, right:isMP?20:'none', padding: 20, backgroundColor:'rgba(0,0, 0, 0.6)', fontWeight: "bold", borderRadius: 10, }}>
         <div className="my-font-size" style={{ fontSize: "50px", color:"#fff" }}>
           EOS
         </div>
@@ -423,7 +436,7 @@ const Login: React.FC = () => {
        
           border: '1px solid #F5F7F9',
         padding: '15px',
-          backgroundColor: '#7BA8D9',
+          backgroundColor: 'rgba(0,0, 0, 0.6)',
           marginBottom: 24,
          borderTop:0,
           maxWidth:400,

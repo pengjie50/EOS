@@ -250,6 +250,11 @@ const TableList: React.FC = () => {
       },
     },
     {
+      title: <FormattedMessage id="pages.permission.xxx" defaultMessage="Permission Key" />,
+      dataIndex: 'permission_key',
+      valueType: 'textarea',
+    },
+    {
       title: <FormattedMessage id="pages.permission.description" defaultMessage="Description" />,
       dataIndex: 'description',
       valueType: 'textarea',
@@ -302,25 +307,23 @@ const TableList: React.FC = () => {
         const { innerWidth, innerHeight } = window;
 
         if (offset.width > 1280) {
-          setIsMP(false)
+          
           setResizeObj({ ...resizeObj, searchSpan: 8, tableScrollHeight: innerHeight - 420 });
         }
         if (offset.width < 1280 && offset.width > 900) {
-          setIsMP(false)
+          
           setResizeObj({ ...resizeObj, searchSpan: 12, tableScrollHeight: innerHeight - 420 });
         }
         if (offset.width < 900 && offset.width > 700) {
           setResizeObj({ ...resizeObj, searchSpan: 24, tableScrollHeight: innerHeight - 420 });
-          setIsMP(false)
+         
         }
 
-        if (offset.width < 700) {
-          setIsMP(true)
-        }
+      
 
       }}
     >
-    <PageContainer header={{
+      <PageContainer className="myPage" header={{
       title: isMP ? null : < FormattedMessage id="pages.permission.title" defaultMessage="Permission" />,
       breadcrumb: {},
       extra: isMP ? null : [
@@ -366,7 +369,7 @@ const TableList: React.FC = () => {
         </NavBar>
 
         <div style={{ padding: '20px', backgroundColor: "#5187c4", display: showMPSearch ? 'block' : 'none' }}>
-          <Search columns={columns.filter(a => !a.hasOwnProperty('hideInSearch'))} action={actionRef} loading={false}
+          <Search columns={columns.filter(a => !(a.hasOwnProperty('hideInSearch') && a['hideInSearch']))} action={actionRef} loading={false}
 
             onFormSearchSubmit={onFormSearchSubmit}
 

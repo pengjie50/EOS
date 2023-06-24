@@ -85,7 +85,26 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
             ),
           },
         ]}
-        />
+      />
+      <ProFormText
+        name="permission_key"
+        label={intl.formatMessage({
+          id: 'pages.permission.xxx',
+          defaultMessage: 'Permission Key',
+        })}
+        width="md"
+        rules={[
+          {
+            required: true,
+            message: (
+              <FormattedMessage
+                id="pages.rules.required"
+                defaultMessage=""
+              />
+            ),
+          },
+        ]}
+      />
         <ProFormTextArea
           name="description"
           width="md"

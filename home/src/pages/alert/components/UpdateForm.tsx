@@ -33,7 +33,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
     values,
   } = props;
 
-  
+
   return (
    
     <ModalForm
@@ -69,7 +69,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
       >
       
       <ProFormTextArea
-        name="t.remarks"
+        name="remarks"
         width="md"
         label={intl.formatMessage({
           id: 'pages.alert.remark',

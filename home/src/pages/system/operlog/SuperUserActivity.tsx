@@ -1,9 +1,13 @@
 import RcResizeObserver from 'rc-resize-observer';
 
 import { addOperlog, removeOperlog, operlog, updateOperlog } from './service';
-import { PlusOutlined, SearchOutlined, FormOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { PlusOutlined, SearchOutlined, FormOutlined, DeleteOutlined, ExclamationCircleOutlined, PrinterOutlined, SortAscendingOutlined, SortDescendingOutlined, SwapOutlined, FileExcelOutlined, EllipsisOutlined } from '@ant-design/icons';
 import type { ActionType, ProColumns, ProDescriptionsItemProps } from '@ant-design/pro-components';
 import { OperlogList, OperlogListItem } from './data.d';
+import FrPrint from "../../../components/FrPrint";
+import FileSaver from "file-saver";
+import moment from 'moment'
+const Json2csvParser = require("json2csv").Parser;
 import {
   FooterToolbar,
   ModalForm,
@@ -16,7 +20,7 @@ import {
   ProFormInstance
 } from '@ant-design/pro-components';
 import { FormattedMessage, useIntl, formatMessage } from '@umijs/max';
-import { Button, Drawer, Input, message, Modal } from 'antd';
+import { Button, Drawer, Input, message, Modal, Popover } from 'antd';
 import React, { useRef, useState } from 'react';
 import CreateForm from './components/CreateForm';
 import UpdateForm from './components/UpdateForm';
@@ -108,6 +112,72 @@ const handleUpdate = async (fields: Partial<any>) => {
     return false;
   }
 };
+
+
+const exportCSV = (data, columns, filename = `${"Summary of all transactions" + moment(Date.now()).format(' YYYY-MM-DD HH:mm:ss')}.csv`) => {
+
+  if (data.length == 0) {
+    message.error(<FormattedMessage
+      id="pages.selectDataFirst"
+      defaultMessage="Please select data first!"
+    />);
+    return false;
+  }
+  var newData = []
+  var map = {}
+  columns.forEach((a) => {
+
+    map[a.dataIndex] = a
+  })
+  data = data.forEach((s) => {
+    var n = {}
+
+    for (var k in s) {
+
+      var c = map[k]
+      if (c && !c.hideInTable) {
+        if (c.valueType == 'date') {
+          n[c.title.props.defaultMessage] = s[k] ? moment(s[k]).format('YYYY/MM/DD') : ""
+        } else if (c.renderText) {
+          n[c.title.props.defaultMessage] = "" + c.renderText(s[k], s)
+        }
+        else if (c.render && k != 'id') {
+          n[c.title.props.defaultMessage] = c.render(s[k], s)
+        } else {
+          if (c.valueEnum) {
+            if (c.valueEnum[s[k]]) {
+              if (typeof c.valueEnum[s[k]] == 'string') {
+                n[c.title.props.defaultMessage] = c.valueEnum[s[k]]
+              } else {
+                n[c.title.props.defaultMessage] = c.valueEnum[s[k]].text.props.defaultMessage
+              }
+
+            } else {
+              n[c.title.props.defaultMessage] = s[k]
+            }
+
+          } else {
+            n[c.title.props.defaultMessage] = s[k]
+          }
+          // n[c.title.props.defaultMessage] = c.valueEnum ? (typeof c.valueEnum[s[k]] == 'string' ? c.valueEnum[s[k]] : c.valueEnum[s[k]].text.props.defaultMessage) : s[k]
+        }
+
+
+      }
+
+    }
+    newData.push(n)
+
+  })
+
+  const parser = new Json2csvParser();
+  const csvData = parser.parse(newData);
+
+  const blob = new Blob(["\uFEFF" + csvData], {
+    type: "text/plain;charset=utf-8;",
+  });
+  FileSaver.saveAs(blob, filename);
+}
 const TableList: React.FC = () => {
   /**
    * @en-US Pop-up window of new window
@@ -119,9 +189,9 @@ const TableList: React.FC = () => {
    * @zh-CN 分布更新窗口的弹窗
    * */
   const [updateModalOpen, handleUpdateModalOpen] = useState<boolean>(false);
-
+  const [paramsText, setParamsText] = useState<string>('');
   const [showDetail, setShowDetail] = useState<boolean>(false);
-
+  const [printModalVisible, handlePrintModalVisible] = useState<boolean>(false);
   const actionRef = useRef<ActionType>();
   const [currentRow, setCurrentRow] = useState<OperlogListItem>();
   const [selectedRowsState, setSelectedRows] = useState<OperlogListItem[]>([]);
@@ -131,10 +201,10 @@ const TableList: React.FC = () => {
    * @zh-CN 国际化配置
    * */
   const intl = useIntl();
-
+  const [MPSorter, setMPSorter] = useState<any>({});
   //--MP start
   const MPSearchFormRef = useRef<ProFormInstance>();
-
+  const [moreOpen, setMoreOpen] = useState<boolean>(false);
   const [showMPSearch, setShowMPSearch] = useState<boolean>(false);
   const [isMP, setIsMP] = useState<boolean>(!isPC());
 
@@ -142,6 +212,22 @@ const TableList: React.FC = () => {
     <div style={{ fontSize: 24 }}>
       <Space style={{ '--gap': '16px' }}>
         <SearchOutlined onClick={e => { setShowMPSearch(!showMPSearch) }} />
+        <Popover onOpenChange={(v) => { setMoreOpen(v) }} open={moreOpen} placement="bottom" title={""} content={<div><Button type="primary" style={{ width: "100%" }} key="print"
+          onClick={() => {
+            setMoreOpen(false)
+            handlePrintModalVisible(true)
+          }}
+        ><PrinterOutlined /> <FormattedMessage id="pages.Print" defaultMessage="Print" />
+        </Button>, <Button style={{ width: "100%" }} type="primary" key="out"
+          onClick={() => exportCSV(data, columns)}
+        ><FileExcelOutlined /> <FormattedMessage id="pages.CSV" defaultMessage="CSV" />
+          </Button>
+
+        </div>} trigger="click">
+          <EllipsisOutlined />
+
+
+        </Popover>
 
       </Space>
     </div>
@@ -178,7 +264,18 @@ const TableList: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [MPfilter, setMPfilter] = useState<any>({})
 
-  async function getData(page, filter) {
+  async function getData(page, filter__) {
+
+    var sorter = {}
+    await setMPSorter((sorter_) => {
+      sorter = sorter_
+      return sorter_
+    })
+    var filter = {}
+    await setMPfilter((filter_) => {
+      filter = filter_
+      return filter_
+    })
     const append = await operlog({
       ...{
         "current": page,
@@ -312,7 +409,7 @@ const TableList: React.FC = () => {
           defaultMessage="Oper time"
         />
       ),
-      sorter: true,
+     
       hideInSearch:true,
       dataIndex: 'oper_time',
       valueType: 'dateTime'
@@ -421,7 +518,26 @@ const TableList: React.FC = () => {
     >
       <PageContainer className="myPage" header={{
         title: isMP ? null : < FormattedMessage id="pages.operlog.xxx" defaultMessage="Super User Activity Log" />,
-      breadcrumb: {},
+        breadcrumb: {},
+        extra: isMP ? null : [
+          <Button type="primary" key="print"
+            onClick={() => {
+              if (selectedRowsState.length == 0) {
+                message.error(<FormattedMessage
+                  id="pages.selectDataFirst"
+                  defaultMessage="Please select data first!"
+                />);
+                return false;
+              }
+              handlePrintModalVisible(true)
+            }}
+          ><PrinterOutlined /> <FormattedMessage id="pages.Print" defaultMessage="Print" />
+          </Button>, <Button type="primary" key="out"
+            onClick={() => exportCSV(selectedRowsState, columns)}
+          ><FileExcelOutlined /> <FormattedMessage id="pages.CSV" defaultMessage="CSV" />
+          </Button>
+
+        ]
     }} >
       {!isMP && (<ProTable<OperlogListItem, API.PageParams>
         //scroll={{ x: 2500, y: 300 }}
@@ -450,7 +566,30 @@ const TableList: React.FC = () => {
 
       {isMP && (<>
 
-        <NavBar backArrow={false} right={right} onBack={back}>
+          <NavBar backArrow={false} left={<div>  <Popover placement="bottom" title={""} content={<div>{columns.filter(a => (a.hasOwnProperty('sorter') && a['sorter'])).map((a) => {
+
+            return (<div><Button onClick={() => {
+              setMPSorter({ [a.dataIndex]: 'ascend' })
+
+
+              getData(1)
+             
+
+            }} icon={<SortAscendingOutlined />} />
+              <Button style={{ margin: 5 }} onClick={() => {
+                setMPSorter({ [a.dataIndex]: 'descend' })
+
+                getData(1)
+
+              }} icon={<SortDescendingOutlined />} />
+              <span>{a.title}</span>
+            </div>)
+
+          })}</div>} trigger="click">
+            <SwapOutlined rotate={90} />
+
+
+          </Popover> </div>} right={right} onBack={back}>
           {intl.formatMessage({
             id: 'pages.operlog.xxx',
             defaultMessage: 'Super User Activity Log',
@@ -518,19 +657,7 @@ const TableList: React.FC = () => {
             </div>
           }
         >
-          <Button
-            onClick={async () => {
-              await handleRemove(selectedRowsState);
-              setSelectedRows([]);
-              actionRef.current?.reloadAndRest?.();
-            }}
-          >
-            <FormattedMessage
-              id="pages.searchTable.batchDeletion"
-              defaultMessage="Batch deletion"
-            />
-          </Button>
-          
+         
         </FooterToolbar>
       )}
         <UpdateForm
@@ -582,7 +709,17 @@ const TableList: React.FC = () => {
             columns={columns as ProDescriptionsItemProps<OperlogListItem>[]}
           />
         )}
-      </Drawer>
+        </Drawer>
+        <FrPrint
+          title={""}
+          subTitle={paramsText}
+          columns={columns}
+          dataSource={[...(isMP ? data : selectedRowsState)/*, sumRow*/]}
+          onCancel={() => {
+            handlePrintModalVisible(false);
+          }}
+          printModalVisible={printModalVisible}
+        />
         {/*
          <div style={{ marginTop: -45, paddingLeft: 10 }}>
           <Button

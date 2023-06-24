@@ -4,10 +4,12 @@ import {
   ProFormCheckbox,
   PageContainer,
   ProFormDateRangePicker,
+  DragSortTable,
   ProFormText,
   ProColumns,
-  ProList,
   ProForm,
+  ProList,
+  ModalForm,
   ProFormRadio ,
   FooterToolbar,
   ProFormTextArea,
@@ -18,16 +20,16 @@ import {
   ProTable,
 } from '@ant-design/pro-components';
 import { FormattedMessage, useIntl, useModel, formatMessage, history } from '@umijs/max';
-import { FileTextOutlined, FileAddOutlined, ArrowRightOutlined, DeleteOutlined, ExclamationCircleOutlined,CloseOutlined} from '@ant-design/icons';
+import { FileTextOutlined, FileAddOutlined, ArrowRightOutlined, DeleteOutlined, ExclamationCircleOutlined, CloseOutlined, MenuOutlined } from '@ant-design/icons';
 import { reportTemplate, addReportTemplate,updateReportTemplate, removeReportTemplate,addReport } from '../service';
-
+import { fieldUniquenessCheck } from '@/services/ant-design-pro/api';
 
 import RcResizeObserver from 'rc-resize-observer';
 import { Button, Drawer, Input, message, Modal, Radio } from 'antd';
 import React, { useRef, useState, useEffect } from 'react';
 import { flow } from '../../system/flow/service';
 import { alertrule } from '../../alertrule/service';
-import { terminal } from '../../system/terminal/service';
+import { organization } from '../../system/company/service';
 import numeral from 'numeral';
 import moment from 'moment'
 import { jetty } from '../../system/jetty/service';
@@ -35,7 +37,7 @@ import { isPC } from "@/utils/utils";
 const { confirm } = Modal;
 //MP
 import { InfiniteScroll, List, NavBar, Space, DotLoading } from 'antd-mobile'
-import { template } from 'lodash';
+import { parseInt, template } from 'lodash';
 /**
  * @en-US Add node
  * @zh-CN 添加节点
@@ -167,12 +169,19 @@ const handleRemove = async (selectedRows: any[], callBack: any) => {
   });
 
 }
-const TableList: React.FC = () => {
+
+export type UpdateFormProps = {
+  onCancel: (flag?: boolean, formVals?: Partial<any>) => void;
+  onSubmit: (values: Partial<any>) => Promise<void>;
+  createModalOpen: boolean;
+
+};
+const UpdateForm: React.FC<UpdateFormProps> = (props) => {
   /**
    * @en-US Pop-up window of new window
    * @zh-CN 新建窗口的弹窗
    *  */
-  const [createModalOpen, handleModalOpen] = useState<boolean>(false);
+  //const [createModalOpen, handleModalOpen] = useState<boolean>(false);
   /**
    * @en-US The pop-up window of the distribution update window
    * @zh-CN 分布更新窗口的弹窗
@@ -183,7 +192,7 @@ const TableList: React.FC = () => {
 
   const [processes, setProcesses] = useState<any>([]);
   const [events, setEvents] = useState<any>([]);
-  const [terminalList, setTerminalList] = useState<any>({});
+  const [organizationList, setOrganizationList] = useState<any>({});
   const [jettyList, setJettyList] = useState<any>({});
   const [flowConf, setFlowConf] = useState<any>({});
   const { initialState } = useModel('@@initialState');
@@ -194,32 +203,39 @@ const TableList: React.FC = () => {
   const [isModalOpen, setIsModalOpen] = useState(false);
 
   const [templateName, setTemplateName] = useState("");
+
+  const [report_type, setReport_type] = useState(1);
+  
   const [isMP, setIsMP] = useState<boolean>(!isPC());
 
  
   const [selectedColumns, setSelectedColumns] = useState<any>([]);
-  const [selectedFilterColumns, setSelectedFilterColumns] = useState<any>([]);
+  
 
   const [availableColumns, setAvailableColumns] = useState<any>([]);
-  const [availableFilterColumns, setAvailableFilterColumns] = useState<any>([]);
   
-
+  
+ 
 
   const [fields, setFields] = useState<any>([]);
+  const getOrganizationName = () => {
+    if (currentUser?.role_type == "Super") {
+      return 'Organization'
+    }
+    if (currentUser?.role_type == "Trader") {
+      return 'Terminal'
+    }
+    if (currentUser?.role_type == "Terminal") {
+      return 'Customer'
+    }
+  }
 
 
-
-  const [selectedRowKeys, setSelectedRowKeys] = useState<ReactText[]>([]);
-  const rowSelection = {
-    selectedRowKeys,
-    onChange: (keys: ReactText[]) => setSelectedRowKeys(keys),
-  };
+  const [selectedRowKeys, setSelectedRowKeys] = useState<any[]>([]);
   
-  const [selectedRowKeys1, setSelectedRowKeys1] = useState<ReactText[]>([]);
-  const rowSelection1 = {
-    selectedRowKeys1,
-    onChange: (keys: ReactText[]) => setSelectedRowKeys1(keys),
-  };
+  
+  const [selectedRowKeys1, setSelectedRowKeys1] = useState<any[]>([]);
+  
   /**
    * @en-US International configuration
    * @zh-CN 国际化配置
@@ -232,8 +248,8 @@ const TableList: React.FC = () => {
     reportTemplate({
       type: {
         'field': 'type',
-        'op': 'eq',
-        'data': 1
+        'op': 'in',
+        'data': [1,2,3]
       }
     }).then((res) => {
 
@@ -263,7 +279,7 @@ const TableList: React.FC = () => {
 
    
     getReportTemplate()
-    jetty({ pageSize: 3000, current: 1, sorter: { name: 'ascend' } }).then((res) => {
+    jetty({  sorter: { name: 'ascend' } }).then((res) => {
       var b = {}
       res.data.forEach((r) => {
         b[r.id] = r.name
@@ -273,12 +289,12 @@ const TableList: React.FC = () => {
     });
 
 
-    terminal({ pageSize: 3000, current: 1, sorter: { name: 'ascend' } }).then((res) => {
+    organization({ sorter: { name: 'ascend' } }).then((res) => {
       var b = {}
       res.data.forEach((r) => {
         b[r.id] = r.name
       })
-      setTerminalList(b)
+      setOrganizationList(b)
 
 
 
@@ -340,192 +356,282 @@ const TableList: React.FC = () => {
     });
 
 
+    if (report_type == 2) {
+      columns = columns2
+    }
+
+
+    setAvailableColumns(columns.filter((a) => {
+      return !a.mustSelect
+    }))
+    
+
+
+    setSelectedColumns(columns.filter((a) => {
+      return a.mustSelect
+    }))
+   
 
 
 
-    setAvailableColumns(columns)
-    setAvailableFilterColumns(columns)
 
+  }, [report_type]);
 
-
-
-  }, [true]);
-
-
-  const columns: ProColumns<any>[] = [
-    {
-      title: (
-        <FormattedMessage
-          id="pages.transaction.transactionID"
-          defaultMessage="EOS ID"
-        />
-      ),
-      dataIndex: 'eos_id',
-      hideInSearch: true,
-     
-      sorter: true,
-      defaultSortOrder: 'descend',
-      render: (dom, entity) => {
-        return (
-          <a
-
-            onClick={() => {
-
-              history.push(`/transaction/detail?transaction_id=` + entity.id);
-              // setShowDetail(true);
-            }}
-          >
-            {dom}
-          </a>
-        );
-      },
-    },
-
-    {
-      title: <FormattedMessage id="pages.transaction.startOfTransaction" defaultMessage="Start Of Transaction" />,
-      dataIndex: 'start_of_transaction',
-      sorter: true,
-      defaultSortOrder: 'descend',
-      valueType: 'date',
-      hideInSearch: true,
-    },
-    {
-      title: <FormattedMessage id="pages.transaction.endOfTransaction" defaultMessage="End Of Transaction" />,
-      dataIndex: 'end_of_transaction',
-      valueType: 'date',
-      hideInSearch: true,
-    },
+  
+  var columns= [
    
     {
-      title: <FormattedMessage id="pages.transaction.vesselName" defaultMessage="Vessel Name" />,
-      dataIndex: 'vessel_name',
-      valueType: 'text',
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Total/ Current Duration" />,
+      dataIndex: 'total_duration',
+
     },
-
-
     {
-      title: <FormattedMessage id="pages.transaction.productType" defaultMessage="Product Type" />,
-      dataIndex: 'product_type',
-      // valueEnum: producttypeList,
+
+      title: <FormattedMessage id="pages.transaction.xxx" defaultMessage="Current Process" />,
+      dataIndex: 'flow_pid',
+     
+    },
+    {
+
+      title: getOrganizationName(),
+      dataIndex: 'organization_id',
+
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.jettyName" defaultMessage="Jetty Name" />,
+      dataIndex: 'jetty_id',
+
     },
     {
       title: <FormattedMessage id="pages.transaction.arrivalID" defaultMessage="Arrival ID" />,
       dataIndex: 'arrival_id',
-      hideInSearch: true
-    },
 
+    },
     {
       title: <FormattedMessage id="pages.transaction.imoNumber" defaultMessage="IMO Number" />,
       dataIndex: 'imo_number',
-      valueType: 'text',
+
     },
     {
+      title: <FormattedMessage id="pages.transaction.vesselName" defaultMessage="Vessel Name" />,
+      dataIndex: 'vessel_name',
 
-      title: <FormattedMessage id="pages.transaction.xxx" defaultMessage="Process" />,
-      dataIndex: 'flow_pid',
-      valueEnum: flowConf,
-      hideInSearch: true,
     },
-  
     {
-      title: <FormattedMessage id="pages.transaction.jettyName" defaultMessage="Jetty Name" />,
-      dataIndex: 'jetty_id',
-      valueEnum: jettyList,
-      search: {
-        transform: (value) => {
-          if (value) {
-            return {
-              'jetty_id': {
-                'field': 'jetty_id',
-                'op': 'eq',
-                'data': value
-              }
-            }
-          }
+      title: <FormattedMessage id="pages.transaction.vesselName" defaultMessage="Vessel Size" />,
+      dataIndex: 'size_of_vessel',
 
-        }
-      }
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.productType" defaultMessage="Product Type" />,
+      dataIndex: 'product_type',
+
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.xxx" defaultMessage="Total Nominated Quantity (Bls-60-F)" />,
+      dataIndex: 'total_nominated_quantity_b',
+
+    },
+    {
+      title: (<FormattedMessage id="pages.transaction.transactionID" defaultMessage="EOS ID" />),
+      dataIndex: 'eos_id',
+      mustSelect: true
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.xxx" defaultMessage="Transaction Status" />,
+      dataIndex: 'status',
+      mustSelect: true
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.startOfTransaction" defaultMessage="Start Of Transaction" />,
+      dataIndex: 'start_of_transaction',
+      mustSelect: true
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.endOfTransaction" defaultMessage="End Of Transaction" />,
+      dataIndex: 'end_of_transaction',
+      mustSelect: true
+
     },
    
     {
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Activity (From)" />,
-      dataIndex: 'flow_id',
-      valueType: 'text',
-    },
-    {
-
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Activity (To)" />,
-      dataIndex: 'flow_id_to',
-      valueType: 'text',
-    },
-
-    {
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Timestamp" />,
-      dataIndex: 'event_time',
-      valueType: 'text',
-    },
-    {
-
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Total Duration By Process" />,
-      dataIndex: 'duration',
-      valueType: 'text',
-    },
-
-    {
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Number of Amber Alert Breached" />,
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Number of Amber Alert" />,
       dataIndex: 'amber_alert_num',
-      valueType: 'text',
+      mustSelect: true
+     
     },
     {
 
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Number of Red Alert Breached" />,
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Number of Red Alert" />,
       dataIndex: 'red_alert_num',
-      valueType: 'text',
+      mustSelect: true
+      
     },
-    {
-
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Total Duration by Transaction" />,
-      dataIndex: 'total_duration',
-      valueType: 'text',
-    },
+   
    
   ];
 
-  const formRef = useRef<ProFormInstance>();
+  const columns2 = [
+    {
 
-  return (
-    <PageContainer header={{
-    //  title: 'Report Template',
-      breadcrumb: {},
-    }}>
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Type of Last Change" />,
+      dataIndex: 'duration',
+
+    },
+    {
+    title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="EOS ID" />,
+      dataIndex: 'flow_id',
+      mustSelect: true
+
+  },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Work Order ID" />,
+      dataIndex: 'flow_id_to',
+      mustSelect: true
+
+    },
+
+    {
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Description" />,
+      dataIndex: 'event_time',
+      mustSelect: true
+
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Value" />,
+      dataIndex: 'duration',
+      mustSelect: true
+
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Type of Data" />,
+      dataIndex: 'duration',
+      mustSelect: true
+
+    }
+]
+  const columns3 = [
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Type of Last Change" />,
+      dataIndex: 'duration',
+
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="EOS ID" />,
+      dataIndex: 'flow_id',
+      mustSelect: true
+
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Work Order ID" />,
+      dataIndex: 'flow_id_to',
+      mustSelect: true
+
+    },
+
+    {
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Description" />,
+      dataIndex: 'event_time',
+      mustSelect: true
+
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Value" />,
+      dataIndex: 'duration',
+      mustSelect: true
+
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Type of Data" />,
+      dataIndex: 'duration',
+      mustSelect: true
+
+    }
+  ]
+ 
+  const formRef = useRef<ProFormInstance>();
+  const onlyCheck = (rule: any, value: any, callback: (arg0: string | undefined) => void) => {
+
+
+    fieldUniquenessCheck({ where: { name: value, type:[1,2,3], company_id: currentUser?.company_id }, model: 'Userconfig' }).then((res) => {
+
+      if(templateMap[template_name] && templateMap[template_name].name==value){
+           callback(undefined); 
+      }
+      if (res.data) {
+
+        callback(intl.formatMessage({
+          id: 'pages.xxx',
+          defaultMessage: 'This name is already in use',
+        }))
+      } else {
+        callback(undefined); // 必须返回一个callback
+      }
+    });
+
+  }
+  const onlyCheck2 = (rule: any, value: any, callback: (arg0: string | undefined) => void) => {
+
+
+    fieldUniquenessCheck({ where: { name: value, company_id: currentUser?.company_id }, model: 'Report' }).then((res) => {
+
      
+      if (res.data) {
+
+        callback(intl.formatMessage({
+          id: 'pages.xxx',
+          defaultMessage: 'This name is already in use',
+        }))
+      } else {
+        callback(undefined); // 必须返回一个callback
+      }
+    });
+
+  }
+
+
+  const {
+    onSubmit,
+    onCancel,
+    createModalOpen,
+
+  } = props;
+  return (
+  
       
-      <ProForm formRef={formRef} submitter={{
+    <ModalForm width={'90%'}
+      title="Create New Report"
+      open={props.createModalOpen}
+      onFinish={props.onSubmit}
+      onOpenChange={(vi) => {
+        if (!vi) {
+          props.onCancel();
+        }
+
+      }}
+      modalProps={{ destroyOnClose: true }}
+      formRef={formRef} submitter={{
 
         render: (_, dom) => <div style={{ padding: 20, backgroundColor: "#fff", position: 'relative', height: isMP ? 240 : 80 }}>
 
-          <div style={{ position: 'absolute', left: isMP ? 0 : 20 }}> <Button
-
-            type="primary"
-            onClick={async () => {
-              history.back()
-            }}
-          >Return to previous page</Button>
-          </div>
-
-
-          <div style={{ position: 'absolute', right: isMP ? 0 : 20 }}>
-
-
-
+        
          
             <Button style={{ width: isMP ? '100%' : null }} onClick={() => {
 
 
-
               formRef.current?.resetFields()
+              setAvailableColumns(columns)
+             
               setSelectedColumns([])
-              setSelectedFilterColumns([])
+             
           } }>
             Reset
           </Button>
@@ -534,8 +640,12 @@ const TableList: React.FC = () => {
             var reportName = formRef.current?.getFieldValue("name")
             var templateName = formRef.current?.getFieldValue("templateName")
             var data = formRef.current?.getFieldsValue()
+            
             data.selected_fields = fields
 
+            var report_type = data.report_type
+            delete data.report_type
+            delete data.useExisting
 
             if (data.time_period && data.time_period != '0') {
              
@@ -548,9 +658,10 @@ const TableList: React.FC = () => {
             }
              // var ok = { name: reportName, value: JSON.stringify(data) , template_name: templateName ? templateName : null }
 
-            var ok = await handleAGenerateReport({ name: reportName, value: data, template_name: templateName ? templateName : null })
+            var ok = await handleAGenerateReport({ name: reportName, value: data,  type: report_type,template_name: templateName ? templateName : null })
            
-           if (ok) {
+            if (ok) {
+              props.onSubmit({})
               history.push(`/Report/ReportSummary`, ok);
            }
 
@@ -563,12 +674,16 @@ const TableList: React.FC = () => {
            
 
           }} type="primary" icon={<FileAddOutlined />}>Save Template</Button>
-        </div> <Modal title="Save Template" open={isModalOpen} onOk={async () => {
+         <Modal title="Save Template" open={isModalOpen} onOk={async () => {
 
             var templateName = formRef.current?.getFieldValue("templateName")
-            var data=formRef.current?.getFieldsValue()
+            var data = formRef.current?.getFieldsValue()
+            var report_type = data.report_type
+            delete data.report_type
+            delete data.useExisting
+            delete data.report_name
             data.selected_fields = fields
-
+           
             if (data.time_period && data.time_period != '0') {
 
               data.dateArr = [new Date((new Date()).getTime() - 3600*24 * 1000 * parseInt(data.time_period)), new Date()]
@@ -580,15 +695,20 @@ const TableList: React.FC = () => {
             }
             
             if (data.save_type=='b') {
-              await handleUpdate({ name: templateName, value: data, id: data.template_name })
+              await handleUpdate({ name: templateName, value: data, id: data.template_name, type: report_type })
             } else {
-             await handleAdd({ name: templateName, value: data })
+              await handleAdd({ name: templateName, value: data, type: report_type })
             }
             
             getReportTemplate()
             setIsModalOpen(false)
 
+            props.onSubmit({})
+
+
           }} onCancel={() => { setIsModalOpen(false) }}>
+
+            <ProFormText label="save_type" name="save_type" hidden initialValue="a" />
 
             <ProFormDependency name={['template_name','save_type']}>
               {({ template_name, save_type }) => {
@@ -596,43 +716,56 @@ const TableList: React.FC = () => {
                
                 if (template_name) {
                   if (save_type == "b") {
+                          
                     formRef.current?.setFieldValue("templateName", templateMap[template_name].name)
                   } else {
+                     
                     formRef.current?.setFieldValue("templateName", null)
                   }
                 
-                  return (<><ProForm.Group >
+                  return (<>
 
-                    <ProFormRadio.Group
-                      radioType="button"
-                      
-                      name="save_type"
-                      label=""
-                      initialValue="a"
-                      options={[
-                        {
-                          label: 'New Template',
-                          value: 'a',
-                        },
-                        {
-                          label: 'Replace Existing Template',
-                          value: 'b',
-                        },
-                      
-                      ]}
-                    />
-                    
-                  </ProForm.Group >
+                    <ProCard ghost={true} wrap={isMP ? true : false} gutter={0} bodyStyle={{ marginBottom: 20 }}>
+                      <ProCard ghost={true} colSpan={isMP ? 24 : 10} bodyStyle={{ marginBottom: 20 }} >
+                        <Button type={save_type == "a" ? 'primary' : "default"} style={{width:'100%'}}  onClick={() => {
+                          formRef.current?.setFieldValue("save_type",'a')
 
+                        } } >New Template</Button>
+                      </ProCard>
+                      <ProCard ghost={true} colSpan={isMP ? 24 : 14} style={{ paddingLeft: isMP ? 0 : 10 }}>
+                        <Button type={save_type == "b" ? 'primary' : "default"} style={{ width: '100%' }} onClick={() => {
+                          formRef.current?.setFieldValue("save_type", 'b')
 
-                    <ProForm.Group  >
+                        }} >Replace Existing Template</Button>
+                      </ProCard>
+                    </ProCard>
                     
-                    
-                     <ProFormText label="Template Name"  name="templateName" width="md" />
+
+                   
 
                    
                     
-                    </ProForm.Group >
+                 
+
+
+                 
+                    
+
+                      <ProFormText label="Template Name" name="templateName" style={{ width: '100%' }} rules={[
+                        {
+                          required: true,
+                          message: (
+                            <FormattedMessage
+                              id="pages.rules.required"
+                              defaultMessage=""
+                            />
+                          ),
+                        }, { validator: onlyCheck }
+                      ]} />
+
+                   
+                    
+                  
                     </>
                   )
                 
@@ -645,7 +778,17 @@ const TableList: React.FC = () => {
                 } else {
                   formRef.current?.setFieldValue("templateName", null)
                   return (<ProForm.Group style={{ marginTop: 20 }} >
-                    <ProFormText label="Template Name" name="templateName" width="md" />
+                    <ProFormText label="Template Name" name="templateName" width="md" rules={[
+                      {
+                        required: true,
+                        message: (
+                          <FormattedMessage
+                            id="pages.rules.required"
+                            defaultMessage=""
+                          />
+                        ),
+                      }, { validator: onlyCheck }
+                    ]} />
                   </ProForm.Group >)
                 }
 
@@ -657,55 +800,103 @@ const TableList: React.FC = () => {
            
           </Modal></div>,
       }}>
-      <ProCard title="Select Saved Template" colSpan={24} headerBordered headStyle={{ backgroundColor: "#d4d4d4" }}>
-          <ProForm.Group >
-            <ProFormSelect name="template_name" label="Name of Template:" fieldProps={{ options: templateList, onChange:(()=>{
-              var id = formRef.current?.getFieldValue("template_name")
-              try {
-                var value = eval('(' + templateMap[id].value + ')');
 
-                formRef.current?.setFieldsValue(value)
+     
+      <ProFormRadio.Group
+        name="useExisting"
+        initialValue="new"
+        label="Generate your report with a new set of report parameters or from a saved report template. "
+        onChange={(v) => {
+          var o = formRef.current?.getFieldValue('useExisting')
+          formRef.current?.resetFields()
+          formRef.current?.setFieldValue('useExisting', o)
+          setAvailableColumns(columns)
+         
+          setSelectedColumns([])
+          
 
-                if (!value.selected_fields) {
-                  value.selected_fields=[]
-                }
-               var arr= columns.filter((c) => {
+        } }
+        options={[
+          {
+            label: 'New Report',
+            value: 'new',
+          },
+          {
+            label: 'Existing Report Template',
+            value: 'existing',
+          },
+          
+        ]}
+      />
 
-                  return value.selected_fields.some((cc) => {
-                    return cc == c.dataIndex
-                  })
-                })
-                setSelectedColumns(arr)
-                setSelectedFilterColumns(arr)
-
-
-
-                setAvailableColumns(columns.filter((a) => {
-                  return !arr.some((b) => {
-                    return a.dataIndex == b.dataIndex
-                  })
-                }))
-
-                setAvailableFilterColumns(columns.filter((a) => {
-                  return !arr.some((b) => {
-                    return a.dataIndex == b.dataIndex
-                  })
-                }))
-
-                setFields(value.selected_fields)
-
-              } catch (e) {
-
-              }
-             
-
-            }) }} width={250} />
+     
 
 
+      
+
+      <ProFormDependency name={['useExisting', 'report_type', 'template_name']}>
+        {({ useExisting, report_type, template_name }) => {
+
+          setReport_type(report_type)
+          return <>
+
+          
+
+            {useExisting == "existing" && <ProFormSelect name="template_name" label="Selected Template" fieldProps={{
+        options: templateList, onChange: (() => {
+          var id = formRef.current?.getFieldValue("template_name")
+          try {
+            var value = eval('(' + templateMap[id].value + ')');
+            value.report_type = templateMap[id].type+""
+            formRef.current?.setFieldsValue(value)
+          
+           
+
+            if (!value.selected_fields) {
+              value.selected_fields = []
+            }
+            var arr = columns.filter((c) => {
+
+              return value.selected_fields.some((cc) => {
+                return cc == c.dataIndex
+              })
+            })
+            setSelectedColumns(arr)
+            
 
 
 
-            <ProFormText name="name" label="Name of Report:" width={250} rules={[
+            setAvailableColumns(columns.filter((a) => {
+              return !arr.some((b) => {
+                return a.dataIndex == b.dataIndex
+              })
+            }))
+
+          
+
+            setFields(value.selected_fields)
+
+          } catch (e) {
+
+          }
+
+
+        })
+            }} width="lg" />}
+            {((useExisting == "existing" && template_name) || useExisting == "new") && <ProFormSelect
+
+              valueEnum={
+                {
+                  '1': "Transaction Summary",
+                  '2': "Transaction Details",
+                  '3': "Alert Reports"
+                }}
+              width="lg"
+              name="report_type"
+              label="Report Type"
+
+            />}
+            {report_type && <ProFormText name="name" label="Name of Report:" width='lg' rules={[
               {
                 required: true,
                 message: (
@@ -714,447 +905,333 @@ const TableList: React.FC = () => {
                     defaultMessage="This field cannot be empty！"
                   />
                 ),
-              }
+              }, { validator: onlyCheck2 }
 
-            ]} />
+            ]} />}
 
           
 
-        </ProForm.Group>
-
-      </ProCard>
+     
+       
+    
 
    
 
 
-      <ProCard title="Output Filter" colSpan={24} headerBordered collapsible={true} headStyle={{ backgroundColor: "#d4d4d4" }}>
+            {report_type  && <ProCard title="Output Filter" colSpan={24} headerBordered collapsible={true} headStyle={{ backgroundColor: "#d4d4d4" }}>
 
-          <ProForm.Group  >
-
-
-            <ProFormRadio.Group
-              name="time_period"
-              label="Time Period:"
-              options={[
-                {
-                  label: 'Last 1 Year',
-                  value: '360',
-                },
-                {
-                  label: 'Last 6 months',
-                  value: '180',
-                },
-                {
-                  label: 'Last 3 months',
-                  value: '90',
-                },
-                {
-                  label: 'Last month',
-                  value: '30',
-                },
-                {
-                  label: 'Last week',
-                  value: '7',
-                },
-               {
-                 label: 'Specific Date Range',
-                  value: '0',
-                }
-              ]}
-            />
-            <ProFormDependency name={['time_period']}>
-              {({ time_period }) => {
-              
-                return time_period==0 ?< ProFormDateRangePicker name="dateRange" label=" " />:null
-              }}
-              </ProFormDependency>
-        
-        </ProForm.Group>
-        <ProForm.Group >
-          <ProFormText
-            name="imo_number"
-            label="IMO Number"
-
-          />
-          <ProFormSelect
-
-            width="sm"
-            name="jetty_id"
-            label="Jetty"
-            valueEnum={jettyList}
-
-          />
-            <ProFormText
-              width="sm"
-            name="vessel_name"
-            label="Vessel Name"
-
-          />
-          </ProForm.Group>
-          <ProForm.Group >
-          <ProFormText
-            name="product_type"
-            label="Product Type"
-
-          />
-          <ProFormSelect
-            valueEnum={
-              {
-                0: {
-                  text: <FormattedMessage id="pages.transaction.active" defaultMessage="Open" />
-                },
-                1: { text: <FormattedMessage id="pages.transaction.closed" defaultMessage="Closed" /> },
-                2: { text: <FormattedMessage id="pages.transaction.cancelled" defaultMessage="Cancelled" /> }
-              }}
-              width="sm"
-            name="status"
-            label="Status"
-
-          />
-          <ProFormSelect
-            valueEnum={terminalList}
-
-              width="sm"
-            name="terminal_id"
-            label="Terminal"
-
-          />
-        </ProForm.Group>
-        <ProForm.Group label="Threshold Breached:">
-          <ProFormSelect
-
-            name="flow_id"
-            width="lg"
-            label={intl.formatMessage({
-              id: 'pages.alertrule.entireTransactionAndProcesses',
-              defaultMessage: 'Entire Transaction And Processes',
-            })}
-            valueEnum={processes}
-            fieldProps={{
-              labelInValue: false,
-              dropdownMatchSelectWidth: isMP ? true : false,
-              mode: 'multiple',
-            }}
-
-          />
-
-          <ProFormSelect
-            name="flow_id_to"
-            width="lg"
-            label={intl.formatMessage({
-              id: 'pages.alertrule.betweenTwoEvents',
-              defaultMessage: 'Between Two Events',
-            })}
-            valueEnum={events}
-              fieldProps={{
-                dropdownMatchSelectWidth: isMP ? true : false,
-              labelInValue: false,
-              mode: 'multiple',
-            }}
-
-          />
-
-        </ProForm.Group>
-
-      </ProCard>
-
-      <RcResizeObserver
-        key="resize-observer"
-        onResize={(offset) => {
-          setResponsive(offset.width < 596);
-        }}
-      >
-        <ProCard
-          title="Report Fields"
-          headStyle={{ backgroundColor: "#d4d4d4" }}
-          collapsible={true}
-          extra=""
-          split={responsive ? 'horizontal' : 'vertical'}
-          bordered
-          headerBordered
-        >
-            <ProCard title="Available Fields" colSpan={isMP?24:12 } >
-            <div style={{ height: 360, overflow: 'auto' }}>
-
-                <ProList<any>
-
-                  rowKey="dataIndex"
-                  rowSelection={rowSelection}
-                onItem={(record, index) => {
-                  console.log(record)
-                }}
-
-                  toolBarRender={() => {
-                    return [
-                      <Button key="3" type="primary" onClick={() => {
+              <ProForm.Group  >
 
 
-                      var arr1=[]
-
-                        selectedRowKeys.forEach((a) => {
-                          arr1.push(availableFilterColumns[a].dataIndex)
-                        })
-
-                       
-                        
-
-                        var arr = fields.map((a) => { return a })
-                        arr = arr.concat(arr1)
-                       
-                        var arr2 = columns.filter((c) => {
-
-                          return arr.some((a) => {
-                            return a == c.dataIndex
-                          })
-                        })
-
-                       
-                        setSelectedColumns(arr2)
-
-                        setSelectedFilterColumns(arr2)
-
-                        setAvailableColumns(columns.filter((a) => {
-                          return !arr.some((b) => {
-                            return a.dataIndex == b
-                          })
-                        }))
-                        
-                        setAvailableFilterColumns(availableFilterColumns.filter((a) => {
-                          return !arr.some((b) => {
-                            return a.dataIndex == b
-                          })
-                        }))
-
-                      } }>
-                        {'>>' }
-                      </Button>,
-                    ];
-                  }}
-
-                toolbar={{
-
-                  search: {
-                    onSearch: (value: string) => {
-                      setAvailableFilterColumns(availableColumns.filter((a) => {
-                        console.log(a)
-                        return a.title.props.defaultMessage.indexOf(value) > -1
-                      }))
+                <ProFormRadio.Group
+                  name="time_period"
+                  label="Time Period:"
+                  options={[
+                    {
+                      label: 'Last 1 Year',
+                      value: '360',
                     },
-                  }
-
-                }}
-                onRow={(record: any) => {
-                  return {
-                    onMouseEnter: () => {
-                     // console.log(record);
+                    {
+                      label: 'Last 6 months',
+                      value: '180',
                     },
-                    onClick: () => {
-                    //  console.log(record);
+                    {
+                      label: 'Last 3 months',
+                      value: '90',
                     },
-                  };
-                }}
-
-                
-                rowKey="name"
-                headerTitle=""
-
-                dataSource={availableFilterColumns}
-                showActions="hover"
-                showExtra="hover"
-                metas={{
-                  title: {
-                    dataIndex: 'title',
-                  },
-
-                    actions:{
-                      render: (text, row) => {
-                        return <ArrowRightOutlined onClick={() => {
-
-
-                          var arr = fields.map((a) => { return a })
-                          arr.push(text.props.record.dataIndex)
-                          setFields(arr)
-                          var arr2=columns.filter((c) => {
-
-                            return arr.some((a) => {
-                              return a == c.dataIndex
-                            })
-                          })
-                          setSelectedColumns(arr2)
-
-                          setSelectedFilterColumns(arr2)
-
-                          setAvailableColumns(columns.filter((a) => {
-                            return !arr.some((b) => {
-                              return a.dataIndex == b
-                            })
-                          }))
-
-                          setAvailableFilterColumns(availableFilterColumns.filter((a) => {
-                            return !arr.some((b) => {
-                              return a.dataIndex == b
-                            })
-                          }))
-                          
-
-                          
-
-                        } } />;
+                    {
+                      label: 'Last month',
+                      value: '30',
+                    },
+                    {
+                      label: 'Last week',
+                      value: '7',
+                    },
+                    {
+                      label: 'Specific Date Range',
+                      value: '0',
                     }
-                  }
-                
-                }}
-              />
+                  ]}
+                />
+                <ProFormDependency name={['time_period']}>
+                  {({ time_period }) => {
 
-            </div>
-            </ProCard>
-            <ProCard title="Selected Fields" colSpan={isMP ? 24 : 12}>
-              <div style={{ height: 360, overflow: 'auto' }}>
-
-                <ProList<any>
-
-                  onItem={(record, index) => {
-                    console.log(record)
+                    return time_period == 0 ? < ProFormDateRangePicker name="dateRange" label=" " /> : null
                   }}
-                  rowSelection={rowSelection1}
-                  toolBarRender={() => {
-                    return [
-                      <Button key="3" type="primary" onClick={() => {
+                </ProFormDependency>
 
+              </ProForm.Group>
+              <ProForm.Group >
+                <ProFormText
+                  name="imo_number"
+                  label="IMO Number"
 
-                        var arr1 = []
+                />
+                <ProFormSelect
 
-                        selectedRowKeys1.forEach((a) => {
-                          arr1.push(selectedFilterColumns[a].dataIndex)
-                        })
-                        
+                  width="sm"
+                  name="jetty_id"
+                  label="Jetty"
+                  valueEnum={jettyList}
 
-                        var arr = fields.filter((a) => {
+                />
+                <ProFormText
+                  width="sm"
+                  name="vessel_name"
+                  label="Vessel Name"
 
-                          return !arr1.some((g) => {
-                           
-                            return g==a
-                          })
+                />
+              </ProForm.Group>
+              <ProForm.Group >
+                <ProFormText
+                  name="product_type"
+                  label="Product Type"
 
-                        })
-
-
-                        
-
-                        setFields(arr)
-
-
-                        var arr2 = columns.filter((c) => {
-
-                          return arr.some((a) => {
-                            return a == c.dataIndex
-                          })
-                        })
-                        setSelectedColumns(arr2)
-
-                        setSelectedFilterColumns(arr2)
-
-
-                        var arr3 = columns.filter((a) => {
-                          return !arr.some((b) => {
-                            return a.dataIndex == b
-                          })
-                        })
-
-                        setAvailableColumns(arr3)
-
-                        setAvailableFilterColumns(arr3)
-
-                      }}>
-                        {'<<'}
-                      </Button>,
-                    ];
-                  }}
-                  toolbar={{
-
-                    search: {
-                      onSearch: (value: string) => {
-                        setSelectedFilterColumns(selectedColumns.filter((a) => {
-                          console.log(a)
-                          return a.title.props.defaultMessage.indexOf(value) > -1
-                        }))
+                />
+                <ProFormSelect
+                  valueEnum={
+                    {
+                      0: {
+                        text: <FormattedMessage id="pages.transaction.active" defaultMessage="Open" />
                       },
-                    }
+                      1: { text: <FormattedMessage id="pages.transaction.closed" defaultMessage="Closed" /> },
+                      2: { text: <FormattedMessage id="pages.transaction.cancelled" defaultMessage="Cancelled" /> }
+                    }}
+                  width="sm"
+                  name="status"
+                  label="Status"
 
+                />
+                <ProFormSelect
+                  valueEnum={organizationList}
+
+                  width="sm"
+                  name="organization_id"
+                  label={getOrganizationName()}
+
+                />
+              </ProForm.Group>
+              {false && <ProForm.Group label="Threshold Breached:">
+                <ProFormSelect
+
+                  name="flow_id"
+                  width="lg"
+                  label={intl.formatMessage({
+                    id: 'pages.alertrule.entireTransactionAndProcesses',
+                    defaultMessage: 'Entire Transaction And Processes',
+                  })}
+                  valueEnum={processes}
+                  fieldProps={{
+                    labelInValue: false,
+                    dropdownMatchSelectWidth: isMP ? true : false,
+                    mode: 'multiple',
                   }}
-                  onRow={(record: any) => {
-                    return {
-                      onMouseEnter: () => {
-                        console.log(record);
-                      },
-                      onClick: () => {
-                        console.log(record);
-                      },
-                    };
-                  }}
 
-
-                  rowKey="name"
-                  headerTitle=""
-
-                  dataSource={selectedFilterColumns}
-                  showActions="hover"
-                  showExtra="hover"
-                  metas={{
-                    title: {
-                      dataIndex: 'title',
-                    },
-
-                    actions: {
-                      render: (text, row) => {
-                        return <CloseOutlined onClick={() => {
-
-                          var arr = fields.filter((a) => {
-
-                            return a != text.props.record.dataIndex
-
-                          })
-                          setFields(arr)
-
-
-                          var arr2 = columns.filter((c) => {
-
-                            return arr.some((a) => {
-                              return a == c.dataIndex
-                            })
-                          })
-                          setSelectedColumns(arr2)
-
-                          setSelectedFilterColumns(arr2)
-
-
-                          var arr3=columns.filter((a) => {
-                            return !arr.some((b) => {
-                              return a.dataIndex == b
-                            })
-                          })
-
-                          setAvailableColumns(arr3)
-
-                          setAvailableFilterColumns(arr3)
-
-                        }} />;
-                      }
-                    }
-
-                  }}
                 />
 
-              </div>
-          </ProCard>
-        </ProCard>
-      </RcResizeObserver>
+                <ProFormSelect
+                  name="flow_id_to"
+                  width="lg"
+                  label={intl.formatMessage({
+                    id: 'pages.alertrule.betweenTwoEvents',
+                    defaultMessage: 'Between Two Events',
+                  })}
+                  valueEnum={events}
+                  fieldProps={{
+                    dropdownMatchSelectWidth: isMP ? true : false,
+                    labelInValue: false,
+                    mode: 'multiple',
+                  }}
+
+                />
+
+              </ProForm.Group>}
+
+            </ProCard>}
+
+            {report_type  && <RcResizeObserver
+              key="resize-observer"
+              onResize={(offset) => {
+                setResponsive(offset.width < 596);
+              }}
+            >
+              <ProCard
+                title="Report Fields"
+                headStyle={{ backgroundColor: "#d4d4d4" }}
+                collapsible={true}
+               
+                extra=""
+                split={responsive ? 'horizontal' : 'vertical'}
+                bordered
+                headerBordered
+              >
+                <ProCard title="" ghost={isMP ? true : false} colSpan={isMP ? 24 : 12} >
+                  <div>
+
+                    <DragSortTable
+                      toolBarRender={() => [
+                        <Button key="3" type="primary" onClick={() => {
+
+
+                          var arr=availableColumns.filter((a) => {
+                            return !selectedRowKeys.some((b) => {
+                              return  b.dataIndex==a.dataIndex
+                            })
+                          })
+
+                         
+                          setAvailableColumns(arr)
+
+
+                          setSelectedColumns(selectedColumns.concat(selectedRowKeys))
+
+                          setSelectedRowKeys([])
+                          setSelectedRowKeys1([])
+                       
+
+                        }}>
+                          {'>>'}
+                        </Button>,
+                      ]}
+                      options={false}
+                      headerTitle="Available:"
+                      
+                      columns={[{
+                        title: '',
+                        dataIndex: 'title',
+                      }]}
+                      rowSelection={{
+                        selectedRowKeys: selectedRowKeys.map((a)=>a.dataIndex),
+                        onChange: (_, selectedRows) => {
+                          console.log(selectedRows)
+                          setSelectedRowKeys(selectedRows);
+                        },
+                      }}
+                      rowKey="dataIndex"
+                      search={false}
+                      pagination={false}
+                      dataSource={availableColumns}
+                      dragSortKey="title"
+                      dragSortHandlerRender={(rowData: any, idx: any) => (
+                        <div style={{ cursor: 'grab' }} >
+                         
+                         {idx + 1} - {rowData.title}
+                        </div>
+                      )}
+                      onDragSortEnd={(newDataSource: any) => {
+                       // console.log('排序后的数据', newDataSource);
+                        //setDatasource2(newDataSource);
+                       // message.success('修改列表排序成功');
+                      } }
+                    />
+
+
+
+
+
+
+                 
+
+                  </div>
+                </ProCard>
+                <ProCard title="" ghost={isMP ? true : false } colSpan={isMP ? 24 : 12}>
+                  <div >
+
+
+                    <DragSortTable
+                      toolBarRender={() => [
+                        <Button key="3" type="primary" onClick={() => {
+
+
+                          var selectedRowKeys2 = selectedRowKeys1.filter((a) => {
+
+                             return !columns.filter((b) => {
+                              return b.mustSelect
+                             }).some((c) => {
+                               return c.dataIndex == a.dataIndex
+                             })
+
+
+                          })
+
+                          var arr = selectedColumns.filter((a) => {
+                            return !selectedRowKeys2.some((b) => {
+                              return b.dataIndex == a.dataIndex
+                            })
+                          })
+
+
+                          setSelectedColumns(arr)
+
+
+                          setAvailableColumns(availableColumns.concat(selectedRowKeys2))
+
+                          setSelectedRowKeys([])
+                          setSelectedRowKeys1([])
+
+                        }}>
+                          {'<<'}
+                        </Button>
+                      ]}
+                      options={false}
+                      headerTitle="Selected:"
+                      
+                      columns={[{
+                        title: '',
+                        dataIndex: 'title',
+                      }]}
+                      rowSelection={{
+                        selectedRowKeys: selectedRowKeys1.map((a) => a.dataIndex),
+                        onChange: (_, selectedRows) => {
+                          setSelectedRowKeys1(selectedRows);
+                        },
+                      }}
+                      rowKey="dataIndex"
+                      search={false}
+                      pagination={false}
+                      dataSource={selectedColumns}
+                      dragSortKey="title"
+                      dragSortHandlerRender={(rowData: any, idx: any) => (
+                        <div style={{ cursor: 'grab' }} >
+
+                          {idx + 1} - {rowData.title}
+                        </div>
+                      )}
+                      onDragSortEnd={(newDataSource: any) => {
+                        // console.log('排序后的数据', newDataSource);
+                       setSelectedColumns(newDataSource);
+                        // message.success('修改列表排序成功');
+                      }}
+                    />
+
+                   
+
+                  </div>
+                </ProCard>
+              </ProCard>
+
+
+
+
+
+
+
+
+
+            </RcResizeObserver>}
+
+
+          </>
       
+        }}
 
-        </ProForm>
 
-    </PageContainer>
+
+      </ProFormDependency>
+        </ModalForm>
+
+   
   );
 };
 
-export default TableList;
+export default UpdateForm;

@@ -76,14 +76,14 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
         }}
         title={intl.formatMessage({
           id: 'pages.company.add',
-          defaultMessage: 'New Company',
+          defaultMessage: 'New Organization',
         })}
       >
         <ProFormText
           name="name"
           label={intl.formatMessage({
             id: 'pages.company.name',
-            defaultMessage: 'Company Name',
+            defaultMessage: 'Organization Name',
           })}
           width="md"
           rules={[
@@ -98,7 +98,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
             },
           ]}
       />
-      <ProFormTreeSelect
+      {/*<ProFormTreeSelect
         name="pid"
         width="md"
         label={intl.formatMessage({
@@ -117,6 +117,36 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
             // setFlowList(tree(res.data, "                                    ", 'pid'))
             return tree(res.data, "                                    ", 'pid')
           });
+
+        }}
+      />*/ }
+
+      <ProFormSelect
+        name="type"
+        label={intl.formatMessage({
+          id: 'pages.xxx',
+          defaultMessage: 'Organization Type',
+        })}
+        width="md"
+        rules={[
+          {
+            required: true,
+            message: (
+              <FormattedMessage
+                id="pages.rules.required"
+                defaultMessage=""
+              />
+            ),
+          },
+        ]}
+        valueEnum={{
+          "Surveyor": "Surveyor",
+          "Trader": "Trader",
+          "Agent": "Agent",
+          "Terminal": "Oil Terminal",
+          "Pilot": "Pilot",
+          "Super": "Super",
+
 
         }}
       />

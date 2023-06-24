@@ -27,7 +27,7 @@ import { Button, Drawer, Input, message, Modal, Radio } from 'antd';
 import React, { useRef, useState, useEffect } from 'react';
 import { flow } from '../../system/flow/service';
 import { alertrule } from '../../alertrule/service';
-import { terminal } from '../../system/terminal/service';
+import { organization } from '../../system/company/service';
 import numeral from 'numeral';
 import moment from 'moment'
 import { jetty } from '../../system/jetty/service';
@@ -183,7 +183,7 @@ const TableList: React.FC = () => {
 
   const [processes, setProcesses] = useState<any>([]);
   const [events, setEvents] = useState<any>([]);
-  const [terminalList, setTerminalList] = useState<any>({});
+  const [organizationList, setOrganizationList] = useState<any>({});
   const [jettyList, setJettyList] = useState<any>({});
   const [flowConf, setFlowConf] = useState<any>({});
   const { initialState } = useModel('@@initialState');
@@ -226,7 +226,17 @@ const TableList: React.FC = () => {
    * */
   const intl = useIntl();
   const [responsive, setResponsive] = useState(false);
-
+  const getOrganizationName = () => {
+    if (currentUser?.role_type == "Super") {
+      return 'Organization'
+    }
+    if (currentUser?.role_type == "Trader") {
+      return 'Terminal'
+    }
+    if (currentUser?.role_type == "Terminal") {
+      return 'Customer'
+    }
+  }
   const getReportTemplate = async () => {
 
     reportTemplate({
@@ -310,12 +320,12 @@ const TableList: React.FC = () => {
     });
 
 
-    terminal({ pageSize: 3000, current: 1, sorter: { name: 'ascend' } }).then((res) => {
+    organization({ pageSize: 3000, current: 1, sorter: { name: 'ascend' } }).then((res) => {
       var b = {}
       res.data.forEach((r) => {
         b[r.id] = r.name
       })
-      setTerminalList(b)
+      setOrganizationList(b)
 
 
 
@@ -689,14 +699,14 @@ const TableList: React.FC = () => {
             label="Status"
 
           />
-          <ProFormSelect
-            valueEnum={terminalList}
+            <ProFormSelect
+              valueEnum={organizationList}
 
               width="sm"
-            name="terminal_id"
-            label="Terminal"
+              name="organization_id"
+              label={getOrganizationName()}
 
-          />
+            />
         </ProForm.Group>
         <ProForm.Group label="Threshold Breached:">
           <ProFormSelect

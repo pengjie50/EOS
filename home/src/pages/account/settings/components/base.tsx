@@ -18,6 +18,7 @@ import { queryCurrent } from '../../../system/user/service';
 
 
 import { updateUser, uploadFile, checkEmail } from '../../../system/user/service';
+import { currentUser } from '../../../../services/ant-design-pro/api';
 
 
 
@@ -74,7 +75,7 @@ const checkImageWH=(file)=>{
   });
 }
 // 头像组件 方便以后独立，增加裁剪之类的功能
-const AvatarView = ({ useravatar, userid }: { useravatar: string; userid: string }) => {
+const AvatarView = ({ useravatar, userid, username }: { useravatar: string; userid: string; username: string }) => {
   const [fileList, setFileList] = useState([]);
   const getAvatarURL = () => {
     if (useravatar) {
@@ -146,12 +147,13 @@ const AvatarView = ({ useravatar, userid }: { useravatar: string; userid: string
   };
 
   return (<>
-    <div style={{ width: "100%", textAlign: "center" }}><FormattedMessage
-      id="pages.userSet.avatar"
-      defaultMessage="Avatar"
-    /></div>
-    <div style={{ width: "100%" ,textAlign: "center" }}>
-      <img style={{ width: "200px" }} src={avatar} alt="avatar" />
+    <div style={{ width: "100%", textAlign: "center" }}></div>
+    <div className="my-font-size" style={{ width: "100%", textAlign: "center", position: "relative", lineHeight:"350px" }}>
+      {/*<img style={{ width: "200px" }} src={avatar} alt="avatar" />*/}
+      <div style={{ color: "#000", display: "inline-block",  width: "200px", backgroundColor: "#b0deff", borderRadius: "50%", top: 0, right: 0, fontSize: 100, fontWeight: "bolder", height: '200px', lineHeight: '180px', textAlign: 'center' }}>
+
+        {username.slice(0,2).toUpperCase()}
+      </div>
     </div>
 
    
@@ -164,13 +166,13 @@ const AvatarView = ({ useravatar, userid }: { useravatar: string; userid: string
           onChange={onChange}
         >
           <div>
-            <Button>
+          {/*<Button>
               <UploadOutlined />
               <FormattedMessage
                 id="pages.userSet.uploadAvatar"
                 defaultMessage="Upload Avatar"
               />
-            </Button>
+            </Button>*/ }
           </div>
         </Upload>
       </ProCard>
@@ -242,7 +244,7 @@ const BaseView: React.FC = () => {
                     defaultMessage="Modify"
                   />,
                 },
-                render: (_, dom) => dom[1],
+                render: (_, dom) => null//dom[1],
               }}
               initialValues={{
                 ...currentUser
@@ -251,23 +253,7 @@ const BaseView: React.FC = () => {
               hideRequiredMark
             >
              
-              <ProFormText
-                
-                name="nickname"
-                label={<FormattedMessage
-                  id="pages.user.nickname"
-                  defaultMessage="Nickname"
-                />}
-                rules={[
-                  {
-                    required: true,
-                    message: <FormattedMessage
-                      id="pages.user.rules.nickname"
-                      defaultMessage="Please enter a nickname!"
-                    />,
-                  },
-                ]}
-              />
+             
              
               <ProFormText
                 disabled={true}
@@ -285,8 +271,8 @@ const BaseView: React.FC = () => {
                   { validator: emailCheck }
                 ]}
                 label={<FormattedMessage
-                  id="pages.user.email"
-                  defaultMessage="Email"
+                  id="pages.user.xxx"
+                  defaultMessage="Email Address"
                 />}
 
               />
@@ -295,15 +281,25 @@ const BaseView: React.FC = () => {
                 name="role_name"
                 label={<FormattedMessage
                   id="pages.user.xxx"
-                  defaultMessage="System Role Name "
+                  defaultMessage="Assigned User Profile"
                 />}
-               
+
+              />
+
+              <ProFormText
+                disabled={true}
+                name="company_name"
+                label={<FormattedMessage
+                  id="pages.user.xxx"
+                  defaultMessage="Organization Name "
+                />}
+
               />
               
             </ProForm>
-          </ProCard>,
-          <ProCard colSpan={isMP ? 24 : 12}>
-            <AvatarView useravatar={currentUser?.avatar} userid={currentUser?.id } />
+          </ProCard>
+             ,<ProCard colSpan={isMP ? 24 : 12}>
+               <AvatarView useravatar={currentUser?.avatar} userid={currentUser?.id} username={currentUser?.username}  />
           </ProCard>]
         
       )}

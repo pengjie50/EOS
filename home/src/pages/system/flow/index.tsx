@@ -235,7 +235,7 @@ const TableList: React.FC = () => {
       ),
       dataIndex: 'name',
       sorter: true,
-      
+      width:400,
       render: (dom, entity) => {
         return (
           <a
@@ -266,6 +266,12 @@ const TableList: React.FC = () => {
       hideInSearch: true,
       defaultSortOrder: 'ascend',
       sorter: true,
+      valueType: 'text',
+    },
+    {
+      title: <FormattedMessage id="pages.flow.xxx" defaultMessage="Code" />,
+      dataIndex: 'code',
+      hideInSearch: true,
       valueType: 'text',
     },
     {
@@ -322,25 +328,23 @@ const TableList: React.FC = () => {
         const { innerWidth, innerHeight } = window;
 
         if (offset.width > 1280) {
-          setIsMP(false)
+         
           setResizeObj({ ...resizeObj, searchSpan: 8, tableScrollHeight: innerHeight - 420 });
         }
         if (offset.width < 1280 && offset.width > 900) {
-          setIsMP(false)
+         
           setResizeObj({ ...resizeObj, searchSpan: 12, tableScrollHeight: innerHeight - 420 });
         }
         if (offset.width < 900 && offset.width > 700) {
           setResizeObj({ ...resizeObj, searchSpan: 24, tableScrollHeight: innerHeight - 420 });
-          setIsMP(false)
+         
         }
 
-        if (offset.width < 700) {
-          setIsMP(true)
-        }
+        
 
       }}
     >
-    <PageContainer header={{
+      <PageContainer className="myPage" header={{
       title: isMP ? null : < FormattedMessage id="pages.flow.title" defaultMessage="Flow" />,
       breadcrumb: {},
       extra: isMP ? null : [
@@ -357,8 +361,8 @@ const TableList: React.FC = () => {
     }}>
       {!isMP && (<ProTable<FlowListItem, API.PageParams>
       
-        actionRef={actionRef}
-      
+          actionRef={actionRef}
+          pagination={false }
           rowKey="id"
           scroll={{ x: 1800, y: resizeObj.tableScrollHeight }}
         search={{
@@ -390,7 +394,7 @@ const TableList: React.FC = () => {
         </NavBar>
 
         <div style={{ padding: '20px', backgroundColor: "#5187c4", display: showMPSearch ? 'block' : 'none' }}>
-          <Search columns={columns.filter(a => !a.hasOwnProperty('hideInSearch'))} action={actionRef} loading={false}
+          <Search columns={columns.filter(a => !(a.hasOwnProperty('hideInSearch') && a['hideInSearch']))} action={actionRef} loading={false}
 
             onFormSearchSubmit={onFormSearchSubmit}
 

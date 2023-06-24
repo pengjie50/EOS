@@ -797,7 +797,7 @@ const Detail: React.FC<any> = (props) => {
           onClick={async () => {
             history.back()
           }}
-        >Return to previous page</Button>
+        >Return to detailed transaction</Button>
       </div>
 
 

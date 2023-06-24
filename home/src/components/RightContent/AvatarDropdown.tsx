@@ -1,7 +1,7 @@
 import { outLogin } from '@/services/ant-design-pro/api';
 import { LogoutOutlined, SettingOutlined, UserOutlined, KeyOutlined } from '@ant-design/icons';
 import { useEmotionCss } from '@ant-design/use-emotion-css';
-import { history, useModel } from '@umijs/max';
+import { history, useModel, useLocation } from '@umijs/max';
 import { Spin } from 'antd';
 import { stringify } from 'querystring';
 import type { MenuInfo } from 'rc-menu/lib/interface';
@@ -23,10 +23,13 @@ export type GlobalHeaderRightProps = {
 export const AvatarName = () => {
   const { initialState } = useModel('@@initialState');
   const { currentUser } = initialState || {};
-  return <span className="anticon">{currentUser?.nickname || currentUser?.username}</span>;
+  return <span className="anticon">{currentUser?.username.split("@")[0] || currentUser?.email.split("@")[0]}</span>;
 };
 
 export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu, children }) => {
+
+  var redirect = useLocation().pathname
+  
   /**
    * 退出登录，并且将当前的 url 保存
    */
@@ -40,19 +43,20 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu, childre
     
     }
 
-    const { search, pathname } = window.location;
-    const urlParams = new URL(window.location.href).searchParams;
+
+   // const urlParams = new URL(window.location.href).searchParams;
     /** 此方法会跳转到 redirect 参数所在的位置 */
-    const redirect = urlParams.get('redirect');
+    //const redirect = urlParams.get('redirect');
     // Note: There may be security issues, please note
-    if (window.location.pathname !== url && !redirect) {
+   // if (window.location.pathname !== url && !redirect) {
+    
+      
       history.replace({
         pathname: url,
-        search: stringify({
-          redirect: pathname + search,
-        }),
+        search: 'redirect=/'
+       // search: 'redirect=' + redirect,
       });
-    }
+   // }
   };
   const actionClassName = useEmotionCss(({ token }) => {
     return {

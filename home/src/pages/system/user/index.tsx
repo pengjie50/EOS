@@ -1,9 +1,10 @@
 import RcResizeObserver from 'rc-resize-observer';
 import { addUser, removeUser, user, updateUser } from './service';
-import { PlusOutlined ,SearchOutlined, FormOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { PlusOutlined, SearchOutlined, FormOutlined, DeleteOutlined, LogoutOutlined,CloseCircleOutlined,ExclamationCircleOutlined } from '@ant-design/icons';
 import type { ActionType, ProColumns, ProDescriptionsItemProps } from '@ant-design/pro-components';
 import { UserList, UserListItem } from './data.d';
 import { outLogin } from '@/services/ant-design-pro/api';
+import { fieldSelectData } from '@/services/ant-design-pro/api';
 import {
   FooterToolbar,
   ModalForm,
@@ -16,7 +17,7 @@ import {
   ProTable,
 } from '@ant-design/pro-components';
 import { FormattedMessage, useIntl, formatMessage } from '@umijs/max';
-import { Button, Drawer, Input, message, Modal } from 'antd';
+import { Button, Drawer, Input, message, Modal, Empty } from 'antd';
 import React, { useRef, useState, useEffect } from 'react';
 import CreateForm from './components/CreateForm';
 import UpdateForm from './components/UpdateForm';
@@ -94,10 +95,22 @@ const handleRemove = async (selectedRows: UserListItem[], callBack: any) => {
   if (!selectedRows) return true;
   var open = true
   confirm({
-    title: 'Delete record?',
+    title: 'Delete Account?',
+    closable:true,
     open: open,
     icon: <ExclamationCircleOutlined />,
-    content: 'The deleted record cannot be restored. Please confirm!',
+    content: <div style={{ marginLeft:-16 }}><div>You are about to delete this user account! This action cannot be undone and all the data related to this user account will be deleted from the system.
+
+      </div>
+
+      <div style={{ marginTop: 10, marginBottom:10 }}>Deleting this user account will do the following:</div>
+
+      <div style={{ color: '#999' }} ><CloseCircleOutlined style={{ color:'red' }} /> Log user out on all devices</div>
+      <div style={{ color: '#999' }} ><CloseCircleOutlined style={{ color: 'red' }} /> Delete all of user’s account information</div>
+
+      <div style={{ fontWeight: 500, marginTop: 10}}>Confirm if you would like to proceed</div>
+    </div>,
+    okText:"Proceed",
     onOk() {
 
 
@@ -150,6 +163,7 @@ const TableList: React.FC = () => {
   const [selectedRowsState, setSelectedRows] = useState<UserListItem[]>([]);
   const [roleList, setRoleList] = useState<any>({});
   const [companyList, setCompanyList] = useState<any>({});
+  const [usernameData, setUsernameData] = useState<any>({});
   const [resizeObj, setResizeObj] = useState({ searchSpan: 12, tableScrollHeight: 300 });
   /**
    * @en-US International configuration
@@ -247,30 +261,33 @@ const TableList: React.FC = () => {
   }
   //--MP end
   const columns: ProColumns<UserListItem>[] = [
+
     {
-      title: (
-        <FormattedMessage
-          id="pages.user.username"
-          defaultMessage="用户名"
-        />
-      ),
+      title: <FormattedMessage id="pages.user.username" defaultMessage="Username" />,
       dataIndex: 'username',
-      
       sorter: true,
-      render: (dom, entity) => {
-        return (
-          <a
-            onClick={() => {
-              setCurrentRow(entity);
-              setShowDetail(true);
-            }}
-          >
-            {dom}
-          </a>
-        );
-      },
+      valueEnum: usernameData,
+      fieldProps: {
+        notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
+        showSearch: true,
+        allowClear: true,
+        onFocus: () => {
+          fieldSelectData({ model: "User", value: '', field: 'username' }).then((res) => {
+            setUsernameData(res.data)
+          })
+        },
+        onSearch: (newValue: string) => {
+
+          fieldSelectData({ model: "User", value: newValue, field: 'username' }).then((res) => {
+            setUsernameData(res.data)
+          })
+
+        }
+      }
     },
-    {
+
+   
+   /* {
       title: <FormattedMessage id="pages.user.nickname" defaultMessage="Nickname" />,
       dataIndex: 'nickname',
       valueType: 'text',
@@ -284,11 +301,12 @@ const TableList: React.FC = () => {
       title: <FormattedMessage id="pages.user.phone" defaultMessage="Phone" />,
       dataIndex: 'phone',
       valueType: 'text',
-    },
+    },*/
     {
-      title: <FormattedMessage id="pages.user.company" defaultMessage="Company" />,
+      title: <FormattedMessage id="pages.user.xxx" defaultMessage="Organization" />,
       dataIndex: 'company_id',
       valueEnum: companyList,
+      sorter:true,
       search: {
         transform: (value) => {
           if (value) {
@@ -308,6 +326,7 @@ const TableList: React.FC = () => {
       title: <FormattedMessage id="pages.user.role" defaultMessage="Role" />,
       dataIndex: 'role_id',
       valueEnum: roleList,
+      sorter: true,
       search: {
         transform: (value) => {
           if (value) {
@@ -324,11 +343,11 @@ const TableList: React.FC = () => {
       }
     },
     {
-      title: <FormattedMessage id="pages.user.status" defaultMessage="Status" />,
+      title: <FormattedMessage id="pages.user.xxx" defaultMessage="Account Status" />,
       dataIndex: 'status',
       search: {
         transform: (value) => {
-          alert(value)
+          
           if (value !== null) {
             return {
 
@@ -344,7 +363,7 @@ const TableList: React.FC = () => {
         }
       },
       valueEnum: {
-        0: { text: <FormattedMessage id="pages.user.normal" defaultMessage="Normal" />, status: 'Success' },
+        0: { text: <FormattedMessage id="pages.user.normal" defaultMessage="Active" />, status: 'Success' },
         1: { text: <FormattedMessage id="pages.user.disable" defaultMessage="Disable" />, status: 'Error' },
       },
     },
@@ -368,6 +387,7 @@ const TableList: React.FC = () => {
 
         }
       },
+      hideInSearch:true,
       valueEnum: {
         0: { text: <FormattedMessage id="pages.user.online" defaultMessage="Online" />, status: 'Success' },
         1: { text: <FormattedMessage id="pages.user.offline" defaultMessage="Offline" />, status: 'Error' },
@@ -424,14 +444,18 @@ const TableList: React.FC = () => {
         </a>,
 
         
-        <a
+        record.online_status ==0 ?  <a
           key="force_logout"
+          title={"Force logout" }
           onClick={() => {
             outLogin({ user_id: currentRow?.id })
+            message.success("Force logout success");
           }}
         >
-          <FormattedMessage id="pages.user.forceLogout" defaultMessage="Force logout" />
-        </a>
+
+          <LogoutOutlined />
+          
+        </a>:null
       ],
     },
   ];
@@ -443,25 +467,23 @@ const TableList: React.FC = () => {
         const { innerWidth, innerHeight } = window;
 
         if (offset.width > 1280) {
-          setIsMP(false)
+         
           setResizeObj({ ...resizeObj, searchSpan: 8, tableScrollHeight: innerHeight - 420 });
         }
         if (offset.width < 1280 && offset.width > 900) {
-          setIsMP(false)
+        
           setResizeObj({ ...resizeObj, searchSpan: 12, tableScrollHeight: innerHeight - 420 });
         }
         if (offset.width < 900 && offset.width > 700) {
           setResizeObj({ ...resizeObj, searchSpan: 24, tableScrollHeight: innerHeight - 420 });
-          setIsMP(false)
+         
         }
 
-        if (offset.width < 700) {
-          setIsMP(true)
-        }
+        
 
       }}
     >
-    <PageContainer header={{
+      <PageContainer className="myPage" header={{
       title: isMP ? null : < FormattedMessage id="pages.user.title" defaultMessage="User" />,
       breadcrumb: {},
       extra: isMP ? null : [
@@ -472,7 +494,7 @@ const TableList: React.FC = () => {
             handleModalOpen(true);
           }}
         >
-          <PlusOutlined /> <FormattedMessage id="pages.searchTable.new" defaultMessage="New" />
+          <PlusOutlined /> <FormattedMessage id="pages.xxx" defaultMessage="Create New User" />
         </Button>,
       ]
     }}>
@@ -490,11 +512,7 @@ const TableList: React.FC = () => {
         options={false }
         request={(params, sorter) => user({ ...params, sorter })}
         columns={columns}
-        rowSelection={{
-          onChange: (_, selectedRows) => {
-            setSelectedRows(selectedRows);
-          },
-        }}
+       bordered
       />)}
 
       {isMP && (<>
@@ -507,7 +525,7 @@ const TableList: React.FC = () => {
         </NavBar>
 
         <div style={{ padding: '20px', backgroundColor: "#5187c4", display: showMPSearch ? 'block' : 'none' }}>
-          <Search columns={columns.filter(a => !a.hasOwnProperty('hideInSearch'))} action={actionRef} loading={false}
+          <Search columns={columns.filter(a => !(a.hasOwnProperty('hideInSearch') && a['hideInSearch']))} action={actionRef} loading={false}
 
             onFormSearchSubmit={onFormSearchSubmit}
 
@@ -515,8 +533,15 @@ const TableList: React.FC = () => {
             formRef={MPSearchFormRef}
             type={'form'}
             cardBordered={true}
-            form={{}}
+              form={{
+                submitter: {
+                  searchConfig: {
 
+                    submitText: < FormattedMessage id="pages.search" defaultMessage="Search" />,
+                  }
+
+                }
+              }}
             search={{}}
             manualRequest={true}
           />
@@ -547,41 +572,7 @@ const TableList: React.FC = () => {
           <InfiniteScrollContent hasMore={hasMore} />
         </InfiniteScroll>
       </>)}
-      {selectedRowsState?.length > 0 && (
-        <FooterToolbar
-          extra={
-            <div>
-              <FormattedMessage id="pages.searchTable.chosen" defaultMessage="Chosen" />{' '}
-              <a style={{ fontWeight: 600 }}>{selectedRowsState.length}</a>{' '}
-              <FormattedMessage id="pages.searchTable.item" defaultMessage="Item" />
-              &nbsp;&nbsp;
-            
-            </div>
-          }
-        >
-          <Button
-            onClick={async () => {
-              await handleRemove(selectedRowsState, (success) => {
-                if (success) {
-                  setSelectedRows([]);
-                  if (isMP) {
-                    setData([]);
-                    getData(1, MPfilter)
-                  }
-                  actionRef.current?.reloadAndRest?.();
-                }
-
-              });
-            }}
-          >
-            <FormattedMessage
-              id="pages.searchTable.batchDeletion"
-              defaultMessage="Batch deletion"
-            />
-          </Button>
-          
-        </FooterToolbar>
-      )}
+     
       
       <CreateForm
         onSubmit={async (value) => {

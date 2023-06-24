@@ -1,21 +1,21 @@
 import RcResizeObserver from 'rc-resize-observer';
 
 import { addAlert, removeAlert, alert as getAlert, updateAlert } from './service';
-
+import { fieldSelectData } from '@/services/ant-design-pro/api';
 import { updateTransaction } from '../transaction/service';
 
 import { Empty } from 'antd';
-import { PlusOutlined, SearchOutlined, ExclamationCircleOutlined, FormOutlined, DeleteOutlined } from '@ant-design/icons';
+import { PlusOutlined, SearchOutlined, ExclamationCircleOutlined, FormOutlined, DeleteOutlined, SwapOutlined, SortAscendingOutlined, SortDescendingOutlined } from '@ant-design/icons';
 import { ActionType, ProColumns, ProDescriptionsItemProps, ProCard } from '@ant-design/pro-components';
 import { AlertList, AlertListItem } from './data.d';
 import { flow } from '../system/flow/service';
 import { alertrule } from '../alertrule/service';
 import { SvgIcon } from '@/components' // 自定义组件
 import { producttype } from '../system/producttype/service';
-import { terminal } from '../system/terminal/service';
+import { organization } from '../system/company/service';
 import { history } from '@umijs/max';
 import numeral from 'numeral';
-
+import { jetty } from '../system/jetty/service';
 import {
   FooterToolbar,
   ModalForm,
@@ -27,8 +27,8 @@ import {
   Search,
   ProTable,
 } from '@ant-design/pro-components';
-import { FormattedMessage, useIntl, useLocation, formatMessage } from '@umijs/max';
-import { Button, Drawer, Input, message, Modal, ConfigProvider, FloatButton } from 'antd';
+import { FormattedMessage, useIntl, useLocation, formatMessage, useModel } from '@umijs/max';
+import { Button, Drawer, Input, message, Modal, ConfigProvider, FloatButton, Popover } from 'antd';
 import React, { useRef, useState, useEffect } from 'react';
 import CreateForm from './components/CreateForm';
 import UpdateForm from './components/UpdateForm';
@@ -101,7 +101,7 @@ const handleUpdate = async (fields: Partial<any>) => {
   />);
   try {
     
-    await updateAlert({ remarks: fields['t.remarks'], id: fields.id });
+    await updateAlert({ remarks: fields['remarks'], id: fields.id });
     hide();
 
     message.success(<FormattedMessage
@@ -140,17 +140,24 @@ const TableList: React.FC = () => {
   const [currentRow, setCurrentRow] = useState<AlertListItem>();
   const [selectedRowsState, setSelectedRows] = useState<AlertListItem[]>([]);
   const [producttypeList, setProducttypeList] = useState<any>({});
-  const [terminalList, setTerminalList] = useState<any>({});
+  const [organizationList, setOrganizationList] = useState<any>({});
   const [flowConf, setFlowConf] = useState<any>({});
   const [flowTree, setFlowTree] = useState<any>([]);
   const [processes, setProcesses] = useState<any>([]);
   const [events, setEvents] = useState<any>([]);
 
-
-  const [terminal_id, setTerminal_id] = useState<any>(useLocation()?.state?.terminal_id);
+  const [isMP, setIsMP] = useState<boolean>(!isPC());
+  const [organization_id, setTerminal_id] = useState<any>(useLocation()?.state?.organization_id);
   const [dateArr, setDateArr] = useState<any>(useLocation()?.state?.dateArr);
   const [status, setStatus] = useState<any>(useLocation()?.state?.status);
   const [flow_id, setFlow_id] = useState<any>(useLocation()?.state?.flow_id);
+  const { initialState, setInitialState } = useModel('@@initialState');
+  const { currentUser } = initialState || {};
+  const [jettyList, setJettyList] = useState<any>({});
+
+  const [tab, setTab] = useState(useLocation()?.state?.tab || 'Terminal');
+  
+
   /**
    * @en-US International configuration
    * @zh-CN 国际化配置
@@ -165,11 +172,21 @@ const TableList: React.FC = () => {
   //const MPSearchFormRef = useRef<ProFormInstance>();
 
   const [showMPSearch, setShowMPSearch] = useState<boolean>(false);
-  const [isMP, setIsMP] = useState<boolean>(!isPC());
+ 
   
   var showNoRead= useLocation()?.state?.showNoRead
 
-
+  const getOrganizationName = () => {
+    if (currentUser?.role_type == "Super") {
+      return 'Organization'
+    }
+    if (currentUser?.role_type == "Trader") {
+      return 'Terminal'
+    }
+    if (currentUser?.role_type == "Terminal") {
+      return 'Customer'
+    }
+  }
   const right = (
     <div style={{ fontSize: 24 }}>
       <Space style={{ '--gap': '16px' }}>
@@ -180,15 +197,15 @@ const TableList: React.FC = () => {
   )
 
   const onFormSearchSubmit = (a) => {
-
+   
 
     setData([]);
-    delete a._timestamp;
-    setMPfilter(a)
+   
+   
     setShowMPSearch(!showMPSearch)
     setCurrentPage(1)
 
-    getData(1, a)
+    getData(1)
   }
   const InfiniteScrollContent = ({ hasMore }: { hasMore?: boolean }) => {
     return (
@@ -208,30 +225,59 @@ const TableList: React.FC = () => {
   const [data, setData] = useState<string[]>([])
   const [hasMore, setHasMore] = useState(true)
   const [currentPage, setCurrentPage] = useState<number>(1)
-  const [MPfilter, setMPfilter] = useState<any>({})
+  const [MPSorter, setMPSorter] = useState<any>({});
 
-  async function getData(page, filter) {
+  async function getData(page) {
+   
+    var sorter = {}
+    await setMPSorter((sorter_) => {
+       sorter= sorter_
+      return sorter_
+    })
+
+
+    var tab1 = ''
+    await setTab((tab_) => {
+      tab1 = tab_
+      return tab_
+    })
+
+    var f = {}
+    for (var k in formRef.current?.getFieldsValue()) {
+      if (formRef.current?.getFieldsValue()[k] != undefined) {
+        f[k] = formRef.current?.getFieldsValue()[k]
+      }
+
+    }
     var d = {
       ...{
         "current": page,
         "pageSize": 10
 
-      }, ...filter
+      }, ...f, sorter
     }
+    console.log(d)
+
     if (showNoRead) {
       d.showNoRead = 1
     }
+    d.tab = tab1
    
     const append1 = await getAlert(d)
+    if (page == 1) {
+      setData([]);
+    }
+    const append = append1
 
-    const append=append1
     console.log(append)
     setData(val => [...val, ...append.data])
     setHasMore(10 * (page - 1) + append.data.length < append.total)
+   
+   
   }
   async function loadMore(isRetry: boolean) {
-   
-    await getData(currentPage, MPfilter)
+
+    await getData(currentPage)
     setCurrentPage(currentPage + 1)
   }
 
@@ -240,7 +286,14 @@ const TableList: React.FC = () => {
   
   useEffect(() => {
   
-   
+    jetty({ sorter: { name: 'ascend' } }).then((res) => {
+      var b = {}
+      res.data.forEach((r) => {
+        b[r.id] = r.name
+      })
+      setJettyList(b)
+
+    });
    
     flow({ sorter: { sort: 'ascend' } }).then((res) => {
       var b = { "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": "Entire Duration" }
@@ -260,8 +313,9 @@ const TableList: React.FC = () => {
 
       var treeData = tree(res.data, "                                    ", 'pid')
       setFlowTree(treeData)
-
+     
       alertrule({
+        tab,
         type: {
           'field': 'type',
           'op': 'eq',
@@ -287,9 +341,9 @@ const TableList: React.FC = () => {
     formRef.current?.setFieldValue('t.status', status+"")
   }
 
-  if (terminal_id) {
+  if (organization_id) {
 
-    formRef.current?.setFieldValue('t.terminal_id', terminal_id)
+    formRef.current?.setFieldValue('organization_id', organization_id)
   }
   if (dateArr && dateArr[0] && dateArr[1]) {
     formRef.current?.setFieldValue('t.start_of_transaction', dateArr)
@@ -306,7 +360,13 @@ const TableList: React.FC = () => {
    
       formRef.current?.setFieldValue('flow_id_to', arr)
     }
-    formRef.current?.submit();
+
+    
+    
+     
+      formRef.current?.submit();
+    
+    
 
   }
 
@@ -327,12 +387,12 @@ const TableList: React.FC = () => {
     });
    
 
-    terminal({ sorter: { name: 'ascend' } }).then((res) => {
+    organization({ sorter: { name: 'ascend' } }).then((res) => {
       var b = {}
       res.data.forEach((r) => {
         b[r.id] = r.name
       })
-      setTerminalList(b)
+      setOrganizationList(b)
 
 
 
@@ -347,7 +407,10 @@ const TableList: React.FC = () => {
 
 
 
-  }, [true]);
+  }, [tab]);
+
+
+  const [imo_numberData, setImo_numberData] = useState<any>({});
   const columns: ProColumns<AlertListItem>[] = [
 
     {
@@ -448,7 +511,8 @@ const TableList: React.FC = () => {
           <a
             onClick={() => {
               setCurrentRow(entity);
-              history.push(`/transaction/detail?transaction_id=` + entity.transaction_id);
+              history.push(`/transaction/detail`, { transaction_id: entity.transaction_id });
+            
               //setShowDetail(true);
             }}
           >
@@ -610,7 +674,24 @@ const TableList: React.FC = () => {
       title: <FormattedMessage id="pages.transaction.imoNumber" defaultMessage="IMO Number" />,
       dataIndex: 't.imo_number',
       align: "center",
-      valueType: 'text',
+      valueEnum: imo_numberData,
+      fieldProps: {
+        notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
+        showSearch: true,
+        allowClear: true,
+        onFocus: () => {
+          fieldSelectData({ model: "Transaction", value: '', field: 'imo_number' }).then((res) => {
+            setImo_numberData(res.data)
+          })
+        },
+        onSearch: (newValue: string) => {
+
+          fieldSelectData({ model: "Transaction", value: newValue, field: 'imo_number' }).then((res) => {
+            setImo_numberData(res.data)
+          })
+
+        }
+      }
     },
 
     {
@@ -627,11 +708,21 @@ const TableList: React.FC = () => {
       align: "center",
       valueType: 'text',
     },*/
+
     {
-      title: <FormattedMessage id="pages.transaction.terminalName" defaultMessage="Terminal Name" />,
-      dataIndex: 't.terminal_id',
-      align: "center",
-      valueEnum: terminalList,
+      title: getOrganizationName(),
+      dataIndex: 'organization_id',
+      sorter: true,
+      valueEnum: organizationList,
+      render: (dom, entity) => {
+
+        if (currentUser?.role_type == 'Terminal' && tab =="Terminal") {
+          return organizationList[entity['t.trader_id']]
+        }
+      
+          return organizationList[entity.company_id]
+       
+      },
       fieldProps: {
         notFoundContent: <Empty />,
       },
@@ -639,8 +730,8 @@ const TableList: React.FC = () => {
         transform: (value) => {
           if (value) {
             return {
-              't.terminal_id': {
-                'field': 't.terminal_id',
+              'organization_id': {
+                'field': 'organization_id',
                 'op': 'eq',
                 'data': value
               }
@@ -654,23 +745,23 @@ const TableList: React.FC = () => {
       title: (
         <FormattedMessage
           id="pages.transaction.xxx"
-          defaultMessage="Start Date"
+          defaultMessage="Threshold Triggered Time"
         />
       ),
-     
 
+      hideInDescriptions:true,
       hideInTable: true,
       fieldProps: { placeholder: ['From ', 'To '] },
      
-      dataIndex: 't.start_of_transaction',
+      dataIndex: 'created_at',
       valueType: 'dateRange',
 
       search: {
         transform: (value) => {
           if (value.length > 0) {
             return {
-              't.start_of_transaction': {
-                'field': 't.start_of_transaction',
+              'created_at': {
+                'field': 'created_at',
                 'op': 'between',
                 'data': value
               }
@@ -691,12 +782,14 @@ const TableList: React.FC = () => {
      // defaultSortOrder: 'descend',
       valueType: 'date',
       hideInTable: true,
+      hideInDescriptions: true,
       hideInSearch: true,
     },
     {
       title: <FormattedMessage id="pages.transaction.status" defaultMessage="Status" />,
       dataIndex: 't.status',
-      hideInTable:true,
+      hideInTable: true,
+      hideInDescriptions:true,
       sorter: true,
       valueEnum: {
         0: {
@@ -724,6 +817,29 @@ const TableList: React.FC = () => {
       },
     },
     {
+      title: <FormattedMessage id="pages.transaction.jettyName" defaultMessage="Jetty Name" />,
+      dataIndex: 't.jetty_id',
+      sorter: true,
+      valueEnum: jettyList,
+      fieldProps: {
+        notFoundContent: <Empty />,
+      },
+      search: {
+        transform: (value) => {
+          if (value) {
+            return {
+              't.jetty_id': {
+                'field': 't.jetty_id',
+                'op': 'eq',
+                'data': value
+              }
+            }
+          }
+
+        }
+      }
+    },
+    {
       title: <FormattedMessage id="pages.alert.specificProcess" defaultMessage="Remarks" />,
       dataIndex: 'remarks',
       hideInSearch: true,
@@ -735,24 +851,26 @@ const TableList: React.FC = () => {
 
          
 
-          <div style={{ position: 'absolute', right: 10, bottom:0 }}>
+          {tab == "Terminal" && <div>
             <Access accessible={access.canAlertMod()} fallback={<div></div>}>
-              <a
+             <a
                 title={formatMessage({ id: "pages.update", defaultMessage: "Modify" })}
                 key="config"
                 onClick={() => {
+                  setCurrentRow(record);
                   handleUpdateModalOpen(true);
 
 
 
-                  setCurrentRow(record);
+
                 }}
               >
                 <FormOutlined style={{ fontSize: '20px' }} />
 
               </a>
+           
             </Access>
-          </div>
+          </div>}
         </div>;
       },
     
@@ -793,29 +911,67 @@ const TableList: React.FC = () => {
         const { innerWidth, innerHeight } = window;
         var h = document.getElementsByClassName("ant-table-thead")?.[0]?.offsetHeight + 300 || 0
         if (offset.width > 1280) {
-          setIsMP(false)
+         
           setResizeObj({ ...resizeObj, searchSpan: 8, tableScrollHeight: innerHeight - h });
         }
         if (offset.width < 1280 && offset.width > 900) {
-          setIsMP(false)
+          
           setResizeObj({ ...resizeObj, searchSpan: 12, tableScrollHeight: innerHeight - h });
         }
         if (offset.width < 900 && offset.width > 700) {
           setResizeObj({ ...resizeObj, searchSpan: 24, tableScrollHeight: innerHeight - h });
-          setIsMP(false)
+          
         }
 
-        if (offset.width < 700) {
-          setIsMP(true)
-        }
+       
 
       }}
     >
-    <PageContainer header={{
+     
+      <PageContainer className="myPage" header={{
         title: isMP ? null : < FormattedMessage id="pages.transactions.xxx" defaultMessage="Threshold Triggered Alerts" />,
       breadcrumb: {},
       extra: isMP ? null : []
-    }}>
+      }}>
+
+        {currentUser?.role_type == "Terminal" && <ProCard
+          className="my-tab"
+          title={<div className="my-font-size" style={{ height: 14, lineHeight: '14px', fontSize: 12 }}>{tab =='Terminal'?'Alerts related to my own Terminal Threshold settings':'This threshold alert is reflective of my customer’s threshold alerts'}</div>}
+          headStyle={{ height: 14, lineHeight: '14px', fontSize: 12 }}
+          tabs={{
+            type: 'card',
+            //tabPosition,
+            activeKey: tab,
+            items: [
+              {
+                label: `Terminal`,
+                key: 'Terminal',
+                children: null,
+              },
+              {
+                label: `Customer`,
+                key: 'Trader',
+                children: null,
+              }
+            ],
+            onChange: (key) => {
+
+              setTab(key);
+              if (isMP) {
+
+
+                getData(1)
+
+
+              } else {
+
+                actionRef.current?.reload();
+
+
+              }
+            },
+          }}
+        />}  
       {!isMP && (<ConfigProvider renderEmpty={customizeRenderEmpty}> <ProTable<AlertListItem, API.PageParams>
           scroll={{ x: 2500, y: resizeObj.tableScrollHeight }}
           bordered size="small"
@@ -841,7 +997,7 @@ const TableList: React.FC = () => {
               d.showNoRead = 1
               console.log("sssssssssssssssssssssss")
             }
-         
+            d.tab=tab
             var list = await getAlert(d)
 
         
@@ -855,7 +1011,28 @@ const TableList: React.FC = () => {
 
       {isMP && (<>
 
-        <NavBar backArrow={false} right={right} onBack={back}>
+          <NavBar backArrow={false} left={<div> <Popover placement="bottom" title={""} content={<div>{columns.filter(a => (a.hasOwnProperty('sorter') && a['sorter'])).map((a) => {
+
+            return (<div><Button onClick={() => {
+              setMPSorter({ [a.dataIndex]: 'ascend' })
+
+
+              getData(1)
+
+
+            }} icon={<SortAscendingOutlined />} />
+              <Button style={{ margin: 5 }} onClick={() => {
+                setMPSorter({ [a.dataIndex]: 'descend' })
+
+                getData(1)
+
+              }} icon={<SortDescendingOutlined />} />
+              <span>{a.title}</span>
+            </div>)
+
+          })}</div>} trigger="click">
+            <SwapOutlined rotate={90} />
+          </Popover></div>} right={right} onBack={back}>
           {intl.formatMessage({
             id: 'pages.alert.xx',
             defaultMessage: 'Threshold Triggered Alerts',
@@ -863,7 +1040,7 @@ const TableList: React.FC = () => {
         </NavBar>
 
         <div style={{ padding: '20px', backgroundColor: "#5187c4", display: showMPSearch ? 'block' : 'none' }}>
-          <Search columns={columns.filter(a => !a.hasOwnProperty('hideInSearch'))} action={actionRef} loading={false}
+          <Search columns={columns.filter(a => !(a.hasOwnProperty('hideInSearch') && a['hideInSearch']))} action={actionRef} loading={false}
 
             onFormSearchSubmit={onFormSearchSubmit}
 
@@ -944,7 +1121,7 @@ const TableList: React.FC = () => {
             setCurrentRow(undefined);
             if (isMP) {
               setData([]);
-              getData(1, MPfilter)
+              getData(1)
             }
             if (actionRef.current) {
               actionRef.current.reload();

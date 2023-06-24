@@ -1,7 +1,7 @@
 import RcResizeObserver from 'rc-resize-observer';
 
 import { addJetty, removeJetty, jetty, updateJetty } from './service';
-import { PlusOutlined, SearchOutlined, FormOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { PlusOutlined, SearchOutlined, FormOutlined, DeleteOutlined, ExclamationCircleOutlined, SwapOutlined, SortAscendingOutlined, SortDescendingOutlined } from '@ant-design/icons';
 import type { ActionType, ProColumns, ProDescriptionsItemProps } from '@ant-design/pro-components';
 import { JettyList, JettyListItem } from './data.d';
 import * as XLSX from 'xlsx';
@@ -16,15 +16,15 @@ import {
   ProFormTextArea,
   ProTable,
 } from '@ant-design/pro-components';
-import { FormattedMessage, useIntl, formatMessage } from '@umijs/max';
-import { Button, Drawer, Input, message, Upload, Tooltip, Modal, Empty, ConfigProvider, FloatButton } from 'antd';
+import { FormattedMessage, useIntl, formatMessage, useModel } from '@umijs/max';
+import { Button, Drawer, Input, message, Upload, Tooltip, Modal, Empty, ConfigProvider, FloatButton, Popover } from 'antd';
 import React, { useRef, useState, useEffect } from 'react';
 import CreateForm from './components/CreateForm';
 import UpdateForm from './components/UpdateForm';
 import { useAccess, Access } from 'umi';
 import { terminal } from '../../system/terminal/service';
 import { isPC } from "@/utils/utils";
-
+import { organization } from '../../system/company/service';
 const { confirm } = Modal;
 //MP
 import { InfiniteScroll, List, NavBar, Space, DotLoading } from 'antd-mobile'
@@ -160,7 +160,7 @@ const TableList: React.FC = () => {
   const actionRef = useRef<ActionType>();
   const [currentRow, setCurrentRow] = useState<JettyListItem>();
   const [selectedRowsState, setSelectedRows] = useState<JettyListItem[]>([]);
-  const [terminalList, setTerminalList] = useState<any>({});
+  const [organizationList, setOrganizationList] = useState<any>({});
 
   /**
    * @en-US International configuration
@@ -168,19 +168,27 @@ const TableList: React.FC = () => {
    * */
   const intl = useIntl();
   const access = useAccess();
-
+  const { initialState, setInitialState } = useModel('@@initialState');
+  const { currentUser } = initialState || {};
   const [resizeObj, setResizeObj] = useState({ searchSpan: 12, tableScrollHeight: 300 });
   //--MP start
   const MPSearchFormRef = useRef<ProFormInstance>();
 
   const [showMPSearch, setShowMPSearch] = useState<boolean>(false);
+
+  const [MPSorter, setMPSorter] = useState<any>({});
+
+
+  
   const [isMP, setIsMP] = useState<boolean>(!isPC());
 
   const right = (
     <div style={{ fontSize: 24 }}>
       <Space style={{ '--gap': '16px' }}>
-        <SearchOutlined onClick={e => { setShowMPSearch(!showMPSearch) }} />
-        <PlusOutlined onClick={() => { handleModalOpen(true) }} />
+        {currentUser?.role_type != 'Terminal' && <SearchOutlined onClick={e => { setShowMPSearch(!showMPSearch) }} />}
+        <Access accessible={access.canJettyAdd()} fallback={<div></div>}>
+          <PlusOutlined onClick={() => { handleModalOpen(true) }} />
+          </Access>
       </Space>
     </div>
   )
@@ -194,7 +202,7 @@ const TableList: React.FC = () => {
     setShowMPSearch(!showMPSearch)
     setCurrentPage(1)
 
-    getData(1, a)
+    getData(1)
   }
   const InfiniteScrollContent = ({ hasMore }: { hasMore?: boolean }) => {
     return (
@@ -216,23 +224,42 @@ const TableList: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [MPfilter, setMPfilter] = useState<any>({})
 
-  async function getData(page, filter) {
-    const append = await jetty({
-      ...{
-        "current": page,
-        "pageSize": 10
+  async function getData(page) {
 
-      }, ...filter
+    var sorter = {}
+    await setMPSorter((sorter_) => {
+      sorter = sorter_
+      return sorter_
     })
+    var filter = {}
+    await setMPfilter((filter_) => {
+      filter = filter_
+      return filter_
+    })
+   
 
 
-    console.log(append)
-    setData(val => [...val, ...append.data])
-    setHasMore(10 * (page - 1) + append.data.length < append.total)
+        const append = await jetty({
+          ...{
+            "current": page,
+            "pageSize": 10
+
+          }, ...filter, sorter: sorter
+        })
+
+        if (page == 1) {
+          setData([]);
+        }
+        console.log(append)
+        setData(val => [...val, ...append.data])
+        setHasMore(10 * (page - 1) + append.data.length < append.total)
+        
+    
+    
   }
   async function loadMore(isRetry: boolean) {
 
-    await getData(currentPage, MPfilter)
+    await getData(currentPage)
     setCurrentPage(currentPage + 1)
   }
   //--MP end
@@ -240,12 +267,12 @@ const TableList: React.FC = () => {
   useEffect(() => {
 
    
-    terminal({ sorter: { name: 'ascend' } }).then((res) => {
+    organization({ type:'Terminal',sorter: { name: 'ascend' } }).then((res) => {
       var b = {}
       res.data.forEach((r) => {
         b[r.id] = r.name
       })
-      setTerminalList(b)
+      setOrganizationList(b)
 
     });
 
@@ -316,6 +343,18 @@ const TableList: React.FC = () => {
       return false;
     },
   };
+
+  const getOrganizationName = () => {
+    if (currentUser?.role_type == "Super") {
+      return 'Terminal'
+    }
+    if (currentUser?.role_type == "Trader") {
+      return 'Terminal'
+    }
+    if (currentUser?.role_type == "Terminal") {
+      return 'Customer'
+    }
+  }
   const columns: ProColumns<JettyListItem>[] = [
     {
       title: (
@@ -342,10 +381,26 @@ const TableList: React.FC = () => {
         );
       },
     },
+
     {
-      title: <FormattedMessage id="pages.jetty.terminals" defaultMessage="Terminal" />,
+      title: getOrganizationName(),
       dataIndex: 'terminal_id',
-      valueEnum: terminalList,
+      sorter: true,
+      hideInTable: currentUser?.role_type == 'Terminal' ? true : false,
+      hideInSearch: currentUser?.role_type == 'Terminal' ? true : false,
+    
+      valueEnum: organizationList,
+      render: (dom, entity) => {
+        if (currentUser?.role_type == 'Super') {
+          return organizationList[entity.terminal_id] 
+        } else if (currentUser?.role_type == 'Trader') {
+          return organizationList[entity.terminal_id]
+        } else if (currentUser?.role_type == 'Terminal') {
+          return organizationList[entity.terminal_id]
+        } else {
+          return "-"
+        }
+      },
       fieldProps: {
         notFoundContent: <Empty />,
       },
@@ -438,7 +493,7 @@ const TableList: React.FC = () => {
                 if (success) {
                   if (isMP) {
                     setData([]);
-                    getData(1, MPfilter)
+                    getData(1)
                   }
                   actionRef.current?.reloadAndRest?.();
                 }
@@ -478,26 +533,24 @@ const TableList: React.FC = () => {
         const { innerWidth, innerHeight } = window;
 
         if (offset.width > 1280) {
-          setIsMP(false)
+         
           setResizeObj({ ...resizeObj, searchSpan: 8, tableScrollHeight: innerHeight - 420 });
         }
         if (offset.width < 1280 && offset.width > 900) {
-          setIsMP(false)
+         
           setResizeObj({ ...resizeObj, searchSpan: 12, tableScrollHeight: innerHeight - 420 });
         }
         if (offset.width < 900 && offset.width > 700) {
           setResizeObj({ ...resizeObj, searchSpan: 24, tableScrollHeight: innerHeight - 420 });
-          setIsMP(false)
+          
         }
 
-        if (offset.width < 700) {
-          setIsMP(true)
-        }
+      
 
       }}
     >
-    <PageContainer header={{
-      title: isMP ? null : < FormattedMessage id="'pages.jetty.title" defaultMessage="Jetty Criteria" />,
+      <PageContainer className="myPage" header={{
+        title: isMP ? null : < FormattedMessage id="'pages.jetty.title" defaultMessage={"Jetty - "+  currentUser?.company_name} />,
       breadcrumb: {},
       extra: isMP ? null : [
         <Access accessible={access.canJettyAdd()} fallback={<div></div>}> <Button
@@ -508,13 +561,13 @@ const TableList: React.FC = () => {
           }}
         >
           <PlusOutlined /> <FormattedMessage id="pages.searchTable.new" defaultMessage="New" />
-        </Button></Access>, <Access accessible={access.canJettyAdd()} fallback={<div></div>}> <Upload {...uploadprops}>
+        </Button></Access>/*, <Access accessible={access.canJettyAdd()} fallback={<div></div>}> <Upload {...uploadprops}>
           <Tooltip title="">
             <Button type="primary">
               Batch Add
             </Button>
           </Tooltip>
-        </Upload></Access>
+        </Upload></Access>*/
       ]
     }}>
       {!isMP && (<ConfigProvider renderEmpty={customizeRenderEmpty}><ProTable<JettyListItem, API.PageParams>
@@ -524,11 +577,11 @@ const TableList: React.FC = () => {
         actionRef={actionRef}
           rowKey="id"
           scroll={{ x: 1800, y: resizeObj.tableScrollHeight }}
-        search={{
-          labelWidth: 80,
+          search={currentUser?.role_type != 'Terminal'?{
+          labelWidth: 130,
           span: resizeObj.searchSpan,
-          searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
-        }}
+            searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
+          } : false}
         options={false }
         request={(params, sorter) => jetty({ ...params, sorter })}
         columns={columns}
@@ -539,17 +592,38 @@ const TableList: React.FC = () => {
         }:false}
       /></ConfigProvider >)}
 
-      {isMP && (<>
+        {isMP && (<>
 
-        <NavBar backArrow={false} right={right} onBack={back}>
+          <NavBar backArrow={false} left={<div> <Popover placement="bottom" title={""} content={<div>{columns.filter(a => (a.hasOwnProperty('sorter') && a['sorter'])).map((a) => {
+
+            return (<div><Button onClick={() => {
+              setMPSorter({ [a.dataIndex]: 'ascend' })
+            
+              
+               getData(1)
+               
+             
+            }} icon={<SortAscendingOutlined />} />
+              <Button style={{ margin: 5 }} onClick={() => {
+                setMPSorter({ [a.dataIndex]: 'descend' })
+                
+                  getData(1)
+                
+              }} icon={<SortDescendingOutlined />} />
+              <span>{a.title}</span>
+            </div>)
+
+          })}</div>} trigger="click">
+            <SwapOutlined rotate={90} />
+          </Popover></div> } right={right} onBack={back}>
           {intl.formatMessage({
             id: 'pages.jetty.title',
-            defaultMessage: 'Jetty Criteria – Advario',
+            defaultMessage: 'Jetty - ' + currentUser?.company_name,
           })}
         </NavBar>
 
         <div style={{ padding: '20px', backgroundColor: "#5187c4", display: showMPSearch ? 'block' : 'none' }}>
-          <Search columns={columns.filter(a => !a.hasOwnProperty('hideInSearch'))} action={actionRef} loading={false}
+            <Search columns={columns.filter(a => !(a.hasOwnProperty('hideInSearch') && a['hideInSearch']))} action={actionRef} loading={false}
 
             onFormSearchSubmit={onFormSearchSubmit}
 
@@ -620,7 +694,7 @@ const TableList: React.FC = () => {
                   setSelectedRows([]);
                   if (isMP) {
                     setData([]);
-                    getData(1, MPfilter)
+                    getData(1)
                   }
                   actionRef.current?.reloadAndRest?.();
                 }
@@ -648,7 +722,7 @@ const TableList: React.FC = () => {
             setCurrentRow(undefined);
             if (isMP) {
               setData([]);
-              getData(1, MPfilter)
+              getData(1)
             }
             if (actionRef.current) {
               actionRef.current.reload();
@@ -673,7 +747,7 @@ const TableList: React.FC = () => {
             setCurrentRow(undefined);
             if (isMP) {
               setData([]);
-              getData(1, MPfilter)
+              getData(1)
             }
             if (actionRef.current) {
               actionRef.current.reload();

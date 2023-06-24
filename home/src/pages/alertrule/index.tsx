@@ -1,11 +1,12 @@
 
 import RcResizeObserver from 'rc-resize-observer';
 import { addAlertrule, removeAlertrule, alertrule, updateAlertrule } from './service';
-import { PlusOutlined, SearchOutlined, MoreOutlined, FormOutlined, DeleteOutlined, InfoCircleOutlined, ExclamationCircleOutlined, PrinterOutlined } from '@ant-design/icons';
+import { PlusOutlined, SearchOutlined, MoreOutlined, FormOutlined, DeleteOutlined, InfoCircleOutlined, ExclamationCircleOutlined, PrinterOutlined, EllipsisOutlined, SwapOutlined, SortAscendingOutlined, SortDescendingOutlined } from '@ant-design/icons';
 import type { ActionType, ProColumns, ProDescriptionsItemProps, ProTableProps } from '@ant-design/pro-components';
 import { AlertruleList, AlertruleListItem } from './data.d';
 import { GridContent } from '@ant-design/pro-layout';
 import { flow } from '../system/flow/service';
+import { organization } from '../system/company/service';
 import FrPrint from "../../components/FrPrint";
 //MP
 import { InfiniteScroll, List, NavBar, Space, DotLoading } from 'antd-mobile'
@@ -20,6 +21,7 @@ import {
   ProFormDigitRange,
   ProFormTextArea,
   ProFormGroup,
+  ProCard,
   ProFormTreeSelect,
   ProTable,
  
@@ -27,8 +29,8 @@ import {
   Search
 } from '@ant-design/pro-components';
 
-import { FormattedMessage, useIntl, useLocation, formatMessage } from '@umijs/max';
-import { Button, Drawer, Input, message, TreeSelect, Modal, Space as SpaceA, Empty, ConfigProvider, FloatButton } from 'antd';
+import { FormattedMessage, useIntl, useLocation, formatMessage, useModel } from '@umijs/max';
+import { Button, Drawer, Input, message, TreeSelect, Modal, Space as SpaceA, Empty, ConfigProvider, FloatButton, Popover } from 'antd';
 import React, { useRef, useState, useEffect } from 'react';
 import CreateForm from './components/CreateForm';
 import UpdateForm from './components/UpdateForm';
@@ -108,7 +110,13 @@ const handleAdd = async (fields: any) => {
  * @param fields
  */
 const handleUpdate = async (fields: Partial<AlertruleListItem>) => {
-  var d = { ...fields }
+
+
+  
+  var d = { amber_hours: null, amber_mins: null, red_hours: null, red_mins: null ,...fields }
+
+
+
   if (d.from_to) {
 
     d.size_of_vessel_from = Number(d.from_to.split("-")[0])
@@ -267,12 +275,34 @@ const TableList: React.FC = () => {
   const [showMPSearch, setShowMPSearch] = useState<boolean>(false);
   const [isMP, setIsMP] = useState<boolean>(!isPC());
   const [paramsText, setParamsText] = useState<string>('');
+  const [organizationList, setOrganizationList] = useState<any>({});
+  const access = useAccess();
+  const { initialState, setInitialState } = useModel('@@initialState');
+  const { currentUser } = initialState || {};
+  const [tab, setTab] = useState('Terminal');
+  const [MPSorter, setMPSorter] = useState<any>({});
+  const [moreOpen, setMoreOpen] = useState<boolean>(false);
   const right = (
     <div style={{ fontSize: 24 }}>
       <Space style={{ '--gap': '16px' }}>
         <SearchOutlined onClick={e => { setShowMPSearch(!showMPSearch) }} />
-        <PlusOutlined onClick={() => { handleModalOpen(true) }} />
+        <Access accessible={access.canAlertruleAdd()} fallback={<div></div>}>
+          {tab == 'Terminal' && <PlusOutlined onClick={() => { handleModalOpen(true) }} />}
+        </Access>
 
+        <Popover onOpenChange={(v) => { setMoreOpen(v) }} open={moreOpen} placement="bottom" title={""} content={<div><Button type="primary" style={{ marginRight:10 }} key="print"
+          onClick={() => {
+            setMoreOpen(false)
+            handlePrintModalVisible(true)
+          }}
+        ><PrinterOutlined /> <FormattedMessage id="pages.Print" defaultMessage="Print" />
+        </Button>
+
+        </div>} trigger="click">
+          <EllipsisOutlined />
+
+
+        </Popover>
       </Space>
     </div>
   )
@@ -308,7 +338,22 @@ const TableList: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [MPfilter, setMPfilter] = useState<any>({})
 
-  async function getData(page, filter) {
+  async function getData(page, filter__) {
+    var tab1 = ''
+    await setTab((tab_) => {
+      tab1 = tab_
+      return tab_
+    })
+    var sorter = {}
+    await setMPSorter((sorter_) => {
+      sorter = sorter_
+      return sorter_
+    })
+    var filter = {}
+    await setMPfilter((filter_) => {
+      filter = filter_
+      return filter_
+    })
     const append = await alertrule({
       ...{
         "current": page,
@@ -316,9 +361,11 @@ const TableList: React.FC = () => {
         "sorter": {
           "type": "ascend"
         }
-      }, ...filter
+      }, ...filter, tab: tab1, sorter
     })
-    
+    if (page == 1) {
+      setData([]);
+    }
     console.log(append)
     setData(val => [...val, ...append.data])
     setHasMore(10 * (page - 1) + append.data.length < append.total)
@@ -342,7 +389,14 @@ const TableList: React.FC = () => {
         handleModalOpen(true)
       }
     }
-   
+    organization({ sorter: { name: 'ascend' } }).then((res) => {
+      var b = {}
+      res.data.forEach((r) => {
+        b[r.id] = r.name
+      })
+      setOrganizationList(b)
+
+    })
 
     flow({ sorter: { sort: 'ascend' } }).then((res) => {
       var b = { "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": intl.formatMessage({
@@ -371,6 +425,7 @@ const TableList: React.FC = () => {
       setFlowTree(treeData)
      
       alertrule({
+        tab,
         type: {
           'field': 'type',
           'op': 'eq',
@@ -389,15 +444,34 @@ const TableList: React.FC = () => {
 
       });
     });
-  },[true]);
+   
+  },[tab]);
   /**
    * @en-US International configuration
    * @zh-CN 国际化配置
    * */
   const intl = useIntl();
-  const access = useAccess();
+ 
   const formRef = useRef<ProFormInstance>();
   const columns: ProColumns<AlertruleListItem>[] = [
+
+
+    {
+      title: (
+        <FormattedMessage
+          id="pages.alert.xxx"
+          defaultMessage="Threshold ID"
+        />
+      ),
+
+      dataIndex: 'alertrule_id',
+      hideInSearch: true,
+      sorter: true,
+      align: "center",
+      render: (dom, entity) => {
+        return dom
+      },
+    },
 
     {
       title: <FormattedMessage id="pages.alertrule.type" defaultMessage="Threshold Type" />,
@@ -731,10 +805,17 @@ const TableList: React.FC = () => {
 
 
     {
-      title: <FormattedMessage id="pages.alertrule.userName" defaultMessage="User Name" />,
+      title: currentUser?.role_type == 'Terminal' ? (tab == 'Terminal' ? 'Created By' : 'Customer'): 'Created By',
       dataIndex: 'username',
       hideInSearch: true,
-      
+      render: (dom, entity) => {
+        if (currentUser?.role_type == 'Terminal') {
+          return tab == 'Terminal' ? dom.split('@')[0]: organizationList[entity.company_id]
+        } else {
+          return dom.split('@')[0]
+        }
+
+      },
       valueType: 'text',
     },
     {
@@ -746,12 +827,38 @@ const TableList: React.FC = () => {
       valueType: 'dateTime',
     },
     
-    
+    {
+      title: currentUser?.role_type == 'Terminal' ?"Customer": "Organization",
+      dataIndex: 'organization_id',
+      sorter: true,
+      valueEnum: organizationList,
+      hideInSearch: currentUser?.role_type=='Trader'?true:false,
+      hideInTable: true,
+      hideInDescriptions:true,
+      fieldProps: {
+        notFoundContent: <Empty />,
+      },
+      search: {
+        transform: (value) => {
+          if (value) {
+            return {
+              'organization_id': {
+                'field': 'organization_id',
+                'op': 'eq',
+                'data': value
+              }
+            }
+          }
+
+        }
+      }
+    },
    
     {
       title: <FormattedMessage id="pages.searchTable.titleOption" defaultMessage="Operating" />,
       dataIndex: 'option',
       valueType: 'option',
+      hideInTable:tab=="Trader"?true:false,
       render: (_, record) => [
 
         <Access accessible={access.canAlertruleMod()} fallback={<div></div>}>
@@ -862,7 +969,13 @@ const TableList: React.FC = () => {
 
 
   }
+
+ 
   return (
+
+
+
+
     <RcResizeObserver
       key="resize-observer"
       onResize={(offset) => {
@@ -870,30 +983,29 @@ const TableList: React.FC = () => {
        
         var h = document.getElementsByClassName("ant-table-thead")?.[0]?.offsetHeight + 300
         if (offset.width > 1280) {
-          setIsMP(false)
+         
           setResizeObj({ ...resizeObj, searchSpan: 8, tableScrollHeight: innerHeight - h });
         }
         if (offset.width < 1280 && offset.width > 900) {
-          setIsMP(false)
+        
           setResizeObj({ ...resizeObj, searchSpan: 12, tableScrollHeight: innerHeight - h });
         }
         if (offset.width < 900 && offset.width > 700) {
           setResizeObj({ ...resizeObj, searchSpan: 24, tableScrollHeight: innerHeight - h });
-          setIsMP(false)
+         
         }
        
-        if (offset.width <700) {
-          setIsMP(true)
-        }
-
+       
         
       }}
     >
-      <PageContainer header={{
+
+      
+      <PageContainer className="myPage" header={{
         title: isMP ? null : < FormattedMessage id="pages.alertrule.title" defaultMessage="Threshold Limit List" /> ,
       breadcrumb: {},
       extra: isMP?null:[<Access accessible={access.canAlertruleAdd()} fallback={<div></div>}>
-        <Button
+        {tab =='Terminal' &&  <Button
 
           type="primary"
           key="primary"
@@ -902,7 +1014,7 @@ const TableList: React.FC = () => {
           }}
         >
           <PlusOutlined /> <FormattedMessage id="pages.searchTable.new" defaultMessage="Create New" />
-        </Button>
+        </Button>}
       </Access>, <Button type="primary" key="print"
         onClick={() => {
           if (selectedRowsState.length == 0) {
@@ -916,7 +1028,40 @@ const TableList: React.FC = () => {
         }}
       ><PrinterOutlined /> <FormattedMessage id="pages.Print" defaultMessage="Print" />
         </Button>]
-    }}>
+      }}>
+
+
+        {currentUser?.role_type == "Terminal" && <ProCard
+          title={<div className="my-font-size" style={{ height: 14, lineHeight: '14px', fontSize: 12 }}>Threshold set by</div>}
+          headStyle={{ height: 14, lineHeight: '14px', fontSize: 12 }}
+          className="my-tab"
+          tabs={{
+            type: 'card',
+            //tabPosition,
+            activeKey: tab,
+            items: [
+              {
+                label: `Terminal`,
+                key: 'Terminal',
+                children: null,
+              },
+              {
+                label: `Customer`,
+                key: 'Trader',
+                children: null,
+              }
+            ],
+            onChange: (key) => {
+              setTab(key);
+              if (isMP) {
+                getData(1)
+              } else {
+                actionRef.current?.reload();
+              }
+
+            },
+          }}
+        />}  
       {!isMP && (<ConfigProvider renderEmpty={customizeRenderEmpty}><ProTable<AlertruleListItem, API.PageParams>
        
         formRef={formRef}
@@ -934,7 +1079,7 @@ const TableList: React.FC = () => {
         toolBarRender={() => []
 
         }
-        request={(params, sorter) => alertrule({ ...params, sorter })}
+        request={(params, sorter) => alertrule({ ...params, sorter,tab })}
         columns={columns}
         rowSelection={access.canAlertruleDel()?{
           onChange: (_, selectedRows) => {
@@ -945,7 +1090,28 @@ const TableList: React.FC = () => {
 
       {isMP && (<>
        
-        <NavBar backArrow={false} right={right} onBack={back}>
+          <NavBar backArrow={false} left={<div> <Popover placement="bottom" title={""} content={<div>{columns.filter(a => (a.hasOwnProperty('sorter') && a['sorter'])).map((a) => {
+
+            return (<div><Button onClick={() => {
+              setMPSorter({ [a.dataIndex]: 'ascend' })
+
+
+              getData(1)
+
+
+            }} icon={<SortAscendingOutlined />} />
+              <Button style={{ margin: 5 }} onClick={() => {
+                setMPSorter({ [a.dataIndex]: 'descend' })
+
+                getData(1)
+
+              }} icon={<SortDescendingOutlined />} />
+              <span>{a.title}</span>
+            </div>)
+
+          })}</div>} trigger="click">
+            <SwapOutlined rotate={90}  />
+          </Popover></div>} right={right} onBack={back}>
           {intl.formatMessage({
             id: 'pages.alertrule.title',
             defaultMessage: 'Threshold Limit List',
@@ -953,7 +1119,7 @@ const TableList: React.FC = () => {
         </NavBar>
 
         <div style={{ padding: '20px', backgroundColor: "#5187c4", display: showMPSearch ? 'block' : 'none' }}>
-          <Search columns={columns.filter(a => !a.hasOwnProperty('hideInSearch'))} action={actionRef} loading={false}
+          <Search columns={columns.filter(a => !(a.hasOwnProperty('hideInSearch') && a['hideInSearch']))} action={actionRef} loading={false}
 
             onFormSearchSubmit={onFormSearchSubmit}
 
@@ -1054,7 +1220,7 @@ const TableList: React.FC = () => {
           }
         }}
         updateModalOpen={updateModalOpen}
-        values={currentRow || {}}
+          values={{ ...currentRow, type: currentRow?.type + "", flow_id: currentRow?.type == 2 ? null : currentRow?.flow_id } || {}}
       />
 
       <Drawer
@@ -1094,7 +1260,7 @@ const TableList: React.FC = () => {
           title={""}
           subTitle={paramsText}
           columns={columns}
-          dataSource={[...selectedRowsState/*, sumRow*/]}
+          dataSource={[...(isMP ? data : selectedRowsState)/*, sumRow*/]}
           onCancel={() => {
             handlePrintModalVisible(false);
           }}

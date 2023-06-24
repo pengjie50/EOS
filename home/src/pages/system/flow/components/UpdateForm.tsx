@@ -218,6 +218,15 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         })}
         width="md"
       />
+
+      <ProFormText
+        name="code"
+        label={intl.formatMessage({
+          id: 'pages.flow.xxx',
+          defaultMessage: 'Code',
+        })}
+        width="md"
+      />
       <ProFormTextArea
         name="description"
         width="md"

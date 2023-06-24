@@ -1,6 +1,6 @@
 import React, { useRef, useState, useEffect,useCallback } from 'react';
 import { PageContainer, ProCard, ProColumns, ProDescriptions, ProFormGroup, ProFormSelect, ProDescriptionsItemProps } from '@ant-design/pro-components';
-import { AlertOutlined, SafetyCertificateOutlined, FormOutlined, CheckOutlined, ReloadOutlined, FieldTimeOutlined,CalendarOutlined, EyeOutlined, ExclamationCircleOutlined, AimOutlined } from '@ant-design/icons'; 
+import { AlertOutlined, SafetyCertificateOutlined, FormOutlined, CheckOutlined, ReloadOutlined, FieldTimeOutlined, CalendarOutlined,DownCircleOutlined,EyeOutlined, ExclamationCircleOutlined, AimOutlined } from '@ant-design/icons'; 
 import ProTable from '@ant-design/pro-table';
 import { FormattedMessage, useIntl, useLocation, useModel, history } from '@umijs/max';
 import { TransactionList, TransactionListItem } from '../data.d';
@@ -18,6 +18,7 @@ import { terminal } from '../../system/terminal/service';
 import { producttype } from '../../system/producttype/service';
 import { jetty } from '../../system/jetty/service';
 import { alertrule } from '../../alertrule/service';
+import { organization } from '../../system/company/service';
 import numeral from 'numeral';
 var moment = require('moment');
 
@@ -169,7 +170,9 @@ const Detail: React.FC<any> = (props) => {
   const { initialState } = useModel('@@initialState');
   const { currentUser } = initialState || {};
   const [show, setShow] = useState<any>({});
-  var transaction_id = useLocation().search.split("=")[1]
+  const [organizationList, setOrganizationList] = useState<any>({});
+  const [organization_id, setOrganization_id] = useState<any>("");
+  var transaction_id = useLocation()?.state?.transaction_id
 
   const [createModalOpen, handleModalOpen] = useState<boolean>(false);
   const [isAdd, setIsAdd] = useState<boolean>(false);
@@ -182,6 +185,9 @@ const Detail: React.FC<any> = (props) => {
   const [validateStatus, setValidateStatus] = useState<any>(0);
   const [validateData, setValidateData] = useState<any>([]);
   const [selectValue, setSelectValue] = useState<any>(null);
+  const [tab, setTab] = useState(useLocation()?.state?.tab || 'Terminal');
+
+  const [thresholdExpand, setThresholdExpand] = useState<boolean>(false);
   
   const getTimeStr=(time)=>{
     return (time ? parseInt((time / 3600) + "") : 0 )+ "h " +( time? parseInt((time % 3600) / 60):0) + "m"
@@ -463,7 +469,17 @@ const Detail: React.FC<any> = (props) => {
 
     });
 
-    alertrule({ transaction_id: {
+    organization({ sorter: { name: 'ascend' } }).then((res) => {
+      var b = {}
+      res.data.forEach((r) => {
+        b[r.id] = r.name
+      })
+      setOrganizationList(b)
+
+    })
+
+    alertrule({
+      organization_id,tab,transaction_id: {
       'field': 'transaction_id',
         'op': 'eq',
       'data': transaction_id
@@ -483,6 +499,16 @@ const Detail: React.FC<any> = (props) => {
         }
         
       })
+        for (var i in b) {
+          b[i]=b[i].sort((a, b) => {
+            var sa = (a.amber_hours || 0) * 60 + (a.amber_mins || 0) + (a.red_hours || 0) * 60 + (a.red_mins || 0)
+            var sb = (b.amber_hours || 0) * 60 + (b.amber_mins || 0) + (b.red_hours || 0) * 60 + (b.red_mins || 0)
+            
+            return sa - sb
+          })
+
+        }
+
       setAlertruleProcessMap(b)
       setAlertruleEventList(c)
 
@@ -491,6 +517,8 @@ const Detail: React.FC<any> = (props) => {
 
 
     getAlertBytransactionId({
+      tab,
+      organization_id,
       transaction_id: {
        
           'field': 'transaction_id',
@@ -705,7 +733,19 @@ const Detail: React.FC<any> = (props) => {
           obj = { duration: 0, process_duration: 0, status: 0, event_count: 0,eventArr:[] ,start_date:null}
         }
         obj.eventArr.push(a)
+
+       
+        var ne = res.data[index + 1]
+        if (ne && a.flow_pid == ne.flow_pid) {
+         
+          a.event_duration = getTimeStr((new Date(ne.event_time).getTime() - new Date(a.event_time).getTime()) / 1000)
+
+        }
+
+
         transactioneventMap.set(a.flow_id, a);
+
+       
 
         var next = res.data[index + 1]
         if (next) {
@@ -719,6 +759,7 @@ const Detail: React.FC<any> = (props) => {
         processMap[a.flow_pid] = obj
 
       })
+
       for (var k in processMap) {
         var ps = processMap[k].eventArr[0]
         var es = processMap[k].eventArr[processMap[k].eventArr.length - 1]
@@ -809,7 +850,7 @@ const Detail: React.FC<any> = (props) => {
        
       };
     },
-    []
+    [tab, organization_id]
   );
 
   var color = {
@@ -826,12 +867,65 @@ const Detail: React.FC<any> = (props) => {
       background: '#F5F7FA',
     }}
   >
+    
+    {currentUser?.role_type == "Terminal" && <ProCard
+      className="my-tab"
+      title={<div className="my-font-size" style={{ height: 14, lineHeight: '14px', fontSize: 12 }}>{tab == 'Terminal' ? 'This transaction is reflective of my own Terminal threshold alerts.' : 'This transaction is reflective of my customer threshold alerts'}</div>}
+      headStyle={{ height: 14, lineHeight: '14px', fontSize: 12 }}
+     
+      tabs={{
+        type: 'card',
+        //tabPosition,
+        activeKey: tab,
+        items: [
+          {
+            label: `Terminal`,
+            key: 'Terminal',
+            children: null,
+          },
+          {
+            label: `Customer`,
+            key: 'Trader',
+            children:null,
+          }
+        ],
+        onChange: (key) => {
+          setTab(key);
+          //actionRef.current.reload();
+        },
+      }}
+    />}  
     <PageContainer
 
       header={{
-        title: "Transaction - "+currentRow?.eos_id
+        title: "Transaction - " + currentRow?.eos_id
 
       }}
+
+      extra={
+
+        tab == 'Trader' &&
+        <ProFormSelect
+
+          style={{ width: 200 }}
+          allowClear={true}
+          valueEnum={organizationList}
+
+
+          fieldProps={{
+            dropdownMatchSelectWidth: isMP ? true : false,
+            onSelect: (a) => {
+
+              setOrganization_id(a)
+
+            }
+          }}
+
+          placeholder={'Filter By: Customer'}
+
+
+        />
+      }
 
     >
 
@@ -1008,8 +1102,10 @@ const Detail: React.FC<any> = (props) => {
            <div style={{ fontSize: '14px', height: 35, lineHeight: '35px', color: "#808080" }}>
               End Time
             </div>
-          <div style={{ fontSize: '14px', height: 35, lineHeight: '35px', color: "#808080" }}>
-            Threshold
+            <div style={{ fontSize: '14px', height: 35, lineHeight: '35px', color: "#808080" }} onClick={() => {
+              setThresholdExpand(!thresholdExpand)
+            } }>
+              Threshold <DownCircleOutlined rotate={thresholdExpand?180:0} />
           </div>
 
         
@@ -1084,7 +1180,7 @@ const Detail: React.FC<any> = (props) => {
                 {p ? p.end_date : ""}
               </div>
 
-              <div style={{ fontSize: '12px', lineHeight: "35px" }}>
+              <div style={{ fontSize: '12px', lineHeight: "35px", height: thresholdExpand ? 'auto' : 30, overflow: 'hidden' }}>
 
                 {arArr && arArr.map((ar) => {
 
@@ -1169,10 +1265,10 @@ const Detail: React.FC<any> = (props) => {
 
       {isMP && (<ProCard ghost={true} style={{ marginBlockStart: 16 }}><div style={{ width: '100%', height: 'auto', overflow: 'auto', padding: "10px", backgroundColor: "#FFF" }}>
         <div style={{ position: 'relative', float: 'left', zIndex: 1, textAlign: 'left', marginRight: 10, width: '100%' }}>
-          <div style={{ float: 'left', width: 40, height: 40, width: '40px' }}>
+          <div style={{ float: 'left', width: 1, height: 40 }}>
             
           </div>
-          <div style={{ position: 'relative', zIndex: 1, marginLeft: 5, fontSize: '14px', color: "#808080", width: '200px', float: 'left' }}>
+          <div style={{ position: 'relative', zIndex: 1, marginLeft: 0, fontSize: '14px', color: "#808080", width: '250px', float: 'left' }}>
             Processes
           </div>
          
@@ -1253,28 +1349,28 @@ const Detail: React.FC<any> = (props) => {
             
               </div>
 
-            <div style={{ fontSize: '10px', lineHeight: '20px', width: '80%', marginLeft:40, display: "inline-block" }}>
-             
-                {arArr && arArr.map((ar) => {
+            {arArr && arArr.length > 0 && <div style={{ fontSize: '10px', lineHeight: '20px', width: '80%', marginLeft: 40, display: "inline-block" }}>
 
-                  return (<div> <Threshold hours={ar.amber_hours} opacity={ar.amber ? 1 : 0.3} mins={ar.amber_mins} type="amber" size={10} /> &nbsp;
+              {arArr && arArr.map((ar) => {
 
-                    <Threshold hours={ar.red_hours} opacity={ar.red ? 1 : 0.3} mins={ar.red_mins} type="red" size={10} /></div>)
-                })
-                }
-              </div>
+                return (<div> <Threshold hours={ar.amber_hours} opacity={ar.amber ? 1 : 0.3} mins={ar.amber_mins} type="amber" size={10} /> &nbsp;
+
+                  <Threshold hours={ar.red_hours} opacity={ar.red ? 1 : 0.3} mins={ar.red_mins} type="red" size={10} /></div>)
+              })
+              }
+            </div>} 
 
             
           
-              <div style={{ height: '30px', position: 'relative', float: 'left', width: '100%' }}>
+            {p && p.process_duration > 0 &&  <div style={{ height: '30px', position: 'relative', float: 'left', width: '100%' }}>
 
-                <div style={{ position: 'relative', marginLeft: '19px', fontSize: "14px", height: 20, lineHeight: '20px', zIndex: 1 }}>
-                  {p && p.process_duration > 0 && (<SvgIcon style={{ color: "#d2d2d2" }} type={'icon-map-connect-full'} />)}
+              <div style={{ position: 'relative', marginLeft: '19px', fontSize: "14px", height: 20, lineHeight: '20px', zIndex: 1 }}>
+                {p && p.process_duration > 0 && (<SvgIcon style={{ color: "#d2d2d2" }} type={'icon-map-connect-full'} />)}
 
-                  <span style={{ display: 'inline-block', height: 20, marginLeft: 5, lineHeight: '20px', fontSize: "14px" }}>  {p && p.process_duration > 0 ? getTimeStr(p.process_duration) : ""}</span>
-                </div>
-
+                <span style={{ display: 'inline-block', height: 20, marginLeft: 5, lineHeight: '20px', fontSize: "14px" }}>  {p && p.process_duration > 0 ? getTimeStr(p.process_duration) : ""}</span>
               </div>
+
+            </div>} 
 
 
           </div>
@@ -1314,7 +1410,7 @@ const Detail: React.FC<any> = (props) => {
           <div style={{ fontSize: '14px', float: 'left', height: '40px', lineHeight: '40px', color: "#333" }}>
 
           </div>
-          <div style={{ fontSize: '10px', float: 'left', color: validateStatus == 2 ? "#67C23A" : "#808080", height: '40px', marginLeft:'5px', textAlign: "left", lineHeight: '40px'}}>
+          <div style={{ fontSize: '10px', float: 'left', color: validateStatus == 2 ? "#67C23A" : "#808080", height: '40px', marginLeft:'5px', textAlign: "left", lineHeight: '20px',width:'80%'}}>
             {currentRow?.bliockchain_hex_key ? (validateStatus == 2 ? "Timestamps uploaded and validated on Polygon blockchain" : "Timestamps not validated on blockchain") : "Timestamps to be uploaded to Polygon blockchain"}
           </div>
         </div>
@@ -1401,7 +1497,7 @@ const Detail: React.FC<any> = (props) => {
       </ProCard>
       
 
-      <ProCard style={{ marginBlockStart: 16 }} title={<><span>Detailed Timestamps</span>&nbsp;
+      <ProCard style={{ marginBlockStart: 16 }} title={<><span>Detailed Timestamps</span>&nbsp; {!isMP ? <>
         <Button onClick={() => {
           setSelectValue(null)
           setCurrentFilter(null);
@@ -1422,8 +1518,8 @@ const Detail: React.FC<any> = (props) => {
             a[i] = false
           }
           setShow(a)
-        }} style={{ cursor: 'pointer', marginTop: isMP ? 10 : 0 }}>Collapse All</Button>&nbsp;</>}
-        bordered headerBordered
+        }} style={{ cursor: 'pointer', marginTop: isMP ? 10 : 0 }}>Collapse All</Button>&nbsp;</>:null}</>}
+        bordered headerBordered={isMP ? false : true}
         extra={<Select
           style={{ width: 200 }}
           allowClear={true}
@@ -1456,11 +1552,41 @@ const Detail: React.FC<any> = (props) => {
           options={filterOfTimestampsList}
         />}
       >
+        {isMP && <div className="my-fond-size" style={{ height: 50,marginTop:-20 }}>
+          <ProCard ghost={true} bodyStyle={{ height: 50 }} gutter={10 }>
+          <ProCard ghost={true}>
+              <Button size="small" onClick={() => {
+              setSelectValue(null)
+              setCurrentFilter(null);
+              setIsAdd(false)
+              handlegetFlowFilter("")
+            }} style={{ cursor: 'pointer', marginTop: isMP ? 10 : 0 }}>Reset View </Button>
 
-       
 
+          </ProCard>
+            <ProCard ghost={true}>
+              <Button size="small" onClick={() => {
+              var a = { ...show }
+              for (var i in a) {
+                a[i] = true
+              }
 
-      <div style={{ backgroundColor: "#fff", position: 'relative', width: '100%', height: 'auto', overflow:'auto' }}>
+              setShow(a)
+            }} style={{ cursor: 'pointer', marginTop: isMP ? 10 : 0 }}>Expand All</Button>
+          </ProCard>
+          <ProCard ghost={true}>
+              <Button size="small" onClick={() => {
+              var a = { ...show }
+              for (var i in a) {
+                a[i] = false
+              }
+              setShow(a)
+            }} style={{ cursor: 'pointer', marginTop: isMP ? 10 : 0 }}>Collapse All</Button>
+          </ProCard>
+          </ProCard>
+        </div>} 
+
+      <div style={{ backgroundColor: "#fff", position: 'relative', width: '100%', height: 'auto' }}>
        
 
 
@@ -1469,7 +1595,7 @@ const Detail: React.FC<any> = (props) => {
             direction={'vertical'}
            
           size="default"
-            style={{ float: 'left', width: isMP ? '100%' : '70%', marginLeft: isMP ? '0px' : '25%', marginTop: 0, overflow: 'auto', maxWidth:'100%' }}
+            style={{ float: 'left', width: isMP ? '100%' : '70%', marginLeft: isMP ? '0px' : '25%', marginTop: 0, maxWidth:'100%' }}
         >
 
             {flowTreeFilter.map(e => {
@@ -1515,14 +1641,14 @@ const Detail: React.FC<any> = (props) => {
                 show[e.id] = !show[e.id]
                 setShow({ ...show })
 
-                }}> <span className="my-title"  style={{paddingRight: '20px', fontWeight:500, display: 'block', width: 400, textAlign: "left", fontSize: "16px", lineHeight: "20px", height: 20 }}>{e.name}</span>
+                }}> <span className="my-title" style={{ paddingRight: '20px', fontWeight: 500, display: 'block', width: '100%', textAlign: "left", fontSize: "16px", lineHeight: "20px", height: 20 }}>{e.name}</span>
 
                   {p && <span className="my-title" style={{ paddingRight: '20px', display: 'block', width: '100%', textAlign: "left", fontSize: "16px", lineHeight: "20px", height: 20 }}>Starting time: {p ? p.start_date : ""} </span>}
                   {p && <span className="my-title" style={{ paddingRight: '20px', display: 'block', width: '100%', textAlign: "left", fontSize: "16px", lineHeight: "20px", height: 20 }}>Ending time: {p ? p.end_date : ""}</span>} 
 
                   {p && <span className="my-title" style={{ display: 'block', textAlign: "left", fontSize: "14px", lineHeight: "20px", height: 20 }}>Process Duration: {p ? getTimeStr(p.duration) : "0h 00m"}</span>}</div>} description={<div >{
 
-                  e.children?.map((c,ni) => {
+                  e.children?.map((c) => {
                     if (!show[e.id]) {
 
                       return
@@ -1530,16 +1656,15 @@ const Detail: React.FC<any> = (props) => {
 
                     var te = transactioneventMap.get(c.id)
 
-                    var ne = e.children[ni + 1]
+                   
 
                     var event_duration=null
-                    if (te && ne) {
-                      ne = transactioneventMap.get(ne.id)
-                      if (ne) {
+                    if (te ) {
+                     
                         
-                        event_duration = getTimeByTwoEvent(c.id, e.children[ni + 1].id)
+                      event_duration = te.event_duration
                         
-                      }
+                      
                       
                     }
                    
@@ -1547,21 +1672,36 @@ const Detail: React.FC<any> = (props) => {
                     return (
 
                       (te || access.canAdmin) && <ProCard
-                        headStyle={{ width:'450px' }}
-                        style={{ marginTop: 30, maxWidth: "100%" }}
-                        title={[<span className="timestamp-hover" style={{ marginLeft: 22,fontSize: "12px", display: 'inline-block', width: '350px', border: "1px solid #d2d2d2", padding: "5px", borderRadius: '5px', fontWeight: 'normal' }}>
-                          <div>{c.name}</div>
-                          <div><CalendarOutlined /> {moment(te?.event_time).format('DD MMMM YYYY')} &nbsp;&nbsp;&nbsp;&nbsp;<FieldTimeOutlined /> {moment(te?.event_time).format('h:mm a') }</div>
 
-                          
+                        style={{ marginBottom: 25, width: '100%' }}
+                        title={
+                         
+                            <div className="timestamp-hover" style={{ marginLeft: 22, fontSize: "12px", display: 'inline-block', width: '100%', border: "1px solid #d2d2d2", padding: "5px", borderRadius: '5px', fontWeight: 'normal' }}>
 
-                        </span>,<div style={{ position: 'absolute' }}> {event_duration}</div>]}
+                              <div>{c.name}</div>
+                              <div>
+                                  <CalendarOutlined /> {moment(te?.event_time).format('DD MMMM YYYY')} &nbsp;&nbsp;&nbsp;&nbsp;<FieldTimeOutlined /> {moment(te?.event_time).format('h:mm a') }
+                              </div>
+
+
+
+                             
+
+                               <div style={{ position: 'absolute', backgroundColor: '#fff',borderRadius:5, left: -35,top:65, fontWeight: 400 }}> {event_duration}</div>
+
+
+                            </div>
+
+
+                           
+
+                            }
                         collapsibleIconRender={({ collapsed: buildInCollapsed }: { collapsed: boolean }) =>
-                          <span style={{ display: 'inline-block', position: 'relative', width: 20, color: "#d5d5d5", marginLeft: -12.5 }}>< AimOutlined style={{ background: "#fff", position: 'absolute',top:-30 }} /></span>
+                          <div style={{ display: 'inline-block', position: 'absolute', width: 20, color: "#d5d5d5", marginLeft: -12.5 }}>< AimOutlined style={{ background: "#fff", position: 'absolute',top:25 }} /></div>
                         }
                         collapsible={ true }
                         defaultCollapsed
-                        bodyStyle={{ marginTop: 25, marginLeft:30 }}
+                        bodyStyle={{ marginTop: 28, marginLeft:20 }}
                         onCollapse={(collapse) => console.log(collapse)}
                         extra={
                           (!te ? <Access accessible={access.canAdmin} fallback={<div></div>}><Button
@@ -1655,20 +1795,27 @@ const Detail: React.FC<any> = (props) => {
        
 
 
-
+     
 
 
        
       <div style={{ marginTop:15, paddingLeft: 0 }}>
         <Button
-
+          style={isMP?{ width:'100%' }:null}
           type="primary"
           onClick={async () => {
             history.back()
           }}
         >Return to previous page</Button>
+        {/*<Button
+          style={isMP ? { width: '100%', marginTop: 15 } : { marginLeft:10 }}
+          type="primary"
+          onClick={async () => {
+            history.push('/Dashboard')
+          }}
+        >Return to dashboard</Button>*/ } 
       </div>
-
+     
 
     </PageContainer>
   </div>)

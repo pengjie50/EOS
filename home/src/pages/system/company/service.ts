@@ -13,6 +13,18 @@ export async function company(params?: CompanyListParams) {
   });
 }
 
+export async function organization(params?: CompanyListParams) {
+  console.log(params)
+  return request('/api/company/organization', {
+    method: 'POST',
+    data: {
+      ...params,
+      hasFilters: true
+    },
+  });
+}
+
+
 export async function updateCompany(options?: { [key: string]: any }) {
   return request <CompanyListItem>('/api/company/mod', {
     method: 'POST',

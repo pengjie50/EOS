@@ -12,7 +12,7 @@ import { TransactionListItem } from '../data.d';
 import { FormattedMessage, useIntl } from '@umijs/max';
 import { Modal, Form } from 'antd';
 import React, { useRef, useEffect, useState } from 'react';
-import { terminal } from '../../system/terminal/service';
+import { company } from '../../system/company/service';
 import { jetty } from '../../system/jetty/service';
 
 
@@ -27,11 +27,21 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
   const restFormRef = useRef<ProFormInstance>();
   const intl = useIntl();
   const [terminalList, setTerminalList] = useState<any>({});
+  const [traderList, setTraderList] = useState<any>({});
   const [jettyList, setJettyList] = useState<any>({});
   useEffect(() => {
 
 
-    terminal({ pageSize: 3000, current: 1, sorter: { name: 'ascend' } }).then((res) => {
+    company({ type: 'Trader', sorter: { name: 'ascend' } }).then((res) => {
+      var b = {}
+      res.data.forEach((r) => {
+        b[r.id] = r.name
+      })
+      setTraderList(b)
+
+    });
+
+    company({ type: 'Terminal', sorter: { name: 'ascend' } }).then((res) => {
       var b = {}
       res.data.forEach((r) => {
         b[r.id] = r.name
@@ -169,6 +179,15 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         })}
         width="md"
         valueEnum={terminalList}
+      />
+      <ProFormSelect
+        name="trader_id"
+        label={intl.formatMessage({
+          id: 'pages.transaction.xxx',
+          defaultMessage: 'Trader',
+        })}
+        width="md"
+        valueEnum={traderList}
       />
       <ProFormSelect
         name="jetty_id"

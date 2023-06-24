@@ -191,10 +191,10 @@
           </div>
         </div>
         <div class="loading-title">
-          Loading resources
+          Loading page
         </div>
         <div class="loading-sub-title">
-          Loading page, please wait
+          please wait
         </div>
       </div>
     `;

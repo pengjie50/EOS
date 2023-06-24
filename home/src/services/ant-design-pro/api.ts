@@ -112,4 +112,11 @@ export async function fieldUniquenessCheck(options?: { [key: string]: any }) {
   });
 }
 
+export async function fieldSelectData(options?: { [key: string]: any }) {
+  return request<any>('/api/system/fieldSelectData', {
+    method: 'POST',
+    data: options || {}
+  });
+}
+
 

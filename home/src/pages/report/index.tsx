@@ -1,6 +1,6 @@
 import RcResizeObserver from 'rc-resize-observer';
 import { addReport, removeReport, report, updateReport, updateReportMenu } from './service';
-import { PlusOutlined, SearchOutlined, FormOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { PlusOutlined, SearchOutlined, FormOutlined, DeleteOutlined, ExclamationCircleOutlined, SwapOutlined, SortAscendingOutlined, SortDescendingOutlined } from '@ant-design/icons';
 import type { ActionType, ProColumns, ProDescriptionsItemProps } from '@ant-design/pro-components';
 import { ReportList, ReportListItem } from './data.d';
 
@@ -15,8 +15,8 @@ import {
   ProFormTextArea,
   ProTable,
 } from '@ant-design/pro-components';
-import { FormattedMessage, useIntl, formatMessage, history } from '@umijs/max';
-import { Button, Drawer, Input, message, Modal, ConfigProvider, Empty } from 'antd';
+import { FormattedMessage, useIntl, formatMessage, history, useModel } from '@umijs/max';
+import { Button, Drawer, Input, message, Modal, ConfigProvider, Empty, Popover, FloatButton } from 'antd';
 import React, { useRef, useState } from 'react';
 import CreateForm from './components/CreateForm';
 import UpdateForm from './components/UpdateForm';
@@ -153,7 +153,7 @@ const TableList: React.FC = () => {
   const [updateModalOpen, handleUpdateModalOpen] = useState<boolean>(false);
 
   const [showDetail, setShowDetail] = useState<boolean>(false);
-
+  const [MPSorter, setMPSorter] = useState<any>({});
 
   const [updateMenuModalVisible, handleUpdateMenuModalVisible] = useState<boolean>(false);
 
@@ -161,6 +161,8 @@ const TableList: React.FC = () => {
   const [currentRow, setCurrentRow] = useState<ReportListItem>();
   const [selectedRowsState, setSelectedRows] = useState<ReportListItem[]>([]);
   const formRef = useRef<ProFormInstance>();
+  const { initialState, setInitialState } = useModel('@@initialState');
+  const { currentUser } = initialState || {};
   /**
    * @en-US International configuration
    * @zh-CN 国际化配置
@@ -178,7 +180,7 @@ const TableList: React.FC = () => {
     <div style={{ fontSize: 24 }}>
       <Space style={{ '--gap': '16px' }}>
         <SearchOutlined onClick={e => { setShowMPSearch(!showMPSearch) }} />
-        <PlusOutlined onClick={() => { history.push(`/Report/add`); }} />
+        <PlusOutlined onClick={() => { handleModalOpen(true); }} />
       </Space>
     </div>
   )
@@ -214,16 +216,29 @@ const TableList: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [MPfilter, setMPfilter] = useState<any>({})
 
-  async function getData(page, filter) {
+  async function getData(page, filter__) {
+
+    var sorter = {}
+    await setMPSorter((sorter_) => {
+      sorter = sorter_
+      return sorter_
+    })
+    var filter = {}
+    await setMPfilter((filter_) => {
+      filter = filter_
+      return filter_
+    })
     const append = await report({
       ...{
         "current": page,
         "pageSize": 10
 
-      }, ...filter
+      }, ...filter, sorter
     })
 
-
+    if (page == 1) {
+      setData([]);
+    }
     console.log(append)
     setData(val => [...val, ...append.data])
     setHasMore(10 * (page - 1) + append.data.length < append.total)
@@ -268,6 +283,7 @@ const TableList: React.FC = () => {
         />
       ),
       sorter: true,
+      defaultSortOrder: 'descend',
       hideInSearch: true,
       dataIndex: 'created_at',
       valueType: 'dateTime'
@@ -280,11 +296,11 @@ const TableList: React.FC = () => {
           defaultMessage="Report Generated Date"
         />
       ),
-      sorter: true,
+     
       fieldProps: {placeholder: ['From', 'To'] },
-      hideInForm: true,
+     
       hideInTable: true,
-      defaultSortOrder: 'descend',
+      hideInDescriptions:true,
       dataIndex: 'created_at',
       valueType: 'dateRange',
       search: {
@@ -306,6 +322,34 @@ const TableList: React.FC = () => {
 
     },
     {
+      title: 'Report Type',
+      dataIndex: 'type',
+      sorter: true,
+     
+      search: {
+        transform: (value) => {
+
+          if (value !== null) {
+            return {
+
+              status: {
+                'field': 'type',
+                'op': 'eq',
+                'data': Number(value)
+              }
+
+            }
+          }
+
+        }
+      },
+      valueEnum: {
+        1:"All Data",
+        2: "Transaction Information",
+        3: "Threshold Alerts"
+      },
+    },
+    {
       title: <FormattedMessage id="pages.report.xxx" defaultMessage="Template  Name" />,
       dataIndex: 'template_name',
       valueType: 'text',
@@ -316,9 +360,23 @@ const TableList: React.FC = () => {
             dom?<a
             onClick = {
               () => {
-                setCurrentRow(entity);
 
-                history.push(`/Report/Detail`, entity);
+                var v = {}
+                var report_type = entity.type
+                var report_name = entity.name
+                v = eval('(' + entity.value + ')');
+                if (v) {
+                  v.report_type = report_type + ""
+                  v.useExisting = 'existing'
+
+                  v.report_name = report_name
+
+
+                }
+
+                setCurrentRow(v);
+
+                handleUpdateModalOpen(true);
 
           }}
           >{dom} </a > : 'N.A.'
@@ -326,6 +384,20 @@ const TableList: React.FC = () => {
         );
       },
    
+    },
+    {
+      title: currentUser?.role_type == 'Terminal' ? (tab == 'Terminal' ? 'Created By' : 'Customer') : 'Created By',
+      dataIndex: 'username',
+      hideInSearch: true,
+      render: (dom, entity) => {
+        if (currentUser?.role_type == 'Terminal') {
+          return tab == 'Terminal' ? dom.split('@')[0] : organizationList[entity.company_id]
+        } else {
+          return dom.split('@')[0]
+        }
+
+      },
+      valueType: 'text',
     },
     /*{
       title: <FormattedMessage id="pages.searchTable.titleOption" defaultMessage="Operating" />,
@@ -390,8 +462,8 @@ const TableList: React.FC = () => {
   return (
 
   
-    <PageContainer header={{
-      title: isMP ? null : < FormattedMessage id="pages.report.title" defaultMessage="Report" />,
+    <PageContainer className="myPage" header={{
+      title: isMP ? null : < FormattedMessage id="pages.report.xxx" defaultMessage="Report History" />,
       breadcrumb: {},
       extra: isMP ? null : [
         <Button
@@ -399,8 +471,8 @@ const TableList: React.FC = () => {
           key="primary"
           onClick={() => {
 
-            history.push(`/Report/add`);
-           // handleModalOpen(true);
+            //history.push(`/Report/add`);
+           handleModalOpen(true);
           }}
         >
           <PlusOutlined /> <FormattedMessage id="pages.searchTable.new" defaultMessage="New" />
@@ -413,21 +485,19 @@ const TableList: React.FC = () => {
           const { innerWidth, innerHeight } = window;
 
           if (offset.width > 1280) {
-            setIsMP(false)
+          
             setResizeObj({ ...resizeObj, searchSpan: 8, tableScrollHeight: innerHeight - 420 });
           }
           if (offset.width < 1280 && offset.width > 900) {
-            setIsMP(false)
+            
             setResizeObj({ ...resizeObj, searchSpan: 12, tableScrollHeight: innerHeight - 420 });
           }
           if (offset.width < 900 && offset.width > 700) {
             setResizeObj({ ...resizeObj, searchSpan: 24, tableScrollHeight: innerHeight - 420 });
-            setIsMP(false)
+           
           }
 
-          if (offset.width < 700) {
-            setIsMP(true)
-          }
+          
 
         }}
       ><ProTable<ReportListItem, API.PageParams>
@@ -446,24 +516,41 @@ const TableList: React.FC = () => {
         className="mytable"
         request={(params, sorter) => report({ ...params, sorter })}
         columns={columns}
-        rowSelection={{
-          onChange: (_, selectedRows) => {
-            setSelectedRows(selectedRows);
-          },
-        }}
+       
         /></RcResizeObserver></ConfigProvider >)}
 
       {isMP && (<>
 
-        <NavBar backArrow={false} right={right} onBack={back}>
+        <NavBar backArrow={false} left={<div> <Popover placement="bottom" title={""} content={<div>{columns.filter(a => (a.hasOwnProperty('sorter') && a['sorter'])).map((a) => {
+
+          return (<div><Button onClick={() => {
+            setMPSorter({ [a.dataIndex]: 'ascend' })
+
+
+            getData(1)
+
+
+          }} icon={<SortAscendingOutlined />} />
+            <Button style={{ margin: 5 }} onClick={() => {
+              setMPSorter({ [a.dataIndex]: 'descend' })
+
+              getData(1)
+
+            }} icon={<SortDescendingOutlined />} />
+            <span>{a.title}</span>
+          </div>)
+
+        })}</div>} trigger="click">
+          <SwapOutlined rotate={90} />
+        </Popover></div>} right={right} onBack={back}>
           {intl.formatMessage({
-            id: 'pages.report.title',
-            defaultMessage: 'Report',
+            id: 'pages.report.xxx',
+            defaultMessage: 'Report History',
           })}
         </NavBar>
 
         <div style={{ padding: '20px', backgroundColor: "#5187c4", display: showMPSearch ? 'block' : 'none' }}>
-          <Search columns={columns.filter(a => !a.hasOwnProperty('hideInSearch'))} action={actionRef} loading={false}
+          <Search columns={columns.filter(a => !(a.hasOwnProperty('hideInSearch') && a['hideInSearch']))} action={actionRef} loading={false}
 
             onFormSearchSubmit={onFormSearchSubmit}
 
@@ -510,42 +597,29 @@ const TableList: React.FC = () => {
         <InfiniteScroll loadMore={loadMore} hasMore={hasMore}>
           <InfiniteScrollContent hasMore={hasMore} />
         </InfiniteScroll>
+        <FloatButton.BackTop visibilityHeight={0} />
       </>)}
-      {selectedRowsState?.length > 0 && (
-        <FooterToolbar
-          extra={
-            <div>
-              <FormattedMessage id="pages.searchTable.chosen" defaultMessage="Chosen" />{' '}
-              <a style={{ fontWeight: 600 }}>{selectedRowsState.length}</a>{' '}
-              <FormattedMessage id="pages.searchTable.item" defaultMessage="项" />
-              &nbsp;&nbsp;
-             
-            </div>
+      <CreateForm
+        onSubmit={async (value) => {
+          //value.id = currentRow?.id
+          //const success = await handleAdd(value as any);
+          if (true) {
+            handleModalOpen(false);
+            setCurrentRow(undefined);
+            if (actionRef.current) {
+              actionRef.current.reload();
+            }
           }
-        >
-          <Button
-            onClick={async () => {
-              await handleRemove(selectedRowsState, (success) => {
-                if (success) {
-                  setSelectedRows([]);
-                  if (isMP) {
-                    setData([]);
-                    getData(1, MPfilter)
-                  }
-                  actionRef.current?.reloadAndRest?.();
-                }
-
-              });
-            }}
-          >
-            <FormattedMessage
-              id="pages.searchTable.batchDeletion"
-              defaultMessage="Batch deletion"
-            />
-          </Button>
-          
-        </FooterToolbar>
-      )}
+        }}
+        onCancel={() => {
+          handleModalOpen(false);
+          if (!showDetail) {
+            setCurrentRow(undefined);
+          }
+        }}
+        createModalOpen={createModalOpen}
+        
+      />
      
       <UpdateForm
         onSubmit={async (value) => {

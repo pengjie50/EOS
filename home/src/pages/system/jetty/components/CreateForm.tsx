@@ -9,10 +9,10 @@ import {
   
 } from '@ant-design/pro-components';
 import { JettyListItem } from '../data.d';
-import { FormattedMessage, useIntl } from '@umijs/max';
+import { FormattedMessage, useIntl, useModel } from '@umijs/max';
 import { Modal, Form } from 'antd';
 import React, { useRef, useState, useEffect } from 'react';
-import { terminal } from '../../../system/terminal/service';
+import { organization } from '../../../system/company/service';
 
 
 export type CreateFormProps = {
@@ -26,11 +26,12 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
   const restFormRef = useRef<ProFormInstance>();
   const intl = useIntl();
   const [terminalList, setTerminalList] = useState<any>({});
-
+  const { initialState, setInitialState } = useModel('@@initialState');
+  const { currentUser } = initialState || {};
   useEffect(() => {
 
 
-    terminal({ pageSize: 3000, current: 1, sorter: { name: 'ascend' } }).then((res) => {
+    organization({type: "Terminal", sorter: { name: 'ascend' } }).then((res) => {
       var b = {}
       res.data.forEach((r) => {
         b[r.id] = r.name
@@ -153,7 +154,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
         
       />
 
-      <ProFormSelect
+      {currentUser?.role_type != 'Terminal' && <ProFormSelect
         name="terminal_id"
         label={intl.formatMessage({
           id: 'pages.jetty.terminals',
@@ -161,8 +162,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
         })}
         width="md"
         valueEnum={terminalList}
-      />
-
+      />} 
        
     </ModalForm>
      
