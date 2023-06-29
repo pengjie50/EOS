@@ -15,6 +15,12 @@ module.exports = app => {
             defaultValue: DataTypes.UUIDV4
 
         },
+        role_id: {
+            type: INTEGER,
+            allowNull: false,
+            autoIncrement: true
+
+        },
         name: {
           type: STRING(100)
           

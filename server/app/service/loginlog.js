@@ -28,15 +28,20 @@ class LoginlogService extends Service {
             obj.offset = parseInt((params.page - 1)) * parseInt(params.limit)
             obj.limit = parseInt(params.limit)
         }
-        obj.attributes = [[ctx.model.col('u.nickname'),'nickname'],'login_log.*']
+        obj.attributes = [[ctx.model.col('u.username'), 'username'], [ctx.model.col('c.name'), 'company_name'],'login_log.*']
         obj.include=[{
-            as:'u',
+            as: 'u',
+            attributes: [],
             model: ctx.model.User
           
-        }]
+        }, {
+            as: 'c',
+            model: ctx.model.Company,
+            attributes: [],
+            }]
         obj.raw=true
         const list = await ctx.model.Loginlog.findAndCountAll(obj)
-
+        console.log(list.rows)
         ctx.status = 200;
         ctx.body = {
             success: true,

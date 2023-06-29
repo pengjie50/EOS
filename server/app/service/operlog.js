@@ -28,9 +28,10 @@ class OperlogService extends Service {
             obj.offset = parseInt((params.page - 1)) * parseInt(params.limit)
             obj.limit = parseInt(params.limit)
         }
-        obj.attributes = [[ctx.model.col('u.nickname'),'nickname'],'oper_log.*']
+        obj.attributes = [[ctx.model.col('u.username'),'username'],'oper_log.*']
         obj.include=[{
-            as:'u',
+            as: 'u',
+            attributes:[],
             model: ctx.model.User
           
         }]

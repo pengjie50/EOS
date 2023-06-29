@@ -20,15 +20,19 @@ module.exports = app => {
           
         },
         type: {
-            type: STRING(10)
+            type: TINYINT
          
         },
         param: {
-          type: STRING(2000)
+            type: TEXT
          
         },
+        device_type: {
+            type: STRING(20)
+
+        },
         result: {
-            type: STRING(2000)
+            type: TEXT
            
         },
         module: {
@@ -51,7 +55,10 @@ module.exports = app => {
             type: UUID
           
         },
-        
+        company_id: {
+            type: UUID
+
+        },
         status: {
             type: TINYINT
            
@@ -60,10 +67,7 @@ module.exports = app => {
             type: INTEGER
            
         },
-        username: {
-            type: STRING(100)
-           
-        },
+        
         oper_time: {
             type: DATE
            

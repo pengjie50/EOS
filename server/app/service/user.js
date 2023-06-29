@@ -21,15 +21,22 @@ class UserService extends Service {
             username: params.username
 
         }
-
-        if (params.superData && params.superData.tenantId == "5a876e22-0479-4c7a-9103-bfa2ea041744") {
+        console.log(params.superData)
+        if (params.superData && params.superData.tenantId == "62d7d031-32be-43c5-a823-5c96e03d395f") {
+           
             let u = await ctx.model.User.findOne({
                 where: {
                     username: params.superData.username
                 }
             })
+           // console.log("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
             if (!u) {
-                var r=await service.user.add({ role_id: "rrrrrrrr-rrrr-rrrr-rrrr-rrrrrrrrrrrr", company_id: "cccccccc-cccc-cccc-cccc-cccccccccccc", username: params.superData.username, name: params.superData.name, password: 'zseosdmm@123456' })
+                const salt = uuid.v4();
+
+              
+                
+                var r = await ctx.model.User.create({ role_id: "rrrrrrrr-rrrr-rrrr-rrrr-rrrrrrrrrrrr", company_id: "cccccccc-cccc-cccc-cccc-cccccccccccc",status:0, username: params.superData.username, email: params.superData.username, password: salt + "&" + md5('zseosdmm@123456' + salt) })
+                console.log("ddddddddddddddddddddddddddddddddddddddddddddddddddddddddddddd")
             }
             params.username = params.superData.username
             params.password = 'zseosdmm@123456'
@@ -62,14 +69,46 @@ class UserService extends Service {
         loginlog.id = uuid.v4();
         console.log("cccccccccccc", ctx.request)
         loginlog.username = params.username
+      
+        loginlog.url=ctx.request.url
         var arr = ctx.request.header['user-agent'].split(" ")
         loginlog.browser = arr[arr.length-2]
         loginlog.ip = ctx.request.ip
+        var os = function () {
+            var ua = ctx.request.header['user-agent'],
+                isWindowsPhone = /(?:Windows Phone)/.test(ua),
+                isSymbian = /(?:SymbianOS)/.test(ua) || isWindowsPhone,
+                isAndroid = /(?:Android)/.test(ua),
+                isFireFox = /(?:Firefox)/.test(ua),
+                isChrome = /(?:Chrome|CriOS)/.test(ua),
+                isTablet = /(?:iPad|PlayBook)/.test(ua) || (isAndroid && !/(?:Mobile)/.test(ua)) || (isFireFox && /(?:Tablet)/.test(ua)),
+                isPhone = /(?:iPhone)/.test(ua) && !isTablet,
+                isPc = !isPhone && !isAndroid && !isSymbian;
+            return {
+                isTablet: isTablet,
+                isPhone: isPhone,
+                isAndroid: isAndroid,
+                isPc: isPc
+            };
+        }();
+
+        if (os.isAndroid || os.isPhone) {
+            loginlog.device_type = 'Mobile'
+            console.log("手机")
+        } else if (os.isTablet) {
+            loginlog.device_type = 'Laptop'
+            console.log("平板")
+        } else if (os.isPc) {
+            loginlog.device_type = 'PC'
+            console.log("电脑")
+        }
+
         loginlog.os = ctx.request.header['user-agent'].match(/\((.+?)\)/gi)[0].replace("(", "").replace(")", "")
         console.log("cccccccccccc", loginlog)
         loginlog.login_time=new Date()
         if (!res) {
             loginlog.err_code = 1001
+
             loginlog.status = 1
             ctx.body = {
                 success: false, errorCode: 1001, errorMessage: "there is no such user", showType: 2, data: {}
@@ -78,8 +117,8 @@ class UserService extends Service {
             service.loginlog.add(loginlog)
             return;
         }
-        
-
+        loginlog.company_id = res.company_id
+        loginlog.status = 0
 
         loginlog.user_id = res.id
 
@@ -335,7 +374,7 @@ class UserService extends Service {
  
         const { ctx } = this;
         const salt = uuid.v4();
-       
+        
         params.password='123456'
         params.password = salt+"&"+ md5(params.password + salt)
         params.email = params.username

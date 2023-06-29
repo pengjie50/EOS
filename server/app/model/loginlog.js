@@ -19,9 +19,13 @@ module.exports = app => {
             type: UUID
            
         },
-        username: {
-          type: STRING(100)
-         
+        company_id: {
+            type: UUID
+
+        },
+        url: {
+            type: STRING(255)
+
         },
         ip: {
             type: STRING(128)
@@ -34,6 +38,22 @@ module.exports = app => {
         os: {
             type: STRING(50)
           
+        },
+        device_type:{
+            type: STRING(20)
+
+        },
+        invalid_attempts:
+        {
+            type: TINYINT
+
+        },
+        logout_time: {
+           type: DATE
+
+        },
+        active_duration: {
+            type: INTEGER
         },
         status: {
             type: TINYINT
@@ -59,7 +79,7 @@ module.exports = app => {
     });
     Model.associate = function () {
        app.model.Loginlog.belongsTo(app.model.User, { foreignKey: 'user_id',as:'u'});
-        
+       app.model.Loginlog.belongsTo(app.model.Company, { foreignKey: 'company_id', as: 'c' }); 
     };
     return Model;
 };

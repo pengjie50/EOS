@@ -15,6 +15,12 @@ module.exports = app => {
             allowNull: false,
             defaultValue: DataTypes.UUIDV4
         },
+        company_id: {
+            type: INTEGER,
+            allowNull: false,
+            autoIncrement: true
+
+        },
         name: {
           type: STRING(100)
          

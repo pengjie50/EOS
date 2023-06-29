@@ -37,12 +37,14 @@ class TransactionService extends Service {
         }
 
 
-        if (obj.where && (obj.where.flow_id || obj.where.flow_id_to)) {
+        if (obj.where && (obj.where.flow_id || obj.where.flow_id_to || obj.where.threshold_organization_id)) {
             var w = {}
             if (obj.where.flow_id) {
                 w.flow_id = obj.where.flow_id
             }
-
+            if (obj.where.threshold_organization_id) {
+                w.company_id = obj.where.threshold_organization_id
+            }
             if (obj.where.flow_id_to) {
                 w.flow_id_to = obj.where.flow_id_to
             }
@@ -52,6 +54,7 @@ class TransactionService extends Service {
             })
             delete obj.where.flow_id
             delete obj.where.flow_id_to
+            delete obj.where.threshold_organization_id
             obj.where.id=ids
         }
         var Op = app.Sequelize.Op
@@ -595,7 +598,7 @@ class TransactionService extends Service {
         //data = JSON.parse(data);
 
         console.log(data)
-  
+        
         const result = await ctx.curl(app.config.writetoBCUrl, {
             timeout: 30000,
             method: 'POST',
@@ -604,7 +607,14 @@ class TransactionService extends Service {
             dataType: 'json',
         });
 
-
+        return {
+            method:"POST",
+            data: data,
+            url: app.config.writetoBCUrl,
+            result: result,
+            status: result.status ,
+            errorCode:0
+        }
         console.log(result.data)
         console.log(result.status)
         
@@ -625,7 +635,14 @@ class TransactionService extends Service {
         console.log(data)
 
         ctx.body = { success: true, data: data };
-
+        return {
+            method: "POST",
+            data: data,
+            url: app.config.validateBCUrl,
+            result: {},
+            status: 0,
+            errorCode: 0
+        }
        /* var data = events.map((a) => {
             return {
                 "EOSID": params.id,

@@ -74,19 +74,23 @@ class AlertruleService extends Service {
         var alertrule = ctx.model.Alertrule
         var list = {}
         if (obj.where && obj.where.transaction_id) {
-            var flowList = await ctx.model.Flow.findAll({ order: [['sort', 'asc']] })
+            var flowList = await ctx.model.Flow.findAll({ order: [['sort', 'asc']], raw: true})
             var flowMap = {}
             flowList = flowList.map((f, index) => {
+
+                console.log(flowList.length)
                 f.next = flowList[index] ? flowList[index] : null
                 flowMap[f.id] = f
                 return f
 
             })
+
+           
             var transaction = await ctx.model.Transaction.findOne({ where: { id: obj.where.transaction_id } })
            
-                var transactioneventList = await ctx.model.Transactionevent.findAll({ where: { transaction_id: obj.where.transaction_id }, sorter: { event_time: 'asc' } })
+            var transactioneventList = await ctx.model.Transactionevent.findAll({  raw: true,where: { transaction_id: obj.where.transaction_id }, sorter: { event_time: 'asc' } })
 
-                var alertruleList = await ctx.model.Alertrule.findAll({ where: { user_id: ctx.user.user_id } })
+            var alertruleList = await ctx.model.Alertrule.findAll({ where: { user_id: ctx.user.user_id }, raw: true })
               
             alertruleList = alertruleList.filter((ar) => {
 
@@ -140,7 +144,7 @@ class AlertruleService extends Service {
 
                             
                         } else if (ar.type == 1) {
-
+                            
                             if (flowMap[lastEvent.flow_id].sort <= flowMap[ar.flow_id_to].sort && flowMap[lastEvent.flow_id].sort >= flowMap[ar.flow_id].sort) {
                                 return ar
                             }
@@ -250,7 +254,7 @@ class AlertruleService extends Service {
                     params[a + '_flow_id']= 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
                 }
                  arr.push({
-                     company_id: ctx.user.company_id,
+                     company_id: params.company_id || ctx.user.company_id,
                      user_id: ctx.user.user_id,
                      total_nominated_quantity_from_m: params.total_nominated_quantity_from_m,
                      total_nominated_quantity_to_m: params.total_nominated_quantity_to_m,

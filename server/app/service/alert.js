@@ -10,6 +10,7 @@ const Service = require('egg').Service;
 const uuid = require('uuid');
 const where = require('../middleware/where');
 const Sequelize = require('sequelize');
+const report = require('../model/report');
 
 class AlertService extends Service {
     
@@ -73,7 +74,7 @@ class AlertService extends Service {
 
 
         } else if (ctx.user.role_type == 'Terminal') {
-            if (obj.where.tab[app.Sequelize.Op.like] == '%Trader%') {
+            if (obj.where.tab && obj.where.tab[app.Sequelize.Op.like] == '%Trader%') {
                 if (obj.where.organization_id) {
                     obj.where.company_id = obj.where.organization_id
                 } else {
@@ -108,8 +109,27 @@ class AlertService extends Service {
             delete obj.where.showNoRead
         }
         obj.raw = true
+
+        var m = new Map()
+
+        if (showNoRead) {
+            var noReadArr = await ctx.model.query("select *  FROM alert where id not in (select alert_id from alert_user_read where user_id='" + ctx.user.user_id + "')", { type: Sequelize.QueryTypes.SELECT })
+          
+            var ids=[]
+            noReadArr.forEach((nr) => {
+                m.set(nr.id, true)
+                ids.push(nr.id)
+            })
+            obj.where.id = ids
+        }
+
+
        
         const list = await ctx.model.Alert.findAndCountAll(obj)
+
+        if (params.isCount) {
+            return list.count
+        }
 
 
       
@@ -120,11 +140,7 @@ class AlertService extends Service {
 
 
         if (showNoRead) {
-            var noReadArr = await ctx.model.query("select *  FROM alert where id not in (select alert_id from alert_user_read where user_id='" + ctx.user.user_id + "')", { type: Sequelize.QueryTypes.SELECT })
-            var m = new Map()
-            noReadArr.forEach((nr) => {
-                m.set(nr.id, true)
-            })
+         
             var readArr = []
             list.rows.forEach((a) => {
                 if (m.get(a.id)) {
@@ -137,45 +153,28 @@ class AlertService extends Service {
             if (readArr.length > 0) {
                 await ctx.model.AlertUserRead.bulkCreate(readArr);
             }
-            ctx.body = {
-                success: true,
-                total: noReadArr.length,
-                data: noReadArr
 
-            };
-        } else {
+           
+        } 
+
+
             ctx.body = {
                 success: true,
                 total: list.count,
                 data: list.rows
 
             }; 
-        }
+        
        
         
     }
     async getUserUnreadAlertCount(params) {
-        const { ctx, sequelize,app } = this;
+        const { ctx, sequelize, app } = this;
 
-        var obj = { where: {}, raw :true }
-        if (ctx.user.role_type == 'Trader') {
+      var count= await   this.list({ where: { showNoRead: true }, isCount: true })
 
-            obj.where.trader_id = ctx.user.company_id
-            obj.where.terminal_id = {
-                [app.Sequelize.Op['in']]: ctx.user.accessible_organization
-            }
-        } else if (ctx.user.role_type == 'Terminal') {
-            obj.where.terminal_id = ctx.user.company_id
-            obj.where.trader_id = {
-                [app.Sequelize.Op['in']]: ctx.user.accessible_organization
-            }
-        }
-        var tarr =await ctx.model.Transaction.findAll(obj);
-       var tids=  tarr.map((a) => {
-            return a.id
-        })
-        var count = await ctx.model.query("select count(*) as count FROM alert where id not in (select alert_id from alert_user_read where user_id='" + ctx.user.user_id + "') and transaction_id in ('" + tids.join("','")+"')", { type: Sequelize.QueryTypes.SELECT })
-        return count[0]['count']
+        
+        return count
     }
     
     async add(params) {
