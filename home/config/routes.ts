@@ -98,7 +98,33 @@ export default [
      
     ]
   },
+  {
+    path: '/InformationPage',
+    name: 'Information Page',
+    access: 'canJettyList',
+    // access: 'canAdmin',
+    icon: 'InfoCircleOutlined',
+    component: './system/jetty',
+    className: "dddddddd",
+    //component: './IdentityAccessManagement',
+    routes: [
+      {
+        path: '/InformationPage',
+        redirect: '/IdentityAccessManagement/jetty',
+      },
 
+      {
+        name: 'Jetty',
+        icon: 'idcard',
+        onclick: () => {
+          alert(1)
+        },
+        path: '/InformationPage/jetty',
+        component: './system/jetty',
+      }
+
+    ]
+  },
 
       {
         name: 'Summary of All Transactions',
@@ -111,7 +137,7 @@ export default [
   {
     path: '/Report',
     key:'Report',
-    name: 'Report History',
+    name: 'Report',
     icon: 'FileZipOutlined',
     component: './report',
    
@@ -157,34 +183,29 @@ export default [
       
     ]
   },
-
-
+  
+  
 
   {
-    path: '/SystemManagement',
+    path: '/AuditLog',
     name: 'Audit log',
     access: 'canAdmin',
     icon: 'SolutionOutlined',
     //component: './IdentityAccessManagement',
     routes: [
       {
-        path: '/SystemManagement',
-        redirect: '/SystemManagement/flow',
+        path: '/AuditLog',
+        redirect: '/AuditLog/flow',
       },
 
       {
         name: 'Super User Activity Log',
         icon: 'table',
-        path: '/SystemManagement/SuperUserActivityLog',
+        path: '/AuditLog/SuperUserActivityLog',
         component: './system/operlog/SuperUserActivity',
-      },
+      }
      
-      {
-        name: 'Transaction Flow',
-        icon: 'ApartmentOutlined',
-        path: '/SystemManagement/flow',
-        component: './system/flow',
-      }/*,
+     /*,
       {
         name: 'Product Type',
         icon: 'table',
@@ -200,19 +221,19 @@ export default [
       {
         name: 'Login log',
         icon: 'bars',
-        path: '/SystemManagement/loginlog',
+        path: '/AuditLog/loginlog',
         component: './system/loginlog',
       },
       {
-        name: 'Operation Log',
+        name: 'User Activity Log',
         icon: 'bars',
-        path: '/SystemManagement/operlog',
+        path: '/AuditLog/operlog',
         component: './system/operlog',
       },
       {
         name: 'API Activity Log',
         icon: 'bars',
-        path: '/SystemManagement/APIActivity',
+        path: '/AuditLog/APIActivity',
         component: './system/operlog/APIActivity',
       }
 
@@ -226,34 +247,33 @@ export default [
       
     ]
   },
+  
   {
-    path: '/InformationPage',
-    name: 'Information Page',
-    access: 'canJettyList',
-   // access: 'canAdmin',
-    icon: 'InfoCircleOutlined',
-    component: './system/jetty',
-    className:"dddddddd",
+    path: '/SystemConfiguration',
+    name: 'System Config',
+    access: 'canAdmin',
+    icon: 'SolutionOutlined',
     //component: './IdentityAccessManagement',
     routes: [
       {
-        path: '/InformationPage',
-        redirect: '/IdentityAccessManagement/jetty',
+        path: '/SystemConfiguration',
+        redirect: '/SystemConfiguration/flow',
       },
-     
       {
-        name: 'Jetty',
-        icon: 'idcard',
-        onclick: () => {
-          alert(1)
-        },
-        path: '/InformationPage/jetty',
-        component: './system/jetty',
+        name: 'Transaction Flow',
+        icon: 'ApartmentOutlined',
+        path: '/SystemConfiguration/flow',
+        component: './system/flow',
+      },
+      {
+        name: 'Security Settings',
+        icon: 'safetyCertificate',
+        path: '/SystemConfiguration/sysconfig',
+        component: './system/sysconfig',
       }
 
     ]
   },
-
   {
     path: '/account',
     name: 'Profile & Setting',

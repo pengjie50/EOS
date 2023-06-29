@@ -18,7 +18,7 @@ import { terminal } from '../../system/terminal/service';
 import { producttype } from '../../system/producttype/service';
 import { jetty } from '../../system/jetty/service';
 import { alertrule } from '../../alertrule/service';
-import { organization } from '../../system/company/service';
+import { company, organization } from '../../system/company/service';
 import numeral from 'numeral';
 var moment = require('moment');
 
@@ -197,15 +197,7 @@ const Detail: React.FC<any> = (props) => {
 
 
   const columns1: ProColumns<TransactionListItem>[] = [
-    {
-      title: <FormattedMessage id="pages.transaction.status" defaultMessage="Status" />,
-      dataIndex: 'status',
-      valueEnum: {
-        0: { text: <FormattedMessage id="pages.transaction.active" defaultMessage="Open" /> },
-        1: { text: <FormattedMessage id="pages.transaction.closed" defaultMessage="Closed" /> },
-        2: { text: <FormattedMessage id="pages.transaction.cancelled" defaultMessage="Cancelled" /> }
-      },
-    },
+   
     {
       title: <FormattedMessage id="pages.transaction.startOfTransaction" defaultMessage="Start of transaction" />,
       dataIndex: 'start_of_transaction',
@@ -218,10 +210,26 @@ const Detail: React.FC<any> = (props) => {
       title: <FormattedMessage id="pages.transaction.endOfTransaction" defaultMessage="End of transaction" />,
       dataIndex: 'end_of_transaction',
       valueType: 'date',
+      render: (dom, entity) => {
+        if (entity.status == 1) {
+          return dom ? moment(new Date(dom)).format('YYYY-MM-DD') : "-"
+        } else {
+          return "-"
+        }
+      },
       align: "center",
       hideInSearch: true,
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.status" defaultMessage="Status" />,
+      dataIndex: 'status',
+      align: "center",
+      valueEnum: {
+        0: { text: <FormattedMessage id="pages.transaction.active" defaultMessage="Open" /> },
+        1: { text: <FormattedMessage id="pages.transaction.closed" defaultMessage="Closed" /> },
+        2: { text: <FormattedMessage id="pages.transaction.cancelled" defaultMessage="Cancelled" /> }
+      },
     }
-   
 
     ]
 
@@ -576,7 +584,7 @@ const Detail: React.FC<any> = (props) => {
       setProducttypeList(b)
 
     });
-    terminal({ sorter: { name: 'ascend' } }).then((res) => {
+    company({ sorter: { name: 'ascend' } }).then((res) => {
       var b = {}
       res.data.forEach((r) => {
         b[r.id] = r.name
@@ -991,9 +999,9 @@ const Detail: React.FC<any> = (props) => {
             bordered
           >
 
-          <ProCard ghost={true} className="my-font-size">
+          <ProCard ghost={true} >
             <ProDescriptions colon={false} contentStyle={{ fontSize: 16 }} columns={columns1 as ProDescriptionsItemProps<any>[]} dataSource={currentRow} labelStyle={{ fontSize: '18px', color: "#333", fontWeight: 500, lineHeight: "18px", padding:0 }} layout="vertical" className="my-descriptions-item"
-                column={isMP ? 2 : 3} >
+                column={isMP ? 1 : 3} >
 
               </ProDescriptions>
             </ProCard>
@@ -1001,11 +1009,11 @@ const Detail: React.FC<any> = (props) => {
             <ProCard ghost={true}>
 
 
-              <ProCard ghost={true} colSpan={8} >
+              <ProCard ghost={true} >
               <SvgIcon className="my-font-size" style={{ fontSize: 40 }} type="icon-lunchuan" />
               </ProCard>
 
-            <ProCard ghost={true} colSpan={16} >
+            <ProCard ghost={true} style={{ marginLeft: 20 }} colSpan={24} >
               <ProDescriptions colon={false} style={{ display: "inline-block" }} contentStyle={{ fontSize: 16, textAlign: 'center' }} columns={columns2 as ProDescriptionsItemProps<any>[]} dataSource={currentRow} labelStyle={{ fontSize: '18px', lineHeight: "18px", color: "#333", fontWeight: 500 }} layout="vertical" className="my-descriptions-item"
                   column={isMP ? 2 : 2} >
 
@@ -1015,12 +1023,12 @@ const Detail: React.FC<any> = (props) => {
               
             </ProCard>
 
-          <ProCard ghost={true} className="my-font-size">
-              <ProCard ghost={true} colSpan={8} >
+          <ProCard ghost={true} >
+              <ProCard ghost={true} >
               <SvgIcon className="my-font-size" style={{ fontSize:40 }} type="icon-terminal" />
               </ProCard>
 
-            <ProCard ghost={true} colSpan={16} >
+            <ProCard ghost={true} style={{ marginLeft: 20 }} colSpan={24} >
               <ProDescriptions colon={false} style={{ display: "inline-block" }} contentStyle={{ fontSize: 16 }} columns={columns3 as ProDescriptionsItemProps<any>[]} dataSource={currentRow} labelStyle={{ fontSize: '18px', color: "#333", lineHeight: "18px", fontWeight:500 }} layout="vertical" className="my-descriptions-item"
                   column={isMP ? 2 : 2} >
 
@@ -1050,11 +1058,11 @@ const Detail: React.FC<any> = (props) => {
 
 
           <ProCard ghost={true}  >
-              <ProCard ghost={true} colSpan={6} >
+              <ProCard ghost={true}  >
               <SvgIcon className="my-font-size" style={{ fontSize: 40 }} type="icon-huowu1" />
               </ProCard>
 
-              <ProCard ghost={true} colSpan={18} >
+            <ProCard ghost={true} colSpan={24} style={{ marginLeft:20 }} >
               <ProDescriptions colon={false} style={{ display: "inline-block" }} contentStyle={{ marginTop: 0 }} columns={columns5 as ProDescriptionsItemProps<any>[]} dataSource={currentRow} labelStyle={{ fontSize: '12px', color: "#333", fontWeight: 500, lineHeight: "18px" }} layout="vertical" className="my-descriptions-item"
                   column={isMP ? 1 : 1} >
 
@@ -1220,7 +1228,13 @@ const Detail: React.FC<any> = (props) => {
 
 
 
-        <div style={{ position: 'relative', cursor: "pointer", float: 'left', zIndex: 1, width: '250px', textAlign: 'center' }} onClick={() => {
+          <div style={{ position: 'relative', cursor: "pointer", float: 'left', zIndex: 1, width: '250px', textAlign: 'center' }} onClick={() => {
+
+            if (currentUser?.role_type!='Super') {
+              message.error("Blockchain details inaccessible based on the rights provided to this account. Please contact the administrator of the system for more details");
+              return
+            }
+
 
           history.push(`/transaction/blockchainIntegration?transaction_id=` + currentRow?.id, { validateData: validateData } );
         
@@ -1383,6 +1397,11 @@ const Detail: React.FC<any> = (props) => {
 
 
         <div style={{ position: 'relative', float: 'left', zIndex: 1, textAlign: 'center', width: '100%' }} onClick={() => {
+
+          if (currentUser?.role_type != 'Super') {
+            message.error("Blockchain details inaccessible based on the rights provided to this account. Please contact the administrator of the system for more details");
+            return
+          }
 
           history.push(`/transaction/blockchainIntegration?transaction_id=` + currentRow?.id, { validateData: validateData });
 

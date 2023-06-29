@@ -38,7 +38,7 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu, childre
     localStorage.setItem('token', "");
     var url ='/user/login'
     if (a===true) {
-      url = "/user/login"
+      url = "/user/adminlogin"
      
     
     }

@@ -232,6 +232,15 @@ const TableList: React.FC = () => {
   }
   //--MP end
   const columns: ProColumns<RoleListItem>[] = [
+
+    {
+      title: <FormattedMessage id="pages.role.xxx" defaultMessage="Role ID" />,
+      dataIndex: 'role_id',
+      hideInSearch: true,
+      width:130,
+      sorter: true
+     
+    },
     {
       title: (
         <FormattedMessage

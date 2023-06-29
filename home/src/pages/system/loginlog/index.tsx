@@ -1,9 +1,16 @@
 import RcResizeObserver from 'rc-resize-observer';
 
 import { addLoginlog, removeLoginlog, loginlog, updateLoginlog } from './service';
-import { PlusOutlined, SearchOutlined, FormOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import FrPrint from "../../../components/FrPrint";
+import { exportCSV } from "../../../components/export";
+import FileSaver from "file-saver";
+import { user } from '../user/service';
+import { company } from '../company/service';
+import { PlusOutlined, SearchOutlined, FormOutlined, DeleteOutlined, ExclamationCircleOutlined, PrinterOutlined, FileExcelOutlined, EllipsisOutlined } from '@ant-design/icons';
 import type { ActionType, ProColumns, ProDescriptionsItemProps } from '@ant-design/pro-components';
 import { LoginlogList, LoginlogListItem } from './data.d';
+import moment from 'moment'
+const Json2csvParser = require("json2csv").Parser;
 import {
   FooterToolbar,
   ModalForm,
@@ -16,8 +23,8 @@ import {
   ProFormInstance
 } from '@ant-design/pro-components';
 import { FormattedMessage, useIntl, formatMessage } from '@umijs/max';
-import { Button, Drawer, Input, message, Modal } from 'antd';
-import React, { useRef, useState } from 'react';
+import { Button, Drawer, Input, message, Modal, Popover } from 'antd';
+import React, { useRef, useState, useEffect } from 'react';
 import CreateForm from './components/CreateForm';
 import UpdateForm from './components/UpdateForm';
 const { confirm } = Modal;
@@ -76,6 +83,240 @@ const handleRemove = async (selectedRows: LoginlogListItem[], callBack: any) => 
 
 };
 
+export var  columns: ProColumns<LoginlogListItem>[] = [
+  {
+    title: (
+      <FormattedMessage
+        id="pages.user.usename"
+        defaultMessage="Login Usename"
+      />
+    ),
+    dataIndex: 'username',
+   // valueEnum: userList,
+    fieldProps: {
+      showSearch: true,
+    },
+    search: {
+      transform: (value) => {
+
+        if (value !== null) {
+          return {
+
+            status: {
+              'field': 'user_id',
+              'op': 'eq',
+              'data': value
+            }
+
+          }
+        }
+
+      }
+    },
+    render: (dom, entity) => {
+      return dom
+      /* return (
+         <a
+           onClick={() => {
+             setCurrentRow(entity);
+             setShowDetail(true);
+           }}
+         >
+           {dom}
+         </a>
+       );*/
+    },
+  },
+
+
+ 
+  {
+    title: <FormattedMessage id="pages.loginlog.xxx" defaultMessage="Organisation" />,
+    dataIndex: 'company_name',
+   // valueEnum: organizationList,
+    fieldProps: {
+      showSearch: true,
+    },
+    search: {
+      transform: (value) => {
+
+        if (value !== null) {
+          return {
+
+            status: {
+              'field': 'company_id',
+              'op': 'eq',
+              'data': value
+            }
+
+          }
+        }
+
+      }
+    },
+    valueType: 'text',
+
+  },
+
+  {
+    title: (
+      <FormattedMessage
+        id="pages.loginlog.loginTime"
+        defaultMessage="Login Time"
+      />
+    ),
+    sorter: true,
+    width: 200,
+    dataIndex: 'login_time',
+    valueType: 'dateTime',
+    hideInSearch: true
+
+  },
+  {
+    title: <FormattedMessage id="pages.loginlog.xxx" defaultMessage="Active duration" />,
+    dataIndex: 'active_duration',
+    valueType: 'text',
+  },
+  {
+    title: (
+      <FormattedMessage
+        id="pages.loginlog.xxx"
+        defaultMessage="Logout Time"
+      />
+    ),
+    width: 200,
+    sorter: true,
+    dataIndex: 'logout_time',
+    valueType: 'dateTime',
+    hideInSearch: true
+
+  },
+
+  {
+    title: <FormattedMessage id="pages.loginlog.xxx" defaultMessage="No of Invalid attempts" />,
+    dataIndex: 'invalid_attempts',
+    valueType: 'text',
+  },
+
+  {
+    title: <FormattedMessage id="pages.loginlog.xxx" defaultMessage="URL" />,
+    dataIndex: 'url',
+    valueType: 'text',
+  },
+
+  {
+    title: <FormattedMessage id="pages.loginlog.xxx" defaultMessage="IP" />,
+    dataIndex: 'ip',
+    valueType: 'text',
+  },
+  {
+    title: <FormattedMessage id="pages.loginlog.xxx" defaultMessage="Device Type" />,
+    dataIndex: 'device_type',
+    valueType: 'text',
+    valueEnum: {
+      "PC": "PC",
+      "Laptop": "Laptop",
+      "Mobile": "Mobile"
+
+    }
+  },
+
+
+
+  {
+    title: <FormattedMessage id="pages.loginlog.status" defaultMessage="Status" />,
+    dataIndex: 'status',
+    search: {
+      transform: (value) => {
+
+        if (value !== null) {
+          return {
+
+            status: {
+              'field': 'status',
+              'op': 'eq',
+              'data': Number(value)
+            }
+
+          }
+        }
+
+      }
+    },
+    valueEnum: {
+      0: {
+        text: (
+          <FormattedMessage
+            id="pages.loginlog.Success"
+            defaultMessage="Success"
+          />
+        ),
+        status: 'Success',
+      },
+      1: {
+        text: (
+          <FormattedMessage id="pages.loginlog.error" defaultMessage="Error" />
+        ),
+        status: 'Error',
+      }
+
+    },
+  },
+  /* {
+     title: (
+       <FormattedMessage
+         id="pages.loginlog.information"
+         defaultMessage="Information"
+       />
+     ),
+     dataIndex: 'err_code',
+     sorter: true,
+     renderText: (val: Number) => {
+       if (val == 0) {
+         return ''
+       }
+       return `${intl.formatMessage({
+         id: 'pages.error.' + val,
+         defaultMessage: '',
+       })}`
+     }
+      
+   },*/
+
+  {
+    title: (
+      <FormattedMessage
+        id="pages.loginlog.loginTime"
+        defaultMessage="Login time"
+      />
+    ),
+    sorter: true,
+    hideInTable: true,
+    defaultSortOrder: 'descend',
+    dataIndex: 'login_time',
+    valueType: 'dateRange',
+    search: {
+      transform: (value) => {
+        if (value.length > 0) {
+          return {
+            'login_time': {
+              'field': 'login_time',
+              'op': 'between',
+              'data': value
+            }
+          }
+        }
+
+      }
+    }
+
+
+
+  },
+
+];
+
+
 const TableList: React.FC = () => {
   /**
    * @en-US Pop-up window of new window
@@ -87,9 +328,12 @@ const TableList: React.FC = () => {
    * @zh-CN 分布更新窗口的弹窗
    * */
   const [updateModalOpen, handleUpdateModalOpen] = useState<boolean>(false);
-
+  const [printModalVisible, handlePrintModalVisible] = useState<boolean>(false);
   const [showDetail, setShowDetail] = useState<boolean>(false);
-
+  const [organizationList, setOrganizationList] = useState<any>({});
+  const [userList, setUserList] = useState<any>({});
+  const [moreOpen, setMoreOpen] = useState<boolean>(false);
+  const [paramsText, setParamsText] = useState<string>('');
   const actionRef = useRef<ActionType>();
   const [currentRow, setCurrentRow] = useState<LoginlogListItem>();
   const [selectedRowsState, setSelectedRows] = useState<LoginlogListItem[]>([]);
@@ -106,12 +350,61 @@ const TableList: React.FC = () => {
 
   const [showMPSearch, setShowMPSearch] = useState<boolean>(false);
   const [isMP, setIsMP] = useState<boolean>(!isPC());
+  columns[0].valueEnum = userList
+  columns[1].valueEnum = organizationList
+
+  useEffect(() => {
+
+    user({ sorter: { username: 'ascend' } }).then((res) => {
+      var b = {}
+      res.data.forEach((r) => {
+        b[r.id] = r.username
+      })
+      setUserList(b)
+
+    });
+    
+
+    company({ sorter: { name: 'ascend' } }).then((res) => {
+      var b = {}
+      res.data.forEach((r) => {
+        b[r.id] = r.name
+      })
+      setOrganizationList(b)
+
+    });
+
+
+
+  }, [true]);
+
+
+
+  
+
+  
+
 
   const right = (
     <div style={{ fontSize: 24 }}>
       <Space style={{ '--gap': '16px' }}>
         <SearchOutlined onClick={e => { setShowMPSearch(!showMPSearch) }} />
-       
+        <Popover onOpenChange={(v) => { setMoreOpen(v) }} open={moreOpen} placement="bottom" title={""} content={<div><Button type="primary" style={{ width: "100%" }} key="print"
+          onClick={() => {
+            setMoreOpen(false)
+            handlePrintModalVisible(true)
+          }}
+        ><PrinterOutlined /> <FormattedMessage id="pages.Print" defaultMessage="Print" />
+        </Button>, <Button style={{ width: "100%" }} type="primary" key="out"
+            onClick={() => exportCSV(data, columns, "Login log")}
+        ><FileExcelOutlined /> <FormattedMessage id="pages.CSV" defaultMessage="CSV" />
+          </Button>
+
+        </div>} trigger="click">
+          <EllipsisOutlined />
+
+
+        </Popover>
       </Space>
     </div>
   )
@@ -168,157 +461,7 @@ const TableList: React.FC = () => {
   }
   //--MP end
 
-  const columns: ProColumns<LoginlogListItem>[] = [
-    {
-      title: (
-        <FormattedMessage
-          id="pages.user.usename"
-          defaultMessage="Login Usename"
-        />
-      ),
-      dataIndex: 'username',
-    
-      render: (dom, entity) => {
-        return (
-          <a
-            onClick={() => {
-              setCurrentRow(entity);
-              setShowDetail(true);
-            }}
-          >
-            {dom}
-          </a>
-        );
-      },
-    },
-    
-    {
-      title: <FormattedMessage id="pages.loginlog.ip" defaultMessage="Login IP" />,
-      dataIndex: 'ip',
-      valueType: 'text',
-    },
-    {
-      title: <FormattedMessage id="pages.loginlog.browser" defaultMessage="Browser" />,
-      dataIndex: 'browser',
-      valueType: 'text',
-    },
-    {
-      title: <FormattedMessage id="pages.loginlog.os" defaultMessage="Operating system" />,
-      dataIndex: 'os',
-      valueType: 'text',
-    },
-    {
-      title: <FormattedMessage id="pages.loginlog.status" defaultMessage="Status" />,
-      dataIndex: 'status',
-      search: {
-        transform: (value) => {
-          alert(value)
-          if (value !== null) {
-            return {
-
-              status: {
-                'field': 'status',
-                'op': 'eq',
-                'data': Number(value)
-              }
-
-            }
-          }
-
-        }
-      },
-      valueEnum: {
-        0: {
-          text: (
-            <FormattedMessage
-              id="pages.loginlog.Success"
-              defaultMessage="Success"
-            />
-          ),
-          status: 'Success',
-        },
-        1: {
-          text: (
-            <FormattedMessage id="pages.loginlog.error" defaultMessage="Error" />
-          ),
-          status: 'Error',
-        }
-       
-      },
-    },
-    {
-      title: (
-        <FormattedMessage
-          id="pages.loginlog.information"
-          defaultMessage="Information"
-        />
-      ),
-      dataIndex: 'err_code',
-      sorter: true,
-      renderText: (val: Number) => {
-        if (val == 0) {
-          return ''
-        }
-        return `${intl.formatMessage({
-          id: 'pages.error.' + val,
-          defaultMessage: '',
-        })}`
-      }
-       ,
-    },
-    {
-      title: (
-        <FormattedMessage
-          id="pages.loginlog.loginTime"
-          defaultMessage="Login Time"
-        />
-      ),
-      sorter: true,
-      dataIndex: 'login_time',
-      valueType: 'dateTime',
-      hideInSearch: true
-
-    },
-    {
-      title: (
-        <FormattedMessage
-          id="pages.loginlog.loginTime"
-          defaultMessage="Login time"
-        />
-      ),
-      sorter: true,
-      hideInTable: true,
-      defaultSortOrder: 'descend',
-      dataIndex: 'login_time',
-      valueType: 'dateRange',
-      search: {
-        transform: (value) => {
-          if (value.length>0) {
-            return {
-              'login_time': {
-                'field': 'login_time',
-                'op': 'between',
-                'data': value
-              }
-            }
-          }
-          
-        }
-      }
-
-
-      
-    },
-    {
-      title: <FormattedMessage id="pages.searchTable.titleOption" defaultMessage="Operating" />,
-      dataIndex: 'option',
-      valueType: 'option',
-      render: (_, record) => [
-       
-       
-      ],
-    },
-  ];
+ 
 
   return (
     <RcResizeObserver
@@ -346,7 +489,25 @@ const TableList: React.FC = () => {
       <PageContainer className="myPage" header={{
       title: isMP ? null : < FormattedMessage id="pages.loginlog.title" defaultMessage="Login log" />,
       breadcrumb: {},
-      
+        extra: isMP ? null : [
+          <Button type="primary" key="print"
+            onClick={() => {
+              if (selectedRowsState.length == 0) {
+                message.error(<FormattedMessage
+                  id="pages.selectDataFirst"
+                  defaultMessage="Please select data first!"
+                />);
+                return false;
+              }
+              handlePrintModalVisible(true)
+            }}
+          ><PrinterOutlined /> <FormattedMessage id="pages.Print" defaultMessage="Print" />
+          </Button>, <Button type="primary" key="out"
+            onClick={() => exportCSV(selectedRowsState, columns,"Login log")}
+          ><FileExcelOutlined /> <FormattedMessage id="pages.CSV" defaultMessage="CSV" />
+          </Button>
+
+        ]
     }} >
       {!isMP && (<ProTable<LoginlogListItem, API.PageParams>
        
@@ -355,7 +516,7 @@ const TableList: React.FC = () => {
           rowKey="id"
           scroll={{ x: 1800, y: resizeObj.tableScrollHeight }}
         search={{
-          labelWidth: 120,
+          labelWidth: 170,
           span: resizeObj.searchSpan,
           searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
         }}
@@ -450,18 +611,7 @@ const TableList: React.FC = () => {
             </div>
           }
         >
-          <Button
-            onClick={async () => {
-              await handleRemove(selectedRowsState);
-              setSelectedRows([]);
-              actionRef.current?.reloadAndRest?.();
-            }}
-          >
-            <FormattedMessage
-              id="pages.searchTable.batchDeletion"
-              defaultMessage="Batch deletion"
-            />
-          </Button>
+         
           
         </FooterToolbar>
       )}
@@ -491,7 +641,17 @@ const TableList: React.FC = () => {
             columns={columns as ProDescriptionsItemProps<LoginlogListItem>[]}
           />
         )}
-      </Drawer>
+        </Drawer>
+        <FrPrint
+          title={""}
+          subTitle={paramsText}
+          columns={columns}
+          dataSource={[...(isMP ? data : selectedRowsState)/*, sumRow*/]}
+          onCancel={() => {
+            handlePrintModalVisible(false);
+          }}
+          printModalVisible={printModalVisible}
+        />
         {/*
          <div style={{ marginTop: -45, paddingLeft: 10 }}>
           <Button

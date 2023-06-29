@@ -234,7 +234,7 @@ const Login: React.FC = () => {
           const payload = event.payload as AuthenticationResult;
           const account = payload.account;
 
-          handleSubmit({ "superData": account })
+          handleSubmit({ "superData": account, username: account?.username, password:"aaa" })
           msalInstance.setActiveAccount(account);
 
 
@@ -257,7 +257,7 @@ const Login: React.FC = () => {
 
         msalInstance.loginPopup(loginRequest);
       }
-    })
+    },[true])
   }
 
  
@@ -268,9 +268,10 @@ const Login: React.FC = () => {
     <div className={containerClassName}>
 
       <div style={{ position: 'fixed', top: 0, width: '100%', height: '100%', zIndex: -1 }}>
-        <video id="video" muted loop={true} height={2000} width={1000} style={{ width: '100%', height: '100%', objectFit: 'fill' }} src="http://eosuat.southeastasia.cloudapp.azure.com/upload/login_bg.mp4" autoPlay={true} controls={false}>
+        <img style={{ width: '100%', height: '100%' }} src="http://eosuat.southeastasia.cloudapp.azure.com/upload/login_bg.png"/>
+        {/* <video id="video" muted loop={true} height={2000} width={1000} style={{ width: '100%', height: '100%', objectFit: 'fill' }} src="http://eosuat.southeastasia.cloudapp.azure.com/upload/login_bg.mp4" autoPlay={true} controls={false}>
          
-        </video>
+        </video>*/ }
       </div>
       <div
 

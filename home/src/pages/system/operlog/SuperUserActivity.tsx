@@ -5,6 +5,7 @@ import { PlusOutlined, SearchOutlined, FormOutlined, DeleteOutlined, Exclamation
 import type { ActionType, ProColumns, ProDescriptionsItemProps } from '@ant-design/pro-components';
 import { OperlogList, OperlogListItem } from './data.d';
 import FrPrint from "../../../components/FrPrint";
+import { exportCSV } from "../../../components/export";
 import FileSaver from "file-saver";
 import moment from 'moment'
 const Json2csvParser = require("json2csv").Parser;
@@ -114,70 +115,197 @@ const handleUpdate = async (fields: Partial<any>) => {
 };
 
 
-const exportCSV = (data, columns, filename = `${"Summary of all transactions" + moment(Date.now()).format(' YYYY-MM-DD HH:mm:ss')}.csv`) => {
-
-  if (data.length == 0) {
-    message.error(<FormattedMessage
-      id="pages.selectDataFirst"
-      defaultMessage="Please select data first!"
-    />);
-    return false;
-  }
-  var newData = []
-  var map = {}
-  columns.forEach((a) => {
-
-    map[a.dataIndex] = a
-  })
-  data = data.forEach((s) => {
-    var n = {}
-
-    for (var k in s) {
-
-      var c = map[k]
-      if (c && !c.hideInTable) {
-        if (c.valueType == 'date') {
-          n[c.title.props.defaultMessage] = s[k] ? moment(s[k]).format('YYYY/MM/DD') : ""
-        } else if (c.renderText) {
-          n[c.title.props.defaultMessage] = "" + c.renderText(s[k], s)
-        }
-        else if (c.render && k != 'id') {
-          n[c.title.props.defaultMessage] = c.render(s[k], s)
-        } else {
-          if (c.valueEnum) {
-            if (c.valueEnum[s[k]]) {
-              if (typeof c.valueEnum[s[k]] == 'string') {
-                n[c.title.props.defaultMessage] = c.valueEnum[s[k]]
-              } else {
-                n[c.title.props.defaultMessage] = c.valueEnum[s[k]].text.props.defaultMessage
-              }
-
-            } else {
-              n[c.title.props.defaultMessage] = s[k]
-            }
-
-          } else {
-            n[c.title.props.defaultMessage] = s[k]
-          }
-          // n[c.title.props.defaultMessage] = c.valueEnum ? (typeof c.valueEnum[s[k]] == 'string' ? c.valueEnum[s[k]] : c.valueEnum[s[k]].text.props.defaultMessage) : s[k]
-        }
 
 
-      }
+//--MP end
+export  const columns: ProColumns<OperlogListItem>[] = [
+
+  {
+    title: <FormattedMessage id="pages.user.username" defaultMessage="username" />,
+    dataIndex: 'username',
+    hideInSearch: true,
+    valueType: 'text',
+  },
+
+  {
+    title: <FormattedMessage id="pages.operlog.module" defaultMessage="module" />,
+    dataIndex: 'module',
+    valueEnum: {
+      "user": "User Account",
+      "company": "Organization",
+      "role": "Role",
+      "flow": "Transaction flow",
+      "alertrule": "Threshold",
+      "alert": "Triggered alert",
+      "report": "Report",
+      "transaction": "Transaction",
+      "jetty": "Jetty"
 
     }
-    newData.push(n)
 
-  })
+  },
+  {
+    title: <FormattedMessage id="pages.operlog.action" defaultMessage="Action Type" />,
+    dataIndex: 'action',
+    valueEnum: {
+      "add": "Create",
+      "mod": "Update",
+      "del": "Delete"
 
-  const parser = new Json2csvParser();
-  const csvData = parser.parse(newData);
+    }
 
-  const blob = new Blob(["\uFEFF" + csvData], {
-    type: "text/plain;charset=utf-8;",
-  });
-  FileSaver.saveAs(blob, filename);
-}
+  },
+  /*{
+    title: <FormattedMessage id="pages.operlog.xxx" defaultMessage="Action Description" />,
+    dataIndex: 'param',
+    hideInSearch: true,
+    valueType: 'text',
+  },*/
+
+  {
+    title: <FormattedMessage id="pages.operlog.url" defaultMessage="url" />,
+    dataIndex: 'url',
+
+    valueType: 'text',
+  },
+  {
+    title: <FormattedMessage id="pages.operlog.ip" defaultMessage="Ip" />,
+    dataIndex: 'ip',
+
+    valueType: 'text',
+  },
+  /* {
+     title: <FormattedMessage id="pages.operlog.param" defaultMessage="param" />,
+     dataIndex: 'param',
+     ellipsis:true,
+     valueType: 'text',
+   },
+   {
+     title: <FormattedMessage id="pages.operlog.result" defaultMessage="result" />,
+     dataIndex: 'result',
+     ellipsis: true,
+     valueType: 'text',
+   },*/
+  {
+    title: <FormattedMessage id="pages.loginlog.status" defaultMessage="Status" />,
+    dataIndex: 'status',
+    hideInForm: true,
+    search: {
+      transform: (value) => {
+
+        if (value !== null) {
+          return {
+
+            status: {
+              'field': 'status',
+              'op': 'eq',
+              'data': Number(value)
+            }
+
+          }
+        }
+
+      }
+    },
+    valueEnum: {
+      0: {
+        text: (
+          <FormattedMessage
+            id="pages.loginlog.Success"
+            defaultMessage="Success"
+          />
+        ),
+        status: 'Success',
+      },
+      1: {
+        text: (
+          <FormattedMessage id="pages.loginlog.error" defaultMessage="Error" />
+        ),
+        status: 'Error',
+      }
+
+    },
+  }/*,
+    {
+      title: (
+        <FormattedMessage
+          id="pages.loginlog.information"
+          defaultMessage="Information"
+        />
+      ),
+      dataIndex: 'err_code',
+      sorter: true,
+      hideInForm: true,
+      renderText: (val: Number) => {
+        if (val == 0) {
+          return ''
+        }
+        return `${intl.formatMessage({
+          id: 'pages.error.' + val,
+          defaultMessage: '',
+        })}`
+      }
+      ,
+    }*/,
+  {
+    title: (
+      <FormattedMessage
+        id="pages.operlog.xxx"
+        defaultMessage="Operation Time 
+"
+      />
+    ),
+
+    hideInSearch: true,
+    dataIndex: 'oper_time',
+    valueType: 'dateTime'
+
+  },
+  {
+    title: (
+      <FormattedMessage
+        id="pages.operlog.operTime"
+        defaultMessage="Operation Time"
+      />
+    ),
+    sorter: true,
+
+    hideInForm: true,
+    hideInTable: true,
+    defaultSortOrder: 'descend',
+    dataIndex: 'oper_time',
+    valueType: 'dateRange',
+    search: {
+      transform: (value) => {
+        if (value.length > 0) {
+          return {
+            'oper_time': {
+              'field': 'oper_time',
+              'op': 'between',
+              'data': value
+            }
+          }
+        }
+
+      }
+    }
+
+
+
+  }
+
+
+];
+
+
+
+
+
+
+
+
+
+
 const TableList: React.FC = () => {
   /**
    * @en-US Pop-up window of new window
@@ -219,7 +347,7 @@ const TableList: React.FC = () => {
           }}
         ><PrinterOutlined /> <FormattedMessage id="pages.Print" defaultMessage="Print" />
         </Button>, <Button style={{ width: "100%" }} type="primary" key="out"
-          onClick={() => exportCSV(data, columns)}
+            onClick={() => exportCSV(data, columns, "Super User Activity Log")}
         ><FileExcelOutlined /> <FormattedMessage id="pages.CSV" defaultMessage="CSV" />
           </Button>
 
@@ -278,6 +406,12 @@ const TableList: React.FC = () => {
     })
     const append = await operlog({
       ...{
+
+         type: {
+        'field': 'type',
+        'op': 'eq',
+        'data': 1
+      },
         "current": page,
         "pageSize": 10
 
@@ -294,204 +428,7 @@ const TableList: React.FC = () => {
     await getData(currentPage, MPfilter)
     setCurrentPage(currentPage + 1)
   }
-  //--MP end
-  const columns: ProColumns<OperlogListItem>[] = [
-    
-    {
-      title: <FormattedMessage id="pages.user.username" defaultMessage="username" />,
-      dataIndex: 'username',
-      valueType: 'text',
-    },
-   
-    {
-      title: <FormattedMessage id="pages.operlog.module" defaultMessage="module" />,
-      dataIndex: 'module',
-      valueType: 'text',
-    },
-    {
-      title: <FormattedMessage id="pages.operlog.action" defaultMessage="Action Type" />,
-      dataIndex: 'action',
-      valueType: 'text',
-    },
-    {
-      title: <FormattedMessage id="pages.operlog.xxx" defaultMessage="Action Description" />,
-      dataIndex: 'param',
-      valueType: 'text',
-    },
-
-    {
-      title: <FormattedMessage id="pages.operlog.url" defaultMessage="url" />,
-      dataIndex: 'url',
-      valueType: 'text',
-    },
-    {
-      title: <FormattedMessage id="pages.operlog.ip" defaultMessage="Ip" />,
-      dataIndex: 'ip',
-      valueType: 'text',
-    },
-   /* {
-      title: <FormattedMessage id="pages.operlog.param" defaultMessage="param" />,
-      dataIndex: 'param',
-      ellipsis:true,
-      valueType: 'text',
-    },
-    {
-      title: <FormattedMessage id="pages.operlog.result" defaultMessage="result" />,
-      dataIndex: 'result',
-      ellipsis: true,
-      valueType: 'text',
-    },*/
-    {
-      title: <FormattedMessage id="pages.loginlog.status" defaultMessage="Status" />,
-      dataIndex: 'status',
-      hideInForm: true,
-      search: {
-        transform: (value) => {
-          alert(value)
-          if (value !== null) {
-            return {
-
-              status: {
-                'field': 'status',
-                'op': 'eq',
-                'data': Number(value)
-              }
-
-            }
-          }
-
-        }
-      },
-      valueEnum: {
-        0: {
-          text: (
-            <FormattedMessage
-              id="pages.loginlog.Success"
-              defaultMessage="Success"
-            />
-          ),
-          status: 'Success',
-        },
-        1: {
-          text: (
-            <FormattedMessage id="pages.loginlog.error" defaultMessage="Error" />
-          ),
-          status: 'Error',
-        }
-
-      },
-    }/*,
-    {
-      title: (
-        <FormattedMessage
-          id="pages.loginlog.information"
-          defaultMessage="Information"
-        />
-      ),
-      dataIndex: 'err_code',
-      sorter: true,
-      hideInForm: true,
-      renderText: (val: Number) => {
-        if (val == 0) {
-          return ''
-        }
-        return `${intl.formatMessage({
-          id: 'pages.error.' + val,
-          defaultMessage: '',
-        })}`
-      }
-      ,
-    }*/,
-    {
-      title: (
-        <FormattedMessage
-          id="pages.operlog.operTime"
-          defaultMessage="Oper time"
-        />
-      ),
-     
-      hideInSearch:true,
-      dataIndex: 'oper_time',
-      valueType: 'dateTime'
-
-    },
-    {
-      title: (
-        <FormattedMessage
-          id="pages.operlog.operTime"
-          defaultMessage="Oper time"
-        />
-      ),
-      sorter: true,
-      hideInForm: true,
-      hideInTable: true,
-      defaultSortOrder: 'descend',
-      dataIndex: 'oper_time',
-      valueType: 'dateRange',
-      search: {
-        transform: (value) => {
-          if (value.length > 0) {
-            return {
-              'oper_time': {
-                'field': 'oper_time',
-                'op': 'between',
-                'data': value
-              }
-            }
-          }
-
-        }
-      }
-
-
-
-    },
-    {
-      title: <FormattedMessage id="pages.alert.specificProcess" defaultMessage="Remarks" />,
-      dataIndex: 'remarks',
-      hideInSearch: true,
-
-      valueType: 'textarea',
-      render: (dom, record) => {
-
-        return <div style={{ position: 'relative', width: '100%' }}><p dangerouslySetInnerHTML={{ __html: dom?.replace(/\n/g, '<br />') }} />
-
-
-
-         <div>
-          
-              <a
-                title={formatMessage({ id: "pages.update", defaultMessage: "Modify" })}
-                key="config"
-                onClick={() => {
-                  setCurrentRow(record);
-                  handleUpdateModalOpen(true);
-
-
-
-
-                }}
-              >
-                <FormOutlined style={{ fontSize: '20px' }} />
-
-              </a>
-
-            
-          </div>
-        </div>;
-      },
-
-    },
-    /*{
-      title: <FormattedMessage id="pages.searchTable.titleOption" defaultMessage="Operating" />,
-      dataIndex: 'option',
-      valueType: 'option',
-      render: (_, record) => [
-       
-       
-      ],
-    },*/
-  ];
+ 
 
   return (
     <RcResizeObserver
@@ -533,7 +470,7 @@ const TableList: React.FC = () => {
             }}
           ><PrinterOutlined /> <FormattedMessage id="pages.Print" defaultMessage="Print" />
           </Button>, <Button type="primary" key="out"
-            onClick={() => exportCSV(selectedRowsState, columns)}
+            onClick={() => exportCSV(selectedRowsState, columns, "Super User Activity Log")}
           ><FileExcelOutlined /> <FormattedMessage id="pages.CSV" defaultMessage="CSV" />
           </Button>
 
@@ -546,7 +483,7 @@ const TableList: React.FC = () => {
           rowKey="id"
           scroll={{ x: 1800, y: resizeObj.tableScrollHeight }}
         search={{
-          labelWidth: 120,
+          labelWidth: 140,
           span: resizeObj.searchSpan,
           searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
         }}
@@ -555,7 +492,11 @@ const TableList: React.FC = () => {
         ]}
         options={false}
         className="mytable"
-        request={(params, sorter) => operlog({ ...params, sorter })}
+          request={(params, sorter) => operlog({ ...params, sorter,type:{
+          'field': 'type',
+        'op': 'eq',
+        'data': 1
+          } })}
         columns={columns}
         rowSelection={{
           onChange: (_, selectedRows) => {

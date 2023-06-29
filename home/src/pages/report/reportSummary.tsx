@@ -1,14 +1,22 @@
 
 import RcResizeObserver from 'rc-resize-observer';
 import { addTransaction, removeTransaction, transaction, updateTransaction } from '../transaction/service';
+import { operlog } from '../system/operlog/service';
+import { loginlog } from '../system/loginlog/service';
+
 
 import { addReport } from '../report/service';
-
-
+import { organization } from '../system/company/service';
+import { alert as getAlert } from '../alert/service';
 import { reportSummary } from './service';
 
+import { columns as columns4 } from '../system/operlog/SuperUserActivity';
+import { columns as columns5 } from '../system/loginlog/index';
+import { columns as columns6 } from '../system/operlog/index';
+import { columns as columns7 } from '../system/operlog/APIActivity';
+import { exportCSV } from "../../components/export";
 
-import { PlusOutlined, SearchOutlined, PrinterOutlined, FileExcelOutlined, ExclamationCircleOutlined, DeleteOutlined, EllipsisOutlined } from '@ant-design/icons';
+import { PlusOutlined, SearchOutlined, PrinterOutlined, FileExcelOutlined, ExclamationCircleOutlined, DeleteOutlined, FormOutlined, EllipsisOutlined } from '@ant-design/icons';
 import type { ActionType, ProColumns, ProDescriptionsItemProps } from '@ant-design/pro-components';
 import { TransactionList, TransactionListItem } from '../transaction/data.d';
 import FrPrint from "../../components/FrPrint";
@@ -32,7 +40,7 @@ import {
   Search,
   ProTable,
 } from '@ant-design/pro-components';
-import { FormattedMessage, useIntl, formatMessage, useLocation } from '@umijs/max';
+import { FormattedMessage, useIntl, formatMessage, useLocation, useModel } from '@umijs/max';
 import { Button, Drawer, Input, message, Modal, Tooltip, Empty, ConfigProvider, Popover } from 'antd';
 import React, { useRef, useState, useEffect } from 'react';
 import CreateForm from './components/CreateForm';
@@ -160,71 +168,7 @@ const handleRemove = async (selectedRows: TransactionListItem[], callBack: any) 
 
 
 
-const exportCSV = (data, columns, filename = `${"Summary of all transactions" + moment(Date.now()).format(' YYYY-MM-DD HH:mm:ss')}.csv`) => {
 
-  if (data.length == 0) {
-    message.error(<FormattedMessage
-      id="pages.selectDataFirst"
-      defaultMessage="Please select data first!"
-    />);
-    return false;
-  }
-  var newData = []
-  var map = {}
-  columns.forEach((a) => {
-
-    map[a.dataIndex] = a
-  })
-  data = data.forEach((s) => {
-    var n = {}
-   
-    for (var k in s) {
-      
-      var c = map[k]
-      if (c && !c.hideInTable) {
-        if (c.valueType == 'date' ) {
-          n[c.title.props.defaultMessage] = s[k] ? moment(s[k]).format('YYYY/MM/DD') : ""
-        } if (c.valueType == 'dateTime') {
-          n[c.title.props.defaultMessage] = s[k] ? moment(s[k]).format('YYYY/MM/DD HH:mm:ss') : ""
-        } else if (c.renderText) {
-          n[c.title.props.defaultMessage] = "" + c.renderText(s[k], s)
-        }
-        else if (c.render && k != 'id') {
-          n[c.title.props.defaultMessage] = c.render(s[k], s)
-        } else {
-          if (c.valueEnum) {
-            if (c.valueEnum[s[k]]) {
-              if (typeof c.valueEnum[s[k]] == 'string') {
-                n[c.title.props.defaultMessage] = c.valueEnum[s[k]]
-              } else {
-                n[c.title.props.defaultMessage] = c.valueEnum[s[k]].text.props.defaultMessage
-              }
-
-            } else {
-              n[c.title.props.defaultMessage] = s[k]
-            }
-
-          } else {
-            n[c.title.props.defaultMessage] = s[k]
-          }
-        }
-
-
-      }
-
-    }
-    newData.push(n)
-
-  })
-
-  const parser = new Json2csvParser();
-  const csvData = parser.parse(newData);
-
-  const blob = new Blob(["\uFEFF" + csvData], {
-    type: "text/plain;charset=utf-8;",
-  });
-  FileSaver.saveAs(blob, filename);
-}
 const TableList: React.FC = () => {
   /**
    * @en-US Pop-up window of new window
@@ -242,11 +186,12 @@ const TableList: React.FC = () => {
   const actionRef = useRef<ActionType>();
   const [currentRow, setCurrentRow] = useState<TransactionListItem>();
   const [selectedRowsState, setSelectedRows] = useState<TransactionListItem[]>([]);
-
+  const { initialState } = useModel('@@initialState');
+  const { currentUser } = initialState || {};
   const [printModalVisible, handlePrintModalVisible] = useState<boolean>(false);
   const [paramsText, setParamsText] = useState<string>('');
   const [flowConf, setFlowConf] = useState<any>({});
-
+  const [organizationList, setOrganizationList] = useState<any>({});
   const [terminalList, setTerminalList] = useState<any>({});
   const [jettyList, setJettyList] = useState<any>({});
   const [producttypeList, setProducttypeList] = useState<any>({});
@@ -267,7 +212,8 @@ const TableList: React.FC = () => {
     return (time ? parseInt((time / 3600) + "") : 0) + "h " + (time ? parseInt((time % 3600) / 60) : 0) + "m"
   }
 
-  
+  var report_type = useLocation()?.state?.type
+  var report_name = useLocation()?.state?.name
   var value = eval('(' + useLocation()?.state?.value + ')');
 
   var Fields=[]
@@ -284,6 +230,15 @@ const TableList: React.FC = () => {
     a.data = value.imo_number
     filter.imo_number = a
   }
+
+
+    if (value.eos_id) {
+      var a = {}
+      a.field = 'eos_id'
+      a.op = 'eq'
+      a.data = value.eos_id
+      filter.eos_id = a
+    }
 
   if (value.vessel_name) {
     var a = {}
@@ -373,7 +328,7 @@ const TableList: React.FC = () => {
 
    
     filter.start_of_transaction={
-        'field': 'start_of_transaction',
+      'field': report_type < 4 ? 'start_of_transaction' :'oper_time',
           'op': 'between',
       'data': value.dateArr
       }
@@ -385,7 +340,7 @@ const TableList: React.FC = () => {
 
 
     filter.start_of_transaction = {
-      'field': 'start_of_transaction',
+      'field': report_type < 4 ? 'start_of_transaction' : 'oper_time',
       'op': 'between',
       'data': value.dateRange
     }
@@ -427,7 +382,7 @@ const TableList: React.FC = () => {
           }}
         ><PrinterOutlined /> <FormattedMessage id="pages.Print" defaultMessage="Print" />
         </Button>, <Button style={{ width: "100%" }} type="primary" key="out"
-          onClick={() => exportCSV(data, columns)}
+          onClick={() => exportCSV(data, columns, report_name)}
         ><FileExcelOutlined /> <FormattedMessage id="pages.CSV" defaultMessage="CSV" />
           </Button>
 
@@ -550,6 +505,22 @@ const TableList: React.FC = () => {
       setProducttypeList(b)
 
     });
+
+    organization({ sorter: { name: 'ascend' } }).then((res) => {
+      var b = {}
+      res.data.forEach((r) => {
+        b[r.id] = r.name
+      })
+      setOrganizationList(b)
+
+
+
+
+
+
+
+    });
+
     terminal({ pageSize: 3000, current: 1, sorter: { name: 'ascend' } }).then((res) => {
       var b = {}
       res.data.forEach((r) => {
@@ -581,7 +552,28 @@ const TableList: React.FC = () => {
     });
 
 
+    if (report_type == 1) {
+    
+      columns = columns
+    } else if (report_type == 2) {
 
+        columns = columns2
+    } else if (report_type == 3) {
+
+      columns = columns3
+    } else if (report_type == 4) {
+
+      columns = columns4
+    } else if (report_type == 5) {
+
+      columns = columns5
+    } else if (report_type == 6) {
+
+      columns = columns6
+    } else if (report_type == 7) {
+
+      columns = columns7
+    } 
 
 
   }, [true]);
@@ -591,7 +583,288 @@ const TableList: React.FC = () => {
    * */
   const intl = useIntl();
   const access = useAccess();
-  var columns: ProColumns<TransactionListItem>[] = [
+  
+  var columns = [
+
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Total/ Current Duration" />,
+      dataIndex: 'total_duration',
+
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.xxx" defaultMessage="Current Process" />,
+      dataIndex: 'flow_id',
+      render: (dom, entity) => {
+        if (entity.status == 0) {
+          return flowConf[dom]
+        } else {
+          return ""
+        }
+      }
+      
+    },
+    {
+      title: currentUser?.role_type == "Terminal" ? "Customer" : <FormattedMessage id="pages.transaction.jettyName" defaultMessage="Trader" />,
+      dataIndex: 'trader_id',
+
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.jettyName" defaultMessage="Terminal" />,
+      dataIndex: 'terminal_id',
+      valueEnum: organizationList
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.jettyName" defaultMessage="Jetty Name" />,
+      dataIndex: 'jetty_id',
+      valueEnum: jettyList
+
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.arrivalID" defaultMessage="Arrival ID" />,
+      dataIndex: 'arrival_id',
+
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.imoNumber" defaultMessage="IMO Number" />,
+      dataIndex: 'imo_number',
+
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.vesselName" defaultMessage="Vessel Name" />,
+      dataIndex: 'vessel_name',
+
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.vesselName" defaultMessage="Vessel Size" />,
+      dataIndex: 'size_of_vessel',
+
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.productType" defaultMessage="Product Type" />,
+      dataIndex: 'product_type',
+
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.xxx" defaultMessage="Total Nominated Quantity (Bls-60-F)" />,
+      dataIndex: 'total_nominated_quantity_b',
+      render: (dom, entity) => {
+        if (dom) {
+          return numeral(dom).format('0,0')
+        }
+
+      },
+
+    },
+    {
+      title: (<FormattedMessage id="pages.transaction.transactionID" defaultMessage="EOS ID" />),
+      dataIndex: 'eos_id',
+      mustSelect: true
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.xxx" defaultMessage="Transaction Status" />,
+      dataIndex: 'status',
+      mustSelect: true,
+      valueEnum: {
+        0: {
+          text: <FormattedMessage id="pages.transaction.active" defaultMessage="Open" />
+        },
+        1: { text: <FormattedMessage id="pages.transaction.closed" defaultMessage="Closed" /> },
+        2: { text: <FormattedMessage id="pages.transaction.cancelled" defaultMessage="Cancelled" /> }
+      },
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.startOfTransaction" defaultMessage="Start Of Transaction" />,
+      dataIndex: 'start_of_transaction',
+      mustSelect: true,
+      valueType: 'date',
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.endOfTransaction" defaultMessage="End Of Transaction" />,
+      dataIndex: 'end_of_transaction',
+      mustSelect: true,
+      valueType: 'date',
+
+    },
+
+    {
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Number of Amber Alert" />,
+      dataIndex: 'amber_alert_num',
+      mustSelect: true
+
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Number of Red Alert" />,
+      dataIndex: 'red_alert_num',
+      mustSelect: true
+
+    },
+
+
+  ];
+
+
+  const columns2 = [
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Type of Last Change" />,
+      dataIndex: 'type_of_Last_change',
+
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="EOS ID" />,
+      dataIndex: 'eos_id',
+      mustSelect: true
+
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Work Order ID" />,
+      dataIndex: 'work_order_id',
+      mustSelect: true
+
+    },
+
+    {
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Description" />,
+      dataIndex: 'description',
+      mustSelect: true
+
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Value" />,
+      dataIndex: 'value',
+      mustSelect: true
+
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Type of Data" />,
+      dataIndex: 'data_type',
+      mustSelect: true
+
+    }
+  ]
+  const columns3 = [
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="IMO Number" />,
+      dataIndex: 'imo_number',
+
+
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Threshold Vessel Size" />,
+      dataIndex: 'ar.size_of_vessel_from',
+
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Threshold Nominated Quantity Range" />,
+      dataIndex: 'ar.total_nominated_quantity_from_m',
+
+
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Transaction Vessel Size" />,
+      dataIndex: 't.size_of_vessel',
+
+
+    },
+
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Transaction Nominated Quantity Range" />,
+      dataIndex: 't.total_nominated_quantity_b',
+
+
+    },
+
+    {
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Product Type" />,
+      dataIndex: 't.product_type',
+
+
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Terminal" />,
+      dataIndex: 't.terminal_id',
+
+
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Trader" />,
+      dataIndex: 't.trader_id',
+
+
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Alert ID" />,
+      dataIndex: 'alert_id',
+      mustSelect: true
+
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Alert Type" />,
+      dataIndex: 'type',
+      mustSelect: true
+
+    },
+
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Alert Triggered Time" />,
+      dataIndex: 'create_time',
+      mustSelect: true
+
+    },
+
+    {
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Threshold ID" />,
+      dataIndex: 'alertrule_id',
+      mustSelect: true
+
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Threshold Type" />,
+      dataIndex: 'alertrule_type',
+      mustSelect: true
+
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Threshold Limit" />,
+      dataIndex: 'amber_hours',
+      mustSelect: true
+
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="EOS ID" />,
+      dataIndex: 'eos_id',
+      mustSelect: true
+
+    },
+
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Total / Current Duration" />,
+      dataIndex: 'duration',
+      mustSelect: true
+
+    }
+  ]
+
+
+
+ /* var columns: ProColumns<TransactionListItem>[] = [
     {
       title: (
         <FormattedMessage
@@ -826,8 +1099,34 @@ const TableList: React.FC = () => {
         </Access>
 
       ],
-    },*/
-  ];
+    },
+  ];*/
+
+
+  if (report_type == 1) {
+    if (currentUser?.role_type == "Trader") {
+      columns.splice(2, 1);
+    } else if (currentUser?.role_type == "Terminal"){
+      columns.splice(3, 1);
+    }
+    
+    columns = columns
+  } else if (report_type == 2) {
+
+    columns = columns2
+  } else if (report_type == 3) {
+
+    columns = columns3
+  } else if (report_type == 5) {
+
+    columns = columns5
+  } else if (report_type == 6) {
+
+    columns = columns6
+  } else if (report_type == 7) {
+
+    columns = columns7
+  } 
   if (Fields.length>0) {
     columns = columns.filter((c) => {
 
@@ -889,7 +1188,7 @@ const TableList: React.FC = () => {
           }}
         ><PrinterOutlined /> <FormattedMessage id="pages.Print" defaultMessage="Print" />
         </Button>, <Button type="primary" key="out"
-          onClick={() => exportCSV(selectedRowsState, columns)}
+          onClick={() => exportCSV(selectedRowsState, columns, report_name)}
         ><FileExcelOutlined /> <FormattedMessage id="pages.CSV" defaultMessage="CSV" />
         </Button>
 
@@ -934,11 +1233,57 @@ const TableList: React.FC = () => {
         options={false}
         search={false}
         className="mytable"
-        request={async (params, sorter) => {
+          request={async (params, sorter) => {
+            var ss = ""
+            if (report_type == 1) {
+            
+              ss = await transaction({ ...params, sorter, ...filter })
+            
+          }else if (report_type == 2) {
 
+              ss = await reportSummary({ ...params, sorter, ...filter })
 
-         var ss = await reportSummary({ ...params, sorter, ...filter })
-          setTransaction_total_num(ss.transaction_total_num)
+        } else if (report_type == 3) {
+
+              ss = await getAlert({ ...params, sorter, ...filter })
+
+            } else if (report_type==4) {
+              ss = await operlog({
+                ...params, sorter, type: {
+                  'field': 'type',
+                  'op': 'eq',
+                  'data': 1
+                }
+              })
+            } else if (report_type == 5) {
+              ss = await loginlog({
+                ...params, sorter
+              })
+            } else if (report_type == 6) {
+             
+              ss = await operlog({
+                ...params, sorter, type: {
+                  'field': 'type',
+                  'op': 'eq',
+                  'data': 2
+                }
+              })
+            } else if (report_type == 7) {
+             
+              ss = await operlog({
+                ...params, sorter, type: {
+                  'field': 'type',
+                  'op': 'eq',
+                  'data':3
+                }
+              })
+            } else {
+              ss = await reportSummary({ ...params, sorter, ...filter })
+            }
+
+           
+
+          setTransaction_total_num(ss.transaction_total_num )
           setTransaction_filter_num(ss.transaction_filter_num)
           return ss
         }}

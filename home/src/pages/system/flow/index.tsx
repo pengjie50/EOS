@@ -226,11 +226,18 @@ const TableList: React.FC = () => {
   }
   //--MP end
   const columns: ProColumns<FlowListItem>[] = [
+
+    {
+      title: <FormattedMessage id="pages.flow.xxx" defaultMessage="No." />,
+      dataIndex: 'code',
+      hideInSearch: true,
+      valueType: 'text',
+    },
     {
       title: (
         <FormattedMessage
-          id="pages.flow.name"
-          defaultMessage="Flow name"
+          id="pages.flow.xxx"
+          defaultMessage="Transaction Flow"
         />
       ),
       dataIndex: 'name',
@@ -261,21 +268,16 @@ const TableList: React.FC = () => {
       valueType: 'text',
     },
     {
-      title: <FormattedMessage id="pages.flow.sort" defaultMessage="Sort" />,
+      title: <FormattedMessage id="pages.flow.xxx" defaultMessage="Sort Order" />,
       dataIndex: 'sort',
       hideInSearch: true,
       defaultSortOrder: 'ascend',
       sorter: true,
       valueType: 'text',
     },
+   
     {
-      title: <FormattedMessage id="pages.flow.xxx" defaultMessage="Code" />,
-      dataIndex: 'code',
-      hideInSearch: true,
-      valueType: 'text',
-    },
-    {
-      title: <FormattedMessage id="pages.flow.description" defaultMessage="Description" />,
+      title: <FormattedMessage id="pages.flow.xxx" defaultMessage="Description" />,
       dataIndex: 'description',
       valueType: 'textarea'
      
@@ -345,7 +347,7 @@ const TableList: React.FC = () => {
       }}
     >
       <PageContainer className="myPage" header={{
-      title: isMP ? null : < FormattedMessage id="pages.flow.title" defaultMessage="Flow" />,
+        title: isMP ? null : < FormattedMessage id="pages.flow.xxx" defaultMessage="Transaction Flow" />,
       breadcrumb: {},
       extra: isMP ? null : [
         <Button
@@ -355,7 +357,7 @@ const TableList: React.FC = () => {
             handleModalOpen(true);
           }}
         >
-          <PlusOutlined /> <FormattedMessage id="pages.searchTable.new" defaultMessage="New" />
+          <PlusOutlined /> <FormattedMessage id="pages.searchTable.xxx" defaultMessage="Create New Transaction Flow" />
         </Button>,
       ]
     }}>
@@ -388,8 +390,8 @@ const TableList: React.FC = () => {
 
         <NavBar backArrow={false} right={right} onBack={back}>
           {intl.formatMessage({
-            id: 'pages.flow.title',
-            defaultMessage: 'Flow',
+            id: 'pages.flow.xxx',
+            defaultMessage: 'Transaction Flow',
           })}
         </NavBar>
 

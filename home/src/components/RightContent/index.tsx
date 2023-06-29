@@ -51,11 +51,11 @@ export const Alert = () => {
           history.push(`/threshold/alert`);
         }
        
-        currentUser.userUnreadAlertCount = 0
+      //  currentUser.userUnreadAlertCount = 0
         //window.open('https://pro.ant.design/docs/getting-started');
       }}
     >
-      <Badge count={currentUser?.userUnreadAlertCount} style={{ boxShadow: 'none' }}>
+      <Badge  count={currentUser?.userUnreadAlertCount} style={{ boxShadow: 'none' }}>
         <BellOutlined  />
       </Badge>
     </div>

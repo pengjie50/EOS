@@ -14,14 +14,15 @@ import {
   ProFormCheckbox
 } from '@ant-design/pro-components';
 import { AlertruleListItem } from '../data.d';
-import { FormattedMessage, useIntl } from '@umijs/max';
-import { Modal, Form, Divider, Button } from 'antd';
+import { FormattedMessage, useIntl, useModel } from '@umijs/max';
+import { Modal, Form, Divider, Button, Empty } from 'antd';
+import { fieldSelectData } from '@/services/ant-design-pro/api';
 import { flow } from '../../system/flow/service';
 import { tree, isPC } from "@/utils/utils";
 import React, { useRef, useState, useEffect } from 'react';
 import { PlusCircleOutlined, PlusOutlined, MinusOutlined, MinusCircleOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import { SvgIcon } from '@/components' // 自定义组件
-
+import { organization } from '../../system/company/service';
 export type CreateFormProps = {
   onCancel: (flag?: boolean, formVals?: Partial<AlertruleListItem>) => void;
   onSubmit: (values: Partial<AlertruleListItem>) => Promise<void>;
@@ -31,7 +32,8 @@ export type CreateFormProps = {
 
 const UpdateForm: React.FC<CreateFormProps> = (props) => {
   const restFormRef = useRef<ProFormInstance>();
-
+  const { initialState, setInitialState } = useModel('@@initialState');
+  const { currentUser } = initialState || {};
   restFormRef?.current?.setFieldsValue({ events: [] })
   const intl = useIntl();
   const [flowConf, setFlowConf] = useState<any>({});
@@ -39,6 +41,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
   const [flowMap, setFlowMap] = useState<any>({});
   const [flowList, setFlowList] = useState<any>([]);
   const [isMP, setIsMP] = useState<boolean>(!isPC());
+  const [organizationList, setOrganizationList] = useState<any>({});
   const {
     onSubmit,
     onCancel,
@@ -117,7 +120,40 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
           defaultMessage: 'Creat new threshold limit setting',
         })}
     >
+      {currentUser?.role_type=="Super" &&   <ProFormSelect
+        valueEnum={organizationList}
+        fieldProps={
+          {
+            notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
+            showSearch: true,
+            allowClear: true,
+            onFocus: () => {
+              organization({ }).then((res) => {
+                var b = {}
+                res.data.forEach((r) => {
+                  b[r.id] = r.name
+                })
+                setOrganizationList(b)
+              })
+            },
+            onSearch: (newValue: string) => {
 
+              organization({ name: newValue }).then((res) => {
+                var b = {}
+                res.data.forEach((r) => {
+                  b[r.id] = r.name
+                })
+                setOrganizationList(b)
+              })
+
+            }
+          }}
+        width="lg"
+        name="company_id"
+        label="Organization"
+
+      />}
+      
       <div style={{ float: 'left', width: '100%', display: "block",marginBottom:"10px" }}>
         <div style={{ fontWeight: 500, fontSize: "14px" }}>Input Applicable Condition(s) For Threshold To Be Applied</div>
         <span><ExclamationCircleOutlined /> If more than one condition is selected, threshold defined is only applicable to transactions that fulfil ALL of the specified conditions</span>

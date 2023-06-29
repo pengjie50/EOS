@@ -262,6 +262,7 @@ const TableList: React.FC = () => {
     {
       title: <FormattedMessage id="pages.searchTable.titleOption" defaultMessage="Operating" />,
       dataIndex: 'option',
+      width:100,
       valueType: 'option',
       render: (_, record) => [
         <a

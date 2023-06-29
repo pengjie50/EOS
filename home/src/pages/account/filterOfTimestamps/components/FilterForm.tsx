@@ -125,7 +125,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
         callback(intl.formatMessage({
           id: 'pages.xxx',
-          defaultMessage:res.data.name +' emplate already uses the same timestamps.',
+          defaultMessage:res.data.name +' template already uses the same timestamps.',
         }))
       } else {
         callback(undefined); // 必须返回一个callback

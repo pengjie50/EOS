@@ -3,7 +3,7 @@ import RcResizeObserver from 'rc-resize-observer';
 import { addAlert, removeAlert, alert as getAlert, updateAlert } from './service';
 import { fieldSelectData } from '@/services/ant-design-pro/api';
 import { updateTransaction } from '../transaction/service';
-
+import { getInitialState } from '../../app';
 import { Empty } from 'antd';
 import { PlusOutlined, SearchOutlined, ExclamationCircleOutlined, FormOutlined, DeleteOutlined, SwapOutlined, SortAscendingOutlined, SortDescendingOutlined } from '@ant-design/icons';
 import { ActionType, ProColumns, ProDescriptionsItemProps, ProCard } from '@ant-design/pro-components';
@@ -990,21 +990,25 @@ const TableList: React.FC = () => {
          
         ]}
           request={async (params, sorter) => {
-
+            console.log(params)
             var d = { ...params, sorter }
 
             if (showNoRead) {
               d.showNoRead = 1
-              console.log("sssssssssssssssssssssss")
+              
             }
             d.tab=tab
             var list = await getAlert(d)
-
+            if (showNoRead) {
+             
+              var a=await getInitialState()
+              setInitialState(a)
+            }
         
             return list
         }}
         columns={columns}
-       
+          pagination={showNoRead?false:{ pageSize:20 } }
         options={false}
         rowSelection={false}
         /></ConfigProvider >)}

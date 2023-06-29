@@ -1,10 +1,11 @@
 import RcResizeObserver from 'rc-resize-observer';
 
 import { addTransaction, removeTransaction, transaction, updateTransaction } from './service';
-import { PlusOutlined, SearchOutlined, PrinterOutlined, FileExcelOutlined, ExclamationCircleOutlined, DeleteOutlined, EllipsisOutlined,SwapOutlined,SortAscendingOutlined, SortDescendingOutlined } from '@ant-design/icons';
+import { PlusOutlined, SearchOutlined, PrinterOutlined, FileExcelOutlined, ExclamationCircleOutlined, FormOutlined, DeleteOutlined, EllipsisOutlined,SwapOutlined,SortAscendingOutlined, SortDescendingOutlined } from '@ant-design/icons';
 import type { ActionType, ProColumns, ProDescriptionsItemProps } from '@ant-design/pro-components';
 import { TransactionList, TransactionListItem } from './data.d';
 import FrPrint from "../../components/FrPrint";
+import { exportCSV } from "../../components/export";
 import FileSaver from "file-saver";
 import { history } from '@umijs/max';
 import { GridContent } from '@ant-design/pro-layout';
@@ -17,9 +18,11 @@ const Json2csvParser = require("json2csv").Parser;
 import {
   FooterToolbar,
   ModalForm,
+  ProFormSelect,
   PageContainer,
   ProDescriptions,
   ProFormDatePicker,
+  ProFormDateRangePicker,
   ProFormText,
   ProCard,
   ProFormTextArea,
@@ -216,70 +219,7 @@ function TableToJson(tableid){//tableid是你要转化的表的表名，是一�
 
 }*/
 
-const exportCSV = (data, columns, filename = `${"Summary of all transactions"+moment(Date.now()).format(' YYYY-MM-DD HH:mm:ss') }.csv`) => {
 
-  if (data.length==0) {
-    message.error(<FormattedMessage
-      id="pages.selectDataFirst"
-      defaultMessage="Please select data first!"
-    />);
-    return false;
-  }
-  var newData = []
-  var map = {}
-  columns.forEach((a) => {
-
-    map[a.dataIndex] = a
-  })
-  data = data.forEach((s) => {
-    var n = {}
-    
-    for (var k in s) {
-     
-      var c = map[k]
-      if (c && !c.hideInTable) {
-        if (c.valueType == 'date') {
-          n[c.title.props.defaultMessage] = s[k] ? moment(s[k]).format('YYYY/MM/DD') : ""
-        } else if (c.renderText) {
-          n[c.title.props.defaultMessage] = "" +c.renderText(s[k], s)
-        }
-        else if (c.render && k != 'id') {
-          n[c.title.props.defaultMessage] = c.render(s[k],s)
-        } else {
-          if (c.valueEnum) {
-            if (c.valueEnum[s[k]]) {
-              if (typeof c.valueEnum[s[k]] == 'string') {
-                n[c.title.props.defaultMessage] = c.valueEnum[s[k]]
-              } else {
-                n[c.title.props.defaultMessage] = c.valueEnum[s[k]].text.props.defaultMessage
-              }
-
-            } else {
-              n[c.title.props.defaultMessage] = s[k]
-            }
-           
-          } else {
-            n[c.title.props.defaultMessage] = s[k]
-          }
-         // n[c.title.props.defaultMessage] = c.valueEnum ? (typeof c.valueEnum[s[k]] == 'string' ? c.valueEnum[s[k]] : c.valueEnum[s[k]].text.props.defaultMessage) : s[k]
-        }
-        
-        
-      }
-     
-    }
-    newData.push(n)
-   
-  })
-
-  const parser = new Json2csvParser();
-  const csvData = parser.parse(newData);
-
-  const blob = new Blob(["\uFEFF" + csvData], {
-    type: "text/plain;charset=utf-8;",
-  });
-  FileSaver.saveAs(blob, filename);
-}
 const TableList: React.FC = () => {
   /**
    * @en-US Pop-up window of new window
@@ -317,11 +257,10 @@ const TableList: React.FC = () => {
   const [showMPSearch, setShowMPSearch] = useState<boolean>(false);
   const [isMP, setIsMP] = useState<boolean>(!isPC());
 
- 
+  const [collapse, setCollapse] = useState<boolean>(isPC()?true:false);
 
   const [MPSorter, setMPSorter] = useState<any>({});
-
-
+  
   const [organization_id, setOrganization_id] = useState<any>(useLocation()?.state?.organization_id);
   const [dateArr, setDateArr] = useState<any>(useLocation()?.state?.dateArr);
   const [status, setStatus] = useState<any>(useLocation()?.state?.status);
@@ -511,7 +450,7 @@ const TableList: React.FC = () => {
 
 
       if (status !== "" && status !== undefined) {
-
+        
         formRef.current?.setFieldValue('status', status + "")
       }
 
@@ -580,12 +519,13 @@ const TableList: React.FC = () => {
       title: (
         <FormattedMessage
           id="pages.transaction.xxx"
-          defaultMessage="Start Date"
+          defaultMessage="Date Range"
         />
       ),
       sorter: true,
       hideInDescriptions: true,
       hideInTable: true,
+      hideInSearch:true,
       fieldProps: { placeholder: ['From ', 'To '] },
       defaultSortOrder: 'descend',
       dataIndex: 'start_of_transaction',
@@ -593,7 +533,7 @@ const TableList: React.FC = () => {
      
       search: {
         transform: (value) => {
-          if (value.length > 0) {
+          if (value && value.length > 0) {
             return {
               'start_of_transaction': {
                 'field': 'start_of_transaction',
@@ -610,8 +550,220 @@ const TableList: React.FC = () => {
 
 
     },
+    {
+      title: null,
+      dataIndex: "aaaaa",
+      renderFormItem: () => (<div style={{ width: '100%' }}>
 
+        {!collapse && <div style={{ width: '100%', textAlign: "center", color: "#FFF" }}> Description  </div>}
+       
+        <div style={{ width: '100%', marginBottom: 20 }}> <ProFormDateRangePicker label="Date Range"
+          width="lg"
+          fieldProps={{ placeholder: ['From ', 'To '] }}
+          name="start_of_transaction"
+           />  </div>
+        {!collapse && <>
+          <div style={{ width: '100%', marginBottom: 20 }}>
 
+            <ProFormSelect label="Product Type"
+              width="lg"
+              valueEnum={product_typeData }
+              name="product_type"
+              fieldProps={{
+                notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
+                showSearch: true,
+                allowClear: true,
+                onFocus: () => {
+                  
+                  fieldSelectData({ model: "Transaction", value: '', field: 'product_type' }).then((res) => {
+                    setProduct_typeData(res.data)
+                  })
+                },
+                onSearch: (newValue: string) => {
+
+                  fieldSelectData({ model: "Transaction", value: newValue, field: 'product_type' }).then((res) => {
+                    setProduct_typeData(res.data)
+                  })
+
+                }
+              }}
+          />
+
+        </div>
+
+          <div style={{ width: '100%', marginBottom: 20 }}>
+
+            <ProFormSelect label="Status"
+              width="lg"
+             
+              valueEnum={{
+                0: {
+                  text: <FormattedMessage id="pages.transaction.active" defaultMessage="Open" />
+                },
+                1: { text: <FormattedMessage id="pages.transaction.closed" defaultMessage="Closed" /> },
+                2: { text: <FormattedMessage id="pages.transaction.cancelled" defaultMessage="Cancelled" /> }
+              }}
+            name="status"
+          />
+
+        </div>
+
+          <div style={{ width: '100%', marginBottom: isMP?0:0 }}>
+
+            <ProFormSelect label={getOrganizationName()}
+              width="lg"
+              fieldProps={{
+                showSearch: true,
+                allowClear: true,
+              }}
+              valueEnum={organizationList}
+            name="organization_id"
+          />
+
+        </div>
+        </>}
+      </div>),
+      valueType: 'text'
+
+    },
+    {
+      title: null,
+      dataIndex: "bbb",
+      renderFormItem: () => (<div style={{ width: '100%' }}>
+
+        {!collapse && !isMP && < div style={{ width: '100%', textAlign: "center", color: "#FFF" }}>  Description </div>}
+
+       
+        
+        <div style={{ width: '100%', marginBottom: 20 }}>
+
+          <ProFormSelect label="IMO Number"
+            width="lg"
+            name="imo_number"
+            valueEnum={imo_numberData}
+            fieldProps={{
+              notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
+              showSearch: true,
+              allowClear: true,
+              onFocus: () => {
+                fieldSelectData({ model: "Transaction", value: '', field: 'imo_number' }).then((res) => {
+                  setImo_numberData(res.data)
+                })
+              },
+              onSearch: (newValue: string) => {
+
+                fieldSelectData({ model: "Transaction", value: newValue, field: 'imo_number' }).then((res) => {
+                  setImo_numberData(res.data)
+                })
+
+              }
+            }}
+            />
+
+          </div>
+        {!collapse && <>
+          <div style={{ width: '100%', marginBottom: 20 }}>
+
+            <ProFormSelect label="Jetty"
+              width="lg"
+              name="jetty_id"
+              valueEnum={jettyList}
+            fieldProps={{
+              notFoundContent: <Empty />,
+            }}
+            />
+
+          </div>
+
+          <div style={{ width: '100%', marginBottom: 20 }}>
+
+            <ProFormSelect label="Vessel Name"
+              width="lg"
+              name="vessel_name"
+              valueEnum={vessel_nameData}
+              fieldProps={
+                {
+                  notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
+                  showSearch: true,
+                  allowClear: true,
+                  onFocus: () => {
+                    fieldSelectData({ model: "Transaction", value: '', field: 'vessel_name' }).then((res) => {
+                      setVessel_nameData(res.data)
+                    })
+                  },
+                  onSearch: (newValue: string) => {
+
+                    fieldSelectData({ model: "Transaction", value: newValue, field: 'vessel_name' }).then((res) => {
+                      setVessel_nameData(res.data)
+                    })
+
+                  }
+                }}
+            />
+
+          </div>
+
+        </>}
+
+      </div>),
+      valueType: 'text'
+
+    },
+
+    
+    {
+      title:null,
+      dataIndex:"cccc",
+      renderFormItem: () => (<div style={{ width: '100%' }}>
+       
+        {!collapse && <div style={{ width: '100%', textAlign: "center", color: "#FFF" }}> Threshold Breached  </div>}
+        
+        <div style={{ width: '100%', marginBottom: 20 }}> <ProFormSelect label="Organization" valueEnum={organizationList}
+          width="lg"
+          name="threshold_organization_id"
+          fieldProps={
+            {
+              notFoundContent: <Empty />,
+
+              dropdownMatchSelectWidth: isMP ? true : false,
+              mode: 'multiple',
+              showSearch: false,
+              multiple: true
+
+            }} />  </div>
+        {!collapse && <>
+          <div style={{ width: '100%', marginBottom: 20 } }> <ProFormSelect label="Entire Transaction And Processes" valueEnum={processes}
+            width="lg"
+            name="flow_id"
+          fieldProps={
+            {
+              notFoundContent: <Empty />,
+             
+              dropdownMatchSelectWidth: isMP ? true : false,
+              mode: 'multiple',
+              showSearch: false,
+              multiple: true
+
+            }} />  </div>
+          <div style={{ width: '100%', marginBottom:20 }}> <ProFormSelect label="Between Two Events" valueEnum={events}
+          width="lg"
+          name="flow_id_to"
+          fieldProps={
+            {
+              notFoundContent: <Empty />,
+
+              dropdownMatchSelectWidth: isMP ? true : false,
+              mode: 'multiple',
+              showSearch: false,
+              multiple: true
+
+            }} />  </div>
+
+        </>}
+      </div>),
+      valueType: 'text'
+    
+    },
     {
       title: <FormattedMessage id="pages.transaction.startOfTransaction" defaultMessage="Start Of Transaction" />,
       dataIndex: 'start_of_transaction',
@@ -630,7 +782,7 @@ const TableList: React.FC = () => {
         if (entity.status == 1) {
           return dom ? moment(new Date(dom)).format('YYYY-MM-DD'):"-"
         } else {
-          return ""
+          return "-"
         }
       }
 
@@ -641,6 +793,7 @@ const TableList: React.FC = () => {
       title: <FormattedMessage id="pages.transaction.status" defaultMessage="Status" />,
       dataIndex: 'status',
       sorter: true,
+      hideInSearch:true,
       defaultSortOrder: 'ascend',
       search: {
         transform: (value) => {
@@ -697,6 +850,7 @@ const TableList: React.FC = () => {
       title: <FormattedMessage id="pages.transaction.imoNumber" defaultMessage="IMO Number" />,
       dataIndex: 'imo_number',
       sorter: true,
+      hideInSearch:true,
       valueEnum:imo_numberData,
       fieldProps: {
         notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
@@ -721,6 +875,7 @@ const TableList: React.FC = () => {
       title: <FormattedMessage id="pages.transaction.vesselName" defaultMessage="Vessel Name" />,
       dataIndex: 'vessel_name',
       sorter: true,
+      hideInSearch:true,
       valueEnum: vessel_nameData,
       fieldProps: {
         notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
@@ -745,6 +900,7 @@ const TableList: React.FC = () => {
       title: getOrganizationName(),
       dataIndex: 'organization_id',
       sorter: true,
+      hideInSearch: true,
       valueEnum: organizationList,
       render: (dom, entity) => {
         if (currentUser?.role_type == 'Super') {
@@ -779,6 +935,7 @@ const TableList: React.FC = () => {
       title: <FormattedMessage id="pages.transaction.jettyName" defaultMessage="Jetty Name" />,
       dataIndex: 'jetty_id',
       sorter: true,
+      hideInSearch:true,
       valueEnum: jettyList,
       fieldProps: {
         notFoundContent: <Empty />,
@@ -804,8 +961,22 @@ const TableList: React.FC = () => {
       title: <FormattedMessage id="pages.transaction.productType" defaultMessage="Product Type" />,
       dataIndex: 'product_type',
       sorter: true,
+      hideInSearch: true,
       valueEnum: product_typeData,
+      search: {
+        transform: (value) => {
+          if (value) {
+            return {
+              'product_type': {
+                'field': 'product_type',
+                'op': 'eq',
+                'data': value
+              }
+            }
+          }
 
+        }
+      },
       fieldProps: {
         notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
         showSearch: true,
@@ -883,6 +1054,7 @@ const TableList: React.FC = () => {
       ),
       dataIndex: 'flow_id',
       hideInTable: true,
+      hideInSearch: true,
       hideInDescriptions: true,
       valueEnum: processes,
       fieldProps: {
@@ -896,7 +1068,7 @@ const TableList: React.FC = () => {
       },
       search: {
         transform: (value) => {
-          if (value.length > 0) {
+          if (value && value.length > 0) {
             return {
               'flow_id': {
                 'field': 'flow_id',
@@ -919,6 +1091,7 @@ const TableList: React.FC = () => {
       ),
       dataIndex: 'flow_id_to',
       hideInTable: true,
+      hideInSearch:true,
       width: 200,
       hideInDescriptions: true,
       valueEnum: events,
@@ -934,7 +1107,7 @@ const TableList: React.FC = () => {
       },
       search: {
         transform: (value) => {
-          if (value.length > 0) {
+          if (value && value.length > 0) {
             return {
               'flow_id': {
                 'field': 'flow_id',
@@ -1000,7 +1173,7 @@ const TableList: React.FC = () => {
             setCurrentRow(record);
           }}
         >
-          <FormattedMessage id="pages.update" defaultMessage="Modify" />
+            <FormOutlined style={{ fontSize: '20px' }} />
           </a></Access>,
         <Access accessible={access.canAdmin} fallback={<div></div>}>
           <a
@@ -1104,19 +1277,37 @@ const TableList: React.FC = () => {
       ><ProTable<TransactionListItem, API.PageParams>
 
           scroll={{ x: columns.length*140, y: resizeObj.tableScrollHeight }}
-          
+          beforeSearchSubmit={(params) => {
+            columns.forEach((c) => {
+              if(c.search?.transform){
+                var p = c.search?.transform(params[c.dataIndex])
+                params={...params,...p }
+              }
+            })
+            if (params.status == 0 || params.status == 1 || params.status == 2) {
+
+            } else {
+              delete params.status
+            }
+            return params
+          } }
         formRef={formRef}
         bordered size="small"
         actionRef={actionRef}
         rowKey="id"
         options={false}
-        search={{
-          labelWidth: 210,
-          span: resizeObj.searchSpan,
+          search={{
+            layout: "vertical",
+            onCollapse: (collapsed) => {
+              setCollapse(collapsed)
+            },
+            labelWidth: 210,
+          
+          span: 8,
           searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
         }}
         className="mytable"
-        request={(params, sorter) => transaction({ ...params, sorter })}
+          request={(params, sorter) => { return transaction({ ...params, sorter }) }}
         columns={columns}
         rowSelection={{
           onChange: (_, selectedRows) => {
@@ -1159,7 +1350,20 @@ const TableList: React.FC = () => {
 
         <div style={{ padding: '20px', backgroundColor: "#5187c4", display: showMPSearch ? 'block' : 'none' }}>
           <Search columns={columns.filter(a => !(a.hasOwnProperty('hideInSearch') && a['hideInSearch']))} action={actionRef} loading={false}
+            beforeSearchSubmit={(params) => {
+              columns.forEach((c) => {
+                if (c.search?.transform) {
+                  var p = c.search?.transform(params[c.dataIndex])
+                  params = { ...params, ...p }
+                }
+              })
+              if (params.status == 0 || params.status == 1 || params.status == 2) {
 
+              } else {
+                delete params.status
+              }
+              return params
+            }}
             onFormSearchSubmit={onFormSearchSubmit}
 
             dateFormatter={'string'}

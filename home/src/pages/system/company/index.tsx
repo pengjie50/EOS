@@ -231,9 +231,10 @@ const TableList: React.FC = () => {
 
     {
       title: 'Series No',
-      dataIndex: 'index',
-      width:100,
-      valueType: 'index',
+      dataIndex: 'company_id',
+      width: 130,
+      sorter: true
+    //  valueType: 'index',
      // align: 'center',
      // render: (dom) => <div style={{ display: 'flex', justifyContent: 'center' }}>{dom}</div>,
     },
