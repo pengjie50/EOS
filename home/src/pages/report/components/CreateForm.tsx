@@ -202,7 +202,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
   const [templateMap, setTemplateMap] = useState<any>({});
 
   const [isModalOpen, setIsModalOpen] = useState(false);
-  const [product_typeData, setProduct_typeData] = useState<any>({});
+  const [product_nameData, setProduct_nameData] = useState<any>({});
 
   const [eos_idData, setEos_idData] = useState<any>({});
 
@@ -439,17 +439,17 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
     },
     {
       title: <FormattedMessage id="pages.transaction.xxx" defaultMessage="Vessel Size" />,
-      dataIndex: 'size_of_vessel',
+      dataIndex: 'vessel_size_dwt',
 
     },
     {
       title: <FormattedMessage id="pages.transaction.productType" defaultMessage="Product Type" />,
-      dataIndex: 'product_type',
+      dataIndex: 'product_name',
 
     },
     {
       title: <FormattedMessage id="pages.transaction.xxx" defaultMessage="Total Nominated Quantity (Bls-60-F)" />,
-      dataIndex: 'total_nominated_quantity_b',
+      dataIndex: 'product_quantity_in_bls_60_f',
 
     },
     {
@@ -605,18 +605,18 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
     {
 
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Threshold Vessel Size" />,
-      dataIndex: 'ar.size_of_vessel_from',
+      dataIndex: 'ar.vessel_size_dwt_from',
 
     },
     {
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Threshold Nominated Quantity Range" />,
-      dataIndex: 'ar.total_nominated_quantity_from_m',
+      dataIndex: 'ar.product_quantity_in_mt_from',
     
 
     },
     {
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Transaction Vessel Size" />,
-      dataIndex: 't.size_of_vessel',
+      dataIndex: 't.vessel_size_dwt',
 
 
     },
@@ -624,14 +624,14 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
     {
 
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Transaction Nominated Quantity Range" />,
-      dataIndex: 't.total_nominated_quantity_b',
+      dataIndex: 't.product_quantity_in_bls_60_f',
      
 
     },
 
     {
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Product Type" />,
-      dataIndex: 't.product_type',
+      dataIndex: 't.product_name',
       
 
     },
@@ -1208,23 +1208,23 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                
             
                 <ProFormSelect
-                  name="product_type"
+                  name="product_name"
                   label="Product Type"
                   width="sm"
-                  valueEnum={product_typeData}
+                  valueEnum={product_nameData}
                   fieldProps={{
                     notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
                     showSearch: true,
                     allowClear: true,
                     onFocus: () => {
-                      fieldSelectData({ model: "Transaction", value: '', field: 'product_type' }).then((res) => {
-                        setProduct_typeData(res.data)
+                      fieldSelectData({ model: "Transaction", value: '', field: 'product_name' }).then((res) => {
+                        setProduct_nameData(res.data)
                       })
                     },
                     onSearch: (newValue: string) => {
 
-                      fieldSelectData({ model: "Transaction", value: newValue, field: 'product_type' }).then((res) => {
-                        setProduct_typeData(res.data)
+                      fieldSelectData({ model: "Transaction", value: newValue, field: 'product_name' }).then((res) => {
+                        setProduct_nameData(res.data)
                       })
 
                     }
@@ -1365,7 +1365,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                 {((currentUser?.role_type == "Trader" && report_type != 1) || (currentUser?.role_type == "Terminal") || (currentUser?.role_type == "Super"  && report_type != 3) ) && <ProFormSelect
                   width="sm"
                   name="alertrule_type"
-                  initialValue={""}
+                  initialValue={null}
                   valueEnum={
                     {
                       '0': "Single Process",
@@ -1384,7 +1384,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                 {((currentUser?.role_type == "Trader" && report_type != 1) || (currentUser?.role_type == "Terminal") || (currentUser?.role_type == "Super" && report_type != 3)) && <ProFormSelect
                   width="sm"
                   name="vessel_size_from_to"
-                  initialValue={""}
+                  initialValue={null}
                   fieldProps={{ dropdownMatchSelectWidth: isMP ? true : false, } }
                   
                   valueEnum={
@@ -1407,25 +1407,26 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                   style={{ width:100 }}
                   separator="-"
                   placeholder={['From', 'To']}
-                  separatorWidth={30}
-                  addonAfter={<ProFormSelect
-                    width="sm"
-                    name="uom"
-                    initialValue={"Bls-60-F"}
-                    valueEnum={{
-                      "L-obs": "L-obs",
-                      "L-15-C": "L-15-C",
-                      "Mt": "Mt",
-                      "MtV": "MtV",
-                      "Bls-60-F": "Bls-60-F",
-
-                    }}
-                    label=" "
-
-                  />}
+                 
+                  
                 />}
              
+                <ProFormSelect
+                  width="sm"
+                  name="uom"
+                  label="UOM"
+                  initialValue={"Bls-60-F"}
+                  valueEnum={{
+                    "L-obs": "L-obs",
+                    "L-15-C": "L-15-C",
+                    "Mt": "Mt",
+                    "MtV": "MtV",
+                    "Bls-60-F": "Bls-60-F",
 
+                  }}
+                 
+
+                />
               
 
                

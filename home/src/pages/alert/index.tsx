@@ -35,7 +35,7 @@ import UpdateForm from './components/UpdateForm';
 import { tree, isPC } from "@/utils/utils";
 import { useAccess, Access } from 'umi';
 
-
+import MPSort from "@/components/MPSort";
 
 //MP
 import { InfiniteScroll, List, NavBar, Space, DotLoading } from 'antd-mobile'
@@ -609,14 +609,14 @@ const TableList: React.FC = () => {
 
     {
       title: <FormattedMessage id="pages.alertrule.vesselSizeLimit" defaultMessage="Vessel Size Limit (DWT)" />,
-      dataIndex: 'ar.size_of_vessel_from',
+      dataIndex: 'ar.vessel_size_dwt_from',
       onFilter: true,
      
       hideInSearch: true,
       valueType: 'text',
 
       render: (dom, entity) => {
-        if (entity['ar.size_of_vessel_from'] != null && entity['ar.size_of_vessel_to']) {
+        if (entity['ar.vessel_size_dwt_from'] != null && entity['ar.vessel_size_dwt_to']) {
 
           var valueEnum = {
             "0-25": "GP",
@@ -628,7 +628,7 @@ const TableList: React.FC = () => {
             "320-1000000": "ULCC",
           }
 
-          return valueEnum[numeral(entity['ar.size_of_vessel_from']).format('0,0') + "-" + numeral(entity['ar.size_of_vessel_to']).format('0,0')];
+          return valueEnum[numeral(entity['ar.vessel_size_dwt_from']).format('0,0') + "-" + numeral(entity['ar.vessel_size_dwt_to']).format('0,0')];
         } else {
           return '-'
         }
@@ -638,7 +638,7 @@ const TableList: React.FC = () => {
 
     {
       title: <FormattedMessage id="pages.alertrule.ee" defaultMessage="Total Nominated Quantity (Bal-60-F)" />,
-      dataIndex: 'ar.total_nominated_quantity_b',
+      dataIndex: 'ar.product_quantity_in_bls_60_f',
       hideInSearch: true,
       width: 200,
       align: "center",
@@ -652,7 +652,7 @@ const TableList: React.FC = () => {
     },/*
     {
       title: <FormattedMessage id="pages.alertrule.ee" defaultMessage="Total Nominated Quantity (MT)" />,
-      dataIndex: 't.total_nominated_quantity_m',
+      dataIndex: 't.product_quantity_in_mt',
       hideInSearch: true,
       width: 200,
       align: "center",
@@ -675,9 +675,25 @@ const TableList: React.FC = () => {
       dataIndex: 't.imo_number',
       align: "center",
       valueEnum: imo_numberData,
+      search: {
+        transform: (value) => {
+          if (value && value.length > 0) {
+            return {
+              't.imo_number': {
+                'field': 't.imo_number',
+                'op': 'in',
+                'data': value
+              }
+            }
+          }
+
+        }
+      },
       fieldProps: {
         notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
         showSearch: true,
+        multiple: true,
+        mode: "multiple",
         allowClear: true,
         onFocus: () => {
           fieldSelectData({ model: "Transaction", value: '', field: 'imo_number' }).then((res) => {
@@ -696,7 +712,7 @@ const TableList: React.FC = () => {
 
     {
       title: <FormattedMessage id="pages.alert.productType" defaultMessage="Product Type" />,
-      dataIndex: 't.product_type',
+      dataIndex: 't.product_name',
       align: "center",
       hideInSearch: true,
      
@@ -724,15 +740,17 @@ const TableList: React.FC = () => {
        
       },
       fieldProps: {
+        multiple: true,
+        mode: "multiple",
         notFoundContent: <Empty />,
       },
       search: {
         transform: (value) => {
-          if (value) {
+          if (value && value.length>0) {
             return {
               'organization_id': {
                 'field': 'organization_id',
-                'op': 'eq',
+                'op': 'in',
                 'data': value
               }
             }
@@ -822,6 +840,8 @@ const TableList: React.FC = () => {
       sorter: true,
       valueEnum: jettyList,
       fieldProps: {
+        multiple: true,
+        mode:"multiple",
         notFoundContent: <Empty />,
       },
       search: {
@@ -830,7 +850,7 @@ const TableList: React.FC = () => {
             return {
               't.jetty_id': {
                 'field': 't.jetty_id',
-                'op': 'eq',
+                'op': 'in',
                 'data': value
               }
             }
@@ -936,7 +956,7 @@ const TableList: React.FC = () => {
 
         {currentUser?.role_type == "Terminal" && <ProCard
           className="my-tab"
-          title={<div className="my-font-size" style={{ height: 14, lineHeight: '14px', fontSize: 12 }}>{tab =='Terminal'?'Alerts related to my own Terminal Threshold settings':'This threshold alert is reflective of my customer’s threshold alerts'}</div>}
+        //  title={<div className="my-font-size" style={{ height: 14, lineHeight: '14px', fontSize: 12 }}>{tab =='Terminal'?'Alerts related to my own Terminal Threshold settings':'This threshold alert is reflective of my customer’s threshold alerts'}</div>}
           headStyle={{ height: 14, lineHeight: '14px', fontSize: 12 }}
           tabs={{
             type: 'card',
@@ -944,12 +964,12 @@ const TableList: React.FC = () => {
             activeKey: tab,
             items: [
               {
-                label: `Terminal`,
+                label: <div title="Alerts related to my own Terminal Threshold settings">Terminal</div>,
                 key: 'Terminal',
                 children: null,
               },
               {
-                label: `Customer`,
+                label: <div title="This threshold alert is reflective of my customer’s threshold alerts">Customer</div>,
                 key: 'Trader',
                 children: null,
               }
@@ -975,13 +995,14 @@ const TableList: React.FC = () => {
       {!isMP && (<ConfigProvider renderEmpty={customizeRenderEmpty}> <ProTable<AlertListItem, API.PageParams>
           scroll={{ x: 2500, y: resizeObj.tableScrollHeight }}
           bordered size="small"
-          
+         
         className="mytable"
         editable={{ type: 'single', editableKeys: ['remarks'] }}
         actionRef={actionRef}
         formRef={formRef}
         rowKey="id"
-        search={{
+          search={{
+            layout: "vertical",
           labelWidth: 210,
           span: resizeObj.searchSpan,
           searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
@@ -1008,42 +1029,25 @@ const TableList: React.FC = () => {
             return list
         }}
         columns={columns}
-          pagination={showNoRead?false:{ pageSize:20 } }
+          pagination={showNoRead ? false : { pageSize: 20, size: "default" }  }
         options={false}
         rowSelection={false}
         /></ConfigProvider >)}
 
       {isMP && (<>
 
-          <NavBar backArrow={false} left={<div> <Popover placement="bottom" title={""} content={<div>{columns.filter(a => (a.hasOwnProperty('sorter') && a['sorter'])).map((a) => {
-
-            return (<div><Button onClick={() => {
-              setMPSorter({ [a.dataIndex]: 'ascend' })
-
-
+          <NavBar backArrow={false} left={
+            <MPSort columns={columns} onSort={(k) => {
+              setMPSorter(k)
               getData(1)
-
-
-            }} icon={<SortAscendingOutlined />} />
-              <Button style={{ margin: 5 }} onClick={() => {
-                setMPSorter({ [a.dataIndex]: 'descend' })
-
-                getData(1)
-
-              }} icon={<SortDescendingOutlined />} />
-              <span>{a.title}</span>
-            </div>)
-
-          })}</div>} trigger="click">
-            <SwapOutlined rotate={90} />
-          </Popover></div>} right={right} onBack={back}>
+            }} />} right={right} onBack={back}>
           {intl.formatMessage({
             id: 'pages.alert.xx',
             defaultMessage: 'Threshold Triggered Alerts',
           })}
         </NavBar>
 
-        <div style={{ padding: '20px', backgroundColor: "#5187c4", display: showMPSearch ? 'block' : 'none' }}>
+        <div style={{ padding: '20px', backgroundColor: "#5000B9", display: showMPSearch ? 'block' : 'none' }}>
           <Search columns={columns.filter(a => !(a.hasOwnProperty('hideInSearch') && a['hideInSearch']))} action={actionRef} loading={false}
 
             onFormSearchSubmit={onFormSearchSubmit}
@@ -1073,6 +1077,7 @@ const TableList: React.FC = () => {
               <ProDescriptions<any>
                 bordered={true}
                 size="small"
+                className="jetty-descriptions"
                 layout="horizontal"
                 column={1}
                 title={""}
@@ -1091,7 +1096,8 @@ const TableList: React.FC = () => {
         <InfiniteScroll loadMore={loadMore} hasMore={hasMore}>
           <InfiniteScrollContent hasMore={hasMore} />
           </InfiniteScroll>
-          <FloatButton.BackTop visibilityHeight={0} />
+          <FloatButton.BackTop  visibilityHeight={0} />
+         
       </>)}
       
       

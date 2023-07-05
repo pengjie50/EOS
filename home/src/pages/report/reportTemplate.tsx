@@ -330,12 +330,12 @@ const TableList: React.FC = () => {
 
     {
       title: <FormattedMessage id="pages.transaction.productType" defaultMessage="Product Type" />,
-      dataIndex: 'product_type',
+      dataIndex: 'product_name',
       // valueEnum: producttypeList,
     },
     {
       title: <FormattedMessage id="pages.alertrule.totalNominatedQuantityM" defaultMessage="Total Nominated Quantity (MT)" />,
-      dataIndex: 'total_nominated_quantity_m',
+      dataIndex: 'product_quantity_in_mt',
 
       hideInSearch: true,
       valueType: "text",
@@ -350,7 +350,7 @@ const TableList: React.FC = () => {
     },
     {
       title: <FormattedMessage id="pages.alertrule.totalNominatedQuantityB" defaultMessage="Total Nominated Quantity (Bal-60-F)" />,
-      dataIndex: 'total_nominated_quantity_b',
+      dataIndex: 'product_quantity_in_bls_60_f',
       hideInSearch: true,
 
       valueType: 'text',
@@ -514,7 +514,7 @@ const TableList: React.FC = () => {
           />
 
           <ProFormText
-            name="product_type"
+            name="product_name"
             label="Product Type"
 
           />

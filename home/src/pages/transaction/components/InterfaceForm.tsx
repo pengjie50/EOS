@@ -13,14 +13,16 @@ import { FormattedMessage, useIntl } from '@umijs/max';
 import { Modal, Form } from 'antd';
 import React, { useRef, useEffect, useState } from 'react';
 import { company } from '../../system/company/service';
-import { jetty } from '../../system/jetty/service';
 
+
+
+import { jetty } from '../../system/jetty/service';
 
 export type UpdateFormProps = {
   onCancel: (flag?: boolean, formVals?: Partial<TransactionListItem>) => void;
   onSubmit: (values: Partial<TransactionListItem>) => Promise<void>;
-  updateModalOpen: boolean;
-  values: Partial<TransactionListItem>;
+  createModalOpen: boolean;
+  
 };
 
 const UpdateForm: React.FC<UpdateFormProps> = (props) => {
@@ -28,11 +30,13 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
   const intl = useIntl();
   const [terminalList, setTerminalList] = useState<any>({});
   const [traderList, setTraderList] = useState<any>({});
+
+
   const [jettyList, setJettyList] = useState<any>({});
   useEffect(() => {
 
 
-    company({ type: 'Trader', sorter: { name: 'ascend' } }).then((res) => {
+    company({  type:'Trader',sorter: { name: 'ascend' } }).then((res) => {
       var b = {}
       res.data.forEach((r) => {
         b[r.id] = r.name
@@ -49,7 +53,8 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
       setTerminalList(b)
 
     });
-    jetty({ pageSize: 3000, current: 1, sorter: { name: 'ascend' } }).then((res) => {
+
+    jetty({ sorter: { name: 'ascend' } }).then((res) => {
       var b = {}
       res.data.forEach((r) => {
         b[r.id] = r.name
@@ -65,8 +70,8 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
   const {
     onSubmit,
     onCancel,
-    updateModalOpen,
-    values,
+    createModalOpen,
+    
   } = props;
 
   
@@ -74,7 +79,6 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
    
     <ModalForm
       modalProps={{ destroyOnClose: true }}
-      initialValues={values}
       onOpenChange={(vi) => {
         if (!vi) {
           props.onCancel();
@@ -83,7 +87,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
       }}
       formRef={restFormRef}
         onFinish={props.onSubmit}
-        open={props.updateModalOpen}
+      open={props.createModalOpen}
         submitter={{
           searchConfig: {
             resetText: intl.formatMessage({
@@ -99,11 +103,27 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           },
         }}
         title={intl.formatMessage({
-          id: 'pages.transaction.mod',
-          defaultMessage: 'Transaction mod',
+          id: 'pages.transaction.add',
+          defaultMessage: 'Add Transaction',
         })}
     >
-      {/* <ProFormText
+
+      <ProFormSelect
+        name="type"
+        label="DE Name"
+        width="md"
+        valueEnum={{
+          1: "DE 1",
+          2: "DE 2",
+          3: "DE 3",
+          4: "DE 4",
+        }}
+      />
+
+
+
+
+      <ProFormText
         name="eos_id"
         label={intl.formatMessage({
           id: 'pages.transaction.eosId',
@@ -111,7 +131,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         })}
         width="md"
 
-      />*/ }
+      />
       <ProFormText
         name="start_of_transaction"
         label={intl.formatMessage({
@@ -121,29 +141,17 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         width="md"
 
       />
-      <ProFormText
+        <ProFormText
         name="end_of_transaction"
-        label={intl.formatMessage({
-          id: 'pages.transaction.name',
-          defaultMessage: 'End of Transaction',
-        })}
-        width="md"
-
+          label={intl.formatMessage({
+            id: 'pages.transaction.name',
+            defaultMessage: 'End of Transaction',
+          })}
+          width="md"
+          
       />
-      <ProFormSelect
-        name="status"
-        label={intl.formatMessage({
-          id: 'pages.transaction.status',
-          defaultMessage: 'Status',
-        })}
-        width="md"
-        valueEnum={{
-          0: "Active" ,
-          1: "Closed",
-          2: "Cancelled" 
-        }}
-      />
-
+     
+     
       <ProFormText
         name="arrival_id"
         label={intl.formatMessage({
@@ -189,6 +197,8 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         width="md"
         valueEnum={traderList}
       />
+
+
       <ProFormSelect
         name="jetty_id"
         label={intl.formatMessage({
@@ -198,7 +208,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         width="md"
         valueEnum={jettyList}
       />
-
+     
       <ProFormText
         name="vessel_name"
         label={intl.formatMessage({
@@ -208,7 +218,6 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         width="md"
 
       />
-
       <ProFormText
         name="vessel_size_dwt"
         label={intl.formatMessage({
@@ -218,6 +227,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         width="md"
 
       />
+
       <ProFormText
         name="product_quantity_in_mt"
         label={intl.formatMessage({
@@ -236,7 +246,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         width="md"
 
       />
-
+     
       <ProFormText
         name="total_duration"
         label={intl.formatMessage({
@@ -246,8 +256,9 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         width="md"
 
       />
-
-        
+      
+     
+     
     </ModalForm>
      
   );

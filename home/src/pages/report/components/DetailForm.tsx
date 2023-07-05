@@ -452,7 +452,7 @@ const TableList: React.FC = () => {
 
     {
       title: <FormattedMessage id="pages.transaction.productType" defaultMessage="Product Type" />,
-      dataIndex: 'product_type',
+      dataIndex: 'product_name',
       // valueEnum: producttypeList,
     },
     {
@@ -681,7 +681,7 @@ const TableList: React.FC = () => {
           </ProForm.Group>
           <ProForm.Group >
           <ProFormText
-            name="product_type"
+            name="product_name"
             label="Product Type"
 
           />

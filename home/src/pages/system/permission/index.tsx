@@ -1,5 +1,5 @@
 import RcResizeObserver from 'rc-resize-observer';
-
+import MPSort from "@/components/MPSort";
 import { addPermission, removePermission, permission, updatePermission } from './service';
 import { PlusOutlined, SearchOutlined, FormOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import type { ActionType, ProColumns, ProDescriptionsItemProps } from '@ant-design/pro-components';
@@ -20,6 +20,7 @@ import { Button, Drawer, Input, message, Modal } from 'antd';
 import React, { useRef, useState } from 'react';
 import CreateForm from './components/CreateForm';
 import UpdateForm from './components/UpdateForm';
+import { tree } from "@/utils/utils";
 import { isPC } from "@/utils/utils";
 const { confirm } = Modal;
 //MP
@@ -163,7 +164,7 @@ const TableList: React.FC = () => {
 
   const [showMPSearch, setShowMPSearch] = useState<boolean>(false);
   const [isMP, setIsMP] = useState<boolean>(!isPC());
-
+  const [MPSorter, setMPSorter] = useState<any>({});
   const right = (
     <div style={{ fontSize: 24 }}>
       <Space style={{ '--gap': '16px' }}>
@@ -204,7 +205,17 @@ const TableList: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [MPfilter, setMPfilter] = useState<any>({})
 
-  async function getData(page, filter) {
+  async function getData(page, filter__) {
+    var sorter = {}
+    await setMPSorter((sorter_) => {
+      sorter = sorter_
+      return sorter_
+    })
+    var filter = {}
+    await setMPfilter((filter_) => {
+      filter = filter_
+      return filter_
+    })
     const append = await permission({
       ...{
         "current": page,
@@ -213,7 +224,10 @@ const TableList: React.FC = () => {
       }, ...filter
     })
 
+    if (page == 1) {
 
+      setData([]);
+    }
     console.log(append)
     setData(val => [...val, ...append.data])
     setHasMore(10 * (page - 1) + append.data.length < append.total)
@@ -233,6 +247,7 @@ const TableList: React.FC = () => {
         />
       ),
       sorter: true,
+      width:300,
       defaultSortOrder: 'ascend',
       dataIndex: 'name',
      
@@ -249,16 +264,24 @@ const TableList: React.FC = () => {
         );
       },
     },
-    {
+    /*{
       title: <FormattedMessage id="pages.permission.xxx" defaultMessage="Permission Key" />,
       dataIndex: 'permission_key',
       valueType: 'textarea',
-    },
+    },*/
     {
       title: <FormattedMessage id="pages.permission.description" defaultMessage="Description" />,
       dataIndex: 'description',
       valueType: 'textarea',
-    },
+    },/*
+    {
+      title: <FormattedMessage id="pages.flow.xxx" defaultMessage="Sort Order" />,
+      dataIndex: 'sort',
+      hideInSearch: true,
+      defaultSortOrder: 'ascend',
+      sorter: true,
+      valueType: 'text',
+    },*/
     {
       title: <FormattedMessage id="pages.searchTable.titleOption" defaultMessage="Operating" />,
       dataIndex: 'option',
@@ -340,7 +363,7 @@ const TableList: React.FC = () => {
       ]
     }}>
       {!isMP && (<ProTable<PermissionListItem, API.PageParams>
-       
+          pagination={{ size: "default", pageSize: 500 }}
         actionRef={actionRef}
           rowKey="id"
           scroll={{ x: '100%', y: resizeObj.tableScrollHeight }}
@@ -351,8 +374,13 @@ const TableList: React.FC = () => {
         }}
         className="mytable"
         options={false }
-        request={(params, sorter) => permission({ ...params, sorter })}
-        columns={columns}
+          request={async (params, sorter) => {
+            var d = await permission({ ...params, sorter })
+            d.data = tree(d.data, null, 'pid')
+            return d
+          }}
+          columns={columns}
+          bordered
         rowSelection={{
           onChange: (_, selectedRows) => {
             setSelectedRows(selectedRows);
@@ -362,14 +390,18 @@ const TableList: React.FC = () => {
 
       {isMP && (<>
 
-        <NavBar backArrow={false} right={right} onBack={back}>
+          <NavBar backArrow={false} left={
+            <MPSort columns={columns} onSort={(k) => {
+              setMPSorter(k)
+              getData(1)
+            }} />} right={right} onBack={back}>
           {intl.formatMessage({
             id: 'pages.permission.title',
             defaultMessage: 'Permission',
           })}
         </NavBar>
 
-        <div style={{ padding: '20px', backgroundColor: "#5187c4", display: showMPSearch ? 'block' : 'none' }}>
+        <div style={{ padding: '20px', backgroundColor: "#5000B9", display: showMPSearch ? 'block' : 'none' }}>
           <Search columns={columns.filter(a => !(a.hasOwnProperty('hideInSearch') && a['hideInSearch']))} action={actionRef} loading={false}
 
             onFormSearchSubmit={onFormSearchSubmit}
@@ -399,6 +431,7 @@ const TableList: React.FC = () => {
               <ProDescriptions<any>
                 bordered={true}
                 size="small"
+                className="jetty-descriptions"
                 layout="horizontal"
                 column={1}
                 title={""}

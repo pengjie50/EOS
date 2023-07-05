@@ -107,6 +107,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           defaultMessage: 'Add Transaction',
         })}
     >
+      {/*
       <ProFormText
         name="eos_id"
         label={intl.formatMessage({
@@ -116,6 +117,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         width="md"
 
       />
+*/ }
       <ProFormText
         name="start_of_transaction"
         label={intl.formatMessage({
@@ -158,7 +160,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
       />
       <ProFormText
-        name="product_type"
+        name="product_name"
         label={intl.formatMessage({
           id: 'pages.transaction.name',
           defaultMessage: 'Product Type',
@@ -215,9 +217,9 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
       />
       <ProFormText
-        name="size_of_vessel"
+        name="vessel_size_dwt"
         label={intl.formatMessage({
-          id: 'pages.alertrule.size_of_vessel',
+          id: 'pages.alertrule.vessel_size_dwt',
           defaultMessage: 'Size Of Vessel',
         })}
         width="md"
@@ -225,7 +227,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
       />
 
       <ProFormText
-        name="total_nominated_quantity_m"
+        name="product_quantity_in_mt"
         label={intl.formatMessage({
           id: 'pages.alertrule.totalNominatedQuantityM',
           defaultMessage: 'Total Nominated Quantity (MT)',
@@ -234,7 +236,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
       />
       <ProFormText
-        name="total_nominated_quantity_b"
+        name="product_quantity_in_bls_60_f"
         label={intl.formatMessage({
           id: 'pages.alertrule.totalNominatedQuantityB',
           defaultMessage: 'Total Nominated Quantity (Bal-60-F)',

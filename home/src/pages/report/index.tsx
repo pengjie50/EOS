@@ -3,7 +3,7 @@ import { addReport, removeReport, report, updateReport, updateReportMenu } from 
 import { PlusOutlined, SearchOutlined, FormOutlined, DeleteOutlined, ExclamationCircleOutlined, SwapOutlined, SortAscendingOutlined, SortDescendingOutlined } from '@ant-design/icons';
 import type { ActionType, ProColumns, ProDescriptionsItemProps } from '@ant-design/pro-components';
 import { ReportList, ReportListItem } from './data.d';
-
+import MPSort from "@/components/MPSort";
 import {
   FooterToolbar,
   ModalForm,
@@ -411,12 +411,13 @@ const TableList: React.FC = () => {
       },
       valueType: 'text',
     },
-    /*{
+    {
       title: <FormattedMessage id="pages.searchTable.titleOption" defaultMessage="Operating" />,
       dataIndex: 'option',
+      width:80,
       valueType: 'option',
       render: (_, record) => [
-        <a
+       /* <a
           key="config"
           onClick={() => {
 
@@ -426,7 +427,7 @@ const TableList: React.FC = () => {
           }}
         >
           <FormOutlined style={{ fontSize: '20px' }} />
-        </a>,
+        </a>,*/
         
           <a
             title={formatMessage({ id: "pages.delete", defaultMessage: "Delete" })}
@@ -452,7 +453,7 @@ const TableList: React.FC = () => {
        
        
       ],
-    },*/
+    }
   ];
   const customizeRenderEmpty = () => {
     var o = formRef.current?.getFieldsValue()
@@ -517,7 +518,7 @@ const TableList: React.FC = () => {
           bordered
           actionRef={actionRef}
           scroll={{ x: columns.length*150, y: resizeObj.tableScrollHeight }}
-        
+          pagination={{ size: "default" }}
         rowKey="id"
         search={{
           labelWidth: 18 * 12,
@@ -533,35 +534,18 @@ const TableList: React.FC = () => {
 
       {isMP && (<>
 
-        <NavBar backArrow={false} left={<div> <Popover placement="bottom" title={""} content={<div>{columns.filter(a => (a.hasOwnProperty('sorter') && a['sorter'])).map((a) => {
-
-          return (<div><Button onClick={() => {
-            setMPSorter({ [a.dataIndex]: 'ascend' })
-
-
+        <NavBar backArrow={false} left={
+          <MPSort columns={columns} onSort={(k) => {
+            setMPSorter(k)
             getData(1)
-
-
-          }} icon={<SortAscendingOutlined />} />
-            <Button style={{ margin: 5 }} onClick={() => {
-              setMPSorter({ [a.dataIndex]: 'descend' })
-
-              getData(1)
-
-            }} icon={<SortDescendingOutlined />} />
-            <span>{a.title}</span>
-          </div>)
-
-        })}</div>} trigger="click">
-          <SwapOutlined rotate={90} />
-        </Popover></div>} right={right} onBack={back}>
+          }} />} right={right} onBack={back}>
           {intl.formatMessage({
             id: 'pages.report.xxx',
             defaultMessage: 'Report History',
           })}
         </NavBar>
 
-        <div style={{ padding: '20px', backgroundColor: "#5187c4", display: showMPSearch ? 'block' : 'none' }}>
+        <div style={{ padding: '20px', backgroundColor: "#5000B9", display: showMPSearch ? 'block' : 'none' }}>
           <Search columns={columns.filter(a => !(a.hasOwnProperty('hideInSearch') && a['hideInSearch']))} action={actionRef} loading={false}
 
             onFormSearchSubmit={onFormSearchSubmit}
@@ -591,6 +575,7 @@ const TableList: React.FC = () => {
               <ProDescriptions<any>
                 bordered={true}
                 size="small"
+                className="jetty-descriptions"
                 layout="horizontal"
                 column={1}
                 title={""}

@@ -150,7 +150,7 @@ const AvatarView = ({ useravatar, userid, username }: { useravatar: string; user
     <div style={{ width: "100%", textAlign: "center" }}></div>
     <div className="my-font-size" style={{ width: "100%", textAlign: "center", position: "relative", lineHeight:"350px" }}>
       {/*<img style={{ width: "200px" }} src={avatar} alt="avatar" />*/}
-      <div style={{ color: "#000", display: "inline-block",  width: "200px", backgroundColor: "#b0deff", borderRadius: "50%", top: 0, right: 0, fontSize: 100, fontWeight: "bolder", height: '200px', lineHeight: '180px', textAlign: 'center' }}>
+      <div style={{ color: "#fff", display: "inline-block", width: "200px", backgroundColor: "#FF4D00", borderRadius: "50%", top: 0, right: 0, fontSize: 100, fontWeight: "bolder", height: '200px', lineHeight: '180px', textAlign: 'center' }}>
 
         {username.slice(0,2).toUpperCase()}
       </div>

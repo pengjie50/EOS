@@ -3,6 +3,7 @@ import { addUser, removeUser, user, updateUser } from './service';
 import { PlusOutlined, SearchOutlined, FormOutlined, DeleteOutlined, LogoutOutlined,CloseCircleOutlined,ExclamationCircleOutlined } from '@ant-design/icons';
 import type { ActionType, ProColumns, ProDescriptionsItemProps } from '@ant-design/pro-components';
 import { UserList, UserListItem } from './data.d';
+import MPSort from "@/components/MPSort";
 import { outLogin } from '@/services/ant-design-pro/api';
 import { fieldSelectData } from '@/services/ant-design-pro/api';
 import {
@@ -157,7 +158,7 @@ const TableList: React.FC = () => {
   const [updateModalOpen, handleUpdateModalOpen] = useState<boolean>(false);
 
   const [showDetail, setShowDetail] = useState<boolean>(false);
-
+  const [MPSorter, setMPSorter] = useState<any>({});
   const actionRef = useRef<ActionType>();
   const [currentRow, setCurrentRow] = useState<UserListItem>();
   const [selectedRowsState, setSelectedRows] = useState<UserListItem[]>([]);
@@ -240,16 +241,29 @@ const TableList: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [MPfilter, setMPfilter] = useState<any>({})
 
-  async function getData(page, filter) {
+  async function getData(page, filter__) {
+    var sorter = {}
+    await setMPSorter((sorter_) => {
+      sorter = sorter_
+      return sorter_
+    })
+    var filter = {}
+    await setMPfilter((filter_) => {
+      filter = filter_
+      return filter_
+    })
     const append = await user({
       ...{
         "current": page,
         "pageSize": 10
 
-      }, ...filter
+      }, ...filter, sorter
     })
 
+    if (page == 1) {
 
+      setData([]);
+    }
     console.log(append)
     setData(val => [...val, ...append.data])
     setHasMore(10 * (page - 1) + append.data.length < append.total)
@@ -266,8 +280,25 @@ const TableList: React.FC = () => {
       title: <FormattedMessage id="pages.user.username" defaultMessage="Username" />,
       dataIndex: 'username',
       sorter: true,
+      search: {
+        transform: (value) => {
+          if (value && value.length > 0) {
+            return {
+              'username': {
+                'field': 'username',
+                'op': 'in',
+                'data': value
+              }
+            }
+          }
+
+        }
+      },
+
       valueEnum: usernameData,
       fieldProps: {
+        multiple: true,
+        mode: 'multiple',
         notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
         showSearch: true,
         allowClear: true,
@@ -306,14 +337,20 @@ const TableList: React.FC = () => {
       title: <FormattedMessage id="pages.user.xxx" defaultMessage="Organization" />,
       dataIndex: 'company_id',
       valueEnum: companyList,
-      sorter:true,
+      sorter: true,
+      fieldProps: {
+        multiple: true,
+        showSearch: true,
+        allowClear: true,
+        mode: 'multiple'
+      },
       search: {
         transform: (value) => {
           if (value) {
             return {
               'company_id': {
                 'field': 'company_id',
-                'op': 'eq',
+                'op': 'in',
                 'data': value
               }
             }
@@ -327,13 +364,19 @@ const TableList: React.FC = () => {
       dataIndex: 'role_id',
       valueEnum: roleList,
       sorter: true,
+      fieldProps: {
+        multiple: true,
+        showSearch: true,
+        allowClear: true,
+        mode: 'multiple'
+      },
       search: {
         transform: (value) => {
           if (value) {
             return {
               'role_id': {
                 'field': 'role_id',
-                'op': 'eq',
+                'op': 'in',
                 'data': value
               }
             }
@@ -345,6 +388,12 @@ const TableList: React.FC = () => {
     {
       title: <FormattedMessage id="pages.user.xxx" defaultMessage="Account Status" />,
       dataIndex: 'status',
+      fieldProps: {
+        multiple: true,
+       
+        allowClear: true,
+        mode: 'multiple'
+      },
       search: {
         transform: (value) => {
           
@@ -353,8 +402,8 @@ const TableList: React.FC = () => {
 
               status: {
                 'field': 'status',
-                'op': 'eq',
-                'data': Number(value)
+                'op': 'in',
+                'data':value
               }
 
             }
@@ -504,7 +553,7 @@ const TableList: React.FC = () => {
           rowKey="id"
           scroll={{ x: 1800, y: resizeObj.tableScrollHeight }}
         search={{
-          labelWidth: 120,
+          labelWidth: 130,
           span: resizeObj.searchSpan,
           searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
         }}
@@ -517,14 +566,18 @@ const TableList: React.FC = () => {
 
       {isMP && (<>
 
-        <NavBar backArrow={false} right={right} onBack={back}>
+          <NavBar backArrow={false} left={
+            <MPSort columns={columns} onSort={(k) => {
+              setMPSorter(k)
+              getData(1)
+            }} />} right={right} onBack={back}>
           {intl.formatMessage({
             id: 'pages.user.title',
             defaultMessage: 'User',
           })}
         </NavBar>
 
-        <div style={{ padding: '20px', backgroundColor: "#5187c4", display: showMPSearch ? 'block' : 'none' }}>
+        <div style={{ padding: '20px', backgroundColor: "#5000B9", display: showMPSearch ? 'block' : 'none' }}>
           <Search columns={columns.filter(a => !(a.hasOwnProperty('hideInSearch') && a['hideInSearch']))} action={actionRef} loading={false}
 
             onFormSearchSubmit={onFormSearchSubmit}
@@ -553,6 +606,7 @@ const TableList: React.FC = () => {
               <ProDescriptions<any>
                 bordered={true}
                 size="small"
+                className="jetty-descriptions"
                 layout="horizontal"
                 column={1}
                 title={""}

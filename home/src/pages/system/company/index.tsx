@@ -4,6 +4,7 @@ import { PlusOutlined, SearchOutlined, FormOutlined, DeleteOutlined, Exclamation
 import type { ActionType, ProColumns, ProDescriptionsItemProps } from '@ant-design/pro-components';
 import { CompanyList, CompanyListItem } from './data.d';
 import { fieldSelectData } from '@/services/ant-design-pro/api';
+import MPSort from "@/components/MPSort";
 import {
   FooterToolbar,
   ModalForm,
@@ -154,7 +155,7 @@ const TableList: React.FC = () => {
   const [selectedRowsState, setSelectedRows] = useState<CompanyListItem[]>([]);
   const [resizeObj, setResizeObj] = useState({ searchSpan: 12, tableScrollHeight: 300 });
 
-
+  const [MPSorter, setMPSorter] = useState<any>({});
   const [nameData, setNameData] = useState<any>({});
   /**
    * @en-US International configuration
@@ -207,16 +208,29 @@ const TableList: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [MPfilter, setMPfilter] = useState<any>({})
 
-  async function getData(page, filter) {
+  async function getData(page, filter__) {
+
+    var sorter = {}
+    await setMPSorter((sorter_) => {
+      sorter = sorter_
+      return sorter_
+    })
+    var filter = {}
+    await setMPfilter((filter_) => {
+      filter = filter_
+      return filter_
+    })
     const append = await company({
       ...{
         "current": page,
         "pageSize": 10
 
-      }, ...filter
+      }, ...filter, sorter
     })
 
-
+    if (page == 1) {
+      setData([]);
+    }
     console.log(append)
     setData(val => [...val, ...append.data])
     setHasMore(10 * (page - 1) + append.data.length < append.total)
@@ -229,7 +243,7 @@ const TableList: React.FC = () => {
   //--MP end
   const columns: ProColumns<CompanyListItem>[] = [
 
-    {
+    /*{
       title: 'Series No',
       dataIndex: 'company_id',
       width: 130,
@@ -237,7 +251,7 @@ const TableList: React.FC = () => {
     //  valueType: 'index',
      // align: 'center',
      // render: (dom) => <div style={{ display: 'flex', justifyContent: 'center' }}>{dom}</div>,
-    },
+    },*/
     {
       title: <FormattedMessage
         id="pages.company.name"
@@ -246,7 +260,26 @@ const TableList: React.FC = () => {
       dataIndex: 'name',
       sorter: true,
       valueEnum: nameData,
+      search: {
+        transform: (value) => {
+
+          if (value !== null) {
+            return {
+
+              name: {
+                'field': 'name',
+                'op': 'in',
+                'data': value
+              }
+
+            }
+          }
+
+        }
+      },
       fieldProps: {
+        multiple: true,
+        mode: 'multiple',
         notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
         showSearch: true,
         allowClear: true,
@@ -270,6 +303,27 @@ const TableList: React.FC = () => {
       title: <FormattedMessage id="pages.company.xxx" defaultMessage="Organization Type" />,
       dataIndex: 'type',
       sorter: true,
+      search: {
+        transform: (value) => {
+
+          if (value !== null) {
+            return {
+
+              type: {
+                'field': 'type',
+                'op': 'in',
+                'data': value
+              }
+
+            }
+          }
+
+        }
+      },
+      fieldProps: {
+        multiple: true,
+        mode: 'multiple',
+      },
       valueEnum:{
       "Surveyor": "Surveyor",
       "Trader": "Trader",
@@ -369,7 +423,7 @@ const TableList: React.FC = () => {
       </Button>]
     }}>
       {!isMP && (<ProTable<CompanyListItem, API.PageParams>
-       
+          pagination={{ size: "default" }}
         actionRef={actionRef}
           rowKey="id"
           bordered
@@ -393,14 +447,18 @@ const TableList: React.FC = () => {
 
       {isMP && (<>
 
-        <NavBar backArrow={false} right={right} onBack={back}>
+          <NavBar backArrow={false} left={
+            <MPSort columns={columns} onSort={(k) => {
+              setMPSorter(k)
+              getData(1)
+            }} />} right={right} onBack={back}>
           {intl.formatMessage({
             id: 'pages.company.title',
             defaultMessage: 'Organization List',
           })}
         </NavBar>
 
-        <div style={{ padding: '20px', backgroundColor: "#5187c4", display: showMPSearch ? 'block' : 'none' }}>
+        <div style={{ padding: '20px', backgroundColor: "#5000B9", display: showMPSearch ? 'block' : 'none' }}>
           <Search columns={columns.filter(a => !(a.hasOwnProperty('hideInSearch') && a['hideInSearch']))} action={actionRef} loading={false}
 
             onFormSearchSubmit={onFormSearchSubmit}
@@ -430,6 +488,7 @@ const TableList: React.FC = () => {
               <ProDescriptions<any>
                 bordered={true}
                 size="small"
+                className="jetty-descriptions"
                 layout="horizontal"
                 column={1}
                 title={""}

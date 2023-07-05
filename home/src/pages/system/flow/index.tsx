@@ -1,9 +1,11 @@
 import RcResizeObserver from 'rc-resize-observer';
-
+import FrPrint from "../../../components/FrPrint";
 import { addFlow, removeFlow, flow, updateFlow } from './service';
-import { PlusOutlined, SearchOutlined, FormOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
+import { PlusOutlined, SearchOutlined, FormOutlined, DeleteOutlined, ExclamationCircleOutlined, EllipsisOutlined,FileExcelOutlined, PrinterOutlined } from '@ant-design/icons';
 import type { ActionType, ProColumns, ProDescriptionsItemProps } from '@ant-design/pro-components';
 import { FlowList, FlowListItem } from './data.d';
+import { exportCSV } from "../../../components/export";
+import MPSort from "@/components/MPSort";
 import {
   FooterToolbar,
   ModalForm,
@@ -16,7 +18,7 @@ import {
   ProTable,
 } from '@ant-design/pro-components';
 import { FormattedMessage, useIntl, formatMessage } from '@umijs/max';
-import { Button, Drawer, Input, message, Modal } from 'antd';
+import { Button, Drawer, Input, message, Modal, Popover } from 'antd';
 import React, { useRef, useState } from 'react';
 import CreateForm from './components/CreateForm';
 import UpdateForm from './components/UpdateForm';
@@ -149,7 +151,8 @@ const TableList: React.FC = () => {
   const [updateModalOpen, handleUpdateModalOpen] = useState<boolean>(false);
 
   const [showDetail, setShowDetail] = useState<boolean>(false);
-
+  const [printModalVisible, handlePrintModalVisible] = useState<boolean>(false);
+  const [paramsText, setParamsText] = useState<string>('');
   const actionRef = useRef<ActionType>();
   const [currentRow, setCurrentRow] = useState<FlowListItem>();
   const [selectedRowsState, setSelectedRows] = useState<FlowListItem[]>([]);
@@ -164,12 +167,28 @@ const TableList: React.FC = () => {
 
   const [showMPSearch, setShowMPSearch] = useState<boolean>(false);
   const [isMP, setIsMP] = useState<boolean>(!isPC());
-
+  const [moreOpen, setMoreOpen] = useState<boolean>(false);
   const right = (
     <div style={{ fontSize: 24 }}>
       <Space style={{ '--gap': '16px' }}>
         <SearchOutlined onClick={e => { setShowMPSearch(!showMPSearch) }} />
-        <PlusOutlined onClick={() => { handleModalOpen(true) }} />
+        <Popover onOpenChange={(v) => { setMoreOpen(v) }} open={moreOpen} placement="bottom" title={""} content={<div><Button type="primary" style={{ width: "100%" }} key="print"
+          onClick={() => {
+            setMoreOpen(false)
+            handlePrintModalVisible(true)
+          }}
+        ><PrinterOutlined /> <FormattedMessage id="pages.Print" defaultMessage="Print" />
+        </Button>, <Button style={{ width: "100%" }} type="primary" key="out"
+          onClick={() => exportCSV(data, columns)}
+        ><FileExcelOutlined /> <FormattedMessage id="pages.CSV" defaultMessage="CSV" />
+          </Button>
+
+        </div>} trigger="click">
+          <EllipsisOutlined />
+
+
+        </Popover>
+        {/*<PlusOutlined onClick={() => { handleModalOpen(true) }} />*/ }
       </Space>
     </div>
   )
@@ -204,17 +223,28 @@ const TableList: React.FC = () => {
   const [hasMore, setHasMore] = useState(true)
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [MPfilter, setMPfilter] = useState<any>({})
+  const [MPSorter, setMPSorter] = useState<any>({});
 
-  async function getData(page, filter) {
+  async function getData(page, filter__) {
+    var sorter = {}
+    await setMPSorter((sorter_) => {
+      sorter = sorter_
+      return sorter_
+    })
+    var filter = {}
+    await setMPfilter((filter_) => {
+      filter = filter_
+      return filter_
+    })
     const append = await flow({
       ...{
         "current": page,
         "pageSize": 10
 
-      }, ...filter
+      }, ...filter, sorter: { sort: "ascend" }
     })
 
-
+    tree(append.data, "                                    ", 'pid')
     console.log(append)
     setData(val => [...val, ...append.data])
     setHasMore(10 * (page - 1) + append.data.length < append.total)
@@ -229,7 +259,7 @@ const TableList: React.FC = () => {
 
     {
       title: <FormattedMessage id="pages.flow.xxx" defaultMessage="No." />,
-      dataIndex: 'code',
+      dataIndex: 'no',
       hideInSearch: true,
       valueType: 'text',
     },
@@ -241,26 +271,21 @@ const TableList: React.FC = () => {
         />
       ),
       dataIndex: 'name',
-      sorter: true,
+      
       width:400,
-      render: (dom, entity) => {
-        return (
-          <a
-            onClick={() => {
-              setCurrentRow(entity);
-              setShowDetail(true);
-            }}
-          >
-            {dom}
-          </a>
-        );
-      },
+      
     },
-    
+    {
+      title: <FormattedMessage id="pages.flow.xxx" defaultMessage="Code" />,
+      dataIndex: 'code',
+      hideInSearch: true,
+     
+      valueType: 'text',
+    },
     {
       title: <FormattedMessage id="pages.flow.type" defaultMessage="Type" />,
       dataIndex: 'type',
-      hideInSearch: true,
+    
       valueEnum: {
         0: { text: <FormattedMessage id="pages.flow.process" defaultMessage="Process" />, status: 'Success' },
         1: { text: <FormattedMessage id="pages.flow.event" defaultMessage="Event" />, status: 'Error' },
@@ -271,8 +296,8 @@ const TableList: React.FC = () => {
       title: <FormattedMessage id="pages.flow.xxx" defaultMessage="Sort Order" />,
       dataIndex: 'sort',
       hideInSearch: true,
-      defaultSortOrder: 'ascend',
-      sorter: true,
+    
+    
       valueType: 'text',
     },
    
@@ -281,7 +306,7 @@ const TableList: React.FC = () => {
       dataIndex: 'description',
       valueType: 'textarea'
      
-    },
+    }/*,
     {
       title: <FormattedMessage id="pages.searchTable.titleOption" defaultMessage="Operating" />,
       dataIndex: 'option',
@@ -320,7 +345,7 @@ const TableList: React.FC = () => {
         </a>
        
       ],
-    },
+    },*/
   ];
 
   return (
@@ -350,7 +375,7 @@ const TableList: React.FC = () => {
         title: isMP ? null : < FormattedMessage id="pages.flow.xxx" defaultMessage="Transaction Flow" />,
       breadcrumb: {},
       extra: isMP ? null : [
-        <Button
+        /*<Button
           type="primary"
           key="primary"
           onClick={() => {
@@ -358,13 +383,29 @@ const TableList: React.FC = () => {
           }}
         >
           <PlusOutlined /> <FormattedMessage id="pages.searchTable.xxx" defaultMessage="Create New Transaction Flow" />
-        </Button>,
+        </Button>,*/ <Button type="primary" key="print"
+          onClick={() => {
+            if (selectedRowsState.length == 0) {
+              message.error(<FormattedMessage
+                id="pages.selectDataFirst"
+                defaultMessage="Please select data first!"
+              />);
+              return false;
+            }
+            handlePrintModalVisible(true)
+          }}
+        ><PrinterOutlined /> <FormattedMessage id="pages.Print" defaultMessage="Print" />
+        </Button>,<Button type="primary" key="out"
+          onClick={() => exportCSV(selectedRowsState, columns,"Transaction Flow")}
+        ><FileExcelOutlined /> <FormattedMessage id="pages.CSV" defaultMessage="CSV" />
+        </Button>
+      
       ]
     }}>
-      {!isMP && (<ProTable<FlowListItem, API.PageParams>
-      
+        {!isMP && (<ProTable<FlowListItem, API.PageParams>
+          pagination={{ size: "default", pageSize:500 }}
           actionRef={actionRef}
-          pagination={false }
+        
           rowKey="id"
           scroll={{ x: 1800, y: resizeObj.tableScrollHeight }}
         search={{
@@ -374,10 +415,11 @@ const TableList: React.FC = () => {
         options={false}
         className="mytable"
         request={async (params, sorter) => {
-          var d = await flow({ ...params, sorter })
-          d.data = tree(d.data, "                                    ", 'pid')
+          var d = await flow({ ...params, sorter: {sort:"ascend"} })
+          d.data=tree(d.data, "                                    ", 'pid')
           return d
         }}
+          bordered
         columns={columns}
         rowSelection={{
           onChange: (_, selectedRows) => {
@@ -395,7 +437,7 @@ const TableList: React.FC = () => {
           })}
         </NavBar>
 
-        <div style={{ padding: '20px', backgroundColor: "#5187c4", display: showMPSearch ? 'block' : 'none' }}>
+        <div style={{ padding: '20px', backgroundColor: "#5000B9", display: showMPSearch ? 'block' : 'none' }}>
           <Search columns={columns.filter(a => !(a.hasOwnProperty('hideInSearch') && a['hideInSearch']))} action={actionRef} loading={false}
 
             onFormSearchSubmit={onFormSearchSubmit}
@@ -425,6 +467,7 @@ const TableList: React.FC = () => {
               <ProDescriptions<any>
                 bordered={true}
                 size="small"
+                className="jetty-descriptions"
                 layout="horizontal"
                 column={1}
                 title={""}
@@ -553,7 +596,17 @@ const TableList: React.FC = () => {
             columns={columns as ProDescriptionsItemProps<FlowListItem>[]}
           />
         )}
-      </Drawer>
+        </Drawer>
+        <FrPrint
+          title={""}
+          subTitle={paramsText}
+          columns={columns}
+          dataSource={[...(isMP ? data : selectedRowsState)/*, sumRow*/]}
+          onCancel={() => {
+            handlePrintModalVisible(false);
+          }}
+          printModalVisible={printModalVisible}
+        />
         {/*
          <div style={{ marginTop: -45, paddingLeft: 10 }}>
           <Button

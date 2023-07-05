@@ -75,7 +75,7 @@ export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) =
     avatarProps: {
       src:false,
       // src:initialState?.currentUser?.avatar,
-      title: <div><div className="my-font-size" style={{ fontSize: 16, display: 'inline-block', backgroundColor: "#b0deff", borderRadius: "50%", color: "#000", height: "25px", textAlign: 'center', lineHeight: '25px', width: 25, fontWeight: "bolder" }}>{initialState?.currentUser?.username.slice(0, 2).toUpperCase()}</div>{/* <AvatarName />*/ }</div>,
+      title: <div><div className="my-font-size" style={{ fontSize: 14, display: 'inline-block', backgroundColor: "#FF4D00", borderRadius: "50%", color: "#fff", height: "28px", textAlign: 'center', lineHeight: '25px', width: 28, fontWeight: "bolder" }}>{initialState?.currentUser?.username.slice(0, 2).toUpperCase()}</div>{/* <AvatarName />*/ }</div>,
       render: (_, avatarChildren) => {
         return <AvatarDropdown>{avatarChildren}</AvatarDropdown>;
       },

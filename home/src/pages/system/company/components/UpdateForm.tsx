@@ -135,7 +135,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           "Agent": "Agent",
           "Terminal": "Oil Terminal",
           "Pilot": "Pilot",
-          "Super": "Super",
+          "Super": "Super User",
 
 
         }}

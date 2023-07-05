@@ -34,7 +34,7 @@ export default [
     icon: 'TableOutlined',
     component: './Dashboard',
   },
-
+ 
   {
     path: '/Transactions',
     name: 'Transactions',
@@ -79,8 +79,8 @@ export default [
         component: './alertrule',
       },
       {
-        key: 'View Triggered Alerts',
-        name: 'View Triggered Alerts',
+        key: 'Triggered Alerts',
+        name: 'Triggered Alerts',
         access: 'canAlertList',
         icon: 'AlertOutlined',
         path: '/threshold/alert',
@@ -114,7 +114,7 @@ export default [
       },
 
       {
-        name: 'Jetty',
+        name: 'Jetty Criteria',
         icon: 'idcard',
         onclick: () => {
           alert(1)
@@ -250,7 +250,7 @@ export default [
   
   {
     path: '/SystemConfiguration',
-    name: 'System Config',
+    name: 'System Configuration',
     access: 'canAdmin',
     icon: 'SolutionOutlined',
     //component: './IdentityAccessManagement',
@@ -264,6 +264,12 @@ export default [
         icon: 'ApartmentOutlined',
         path: '/SystemConfiguration/flow',
         component: './system/flow',
+      },
+      {
+        name: 'Interface Data',
+        icon: 'safetyCertificate',
+        path: '/SystemConfiguration/interfacedata',
+        component: './system/interfacedata',
       },
       {
         name: 'Security Settings',

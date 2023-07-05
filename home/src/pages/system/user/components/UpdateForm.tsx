@@ -6,6 +6,7 @@ import {
   ProFormTextArea,
   ModalForm,
   ProFormSwitch,
+  ProFormCheckbox,
   ProFormTreeSelect,
   ProFormInstance
   
@@ -253,7 +254,12 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           },
         ]}
       />
-      <ProFormSwitch name="email_notification" label="Send email notification for Password Reset" />
+      <ProFormCheckbox.Group
+        name="email_notification"
+        layout="vertical"
+        label=""
+        options={[{ label: "Send email notification for Password Reset", value: "send_email" }]}
+      />
     </ModalForm>
      
   );

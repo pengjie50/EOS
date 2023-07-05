@@ -7,7 +7,11 @@ import { AlertruleList, AlertruleListItem } from './data.d';
 import { GridContent } from '@ant-design/pro-layout';
 import { flow } from '../system/flow/service';
 import { organization } from '../system/company/service';
+import MPSort from "@/components/MPSort";
+
 import FrPrint from "../../components/FrPrint";
+
+
 //MP
 import { InfiniteScroll, List, NavBar, Space, DotLoading } from 'antd-mobile'
 
@@ -67,16 +71,16 @@ const handleAdd = async (fields: any) => {
     defaultMessage="Adding"
   />);
   if (d.total_nominated_quantity_unit=='b') {
-    d.total_nominated_quantity_from_b = d.total_nominated_quantity_from_m
-    d.total_nominated_quantity_to_b = d.total_nominated_quantity_to_m
+    d.product_quantity_in_bls_60_f_from = d.product_quantity_in_mt_from
+    d.product_quantity_in_bls_60_f_to = d.product_quantity_in_mt_to
 
-    delete d.total_nominated_quantity_from_m
-    delete d.total_nominated_quantity_to_m
+    delete d.product_quantity_in_mt_from
+    delete d.product_quantity_in_mt_to
   }
 
   if (d.from_to) {
-    d.size_of_vessel_from = Number(d.from_to.split("-")[0])
-    d.size_of_vessel_to = Number(d.from_to.split("-")[1])
+    d.vessel_size_dwt_from = Number(d.from_to.split("-")[0])
+    d.vessel_size_dwt_to = Number(d.from_to.split("-")[1])
   }
  
   
@@ -119,33 +123,33 @@ const handleUpdate = async (fields: Partial<AlertruleListItem>) => {
 
   if (d.from_to) {
 
-    d.size_of_vessel_from = Number(d.from_to.split("-")[0])
-    d.size_of_vessel_to = Number(d.from_to.split("-")[1])
+    d.vessel_size_dwt_from = Number(d.from_to.split("-")[0])
+    d.vessel_size_dwt_to = Number(d.from_to.split("-")[1])
   } else {
-    d.size_of_vessel_from =null
-    d.size_of_vessel_to = null
+    d.vessel_size_dwt_from =null
+    d.vessel_size_dwt_to = null
   }
-  if (d.total_nominated_quantity_from_m ) {
+  if (d.product_quantity_in_mt_from ) {
 
-    d['total_nominated_quantity_from_' + d.total_nominated_quantity_unit] = d.total_nominated_quantity_from_m
-    d['total_nominated_quantity_to_' + d.total_nominated_quantity_unit] = d.total_nominated_quantity_to_m
+    d['total_nominated_quantity_from_' + d.total_nominated_quantity_unit] = d.product_quantity_in_mt_from
+    d['total_nominated_quantity_to_' + d.total_nominated_quantity_unit] = d.product_quantity_in_mt_to
 
     
   }
-  if (d.total_nominated_quantity_from_b) {
-    d['total_nominated_quantity_from_' + d.total_nominated_quantity_unit] = d.total_nominated_quantity_from_b
-    d['total_nominated_quantity_to_' + d.total_nominated_quantity_unit] = d.total_nominated_quantity_to_b
+  if (d.product_quantity_in_bls_60_f_from) {
+    d['total_nominated_quantity_from_' + d.total_nominated_quantity_unit] = d.product_quantity_in_bls_60_f_from
+    d['total_nominated_quantity_to_' + d.total_nominated_quantity_unit] = d.product_quantity_in_bls_60_f_to
     
   }
 
   if (d.total_nominated_quantity_unit=='m') {
-    d.total_nominated_quantity_from_b = null
-    d.total_nominated_quantity_to_b = null
+    d.product_quantity_in_bls_60_f_from = null
+    d.product_quantity_in_bls_60_f_to = null
   }
   
   if (d.total_nominated_quantity_unit == 'b') {
-    d.total_nominated_quantity_from_m = null
-    d.total_nominated_quantity_to_m = null
+    d.product_quantity_in_mt_from = null
+    d.product_quantity_in_mt_to = null
   }
     var is = false
     
@@ -282,6 +286,8 @@ const TableList: React.FC = () => {
   const [tab, setTab] = useState('Terminal');
   const [MPSorter, setMPSorter] = useState<any>({});
   const [moreOpen, setMoreOpen] = useState<boolean>(false);
+  const [MpSortDataIndex, setMpSortDataIndex] = useState<string>('');
+  
   const right = (
     <div style={{ fontSize: 24 }}>
       <Space style={{ '--gap': '16px' }}>
@@ -601,13 +607,13 @@ const TableList: React.FC = () => {
         transform: (value) => {
           if (value) {
             return {
-              'size_of_vessel_from': {
-                'field': 'size_of_vessel_from',
+              'vessel_size_dwt_from': {
+                'field': 'vessel_size_dwt_from',
                 'op': 'eq',
                 'data': value.split('-')[0]
               },
-              'size_of_vessel_to': {
-                'field': 'size_of_vessel_to',
+              'vessel_size_dwt_to': {
+                'field': 'vessel_size_dwt_to',
                 'op': 'eq',
                 'data': value.split('-')[1]
               }
@@ -677,14 +683,14 @@ const TableList: React.FC = () => {
 
     {
       title: <FormattedMessage id="pages.alertrule.vesselSizeLimit" defaultMessage="Vessel Size Limit (DWT)" />,
-      dataIndex: 'size_of_vessel_from',
+      dataIndex: 'vessel_size_dwt_from',
       onFilter: true,
       sorter: true,
       hideInSearch: true,
       valueType: 'text',
       
       render: (dom, entity) => {
-        if (entity.size_of_vessel_from != null && entity.size_of_vessel_to) {
+        if (entity.vessel_size_dwt_from != null && entity.vessel_size_dwt_to) {
 
           var valueEnum = {
             "0-25": "GP",
@@ -696,7 +702,7 @@ const TableList: React.FC = () => {
             "320-1000000": "ULCC",
           }
 
-          return valueEnum[numeral(entity.size_of_vessel_from).format('0,0') + "-" + numeral(entity.size_of_vessel_to).format('0,0')];
+          return valueEnum[numeral(entity.vessel_size_dwt_from).format('0,0') + "-" + numeral(entity.vessel_size_dwt_to).format('0,0')];
         } else {
           return '-'
         }
@@ -705,16 +711,16 @@ const TableList: React.FC = () => {
     },
     {
       title: <FormattedMessage id="pages.alertrule.throughputVolume1" defaultMessage="Total Nominated Quantity (MT)" />,
-      dataIndex: 'total_nominated_quantity_from_m',
-      fieldProps: { placeholder: ['From', 'To'] },
+      dataIndex: 'product_quantity_in_mt_from',
+      fieldProps: { placeholder: ['From', 'To']},
       valueType: "digitRange",
       width: 200,
       sorter: true,
       render: (dom, entity) => {
-        if (entity.total_nominated_quantity_from_m  && entity.total_nominated_quantity_to_m) {
+        if (entity.product_quantity_in_mt_from  && entity.product_quantity_in_mt_to) {
 
        
-          return numeral(entity.total_nominated_quantity_from_m).format('0,0') + " - " + numeral(entity.total_nominated_quantity_to_m).format('0,0')
+          return numeral(entity.product_quantity_in_mt_from).format('0,0') + " - " + numeral(entity.product_quantity_in_mt_to).format('0,0')
         } else {
           return '-'
         }
@@ -728,8 +734,8 @@ const TableList: React.FC = () => {
             var b = value[1] || 1000000000
            
             return {
-              'total_nominated_quantity_from_m': {
-                'field': 'total_nominated_quantity_from_m',
+              'product_quantity_in_mt_from': {
+                'field': 'product_quantity_in_mt_from',
                 'op': 'between',
                 'data': [a,b]
               }
@@ -742,14 +748,15 @@ const TableList: React.FC = () => {
    
     {
       title:"Total Nominated Quantity (Bal-60-F)",
-      dataIndex: 'total_nominated_quantity_from_b',
-      fieldProps: { placeholder:['From','To']},
+      dataIndex: 'product_quantity_in_bls_60_f_from',
+      fieldProps: {
+        placeholder: ['From', 'To']},
       valueType: "digitRange",
       width:200,
       sorter: true,
       render: (dom, entity) => {
-        if (entity.total_nominated_quantity_from_b && entity.total_nominated_quantity_to_b ) {
-          return numeral(entity.total_nominated_quantity_from_b).format('0,0') + " - " + numeral(entity.total_nominated_quantity_to_b).format('0,0')
+        if (entity.product_quantity_in_bls_60_f_from && entity.product_quantity_in_bls_60_f_to ) {
+          return numeral(entity.product_quantity_in_bls_60_f_from).format('0,0') + " - " + numeral(entity.product_quantity_in_bls_60_f_to).format('0,0')
         } else {
           return '-'
         }
@@ -761,8 +768,8 @@ const TableList: React.FC = () => {
             var a = value[0] || 0
             var b = value[1] || 1000000000
             return {
-              'total_nominated_quantity_from_b': {
-                'field': 'total_nominated_quantity_from_b',
+              'product_quantity_in_bls_60_f_from': {
+                'field': 'product_quantity_in_bls_60_f_from',
                 'op': 'between',
                 'data': [a,b]
               }
@@ -836,15 +843,17 @@ const TableList: React.FC = () => {
       hideInTable: true,
       hideInDescriptions:true,
       fieldProps: {
+        multiple: true,
+        mode:"multiple",
         notFoundContent: <Empty />,
       },
       search: {
         transform: (value) => {
-          if (value) {
+          if (value && value.length>0) {
             return {
               'organization_id': {
                 'field': 'organization_id',
-                'op': 'eq',
+                'op': 'in',
                 'data': value
               }
             }
@@ -869,10 +878,10 @@ const TableList: React.FC = () => {
               handleUpdateModalOpen(true);
 
               try {
-                if (record.size_of_vessel_from == null && record.size_of_vessel_to == null) {
+                if (record.vessel_size_dwt_from == null && record.vessel_size_dwt_to == null) {
                   record.from_to = null
                 } else {
-                  record.from_to = record.size_of_vessel_from + "-" + record.size_of_vessel_to
+                  record.from_to = record.vessel_size_dwt_from + "-" + record.vessel_size_dwt_to
                 }
                 record.emailArr = []
                 record.typeArr = [1]
@@ -1032,7 +1041,7 @@ const TableList: React.FC = () => {
 
 
         {currentUser?.role_type == "Terminal" && <ProCard
-          title={<div className="my-font-size" style={{ height: 14, lineHeight: '14px', fontSize: 12 }}>Threshold set by</div>}
+         // title={<div className="my-font-size" style={{ height: 14, lineHeight: '14px', fontSize: 12 }}>Threshold set by</div>}
           headStyle={{ height: 14, lineHeight: '14px', fontSize: 12 }}
           className="my-tab"
           tabs={{
@@ -1041,12 +1050,12 @@ const TableList: React.FC = () => {
             activeKey: tab,
             items: [
               {
-                label: `Terminal`,
+                label: <div title="Threshold set by">Terminal</div>,
                 key: 'Terminal',
                 children: null,
               },
               {
-                label: `Customer`,
+                label: <div title="Threshold set by">Customer</div>,
                 key: 'Trader',
                 children: null,
               }
@@ -1070,7 +1079,8 @@ const TableList: React.FC = () => {
         rowKey="id"
          scroll={{ x: 1800, y: resizeObj.tableScrollHeight }}
         bordered size="small"
-        search={{
+          search={{
+            layout: "vertical",
           labelWidth: 210,
           span: resizeObj.searchSpan,
           searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
@@ -1079,6 +1089,7 @@ const TableList: React.FC = () => {
         toolBarRender={() => []
 
         }
+          pagination={{ size: "default" }}
         request={(params, sorter) => alertrule({ ...params, sorter,tab })}
         columns={columns}
         rowSelection={access.canAlertruleDel()?{
@@ -1090,35 +1101,18 @@ const TableList: React.FC = () => {
 
       {isMP && (<>
        
-          <NavBar backArrow={false} left={<div> <Popover placement="bottom" title={""} content={<div>{columns.filter(a => (a.hasOwnProperty('sorter') && a['sorter'])).map((a) => {
-
-            return (<div><Button onClick={() => {
-              setMPSorter({ [a.dataIndex]: 'ascend' })
-
-
+          <NavBar backArrow={false} left={
+            <MPSort columns={columns} onSort={(k) => {
+              setMPSorter(k)
               getData(1)
-
-
-            }} icon={<SortAscendingOutlined />} />
-              <Button style={{ margin: 5 }} onClick={() => {
-                setMPSorter({ [a.dataIndex]: 'descend' })
-
-                getData(1)
-
-              }} icon={<SortDescendingOutlined />} />
-              <span>{a.title}</span>
-            </div>)
-
-          })}</div>} trigger="click">
-            <SwapOutlined rotate={90}  />
-          </Popover></div>} right={right} onBack={back}>
+            }} />} right={right} onBack={back}>
           {intl.formatMessage({
             id: 'pages.alertrule.title',
             defaultMessage: 'Threshold Limit List',
           })}
         </NavBar>
 
-        <div style={{ padding: '20px', backgroundColor: "#5187c4", display: showMPSearch ? 'block' : 'none' }}>
+        <div style={{ padding: '20px', backgroundColor: "#5000B9", display: showMPSearch ? 'block' : 'none' }}>
           <Search columns={columns.filter(a => !(a.hasOwnProperty('hideInSearch') && a['hideInSearch']))} action={actionRef} loading={false}
 
             onFormSearchSubmit={onFormSearchSubmit}
@@ -1148,6 +1142,7 @@ const TableList: React.FC = () => {
               <ProDescriptions<AlertruleListItem>
                 bordered={true}
                 size="small"
+                className="jetty-descriptions"
                 layout="horizontal"
                 column={1}
                 title={item?.process_name}

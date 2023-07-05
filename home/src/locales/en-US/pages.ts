@@ -196,7 +196,7 @@ export default {
   
 
 
-  'pages.operlog.url': 'Url',
+  'pages.operlog.url': 'URL',
   'pages.operlog.module': 'Module',
   'pages.operlog.action': 'Action Type',
   'pages.operlog.param': 'Param',
@@ -206,7 +206,7 @@ export default {
   'pages.operlog.operTime': 'Operation time',
 
 
-  'pages.loginlog.ip': 'Url',
+  'pages.loginlog.ip': 'URL',
   'pages.loginlog.browser': 'Browser',
   'pages.loginlog.os': 'Operating system',
   'pages.loginlog.status': 'Status',

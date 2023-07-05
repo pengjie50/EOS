@@ -1,10 +1,9 @@
 import RcResizeObserver from 'rc-resize-observer';
 
-import { addJetty, removeJetty, jetty, updateJetty } from './service';
+import { addInterfacedata, removeInterfacedata, interfacedata, updateInterfacedata } from './service';
 import { PlusOutlined, SearchOutlined, FormOutlined, DeleteOutlined, ExclamationCircleOutlined, SwapOutlined, SortAscendingOutlined, SortDescendingOutlined } from '@ant-design/icons';
 import type { ActionType, ProColumns, ProDescriptionsItemProps } from '@ant-design/pro-components';
-import { JettyList, JettyListItem } from './data.d';
-import MPSort from "@/components/MPSort";
+import { InterfacedataList, InterfacedataListItem } from './data.d';
 import * as XLSX from 'xlsx';
 import {
   FooterToolbar,
@@ -34,13 +33,13 @@ import { InfiniteScroll, List, NavBar, Space, DotLoading } from 'antd-mobile'
  * @zh-CN 添加节点
  * @param fields
  */
-const handleAdd = async (fields: JettyListItem) => {
+const handleAdd = async (fields: InterfacedataListItem) => {
   const hide = message.loading(<FormattedMessage
     id="pages.adding"
     defaultMessage="Adding"
   />);
   try {
-    await addJetty({ ...fields });
+    await addInterfacedata({ ...fields });
     hide();
     message.success(<FormattedMessage
       id="pages.addedSuccessfully"
@@ -57,19 +56,22 @@ const handleAdd = async (fields: JettyListItem) => {
   }
 };
 
+
+
+
 /**
  * @en-US Update node
  * @zh-CN 更新节点
  *
  * @param fields
  */
-const handleUpdate = async (fields: Partial<JettyListItem> ) => {
+const handleUpdate = async (fields: Partial<InterfacedataListItem> ) => {
   const hide = message.loading(<FormattedMessage
     id="pages.modifying"
     defaultMessage="Modifying"
   />);
   try {
-    await updateJetty({ ...fields });
+    await updateInterfacedata({ ...fields });
     hide();
 
     message.success(<FormattedMessage
@@ -93,7 +95,7 @@ const handleUpdate = async (fields: Partial<JettyListItem> ) => {
  *
  * @param selectedRows
  */
-const handleRemove = async (selectedRows: JettyListItem[], callBack: any) => {
+const handleRemove = async (selectedRows: InterfacedataListItem[], callBack: any) => {
   if (!selectedRows) return true;
   var open = true
   confirm({
@@ -109,7 +111,7 @@ const handleRemove = async (selectedRows: JettyListItem[], callBack: any) => {
         defaultMessage="Deleting"
       />);
       try {
-        removeJetty({
+        removeInterfacedata({
           id: selectedRows.map((row) => row.id),
         }).then(() => {
           hide();
@@ -159,8 +161,8 @@ const TableList: React.FC = () => {
   const [showDetail, setShowDetail] = useState<boolean>(false);
 
   const actionRef = useRef<ActionType>();
-  const [currentRow, setCurrentRow] = useState<JettyListItem>();
-  const [selectedRowsState, setSelectedRows] = useState<JettyListItem[]>([]);
+  const [currentRow, setCurrentRow] = useState<InterfacedataListItem>();
+  const [selectedRowsState, setSelectedRows] = useState<InterfacedataListItem[]>([]);
   const [organizationList, setOrganizationList] = useState<any>({});
 
   /**
@@ -187,7 +189,7 @@ const TableList: React.FC = () => {
     <div style={{ fontSize: 24 }}>
       <Space style={{ '--gap': '16px' }}>
         {currentUser?.role_type != 'Terminal' && <SearchOutlined onClick={e => { setShowMPSearch(!showMPSearch) }} />}
-        <Access accessible={access.canJettyAdd()} fallback={<div></div>}>
+        <Access accessible={access.canInterfacedataAdd()} fallback={<div></div>}>
           <PlusOutlined onClick={() => { handleModalOpen(true) }} />
           </Access>
       </Space>
@@ -240,7 +242,7 @@ const TableList: React.FC = () => {
    
 
 
-        const append = await jetty({
+        const append = await interfacedata({
           ...{
             "current": page,
             "pageSize": 10
@@ -296,7 +298,7 @@ const TableList: React.FC = () => {
       let terminal_id = formRef.current?.getFieldValue('terminal_id')
       if (!terminal_id) {
         message.error(<FormattedMessage
-          id="pages.jetty.p"
+          id="pages.interfacedata.p"
           defaultMessage="Please select terminal first!"
         />);
         return
@@ -356,19 +358,59 @@ const TableList: React.FC = () => {
       return 'Customer'
     }
   }
-  const columns: ProColumns<JettyListItem>[] = [
+  const columns: ProColumns<InterfacedataListItem>[] = [
+   
     {
-      title: (
-        <FormattedMessage
-          id="pages.jetty.xxx"
-          defaultMessage="Jetty No."
-        />
-      ),
+      title:"Type",
+      dataIndex: 'type',
+      valueType: 'text',
+      sorter: true,
+      valueEnum:{
+        1: "DE 1",
+        2: "DE 2",
+        3: "DE 3",
+        4: "DE 4",
+      },
+     
+    },
+    {
+      title: "IMO Number",
+      dataIndex: 'imo_number',
+      valueType: 'text',
+      sorter: true
+    },
+    {
+      title: "Work Order ID",
+      dataIndex: 'work_order_id',
+      valueType: 'text',
+      sorter: true
+    },
+   
+    {
+      title: "Json String",
+      dataIndex: 'json_string',
+      valueType: 'text',
+      ellipsis: true,
+      sorter: true
+    },
+    {
+      title: "Already Used",
+      dataIndex: 'already_used',
+      valueType: 'text',
+      sorter: true,
+      valueEnum: {
+        1: "already_used",
+        0: "no",
+
+      },
+    },
+    {
+      title: "EOS ID",
       sorter: true,
       hideInSearch: true,
       defaultSortOrder: 'ascend',
-      dataIndex: 'name',
-     
+      dataIndex: 'eos_id',
+
       render: (dom, entity) => {
         return (
           <a
@@ -382,111 +424,39 @@ const TableList: React.FC = () => {
         );
       },
     },
+    {
+      title: "Created At",
 
-    {
-      title: "Terminal",
-      dataIndex: 'terminal_id',
-      sorter: true,
-      hideInTable: currentUser?.role_type == 'Terminal' ? true : false,
-      hideInSearch: currentUser?.role_type == 'Terminal' ? true : false,
-    
-      valueEnum: organizationList,
-      render: (dom, entity) => {
-       
-          return organizationList[entity.terminal_id] 
-        
-         
-      },
-      fieldProps: {
-        multiple: true,
-        mode: 'multiple',
-        notFoundContent: <Empty />,
-      },
-      search: {
-        transform: (value) => {
-          if (value) {
-            return {
-              'terminal_id': {
-                'field': 'terminal_id',
-                'op': 'in',
-                'data': value
-              }
-            }
-          }
+      hideInSearch: true,
+      dataIndex: 'created_at',
+      valueType: 'dateTime'
 
-        }
-      }
     },
-    {
-      title: <FormattedMessage id="pages.jetty.depthAlongside" defaultMessage="Depth Alongside (M)" />,
-      dataIndex: 'depth_alongside',
-      valueType: 'text',
-      sorter: true,
-      hideInSearch: true,
-    },
-    {
-      title: <FormattedMessage id="pages.jetty.depthApproaches" defaultMessage="Depth Approaches (M)" />,
-      dataIndex: 'depth_approaches',
-      valueType: 'text',
-      sorter: true,
-      hideInSearch: true,
-    },
-    {
-      title: <FormattedMessage id="pages.jetty.maxLOA" defaultMessage="Max. LOA (M)" />,
-      dataIndex: 'max_loa',
-      valueType: 'text',
-      sorter: true,
-      hideInSearch: true,
-    },
-    {
-      title: <FormattedMessage id="pages.jetty.minLOA" defaultMessage="Min. LOA (M)" />,
-      dataIndex: 'min_loa',
-      valueType: 'text',
-      sorter: true,
-      hideInSearch: true,
-    },
-    {
-      title: <FormattedMessage id="pages.jetty.maxDisplacement" defaultMessage="Max. Displacement (MT)D
-" />,
-      dataIndex: 'max_displacement',
-      width: 200,
-      valueType: 'text',
-      sorter: true,
-      hideInSearch: true,
-    },
-    {
-      title: <FormattedMessage id="pages.jetty.mlaEnvelopAtMHWS3m" defaultMessage="MLA Envelop At MHWS 3.0m (Unless Otherwise Specified) (M)
-" />,
-      width:320,
-      dataIndex: 'mla_envelop_at_mhws_3m',
-      valueType: 'text',
-      sorter: true,
-      hideInSearch: true,
-    },
-    
     {
       title: <FormattedMessage id="pages.searchTable.titleOption" defaultMessage="Operating" />,
       dataIndex: 'option',
+      width:80,
       valueType: 'option',
-      hideInTable: !access.canJettyMod(),
+      hideInTable: !access.canInterfacedataMod(),
       render: (_, record) => [
-        <Access accessible={access.canJettyMod()} fallback={<div></div>}>
+        <Access accessible={access.canInterfacedataMod()} fallback={<div></div>}>
         <a
           key="config"
           onClick={() => {
             handleUpdateModalOpen(true);
-            setCurrentRow(record);
+            setCurrentRow({ ...record, type: record.type + "" });
+           
           }}
         >
           <FormOutlined style={{ fontSize: '20px' }} /> 
           </a>
         </Access>,
-        <Access accessible={access.canJettyDel()} fallback={<div></div>}>
+        <Access accessible={access.canInterfacedataDel()} fallback={<div></div>}>
           <a
             title={formatMessage({ id: "pages.delete", defaultMessage: "Delete" })}
             key="config"
             onClick={() => {
-              setCurrentRow(record);
+              setCurrentRow({ ...record, type: record.type+""});
               handleRemove([record], (success) => {
                 if (success) {
                   if (isMP) {
@@ -548,10 +518,10 @@ const TableList: React.FC = () => {
       }}
     >
       <PageContainer className="myPage" header={{
-        title: isMP ? null : < FormattedMessage id="'pages.jetty.title" defaultMessage={"Jetty - "+  currentUser?.company_name} />,
+        title: isMP ? null : < FormattedMessage id="'pages.interfacedata.title" defaultMessage={"Interfacedata - "+  currentUser?.company_name} />,
       breadcrumb: {},
       extra: isMP ? null : [
-        <Access accessible={access.canJettyAdd()} fallback={<div></div>}> <Button
+        <Access accessible={access.canInterfacedataAdd()} fallback={<div></div>}> <Button
           type="primary"
           key="primary"
           onClick={() => {
@@ -559,7 +529,7 @@ const TableList: React.FC = () => {
           }}
         >
           <PlusOutlined /> <FormattedMessage id="pages.searchTable.new" defaultMessage="New" />
-        </Button></Access>/*, <Access accessible={access.canJettyAdd()} fallback={<div></div>}> <Upload {...uploadprops}>
+        </Button></Access>/*, <Access accessible={access.canInterfacedataAdd()} fallback={<div></div>}> <Upload {...uploadprops}>
           <Tooltip title="">
             <Button type="primary">
               Batch Add
@@ -568,7 +538,7 @@ const TableList: React.FC = () => {
         </Upload></Access>*/
       ]
     }}>
-      {!isMP && (<ConfigProvider renderEmpty={customizeRenderEmpty}><ProTable<JettyListItem, API.PageParams>
+      {!isMP && (<ConfigProvider renderEmpty={customizeRenderEmpty}><ProTable<InterfacedataListItem, API.PageParams>
         formRef={formRef }
           className="mytable"
           bordered
@@ -582,9 +552,9 @@ const TableList: React.FC = () => {
             searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
           } : false}
         options={false }
-        request={(params, sorter) => jetty({ ...params, sorter })}
+        request={(params, sorter) => interfacedata({ ...params, sorter })}
         columns={columns}
-        rowSelection={access.canJettyDel() ?{ 
+        rowSelection={access.canInterfacedataDel() ?{ 
           onChange: (_, selectedRows) => {
             setSelectedRows(selectedRows);
           },
@@ -593,14 +563,31 @@ const TableList: React.FC = () => {
 
         {isMP && (<>
 
-          <NavBar backArrow={false} left={
-            <MPSort columns={columns} onSort={(k) => {
-              setMPSorter(k)
-              getData(1)
-            }} />} right={right} onBack={back}>
+          <NavBar backArrow={false} left={<div> <Popover placement="bottom" title={""} content={<div>{columns.filter(a => (a.hasOwnProperty('sorter') && a['sorter'])).map((a) => {
+
+            return (<div><Button onClick={() => {
+              setMPSorter({ [a.dataIndex]: 'ascend' })
+            
+              
+               getData(1)
+               
+             
+            }} icon={<SortAscendingOutlined />} />
+              <Button style={{ margin: 5 }} onClick={() => {
+                setMPSorter({ [a.dataIndex]: 'descend' })
+                
+                  getData(1)
+                
+              }} icon={<SortDescendingOutlined />} />
+              <span>{a.title}</span>
+            </div>)
+
+          })}</div>} trigger="click">
+            <SwapOutlined rotate={90} />
+          </Popover></div> } right={right} onBack={back}>
           {intl.formatMessage({
-            id: 'pages.jetty.title',
-            defaultMessage: 'Jetty - ' + currentUser?.company_name,
+            id: 'pages.interfacedata.title',
+            defaultMessage: 'Interfacedata - ' + currentUser?.company_name,
           })}
         </NavBar>
 
@@ -632,7 +619,7 @@ const TableList: React.FC = () => {
             <List.Item key={index}>
 
               <ProDescriptions<any>
-                className="jetty-descriptions"
+                className="interfacedata-descriptions"
                 bordered={true}
                 size="small"
                 layout="horizontal"
@@ -657,7 +644,7 @@ const TableList: React.FC = () => {
       </>)}
       {selectedRowsState?.length > 0 && (
 
-        <Access accessible={access.canJettyDel()} fallback={<div></div>}>
+        <Access accessible={access.canInterfacedataDel()} fallback={<div></div>}>
         <FooterToolbar
           extra={
             <div>
@@ -696,9 +683,18 @@ const TableList: React.FC = () => {
       )}
       
       <CreateForm
-        onSubmit={async (value) => {
-          value.id = currentRow?.id
-          const success = await handleAdd(value as JettyListItem);
+          onSubmit={async (value) => {
+            var data = eval("(" + value.json_string + ")"); 
+            
+            value.imo_number = data.toai_imo_number || null
+            value.work_order_id = data.towoi_work_order_id || null
+           
+            value.already_used = 0
+
+
+
+          
+            const success = await handleAdd(value);
           if (success) {
             handleModalOpen(false);
             setCurrentRow(undefined);
@@ -722,7 +718,8 @@ const TableList: React.FC = () => {
       />
       <UpdateForm
         onSubmit={async (value) => {
-          value.id = currentRow?.id
+            value.id = currentRow?.id
+            
           const success = await handleUpdate(value);
           if (success) {
             handleUpdateModalOpen(false);
@@ -756,7 +753,7 @@ const TableList: React.FC = () => {
         closable={isMP ? true : false}
       >
         {currentRow?.name && (
-          <ProDescriptions<JettyListItem>
+          <ProDescriptions<InterfacedataListItem>
             column={isMP ? 1 : 2}
             title={currentRow?.name}
             request={async () => ({
@@ -765,7 +762,7 @@ const TableList: React.FC = () => {
             params={{
               id: currentRow?.name,
             }}
-            columns={columns as ProDescriptionsItemProps<JettyListItem>[]}
+            columns={columns as ProDescriptionsItemProps<InterfacedataListItem>[]}
           />
         )}
         </Drawer>

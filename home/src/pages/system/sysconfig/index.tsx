@@ -1,5 +1,5 @@
 import RcResizeObserver from 'rc-resize-observer';
-
+import MPSort from "@/components/MPSort";
 import { addSysconfig, removeSysconfig, sysconfig, updateSysconfig } from './service';
 import { PlusOutlined, SearchOutlined, FormOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import type { ActionType, ProColumns, ProDescriptionsItemProps } from '@ant-design/pro-components';
@@ -343,7 +343,7 @@ const TableList: React.FC = () => {
       ]
     }}>
       {!isMP && (<ProTable<SysconfigListItem, API.PageParams>
-        
+          pagination={{ size: "default" }}
         actionRef={actionRef}
           rowKey="id"
           scroll={{ x: 1800, y: resizeObj.tableScrollHeight }}
@@ -352,7 +352,8 @@ const TableList: React.FC = () => {
           span: resizeObj.searchSpan,
           searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
         }}
-        options={false}
+          options={false}
+          bordered
         className="mytable"
         request={(params, sorter) => sysconfig({ ...params, sorter })}
         columns={columns}
@@ -372,7 +373,7 @@ const TableList: React.FC = () => {
           })}
         </NavBar>
 
-        <div style={{ padding: '20px', backgroundColor: "#5187c4", display: showMPSearch ? 'block' : 'none' }}>
+        <div style={{ padding: '20px', backgroundColor: "#5000B9", display: showMPSearch ? 'block' : 'none' }}>
           <Search columns={columns.filter(a => !(a.hasOwnProperty('hideInSearch') && a['hideInSearch']))} action={actionRef} loading={false}
 
             onFormSearchSubmit={onFormSearchSubmit}
@@ -402,6 +403,7 @@ const TableList: React.FC = () => {
               <ProDescriptions<any>
                 bordered={true}
                 size="small"
+                className="jetty-descriptions"
                 layout="horizontal"
                 column={1}
                 title={""}

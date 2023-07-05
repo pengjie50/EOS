@@ -1,11 +1,12 @@
 import RcResizeObserver from 'rc-resize-observer';
-
+import { fieldSelectData } from '@/services/ant-design-pro/api';
 import { addLoginlog, removeLoginlog, loginlog, updateLoginlog } from './service';
 import FrPrint from "../../../components/FrPrint";
 import { exportCSV } from "../../../components/export";
 import FileSaver from "file-saver";
 import { user } from '../user/service';
 import { company } from '../company/service';
+import MPSort from "@/components/MPSort";
 import { PlusOutlined, SearchOutlined, FormOutlined, DeleteOutlined, ExclamationCircleOutlined, PrinterOutlined, FileExcelOutlined, EllipsisOutlined } from '@ant-design/icons';
 import type { ActionType, ProColumns, ProDescriptionsItemProps } from '@ant-design/pro-components';
 import { LoginlogList, LoginlogListItem } from './data.d';
@@ -23,7 +24,7 @@ import {
   ProFormInstance
 } from '@ant-design/pro-components';
 import { FormattedMessage, useIntl, formatMessage } from '@umijs/max';
-import { Button, Drawer, Input, message, Modal, Popover } from 'antd';
+import { Button, Drawer, Input, message, Modal, Popover, Empty } from 'antd';
 import React, { useRef, useState, useEffect } from 'react';
 import CreateForm from './components/CreateForm';
 import UpdateForm from './components/UpdateForm';
@@ -37,6 +38,15 @@ import { isPC } from "@/utils/utils";
  *
  * @param selectedRows
  */
+
+const getTimeStr = (time) => {
+  if (time > 0) {
+    return (time ? parseInt((time / 3600) + "") : 0) + "h " + (time ? parseInt((time % 3600) / 60) : 0) + "m"
+  } else {
+    return "-"
+  }
+  
+}
 const handleRemove = async (selectedRows: LoginlogListItem[], callBack: any) => {
   if (!selectedRows) return true;
   var open = true
@@ -83,7 +93,7 @@ const handleRemove = async (selectedRows: LoginlogListItem[], callBack: any) => 
 
 };
 
-export var  columns: ProColumns<LoginlogListItem>[] = [
+export var  columnsBase: ProColumns<LoginlogListItem>[] = [
   {
     title: (
       <FormattedMessage
@@ -92,10 +102,7 @@ export var  columns: ProColumns<LoginlogListItem>[] = [
       />
     ),
     dataIndex: 'username',
-   // valueEnum: userList,
-    fieldProps: {
-      showSearch: true,
-    },
+  
     search: {
       transform: (value) => {
 
@@ -104,7 +111,7 @@ export var  columns: ProColumns<LoginlogListItem>[] = [
 
             status: {
               'field': 'user_id',
-              'op': 'eq',
+              'op': 'in',
               'data': value
             }
 
@@ -134,9 +141,8 @@ export var  columns: ProColumns<LoginlogListItem>[] = [
     title: <FormattedMessage id="pages.loginlog.xxx" defaultMessage="Organisation" />,
     dataIndex: 'company_name',
    // valueEnum: organizationList,
-    fieldProps: {
-      showSearch: true,
-    },
+    fieldProps: { multiple: true, mode: 'multiple', showSearch: true },
+   
     search: {
       transform: (value) => {
 
@@ -145,7 +151,7 @@ export var  columns: ProColumns<LoginlogListItem>[] = [
 
             status: {
               'field': 'company_id',
-              'op': 'eq',
+              'op': 'in',
               'data': value
             }
 
@@ -165,7 +171,7 @@ export var  columns: ProColumns<LoginlogListItem>[] = [
         defaultMessage="Login Time"
       />
     ),
-    sorter: true,
+   
     width: 200,
     dataIndex: 'login_time',
     valueType: 'dateTime',
@@ -175,7 +181,12 @@ export var  columns: ProColumns<LoginlogListItem>[] = [
   {
     title: <FormattedMessage id="pages.loginlog.xxx" defaultMessage="Active duration" />,
     dataIndex: 'active_duration',
+    hideInSearch:true,
     valueType: 'text',
+    render: (dom) => {
+     return getTimeStr(dom)
+    }
+    
   },
   {
     title: (
@@ -195,24 +206,71 @@ export var  columns: ProColumns<LoginlogListItem>[] = [
   {
     title: <FormattedMessage id="pages.loginlog.xxx" defaultMessage="No of Invalid attempts" />,
     dataIndex: 'invalid_attempts',
+    hideInSearch: true,
     valueType: 'text',
   },
 
   {
-    title: <FormattedMessage id="pages.loginlog.xxx" defaultMessage="URL" />,
+    title: <FormattedMessage id="pages.operlog.url" defaultMessage="url" />,
     dataIndex: 'url',
     valueType: 'text',
-  },
+    search: {
+      transform: (value) => {
+        if (value.length > 0) {
 
+          return {
+            'url': {
+              'field': 'url',
+              'op': 'in',
+              'data': value
+            }
+          }
+        }
+
+      }
+    },
+  },
   {
-    title: <FormattedMessage id="pages.loginlog.xxx" defaultMessage="IP" />,
+    title: <FormattedMessage id="pages.operlog.ip" defaultMessage="Ip" />,
     dataIndex: 'ip',
+    search: {
+      transform: (value) => {
+        if (value.length > 0) {
+
+          return {
+            'ip': {
+              'field': 'ip',
+              'op': 'in',
+              'data': value
+            }
+          }
+        }
+
+      }
+    },
     valueType: 'text',
   },
+
   {
     title: <FormattedMessage id="pages.loginlog.xxx" defaultMessage="Device Type" />,
     dataIndex: 'device_type',
     valueType: 'text',
+    fieldProps: { multiple: true, mode: 'multiple' },
+    search: {
+      transform: (value) => {
+        if (value.length > 0) {
+
+          return {
+            'device_type': {
+              'field': 'device_type',
+              'op': 'in',
+              'data': value
+            }
+          }
+        }
+
+      }
+    },
     valueEnum: {
       "PC": "PC",
       "Laptop": "Laptop",
@@ -234,8 +292,8 @@ export var  columns: ProColumns<LoginlogListItem>[] = [
 
             status: {
               'field': 'status',
-              'op': 'eq',
-              'data': Number(value)
+              'op': 'in',
+              'data': value
             }
 
           }
@@ -243,6 +301,7 @@ export var  columns: ProColumns<LoginlogListItem>[] = [
 
       }
     },
+    fieldProps: { multiple: true, mode: 'multiple' },
     valueEnum: {
       0: {
         text: (
@@ -331,13 +390,106 @@ const TableList: React.FC = () => {
   const [printModalVisible, handlePrintModalVisible] = useState<boolean>(false);
   const [showDetail, setShowDetail] = useState<boolean>(false);
   const [organizationList, setOrganizationList] = useState<any>({});
-  const [userList, setUserList] = useState<any>({});
+ 
   const [moreOpen, setMoreOpen] = useState<boolean>(false);
   const [paramsText, setParamsText] = useState<string>('');
   const actionRef = useRef<ActionType>();
   const [currentRow, setCurrentRow] = useState<LoginlogListItem>();
   const [selectedRowsState, setSelectedRows] = useState<LoginlogListItem[]>([]);
   const [resizeObj, setResizeObj] = useState({ searchSpan: 12, tableScrollHeight: 300 });
+
+
+  const [urlData, setUrlData] = useState<any>({});
+  const [ipData, setIpData] = useState<any>({});
+  const [userList, setUserList] = useState<any>({});
+
+  const [MPSorter, setMPSorter] = useState<any>({});
+
+
+  var columns: ProColumns<LoginlogListItem>[] = columnsBase.map((a) => {
+
+
+    var b = { ...a }
+
+
+    if (b.dataIndex == "company_name") {
+     
+      b.valueEnum = organizationList
+    }
+
+    if (b.dataIndex == "url") {
+      b.valueEnum = urlData
+      b.fieldProps = {
+        notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
+        showSearch: true,
+        allowClear: true,
+        multiple: true,
+        mode: 'multiple',
+
+        onFocus: () => {
+          fieldSelectData({ model: "Loginlog", value: '', field: 'url' }).then((res) => {
+            console.log(res.data)
+            setUrlData(res.data)
+          })
+        },
+        onSearch: (newValue: string) => {
+
+          fieldSelectData({ model: "Loginlog", value: newValue, field: 'url' }).then((res) => {
+            console.log(res.data)
+            setUrlData(res.data)
+          })
+
+        }
+      }
+    }
+
+    if (b.dataIndex == "ip") {
+      b.valueEnum = ipData
+      b.fieldProps = {
+        notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
+        showSearch: true,
+        allowClear: true,
+        multiple: true,
+        mode: 'multiple',
+
+        onFocus: () => {
+          fieldSelectData({ model: "Loginlog", value: '', field: 'ip' }).then((res) => {
+            console.log(res.data)
+            setIpData(res.data)
+          })
+        },
+        onSearch: (newValue: string) => {
+
+          fieldSelectData({ model: "Loginlog", value: newValue, field: 'ip' }).then((res) => {
+            console.log(res.data)
+            setIpData(res.data)
+          })
+
+        }
+      }
+    }
+
+    if (b.dataIndex == "username") {
+      b.valueEnum = userList
+      b.fieldProps = {
+        notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
+        showSearch: true,
+        allowClear: true,
+        multiple: true,
+        mode: 'multiple',
+
+
+      }
+    }
+    return b
+
+
+
+
+
+
+  })
+
   /**
    * @en-US International configuration
    * @zh-CN 国际化配置
@@ -350,8 +502,7 @@ const TableList: React.FC = () => {
 
   const [showMPSearch, setShowMPSearch] = useState<boolean>(false);
   const [isMP, setIsMP] = useState<boolean>(!isPC());
-  columns[0].valueEnum = userList
-  columns[1].valueEnum = organizationList
+ 
 
   useEffect(() => {
 
@@ -440,7 +591,17 @@ const TableList: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [MPfilter, setMPfilter] = useState<any>({})
 
-  async function getData(page, filter) {
+  async function getData(page, filter__) {
+    var sorter = {}
+    await setMPSorter((sorter_) => {
+      sorter = sorter_
+      return sorter_
+    })
+    var filter = {}
+    await setMPfilter((filter_) => {
+      filter = filter_
+      return filter_
+    })
     const append = await loginlog({
       ...{
         "current": page,
@@ -449,7 +610,10 @@ const TableList: React.FC = () => {
       }, ...filter
     })
 
+    if (page == 1) {
 
+      setData([]);
+    }
     console.log(append)
     setData(val => [...val, ...append.data])
     setHasMore(10 * (page - 1) + append.data.length < append.total)
@@ -510,7 +674,7 @@ const TableList: React.FC = () => {
         ]
     }} >
       {!isMP && (<ProTable<LoginlogListItem, API.PageParams>
-       
+          pagination={{ size: "default" }}
        
         actionRef={actionRef}
           rowKey="id"
@@ -526,7 +690,8 @@ const TableList: React.FC = () => {
         options={false}
         className="mytable"
         request={(params, sorter) => loginlog({ ...params, sorter })}
-        columns={columns}
+          columns={columns}
+          bordered
         rowSelection={{
           onChange: (_, selectedRows) => {
             setSelectedRows(selectedRows);
@@ -536,14 +701,18 @@ const TableList: React.FC = () => {
 
       {isMP && (<>
 
-        <NavBar backArrow={false} right={right} onBack={back}>
+          <NavBar backArrow={false} left={
+            <MPSort columns={columns} onSort={(k) => {
+              setMPSorter(k)
+              getData(1)
+            }} />} right={right} onBack={back}>
           {intl.formatMessage({
             id: 'pages.loginlog.title',
             defaultMessage: 'Login log',
           })}
         </NavBar>
 
-        <div style={{ padding: '20px', backgroundColor: "#5187c4", display: showMPSearch ? 'block' : 'none' }}>
+        <div style={{ padding: '20px', backgroundColor: "#5000B9", display: showMPSearch ? 'block' : 'none' }}>
           <Search columns={columns.filter(a => !(a.hasOwnProperty('hideInSearch') && a['hideInSearch']))} action={actionRef} loading={false}
 
             onFormSearchSubmit={onFormSearchSubmit}
@@ -573,6 +742,7 @@ const TableList: React.FC = () => {
               <ProDescriptions<any>
                 bordered={true}
                 size="small"
+                className="jetty-descriptions"
                 layout="horizontal"
                 column={1}
                 title={""}

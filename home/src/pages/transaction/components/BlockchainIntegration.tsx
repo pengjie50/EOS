@@ -188,12 +188,12 @@ const Detail: React.FC<any> = (props) => {
       dataIndex: 'eos_id',
       render: (dom, entity) => {
         if(!isMP){
-          return dom
+          return "E"+dom
         }
         if (entity.validated) {
-          return <div><div style={{ height: isMP ? 'auto' : '60px' }}>{dom}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
+          return <div><div style={{ height: isMP ? 'auto' : '60px' }}>{"E" + dom}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
         } else {
-          return <div><div style={{ height: isMP ? 'auto' : '60px' }}>{dom}</div><div><CloseOutlined style={{ color: 'red' }} /></div></div>
+          return <div><div style={{ height: isMP ? 'auto' : '60px' }}>{"E" + dom}</div><div><CloseOutlined style={{ color: 'red' }} /></div></div>
         }
 
       },
@@ -360,7 +360,7 @@ const Detail: React.FC<any> = (props) => {
 
     {
       title: <FormattedMessage id="pages.transaction.productType" defaultMessage="Product Type" />,
-      dataIndex: 'product_type',
+      dataIndex: 'product_name',
      // valueEnum: producttypeList,
       render: (dom, entity) => {
         if (!isMP) {
@@ -376,7 +376,7 @@ const Detail: React.FC<any> = (props) => {
     },
     {
       title: <FormattedMessage id="pages.alertrule.throughputVolume1" defaultMessage="Total Nominated Quantity (MT)" />,
-      dataIndex: 'total_nominated_quantity_m',
+      dataIndex: 'product_quantity_in_mt',
       hideInSearch: true,
       valueType: "text",
 
@@ -402,7 +402,7 @@ const Detail: React.FC<any> = (props) => {
     },
     {
       title: <FormattedMessage id="pages.alertrule.throughputVolume1" defaultMessage="Total Nominated Quantity (Bal-60-F)" />,
-      dataIndex: 'total_nominated_quantity_b',
+      dataIndex: 'product_quantity_in_bls_60_f',
       hideInSearch: true,
       valueType: 'text',
       render: (dom, entity) => {
@@ -790,10 +790,10 @@ const Detail: React.FC<any> = (props) => {
 
 
 
-      <div style={{ marginTop: 15, paddingLeft: 0 }}>
+      <div style={{ marginTop: 15, paddingLeft: 0 }} className="re-back">
         <Button
 
-          type="primary"
+          type="default"
           onClick={async () => {
             history.back()
           }}

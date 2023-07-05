@@ -6,6 +6,7 @@ import {
   ProFormTreeSelect,
   ProFormSwitch,
   ModalForm,
+ 
   ProFormCheckbox,
   ProFormInstance
   
@@ -115,8 +116,8 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
           },
         }}
         title={intl.formatMessage({
-          id: 'pages.user.add',
-          defaultMessage: '新增用户',
+          id: 'pages.user.xxx',
+          defaultMessage: 'Add New User',
         })}
     >
       <ProFormSelect
@@ -198,8 +199,14 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
         })}
         valueEnum={roleConf }
       />
-
-      <ProFormSwitch name="email_notification" label="Send email notification for Password Reset" />
+      <ProFormCheckbox.Group
+        name="email_notification"
+        layout="vertical"
+        label=""
+        options={[{
+          label: "Send email confirmation", value:"send_email"}]}
+      />
+     
      
     </ModalForm>
      

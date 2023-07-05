@@ -1,6 +1,7 @@
 import RcResizeObserver from 'rc-resize-observer';
 
-import { addRole, removeRole, role, updateRole, updateRoleMenu } from './service';
+import MPSort from "@/components/MPSort";
+import { addRole, removeRole, role, updateRole, updateRoleMenu, queryMenuByRoleId } from './service';
 import { PlusOutlined, SearchOutlined, FormOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import type { ActionType, ProColumns, ProDescriptionsItemProps } from '@ant-design/pro-components';
 import { RoleList, RoleListItem } from './data.d';
@@ -155,7 +156,7 @@ const TableList: React.FC = () => {
 
   const [stepMenuFormValues, setMenuStepFormValues] = useState({});
   const [updateMenuModalVisible, handleUpdateMenuModalVisible] = useState<boolean>(false);
-
+  const [MPSorter, setMPSorter] = useState<any>({});
   const actionRef = useRef<ActionType>();
   const [currentRow, setCurrentRow] = useState<RoleListItem>();
   const [selectedRowsState, setSelectedRows] = useState<RoleListItem[]>([]);
@@ -211,16 +212,30 @@ const TableList: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [MPfilter, setMPfilter] = useState<any>({})
 
-  async function getData(page, filter) {
+  async function getData(page, filter__) {
+    var sorter = {}
+    await setMPSorter((sorter_) => {
+      sorter = sorter_
+      return sorter_
+    })
+    var filter = {}
+    await setMPfilter((filter_) => {
+      filter = filter_
+      return filter_
+    })
+
     const append = await role({
       ...{
         "current": page,
         "pageSize": 10
 
-      }, ...filter
+      }, ...filter, sorter
     })
 
+    if (page == 1) {
 
+      setData([]);
+    }
     console.log(append)
     setData(val => [...val, ...append.data])
     setHasMore(10 * (page - 1) + append.data.length < append.total)
@@ -308,9 +323,18 @@ const TableList: React.FC = () => {
       render: (_, record) => [
         <a
           key="config"
-          onClick={() => {
-            handleUpdateModalOpen(true);
+          onClick={async () => {
+
+
+           
+
+            var r = await queryMenuByRoleId({ role_id: record.id })
+            record.accessible_permissions= r.data.map((p) => {
+              return p.permission_id
+            })
+           
             setCurrentRow(record);
+            handleUpdateModalOpen(true);
           }}
         >
           <FormOutlined style={{ fontSize: '20px' }} />
@@ -390,7 +414,7 @@ const TableList: React.FC = () => {
       ]
     }}>
       {!isMP && ( <ProTable<RoleListItem, API.PageParams>
-       
+          pagination={{ size: "default" }}
         actionRef={actionRef}
           rowKey="id"
           scroll={{ x: '100%', y: resizeObj.tableScrollHeight }}
@@ -408,14 +432,18 @@ const TableList: React.FC = () => {
 
       {isMP && (<>
 
-        <NavBar backArrow={false} right={right} onBack={back}>
+          <NavBar backArrow={false} left={
+            <MPSort columns={columns} onSort={(k) => {
+              setMPSorter(k)
+              getData(1)
+            }} />} right={right} onBack={back}>
           {intl.formatMessage({
             id: 'pages.role.title',
             defaultMessage: 'Role',
           })}
         </NavBar>
 
-        <div style={{ padding: '20px', backgroundColor: "#5187c4", display: showMPSearch ? 'block' : 'none' }}>
+        <div style={{ padding: '20px', backgroundColor: "#5000B9", display: showMPSearch ? 'block' : 'none' }}>
           <Search columns={columns.filter(a => !(a.hasOwnProperty('hideInSearch') && a['hideInSearch']))} action={actionRef} loading={false}
 
             onFormSearchSubmit={onFormSearchSubmit}
@@ -445,6 +473,7 @@ const TableList: React.FC = () => {
               <ProDescriptions<any>
                 bordered={true}
                 size="small"
+                className="jetty-descriptions"
                 layout="horizontal"
                 column={1}
                 title={""}
@@ -494,7 +523,7 @@ const TableList: React.FC = () => {
       <UpdateForm
         onSubmit={async (value) => {
             value.id = currentRow?.id
-
+           
           const success = await handleUpdate(value);
           if (success) {
             handleUpdateModalOpen(false);
@@ -515,7 +544,7 @@ const TableList: React.FC = () => {
           }
         }}
         updateModalOpen={updateModalOpen}
-          values={{ ...currentRow, accessible_feature: currentRow?.accessible_feature?.split(","), accessible_timestamp: currentRow?.accessible_timestamp?.split(","), accessible_organization: currentRow?.accessible_organization?.split(",") } || {}}
+          values={{ ...currentRow, accessible_timestamp: currentRow?.accessible_timestamp?.split(","), accessible_organization: currentRow?.accessible_organization?.split(",") } || {}}
       />
       <MenuForm
         onSubmit={async (value) => {

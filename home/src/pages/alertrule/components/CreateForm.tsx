@@ -190,8 +190,8 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
 
 
 
-        <ProFormDependency name={[ 'total_nominated_quantity_to_m', 'total_nominated_quantity_from_m']}>
-          {({ total_nominated_quantity_to_m, total_nominated_quantity_from_m }) => {
+        <ProFormDependency name={[ 'product_quantity_in_mt_to', 'product_quantity_in_mt_from']}>
+          {({ product_quantity_in_mt_to, product_quantity_in_mt_from }) => {
            
 
               return (<ProFormGroup><ProFormDigit  label={<FormattedMessage
@@ -203,7 +203,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
            
             {
               validator: (rule, value, callback) => {
-                if (total_nominated_quantity_from_m != null && total_nominated_quantity_to_m != null && total_nominated_quantity_to_m && value >= total_nominated_quantity_to_m) {
+                if (product_quantity_in_mt_from != null && product_quantity_in_mt_to != null && product_quantity_in_mt_to && value >= product_quantity_in_mt_to) {
                   callback("Incorrect interval")
                 } else {
                   callback()
@@ -212,7 +212,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
 
             }
           ]}
-          name="total_nominated_quantity_from_m" width="xs" min={1} max={10000000}
+          name="product_quantity_in_mt_from" width="xs" min={1} max={10000000}
 
         />
 
@@ -224,7 +224,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
            
             {
               validator: (rule, value, callback) => {
-                if (total_nominated_quantity_from_m != null && total_nominated_quantity_to_m != null &&  total_nominated_quantity_from_m && value <= total_nominated_quantity_from_m) {
+                if (product_quantity_in_mt_from != null && product_quantity_in_mt_to != null &&  product_quantity_in_mt_from && value <= product_quantity_in_mt_from) {
                   callback("Incorrect interval")
                 } else {
                   callback()
@@ -233,7 +233,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
 
             }
           ]}
-          name="total_nominated_quantity_to_m" width="xs" min={1} max={10000000} />
+          name="product_quantity_in_mt_to" width="xs" min={1} max={10000000} />
 
         <ProFormSelect
           name="total_nominated_quantity_unit"
@@ -248,7 +248,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
 
                     {
                       validator: (rule, value, callback) => {
-                        if (total_nominated_quantity_from_m != null && total_nominated_quantity_to_m != null) {
+                        if (product_quantity_in_mt_from != null && product_quantity_in_mt_to != null) {
                           if (!value) {
                             callback("Please Select Unit of Measurement")
                           } else {
@@ -301,7 +301,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
           id="pages.alertrule.from"
           defaultMessage="Total Nominated Quantity From"
         />}
-          name="total_nominated_quantity_from_b" width="sm" min={1} max={10000000}
+          name="product_quantity_in_bls_60_f_from" width="sm" min={1} max={10000000}
 
         />
 
@@ -310,7 +310,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
           defaultMessage="To"
         />}
 
-          name="total_nominated_quantity_to_b" width="sm" min={1} max={10000000} />
+          name="product_quantity_in_bls_60_f_to" width="sm" min={1} max={10000000} />
         <ProFormText
           name="total_nominated_quantity_unit2"
           width="sm"

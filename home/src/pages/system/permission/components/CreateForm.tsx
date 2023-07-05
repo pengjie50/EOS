@@ -4,6 +4,7 @@ import {
   ProFormSelect,
   ProFormText,
   ProFormTextArea,
+  ProFormTreeSelect,
   ModalForm,
   ProFormInstance
   
@@ -11,9 +12,10 @@ import {
 import { PermissionListItem } from '../data.d';
 import { FormattedMessage, useIntl } from '@umijs/max';
 import { Modal, Form } from 'antd';
-import React, { useRef } from 'react';
+import React, { useRef, useState } from 'react';
 
-
+import { permission } from '../service';
+import { tree, isPC } from "@/utils/utils";
 
 export type CreateFormProps = {
   onCancel: (flag?: boolean, formVals?: Partial<PermissionListItem>) => void;
@@ -25,7 +27,8 @@ export type CreateFormProps = {
 const UpdateForm: React.FC<CreateFormProps> = (props) => {
   const restFormRef = useRef<ProFormInstance>();
   const intl = useIntl();
- 
+  const [permissionConf, setPermissionConf] = useState<any>([]);
+  const [isMP, setIsMP] = useState<boolean>(!isPC());
   const {
     onSubmit,
     onCancel,
@@ -100,6 +103,64 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
               <FormattedMessage
                 id="pages.rules.required"
                 defaultMessage=""
+              />
+            ),
+          },
+        ]}
+      />
+      <ProFormTreeSelect
+        name="pid"
+        label={intl.formatMessage({
+          id: 'pages.flow.fatherFlow',
+          defaultMessage: 'Father Permission',
+        })}
+        placeholder="Please select"
+        allowClear
+        width="md"
+
+        request={async () => {
+          return permission({ sorter: { sort: 'ascend' } }).then((res) => {
+
+            res.data = res.data.map((r) => {
+              r['value'] = r.id
+              r['title'] = r.name
+              return r
+            })
+
+            setPermissionConf(tree(res.data, null, 'pid'))
+            return tree(res.data, null, 'pid')
+          });
+
+        }}
+
+        // tree-select args
+        fieldProps={{
+          showArrow: false,
+
+
+          dropdownMatchSelectWidth: isMP ? true : false,
+
+
+          treeNodeFilterProp: 'name',
+          fieldNames: {
+            label: 'name',
+          },
+        }}
+      />
+      <ProFormText
+        name="sort"
+        label={intl.formatMessage({
+          id: 'pages.flow.sort',
+          defaultMessage: 'Sort',
+        })}
+        width="md"
+        rules={[
+          {
+            required: true,
+            message: (
+              <FormattedMessage
+                id="pages.flow.rules.sort"
+                defaultMessage="Please enter sort!"
               />
             ),
           },

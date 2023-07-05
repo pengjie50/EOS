@@ -2,10 +2,10 @@ import React, { useRef, useState, useEffect,useCallback } from 'react';
 import { PageContainer, ProCard, ProColumns, ProDescriptions, ProFormGroup, ProFormSelect, ProDescriptionsItemProps } from '@ant-design/pro-components';
 import { AlertOutlined, SafetyCertificateOutlined, FormOutlined, CheckOutlined, ReloadOutlined, FieldTimeOutlined, CalendarOutlined,DownCircleOutlined,EyeOutlined, ExclamationCircleOutlined, AimOutlined } from '@ant-design/icons'; 
 import ProTable from '@ant-design/pro-table';
-import { FormattedMessage, useIntl, useLocation, useModel, history } from '@umijs/max';
+import { FormattedMessage, useIntl, useLocation, useModel, history, formatMessage } from '@umijs/max';
 import { TransactionList, TransactionListItem } from '../data.d';
 import { transaction, validateBC, transactionevent, addTransactionevent, updateTransactionevent } from '../service';
-import { Button, Space, Steps, Icon, Select, message, Spin, Empty, Modal } from 'antd';
+import { Button, Space, Steps, Icon, Select, message, Spin, Empty, Modal, Tooltip, Drawer } from 'antd';
 import { flow } from '../../system/flow/service';
 import { filterOfTimestamps, addFilterOfTimestamps, updateFilterOfTimestamps, removeFilterOfTimestamps } from '../../account/filterOfTimestamps/service';
 import { getAlertBytransactionId } from '../../alert/service';
@@ -148,12 +148,16 @@ const Detail: React.FC<any> = (props) => {
 
   const [currentFilter, setCurrentFilter] = useState<any>();
   const [currentRow, setCurrentRow] = useState<TransactionListItem>();
+
+  const [currentAlertruleRow, setCurrentAlertruleRow] = useState<TransactionListItem>();
+  const [events, setEvents] = useState<any>([]);
+
   const [flowTreeFilter, setFlowTreeFilter] = useState<any>([]);
   const [flowTreeAll, setFlowTreeAll] = useState<any>([]);
   const [flowList, setFlowList] = useState<any>([]);
   const [summaryList, setSummaryList] = useState<any>([]);
   const [transactionAlert, setTransactionAlert] = useState<any>([]);
- 
+  const [processes, setProcesses] = useState<any>([]);
   const [transactioneventMap, setTransactioneventMap] = useState<any>(new Map());
   const [processMap, setProcessMap] = useState<any>({});
  // const [transaction_id, setTransaction_id] = useState<any>("");
@@ -171,10 +175,13 @@ const Detail: React.FC<any> = (props) => {
   const { currentUser } = initialState || {};
   const [show, setShow] = useState<any>({});
   const [organizationList, setOrganizationList] = useState<any>({});
-  const [organization_id, setOrganization_id] = useState<any>("");
+  const [organization_id, setOrganization_id] = useState<any>([]);
   var transaction_id = useLocation()?.state?.transaction_id
-
+  const [showDetail, setShowDetail] = useState<boolean>(false);
   const [createModalOpen, handleModalOpen] = useState<boolean>(false);
+  const [tooltipOpen, setTooltipOpen] = useState<boolean>(false);
+
+  
   const [isAdd, setIsAdd] = useState<boolean>(false);
 
   const [totalDuration, setTotalDuration] = useState<any>(0);
@@ -194,7 +201,7 @@ const Detail: React.FC<any> = (props) => {
   }
 
   const access = useAccess();
-
+  const intl = useIntl();
 
   const columns1: ProColumns<TransactionListItem>[] = [
    
@@ -255,7 +262,14 @@ const Detail: React.FC<any> = (props) => {
     {
       title: <FormattedMessage id="pages.transaction.terminalName" defaultMessage="Terminal Name" />,
       dataIndex: 'terminal_id',
+      hideInDescriptions: currentUser?.role_type == 'Terminal' ? true : false,
       valueEnum: terminalList
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.terminalName" defaultMessage="Trader Name" />,
+      dataIndex: 'trader_id',
+      hideInDescriptions: currentUser?.role_type=='Trader'? true:false,
+      valueEnum: organizationList
     },
     {
       title: <FormattedMessage id="pages.transaction.jettyName" defaultMessage="Jetty Name" />,
@@ -270,7 +284,7 @@ const Detail: React.FC<any> = (props) => {
   const columns4: ProColumns<TransactionListItem>[] = [
     {
       title: <FormattedMessage id="pages.alertrule.throughputVolume1" defaultMessage="Total Nominated Quantity (MT)" />,
-      dataIndex: 'total_nominated_quantity_m',
+      dataIndex: 'product_quantity_in_mt',
       hideInSearch: true,
       valueType: "text",
       render: (dom, entity) => {
@@ -284,7 +298,7 @@ const Detail: React.FC<any> = (props) => {
     },
     {
       title: <FormattedMessage id="pages.alertrule.throughputVolume1" defaultMessage="Total Nominated Quantity (Bal-60-F)" />,
-      dataIndex: 'total_nominated_quantity_b',
+      dataIndex: 'product_quantity_in_bls_60_f',
       hideInSearch: true,
       valueType: 'text',
       render: (dom, entity) => {
@@ -303,7 +317,7 @@ const Detail: React.FC<any> = (props) => {
   const columns5: ProColumns<TransactionListItem>[] = [
     {
       title: <FormattedMessage id="pages.transaction.productType" defaultMessage="Product Type" />,
-      dataIndex: 'product_type',
+      dataIndex: 'product_name',
       //valueEnum: producttypeList,
     },
 
@@ -321,7 +335,11 @@ const Detail: React.FC<any> = (props) => {
       dataIndex: 'eos_id',
       ellipsis: {
         showTitle: true,
+      },
+      render:(dom)=> {
+       return  "E"+dom
       }
+
      
     },
 
@@ -426,7 +444,7 @@ const Detail: React.FC<any> = (props) => {
     },
     {
       title: <FormattedMessage id="pages.transaction.averageDurationPerVolumeOfSameProductType" defaultMessage="Average Duration per Volume of same Product Type" />,
-      dataIndex: 'average_duration_per_volume_of_same_product_type',
+      dataIndex: 'average_duration_per_volume_of_same_product_name',
       hideInSearch: true,
       render: (dom, entity) => {
         return (
@@ -457,7 +475,418 @@ const Detail: React.FC<any> = (props) => {
       ],
     },*/
   ];
+  const columnsAlertrule: ProColumns<any>[] = [
 
+
+    {
+      title: (
+        <FormattedMessage
+          id="pages.alert.xxx"
+          defaultMessage="Threshold ID"
+        />
+      ),
+
+      dataIndex: 'alertrule_id',
+      hideInSearch: true,
+      sorter: true,
+      align: "center",
+      render: (dom, entity) => {
+        return dom
+      },
+    },
+
+    {
+      title: <FormattedMessage id="pages.alertrule.type" defaultMessage="Threshold Type" />,
+      dataIndex: 'type',
+      sorter: true,
+      hideInSearch: true,
+      defaultSortOrder: 'ascend',
+      valueEnum: {
+        0: { text: <FormattedMessage id="pages.alertrule.singleProcess" defaultMessage="Single Process" /> },
+        1: { text: <FormattedMessage id="pages.alertrule.betweenTwoEvents" defaultMessage="Between Two Events" /> },
+        2: { text: <FormattedMessage id="pages.alertrule.entireTransaction" defaultMessage="Entire Transaction" /> },
+      }
+
+    },
+
+
+
+    {
+      title: (
+        <FormattedMessage
+          id="pages.alertrule.entireTransactionAndProcesses"
+          defaultMessage="Entire Transaction And Processes"
+        />
+      ),
+      dataIndex: 'flow_id',
+      hideInTable: true,
+      hideInDescriptions: true,
+      valueEnum: processes,
+      fieldProps: {
+        notFoundContent: <Empty />,
+        width: '300px',
+        dropdownMatchSelectWidth: isMP ? true : false,
+        mode: 'multiple',
+        showSearch: false,
+        multiple: true
+
+      },
+      search: {
+        transform: (value) => {
+          if (value.length > 0) {
+            return {
+              'flow_id': {
+                'field': 'flow_id',
+                'op': 'in',
+                'data': value
+              }
+            }
+          }
+
+        }
+      }
+    },
+
+
+    {
+      title: (
+        <FormattedMessage
+          id="pages.alertrule.betweenTwoEvents"
+          defaultMessage="Between Two Events"
+        />
+      ),
+      dataIndex: 'flow_id_to',
+      hideInTable: true,
+      width: 200,
+      hideInDescriptions: true,
+      valueEnum: events,
+      fieldProps: {
+        notFoundContent: <Empty />,
+
+        dropdownMatchSelectWidth: isMP ? true : false,
+        width: '300px',
+        mode: 'multiple',
+        showSearch: false,
+        multiple: true
+
+      },
+      search: {
+        transform: (value) => {
+          if (value.length > 0) {
+            return {
+              'flow_id': {
+                'field': 'flow_id',
+                'op': 'in',
+                'data': value.map((a) => {
+                  return a.split('_')[0]
+                })
+              },
+              'flow_id_to': {
+                'field': 'flow_id_to',
+                'op': 'in',
+                'data': value.map((a) => {
+                  return a.split('_')[1]
+                })
+              },
+            }
+          }
+        }
+      }
+
+
+    },
+
+    {
+      title: <FormattedMessage id="pages.alertrule.vesselSizeLimit" defaultMessage="Vessel Size Limit (DWT)" />,
+      dataIndex: 'from_to',
+      hideInTable: true,
+      hideInDescriptions: true,
+      fieldProps: {
+
+        dropdownMatchSelectWidth: isMP ? true : false,
+        width: '300px',
+
+        // showSearch: true,
+
+
+      },
+      valueEnum: {
+        "0-25": "1. GP (General Purpose): Less than 24.99 DWT",
+        "25-45": "2. MR (Medium Range): 25 to 44.99 DWT",
+        "45-80": "3. LR1 (Long Range 1): 45 to 79.99 DWT",
+        "80-120": "4. AFRA (AFRAMAX): 80 to 119.99 DWT",
+        "120-160": "5. LR2 (Long Range 2): 120 to 159.99 DWT",
+        "160-320": "6. VLCC (Very Large Crude Carrier): 160 to 319.99 DWT",
+        "320-1000000": "7. ULCC (Ultra-Large Crude Carrier): More than 320 DWT",
+      },
+      search: {
+        transform: (value) => {
+          if (value) {
+            return {
+              'vessel_size_dwt_from': {
+                'field': 'vessel_size_dwt_from',
+                'op': 'eq',
+                'data': value.split('-')[0]
+              },
+              'vessel_size_dwt_to': {
+                'field': 'vessel_size_dwt_to',
+                'op': 'eq',
+                'data': value.split('-')[1]
+              }
+            }
+          }
+
+        }
+      }
+
+    },
+    /*{
+      title: (
+        <FormattedMessage
+          id="pages.alertrule.eee"
+          defaultMessage="Between two events"
+        />
+      ),
+      dataIndex: 'flow_id_to',
+      hideInDescriptions: true,
+      hideInTable: true,
+      renderFormItem: (_, fieldConfig, form) => {
+        if (fieldConfig.type === 'form') {
+          return null;
+        }
+        const status = form.getFieldValue('state');
+        if (status !== 'open') {
+          return (
+
+            <TreeSelect
+              allowClear
+              fieldNames={{ label: 'name', value: 'id' }}
+              treeData = { flowTree}
+            />)
+            
+        }
+        return fieldConfig.defaultRender(_);
+      },
+    },*/
+    {
+      title: (
+        <FormattedMessage
+          id="pages.alertrule.eee"
+          defaultMessage="Threshold Process/Events"
+        />
+      ),
+      dataIndex: 'flow_id',
+      hideInSearch: true,
+      valueEnum: flowConf,
+      render: (dom, entity) => {
+        if (entity.type == 0) {
+          return flowConf[entity.flow_id]
+        } else if (entity.type == 1) {
+          return flowConf[entity.flow_id] + " -> " + flowConf[entity.flow_id_to]
+        } else {
+          return '-'
+        }
+
+      }
+
+    },
+
+
+
+
+
+
+
+    {
+      title: <FormattedMessage id="pages.alertrule.vesselSizeLimit" defaultMessage="Vessel Size Limit (DWT)" />,
+      dataIndex: 'vessel_size_dwt_from',
+      onFilter: true,
+      sorter: true,
+      hideInSearch: true,
+      valueType: 'text',
+
+      render: (dom, entity) => {
+        if (entity.vessel_size_dwt_from != null && entity.vessel_size_dwt_to) {
+
+          var valueEnum = {
+            "0-25": "GP",
+            "25-45": "MR",
+            "45-80": "LR1",
+            "80-120": "AFRA",
+            "120-160": "LR2",
+            "160-320": "VLCC",
+            "320-1000000": "ULCC",
+          }
+
+          return valueEnum[numeral(entity.vessel_size_dwt_from).format('0,0') + "-" + numeral(entity.vessel_size_dwt_to).format('0,0')];
+        } else {
+          return '-'
+        }
+
+      },
+    },
+    {
+      title: <FormattedMessage id="pages.alertrule.throughputVolume1" defaultMessage="Total Nominated Quantity (MT)" />,
+      dataIndex: 'product_quantity_in_mt_from',
+      fieldProps: { placeholder: ['From', 'To'] },
+      valueType: "digitRange",
+      width: 200,
+      sorter: true,
+      render: (dom, entity) => {
+        if (entity.product_quantity_in_mt_from && entity.product_quantity_in_mt_to) {
+
+
+          return numeral(entity.product_quantity_in_mt_from).format('0,0') + " - " + numeral(entity.product_quantity_in_mt_to).format('0,0')
+        } else {
+          return '-'
+        }
+
+      },
+      search: {
+        transform: (value) => {
+          if (value.length > 0) {
+
+            var a = value[0] || 0
+            var b = value[1] || 1000000000
+
+            return {
+              'product_quantity_in_mt_from': {
+                'field': 'product_quantity_in_mt_from',
+                'op': 'between',
+                'data': [a, b]
+              }
+            }
+          }
+
+        }
+      }
+    },
+
+    {
+      title: "Total Nominated Quantity (Bal-60-F)",
+      dataIndex: 'product_quantity_in_bls_60_f_from',
+      fieldProps: {
+        placeholder: ['From', 'To']
+      },
+      valueType: "digitRange",
+      width: 200,
+      sorter: true,
+      render: (dom, entity) => {
+        if (entity.product_quantity_in_bls_60_f_from && entity.product_quantity_in_bls_60_f_to) {
+          return numeral(entity.product_quantity_in_bls_60_f_from).format('0,0') + " - " + numeral(entity.product_quantity_in_bls_60_f_to).format('0,0')
+        } else {
+          return '-'
+        }
+
+      },
+      search: {
+        transform: (value) => {
+          if (value.length > 0) {
+            var a = value[0] || 0
+            var b = value[1] || 1000000000
+            return {
+              'product_quantity_in_bls_60_f_from': {
+                'field': 'product_quantity_in_bls_60_f_from',
+                'op': 'between',
+                'data': [a, b]
+              }
+
+            }
+          }
+
+        }
+      }
+    },
+
+    {
+      title: <FormattedMessage id="pages.alertrule.thresholdLimit" defaultMessage="Threshold Limit" />,
+      dataIndex: 'amber_hours',
+      hideInSearch: true,
+      valueType: 'text',
+      render: (dom, entity) => {
+        return (<div><div style={{ display: entity.amber_hours || entity.amber_mins ? "block" : "none" }}> <SvgIcon style={{ color: "#DE8205" }} type="icon-yuan" />{" " + (entity.amber_hours ? entity.amber_hours : '0') + "h " + (entity.amber_mins ? entity.amber_mins : '0') + "m"}</div>
+          <div style={{ display: entity.red_hours || entity.red_mins ? "block" : "none" }}><SvgIcon style={{ color: "red" }} type="icon-yuan" />{" " + (entity.red_hours ? entity.red_hours : '0') + "h " + (entity.red_mins ? entity.red_mins : '0') + "m"}</div></div>)
+      },
+    },
+    {
+      title: <FormattedMessage id="pages.alertrule.email" defaultMessage="" />,
+      dataIndex: 'email',
+      hideInSearch: true,
+      hideInTable: true,
+      hideInDescriptions: true,
+      valueType: 'text',
+    },
+    /* {
+       title: <FormattedMessage id="pages.alertrule.sendEmailSelect" defaultMessage="Send Email Select" />,
+       dataIndex: 'send_email_select',
+       hideInSearch: true,
+       hideInTable: true,
+       render: (dom, entity) => {
+ 
+         return dom;
+       },
+     },*/
+
+
+   /* {
+      title: currentUser?.role_type == 'Terminal' ? (tab == 'Terminal' ? 'Created By' : 'Customer') : 'Created By',
+      dataIndex: 'username',
+      hideInSearch: true,
+      render: (dom, entity) => {
+        if (currentUser?.role_type == 'Terminal') {
+          return tab == 'Terminal' ? dom.split('@')[0] : organizationList[entity.company_id]
+        } else {
+          return dom.split('@')[0]
+        }
+
+      },
+      valueType: 'text',
+    },*/
+    {
+      title: <FormattedMessage id="pages.alertrule.userName" defaultMessage="Date of Threshold Alert Creation" />,
+      dataIndex: 'created_at',
+      width: 200,
+      hideInSearch: true,
+      sorter: true,
+      valueType: 'dateTime',
+    },
+
+    {
+      title: currentUser?.role_type == 'Terminal' ? "Customer" : "Organization",
+      dataIndex: 'organization_id',
+      sorter: true,
+      valueEnum: organizationList,
+      hideInSearch: currentUser?.role_type == 'Trader' ? true : false,
+      hideInTable: true,
+      hideInDescriptions: true,
+      fieldProps: {
+        notFoundContent: <Empty />,
+      },
+      search: {
+        transform: (value) => {
+          if (value) {
+            return {
+              'organization_id': {
+                'field': 'organization_id',
+                'op': 'eq',
+                'data': value
+              }
+            }
+          }
+
+        }
+      }
+    },
+
+    
+
+
+
+
+
+
+
+  ];
   const getTimeByTwoEvent = (flow_id, flow_id_to) => {
     try {
       return getTimeStr((new Date(transactioneventMap.get(flow_id_to).event_time).getTime() - new Date(transactioneventMap.get(flow_id).event_time).getTime()) / 1000)
@@ -477,23 +906,24 @@ const Detail: React.FC<any> = (props) => {
 
     });
 
-    organization({ sorter: { name: 'ascend' } }).then((res) => {
-      var b = {}
-      res.data.forEach((r) => {
-        b[r.id] = r.name
-      })
-      setOrganizationList(b)
-
-    })
+   
 
     alertrule({
-      organization_id,tab,transaction_id: {
+      
+      organization_id: {
+        'field': 'organization_id',
+        'op': 'in',
+        'data': organization_id
+      },
+      tab,transaction_id: {
       'field': 'transaction_id',
         'op': 'eq',
       'data': transaction_id
       } }).then((res) => {
       var b = {}
-      var c = []
+        var c = []
+
+        var d = {}
       res.data.forEach((r) => {
         if (r.type != 1) {
           if (!b[r.flow_id]) {
@@ -505,6 +935,14 @@ const Detail: React.FC<any> = (props) => {
           setCollapsed(false)
           c.push(r)
         }
+
+        
+
+
+
+
+
+        d[r.flow_id + "_" + r.flow_id_to] = b[r.flow_id] + " -> " + b[r.flow_id_to]
         
       })
         for (var i in b) {
@@ -517,6 +955,11 @@ const Detail: React.FC<any> = (props) => {
 
         }
 
+
+       
+        
+        setEvents(d)
+
       setAlertruleProcessMap(b)
       setAlertruleEventList(c)
 
@@ -526,7 +969,11 @@ const Detail: React.FC<any> = (props) => {
 
     getAlertBytransactionId({
       tab,
-      organization_id,
+      organization_id: {
+        'field': 'organization_id',
+        'op': 'in',
+        'data': organization_id
+      },
       transaction_id: {
        
           'field': 'transaction_id',
@@ -677,12 +1124,24 @@ const Detail: React.FC<any> = (props) => {
 
 
         
-
+        var p = {
+          "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": intl.formatMessage({
+            id: 'pages.alertrule.entireTransaction',
+            defaultMessage: 'Entire Transaction',
+          })
+        }
         var s = {}
         res.data.forEach((r) => {
+          if (r.type == 0) {
+
+            p[r.id] = r.name
+          }
           b[r.id] = r.name
           s[r.id] = false
         })
+
+
+        setProcesses(p)
         setShow(s)
         setFlowConf(b)
 
@@ -831,11 +1290,22 @@ const Detail: React.FC<any> = (props) => {
       'data': transaction_id
     } }).then((res) => {
 
+      organization({ sorter: { name: 'ascend' } }).then((res2) => {
+        var b = {}
+        res2.data.forEach((r) => {
+          
+          if (r.id == res.data[0]?.trader_id || r.id == res.data[0]?.terminal_id) {
+            b[r.id] = r.name
+          }
 
+        })
+        setOrganizationList(b)
+
+      })
       setCurrentRow(res.data[0])
       handlegetFlow([])
       if (res.data[0].status == 1) {
-        res.data[0].bliockchain_hex_key="sssss"
+        res.data[0].blockchain_hex_key="sssss"
         setValidateStatus(1)
         validateBC({ id: res.data[0].id }).then((res) => {
           if (res.data && res.data.length == 0) {
@@ -875,70 +1345,68 @@ const Detail: React.FC<any> = (props) => {
       background: '#F5F7FA',
     }}
   >
-    
-    {currentUser?.role_type == "Terminal" && <ProCard
-      className="my-tab"
-      title={<div className="my-font-size" style={{ height: 14, lineHeight: '14px', fontSize: 12 }}>{tab == 'Terminal' ? 'This transaction is reflective of my own Terminal threshold alerts.' : 'This transaction is reflective of my customer threshold alerts'}</div>}
-      headStyle={{ height: 14, lineHeight: '14px', fontSize: 12 }}
-     
-      tabs={{
-        type: 'card',
-        //tabPosition,
-        activeKey: tab,
-        items: [
-          {
-            label: `Terminal`,
-            key: 'Terminal',
-            children: null,
-          },
-          {
-            label: `Customer`,
-            key: 'Trader',
-            children:null,
-          }
-        ],
-        onChange: (key) => {
-          setTab(key);
-          //actionRef.current.reload();
-        },
-      }}
-    />}  
+   
     <PageContainer
 
       header={{
-        title: "Transaction - " + currentRow?.eos_id
+        title: "Transaction - E" + currentRow?.eos_id
 
       }}
 
-      extra={
-
-        tab == 'Trader' &&
-        <ProFormSelect
-
-          style={{ width: 200 }}
-          allowClear={true}
-          valueEnum={organizationList}
-
-
-          fieldProps={{
-            dropdownMatchSelectWidth: isMP ? true : false,
-            onSelect: (a) => {
-
-              setOrganization_id(a)
-
-            }
-          }}
-
-          placeholder={'Filter By: Customer'}
-
-
-        />
-      }
+     
 
     >
 
 
-     
+      {currentUser?.role_type == "Terminal" && <ProCard
+        className="my-tab"
+       // title={<div className="my-font-size" style={{ height: 14, lineHeight: '14px', fontSize: 12 }}>{tab == 'Terminal' ? 'This transaction is reflective of my own Terminal threshold alerts.' : 'This transaction is reflective of my customer threshold alerts'}</div>}
+        headStyle={{ height: 14, lineHeight: '14px', fontSize: 12 }}
+        
+        tabs={{
+          type: 'card',
+          //tabPosition,
+          activeKey: tab,
+          items: [
+            {
+              label: <div title="This transaction is reflective of my own Terminal threshold alerts">Terminal</div>,
+              key: 'Terminal',
+              children: null,
+            },
+            {
+              label: <div title="This transaction is reflective of my customer threshold alerts">Customer</div> ,
+              key: 'Trader',
+              children: null,
+            }
+          ],
+          onChange: (key) => {
+            setTab(key);
+            if (key == "Trader") {
+              setOrganization_id([currentRow?.trader_id])
+            }
+            
+            //actionRef.current.reload();
+          },
+        }}
+      />}  
+      {currentUser?.role_type == "Super" && <ProFormSelect label="Organization" valueEnum={organizationList}
+        width={isMP ? "lg" : 300}
+        name="threshold_organization_id"
+        
+        //placeholder="Option to filter by organisation to view threshold alerts raised by different organisation on the system"
+        fieldProps={
+          {
+            notFoundContent: <Empty />,
+            onChange: (a) => {
+             
+              setOrganization_id(a)
+            },
+            dropdownMatchSelectWidth: isMP ? true : false,
+            mode: 'multiple',
+            showSearch: false,
+            multiple: true
+
+          }} />}  
 
       <FilterForm
         onSubmit={async (value) => {
@@ -992,7 +1460,7 @@ const Detail: React.FC<any> = (props) => {
       <ProCard ghost={true} className="my-ant-descriptions-row" style={{ marginBlockStart: 8 }} wrap={isMP ? true : false} gutter={8}>
           <ProCard
           colSpan={isMP ? 24 : 12}
-          style={{  backgroundColor: "#e5e5e5" }}
+          style={{  backgroundColor: "#d2faf5" }}
             layout="center"
             title={"General Information"}
             wrap={true }
@@ -1042,7 +1510,7 @@ const Detail: React.FC<any> = (props) => {
           </ProCard>
           <ProCard
           colSpan={isMP ? 24 : 12}
-          style={{ height: '100%',backgroundColor:"#e5e5e5",marginTop:isMP?10:0 }}
+          style={{ height: '100%', backgroundColor:"#d2faf5",marginTop:isMP?10:0 }}
             layout="center"
             title={"Products"}
             wrap={true}
@@ -1192,7 +1660,7 @@ const Detail: React.FC<any> = (props) => {
 
                 {arArr && arArr.map((ar) => {
 
-                  return (<div> <Threshold hours={ar.amber_hours} opacity={ ar.amber?1:0.3}  mins={ar.amber_mins} type="amber" size={10} /> &nbsp;
+                  return (<div onClick={(ev) => { ev.stopPropagation(); setCurrentAlertruleRow(ar); setShowDetail(true) }}> <Threshold hours={ar.amber_hours} opacity={ar.amber ? 1 : 0.3} mins={ar.amber_mins} type="amber" size={10} /> &nbsp;
 
                     <Threshold hours={ar.red_hours} mins={ar.red_mins} opacity={ar.red ? 1 : 0.3}  type="red" size={10} /></div>)
                 })
@@ -1226,12 +1694,14 @@ const Detail: React.FC<any> = (props) => {
         }
 
 
+          <Tooltip open={tooltipOpen} onOpenChange={(open) => { setTooltipOpen(currentUser?.role_type != 'Super' ? open:false) } } title="Blockchain details inaccessible based on the rights provided to this account. Please contact the administrator of the system for more details" color={"#FF4D00"} key={"#FF4D00"}>
+           
+         
 
-
-          <div style={{ position: 'relative', cursor: "pointer", float: 'left', zIndex: 1, width: '250px', textAlign: 'center' }} onClick={() => {
+            <div style={{ position: 'relative', cursor: currentUser?.role_type != 'Super' ? "none" : "pointer" , float: 'left', zIndex: 1, width: '250px', textAlign: 'center' }} onClick={() => {
 
             if (currentUser?.role_type!='Super') {
-              message.error("Blockchain details inaccessible based on the rights provided to this account. Please contact the administrator of the system for more details");
+             // message.error("Blockchain details inaccessible based on the rights provided to this account. Please contact the administrator of the system for more details");
               return
             }
 
@@ -1239,7 +1709,7 @@ const Detail: React.FC<any> = (props) => {
           history.push(`/transaction/blockchainIntegration?transaction_id=` + currentRow?.id, { validateData: validateData } );
         
         } }>
-
+         
           <div style={{ position: 'relative', zIndex: 1, fontSize: '14px', height: 25, color: "#333" }}></div>
           <div style={{ position: 'relative', zIndex: 1, height: '30px', }}>
 
@@ -1251,7 +1721,7 @@ const Detail: React.FC<any> = (props) => {
                 width: '30px',
                 height: '30px',
                 fontSize: "20px",
-                  backgroundColor: currentRow?.bliockchain_hex_key ?( validateStatus == 2 ? "rgb(130, 71, 229)" : "red") :"#666" ,
+                  backgroundColor: currentRow?.blockchain_hex_key ?( validateStatus == 2 ? "rgb(130, 71, 229)" : "red") :"#666" ,
                 borderRadius: '50%',
                 textAlign: 'center',
                 lineHeight: '30px'
@@ -1265,11 +1735,11 @@ const Detail: React.FC<any> = (props) => {
             
           </div>
           <div style={{ fontSize: '10px', width: "100%" }}>
-              {currentRow?.bliockchain_hex_key ? (validateStatus == 2 ? "Timestamps uploaded and validated on Polygon blockchain" : "Timestamps not validated on blockchain") : "Timestamps to be uploaded to Polygon blockchain"}
+              {currentRow?.blockchain_hex_key ? (validateStatus == 2 ? "Timestamps uploaded and validated on Polygon blockchain" : "Timestamps not validated on blockchain") : "Timestamps to be uploaded to Polygon blockchain"}
           </div>
 
         </div>
-
+          </Tooltip>
       </div></div></ProCard>)}
 
 
@@ -1367,7 +1837,7 @@ const Detail: React.FC<any> = (props) => {
 
               {arArr && arArr.map((ar) => {
 
-                return (<div> <Threshold hours={ar.amber_hours} opacity={ar.amber ? 1 : 0.3} mins={ar.amber_mins} type="amber" size={10} /> &nbsp;
+                return (<div onClick={(ev) => { ev.stopPropagation(); setCurrentAlertruleRow(ar); setShowDetail(true) }}> <Threshold hours={ar.amber_hours} opacity={ar.amber ? 1 : 0.3} mins={ar.amber_mins} type="amber" size={10} /> &nbsp;
 
                   <Threshold hours={ar.red_hours} opacity={ar.red ? 1 : 0.3} mins={ar.red_mins} type="red" size={10} /></div>)
               })
@@ -1394,12 +1864,12 @@ const Detail: React.FC<any> = (props) => {
         }
 
        
-
+        <Tooltip open={tooltipOpen} onOpenChange={(open) => { setTooltipOpen(currentUser?.role_type != 'Super' ? open : false) }} title="Blockchain details inaccessible based on the rights provided to this account. Please contact the administrator of the system for more details" color={"#FF4D00"} key={"#FF4D00"}>
 
         <div style={{ position: 'relative', float: 'left', zIndex: 1, textAlign: 'center', width: '100%' }} onClick={() => {
 
           if (currentUser?.role_type != 'Super') {
-            message.error("Blockchain details inaccessible based on the rights provided to this account. Please contact the administrator of the system for more details");
+            //message.error("Blockchain details inaccessible based on the rights provided to this account. Please contact the administrator of the system for more details");
             return
           }
 
@@ -1416,7 +1886,7 @@ const Detail: React.FC<any> = (props) => {
                 width: '30px',
                 height: '30px',
                 fontSize: "20px",
-                backgroundColor: currentRow?.bliockchain_hex_key ? (validateStatus == 2 ? "rgb(130, 71, 229)" : "red") : "#666",
+                backgroundColor: currentRow?.blockchain_hex_key ? (validateStatus == 2 ? "rgb(130, 71, 229)" : "red") : "#666",
                 borderRadius: '50%',
                 textAlign: 'center',
                 lineHeight: '30px'
@@ -1430,11 +1900,11 @@ const Detail: React.FC<any> = (props) => {
 
           </div>
           <div style={{ fontSize: '10px', float: 'left', color: validateStatus == 2 ? "#67C23A" : "#808080", height: '40px', marginLeft:'5px', textAlign: "left", lineHeight: '20px',width:'80%'}}>
-            {currentRow?.bliockchain_hex_key ? (validateStatus == 2 ? "Timestamps uploaded and validated on Polygon blockchain" : "Timestamps not validated on blockchain") : "Timestamps to be uploaded to Polygon blockchain"}
+            {currentRow?.blockchain_hex_key ? (validateStatus == 2 ? "Timestamps uploaded and validated on Polygon blockchain" : "Timestamps not validated on blockchain") : "Timestamps to be uploaded to Polygon blockchain"}
           </div>
         </div>
 
-     
+          </Tooltip>
 
       </div></ProCard>)}
 
@@ -1448,7 +1918,7 @@ const Detail: React.FC<any> = (props) => {
         {alertruleEventList.map((ta) => {
           var tb=transactionAlert?.b2e?.[ta.flow_id + "_" + ta.flow_id_to]
           return (
-            <ProCard ghost={true} colSpan={24} bordered wrap={isMP ? true : false}
+            <ProCard  ghost={true} colSpan={24} bordered wrap={isMP ? true : false}
 
               style={{ marginBlockStart: 5, cursor: 'pointer' }}
               headStyle={{ padding: 0, fontWeight: 'normal', fontSize:'14px'}}
@@ -1481,7 +1951,7 @@ const Detail: React.FC<any> = (props) => {
                 </span>
                 <span style={{ marginLeft: 5, fontWeight: 500 }}>{getTimeByTwoEvent(ta.flow_id, ta.flow_id_to)}</span>
               </ProCard>
-              <ProCard ghost={true} layout={isMP ? "default" : "center"} colSpan={isMP ? 24 : 8}>
+              <ProCard ghost={true} layout={isMP ? "default" : "center"} colSpan={isMP ? 24 : 8} onClick={(ev) => { ev.stopPropagation(); setCurrentAlertruleRow(ta); setShowDetail(true) }} >
                
                 <ProDescriptions
                   column={isMP ? 1 : 2} >
@@ -1662,8 +2132,8 @@ const Detail: React.FC<any> = (props) => {
 
                 }}> <span className="my-title" style={{ paddingRight: '20px', fontWeight: 500, display: 'block', width: '100%', textAlign: "left", fontSize: "16px", lineHeight: "20px", height: 20 }}>{e.name}</span>
 
-                  {p && <span className="my-title" style={{ paddingRight: '20px', display: 'block', width: '100%', textAlign: "left", fontSize: "16px", lineHeight: "20px", height: 20 }}>Starting time: {p ? p.start_date : ""} </span>}
-                  {p && <span className="my-title" style={{ paddingRight: '20px', display: 'block', width: '100%', textAlign: "left", fontSize: "16px", lineHeight: "20px", height: 20 }}>Ending time: {p ? p.end_date : ""}</span>} 
+                  {p && <span className="my-title" style={{ paddingRight: '20px', display: 'block', width: '100%', textAlign: "left", fontSize: "16px", lineHeight: "20px", height: 20 }}>Start: {p ? p.start_date : ""} </span>}
+                  {p && <span className="my-title" style={{ paddingRight: '20px', display: 'block', width: '100%', textAlign: "left", fontSize: "16px", lineHeight: "20px", height: 20 }}>End: {p ? p.end_date : ""}</span>} 
 
                   {p && <span className="my-title" style={{ display: 'block', textAlign: "left", fontSize: "14px", lineHeight: "20px", height: 20 }}>Process Duration: {p ? getTimeStr(p.duration) : "0h 00m"}</span>}</div>} description={<div >{
 
@@ -1755,8 +2225,8 @@ const Detail: React.FC<any> = (props) => {
                           <ProDescriptions.Item label="Work order ID"  dataIndex="work_order_id" valueType="text" >
                             {te?.work_order_id} 
                           </ProDescriptions.Item>
-                          <ProDescriptions.Item label="Product Type"  dataIndex="product_type" valueType="text">
-                          {te?.product_type}
+                          <ProDescriptions.Item label="Product Type"  dataIndex="product_name" valueType="text">
+                          {te?.product_name}
                           </ProDescriptions.Item>
                           <ProDescriptions.Item label="Tank ID"  dataIndex="tank_id" valueType="text">
                            {te?.tank_id}
@@ -1817,11 +2287,11 @@ const Detail: React.FC<any> = (props) => {
      
 
 
-       
-      <div style={{ marginTop:15, paddingLeft: 0 }}>
+
+      <div style={{ marginTop: 15, paddingLeft: 0 }} className="re-back">
         <Button
           style={isMP?{ width:'100%' }:null}
-          type="primary"
+          type="default"
           onClick={async () => {
             history.back()
           }}
@@ -1834,6 +2304,31 @@ const Detail: React.FC<any> = (props) => {
           }}
         >Return to dashboard</Button>*/ } 
       </div>
+
+
+      <Drawer
+        width={isMP ? '100%' : 600}
+        open={showDetail}
+        onClose={() => {
+          setCurrentAlertruleRow(undefined);
+          setShowDetail(false);
+        }}
+        closable={isMP ? true : false}
+      >
+        {currentAlertruleRow?.id && (
+          <ProDescriptions<TransactionListItem>
+            column={isMP ? 1 : 1}
+            title={"Threhold Summary - "+currentAlertruleRow?.alertrule_id}
+            request={async () => ({
+              data: currentAlertruleRow || {},
+            })}
+            params={{
+              id: currentAlertruleRow?.id,
+            }}
+            columns={columnsAlertrule as ProDescriptionsItemProps<TransactionListItem>[]}
+          />
+        )}
+      </Drawer>
      
 
     </PageContainer>

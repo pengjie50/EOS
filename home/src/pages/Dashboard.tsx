@@ -98,7 +98,7 @@ const Welcome: React.FC = () => {
   const [collapsed4, setCollapsed4] = useState<boolean>(localStorage.getItem('collapsed4') ==='true');
 
 
-  const [organization_id, setOrganization_id] = useState<any>("");
+  const [organization_id, setOrganization_id] = useState<any>([]);
   const [dateArr, setDateArr] = useState<any>(['', '']);
   const [status, setStatus] = useState<any>("");
  
@@ -124,10 +124,10 @@ const Welcome: React.FC = () => {
 
 
     let p = { pageSize: 100000, current: 1 }
-    if (organization_id) {
+    if (organization_id && organization_id.length>0) {
       p.organization_id = {
         'field': 'organization_id',
-          'op': 'eq',
+          'op': 'in',
         'data': organization_id
         } 
     }
@@ -425,7 +425,7 @@ const Welcome: React.FC = () => {
     <GridContent  className="dashboard">
       {currentUser?.role_type == "Terminal" && <ProCard
 
-        title={<div className="my-font-size" style={{ height: 14, lineHeight: '14px', fontSize: 12 }}>Threshold set by</div>}
+       // title={<div className="my-font-size" style={{ height: 14, lineHeight: '14px', fontSize: 12 }}>Threshold set by</div>}
         headStyle={{ height: 14, lineHeight: '14px', fontSize: 12 }}
         className="my-tab"
         tabs={{
@@ -434,12 +434,12 @@ const Welcome: React.FC = () => {
           activeKey: tab,
           items: [
             {
-              label: `Terminal`,
+              label: <div title="Threshold set by">Terminal</div>,
               key: 'Terminal',
               children: null,
             },
             {
-              label: `Customer`,
+              label: <div title="Threshold set by">Customer</div>,
               key: 'Trader',
               children: null,
             }
@@ -460,7 +460,7 @@ const Welcome: React.FC = () => {
           <ProForm<any> formRef={formRef} layout={'inline'}
             grid={true}
             onReset={() => {
-              setOrganization_id("")
+              setOrganization_id([])
               setStatus("")
               setDateArr([])
             } }
@@ -476,11 +476,17 @@ const Welcome: React.FC = () => {
               colProps={{ md: 12, xl: 8 }}
               name="organization_id"
               label=""
+              fieldProps={{
+                mode: 'multiple',
+                showSearch: false,
+                multiple: true
+
+              } }
               onChange={(a) => {
                 if (a) {
                   setOrganization_id(a)
                 } else {
-                  setOrganization_id("")
+                  setOrganization_id([])
 
                 }
 
@@ -510,7 +516,7 @@ const Welcome: React.FC = () => {
               placeholder="Filter By: Status"
 
             />
-            <ProFormDateRangePicker colProps={{ md: 12, xl: 10 }} name="dateRange" fieldProps={{ placeholder: ['Date (From) ', 'Date (To) '] }} onChange={(a, b) => {
+            <ProFormDateRangePicker colProps={{ md: 12, xl: 10 }} name="dateRange" fieldProps={{ placeholder: ['Start Date (From) ', 'Start Date (To) '] }} onChange={(a, b) => {
 
 
               setDateArr(b)
@@ -524,6 +530,230 @@ const Welcome: React.FC = () => {
         
          
         </ProCard>
+
+
+        <ProCard collapsed={collapsed4} colSpan={24} style={{ marginBlockStart: 16 }} wrap title={<div style={{ fontWeight: '500', fontSize: 14 }}>  {getFilterStr(organization_id, organizationList, dateArr, 0, "Transactions") + " ( Count:" + transactionList.length + " )"} </div>} extra={< EyeOutlined onClick={() => {
+          setCollapsed4(!collapsed4);
+          localStorage.setItem('collapsed4', !collapsed4);
+        }} style={{ fontWeight: 'normal', fontSize: 14 }} />} bordered headerBordered >
+
+          <ProCard ghost={true} colSpan={24} bodyStyle={{ overflow: isMP ? 'auto' : 'hidden' }}>
+
+
+
+
+            <ConfigProvider renderEmpty={customizeRenderEmpty}> <ProTable<any, API.PageParams>
+
+              pagination={{ showTotal:false, size: "default" }}
+              className="mytable2"
+
+              rowKey="id"
+              scroll={{ x: 2700, y: 300 }}
+              size="small"
+              search={false}
+              options={false}
+              dataSource={transactionList}
+              // pagination={false }
+              columns={[
+
+                {
+                  title: (
+                    <FormattedMessage
+                      id="pages.transaction.transactionID"
+                      defaultMessage="EOS ID"
+                    />
+                  ),
+                  dataIndex: 'eos_id',
+                  width:80,
+                  renderText: (dom, entity) => {
+                    return entity.eos_id
+                  },
+                  render: (dom, entity) => {
+                    return (
+                      <a
+
+                        onClick={() => {
+
+                          history.push(`/transaction/detail`, { transaction_id: entity.id, tab });
+                          // setShowDetail(true);
+                        }}
+                      >
+                        {"E"+dom}
+                      </a>
+                    );
+                  },
+                },
+                {
+
+                  title: <FormattedMessage id="pages.transaction.startOfTransaction" defaultMessage="Start Of Transaction" />,
+                  dataIndex: 'start_of_transaction',
+                  width: 200,
+                  //sorter: true,
+                  // defaultSortOrder: 'descend',
+                  valueType: 'dateTime',
+                  hideInSearch: true,
+                },
+                {
+                  title: <FormattedMessage id="pages.transaction.imoNumber" defaultMessage="IMO Number" />,
+                  dataIndex: 'imo_number',
+                  valueType: 'text',
+                },
+                {
+                  title: <FormattedMessage id="pages.transaction.vesselName" defaultMessage="Vessel Name" />,
+                  dataIndex: 'vessel_name',
+                  
+                  valueType: 'text',
+                },
+
+                {
+                  title: currentUser?.role_type == "Terminal" ? "Customer" :"Trader",
+                  dataIndex: 'organization_id',
+                  width: 200,
+                  valueEnum: organizationList,
+                  align: "center",
+                  hideInTable: currentUser?.role_type =="Trader"?true:false,
+                  render: (dom, entity) => {
+
+                    return organizationList[entity.trader_id]
+                  }
+                },
+                {
+                  title: "Terminal",
+                  dataIndex: 'organization_id',
+                  width: 200,
+                  valueEnum: organizationList,
+                  hideInTable: currentUser?.role_type == "Terminal" ? true : false,
+                  align: "center",
+                  render: (dom, entity) => {
+                  
+                      return organizationList[entity.terminal_id] 
+                  },
+                },
+
+                {
+                  title: <FormattedMessage id="pages.transaction.jettyName" defaultMessage="Jetty Name" />,
+                  dataIndex: 'jetty_id',
+                  valueEnum: jettyList,
+                  align: "center",
+                  search: {
+                    transform: (value) => {
+                      if (value) {
+                        return {
+                          'jetty_id': {
+                            'field': 'jetty_id',
+                            'op': 'eq',
+                            'data': value
+                          }
+                        }
+                      }
+
+                    }
+                  }
+                },
+
+                {
+                  title: <FormattedMessage id="pages.alertrule.xxx" defaultMessage="Total Nominated Quantity (MT) / (BLS-60-F)" />,
+                  dataIndex: 'product_quantity_in_mt',
+                  width: 400,
+                  align: "center",
+                  hideInSearch: true,
+                  valueType: "text",
+                  render: (dom, entity) => {
+                    if (dom) {
+
+
+                      return numeral(dom).format('0,0') + " / " + numeral(entity.product_quantity_in_bls_60_f).format('0,0')
+                    }
+
+                  },
+                },
+              
+               
+
+              ].concat(flowList.map((e, i) => {
+
+
+                return {
+                  title: e.name,
+                  dataIndex: 'vessel_name',
+                  width: 160,
+                  align: "center",
+                  valueType: 'text',
+                  render: (dom, entity) => {
+                    var p = transactionMap[entity.id]?.processMap[e.id]
+                    var val = p?.duration
+                    var total_duration = entity.total_duration
+                    var ta = transactionAlert[entity.id]?.[e.id]
+                    return <div style={{ position: 'relative', float: 'left', zIndex: 1, textAlign: 'center', height: "50px", width: '100%' }}>
+
+
+                      <div style={{ position: 'absolute', zIndex: 0, top: 12, left: i == 0 ? '50%' : 0, width: i == 0 || i == 4 ? (i == 0 ? '70%' : "50%") : (i > 4 ? '0' : '120%'), height: 2, backgroundColor: '#8aabe5', overflow: 'hidden', }}></div>
+
+                      <div style={{ position: 'relative', zIndex: 1 }}>
+                        {i < 5 && (
+                          <span style={{
+                            display: "inline-block",
+                            color: "#fff",
+                            width: '25px',
+                            height: '25px',
+                            fontSize: "20px",
+                            backgroundColor: p ? (p.event_count > 0 ? (ta ? (ta.red > 0 ? "red" : "#DE8205") : color[e.icon]) : "#595959") : "#595959",
+                            borderRadius: '50%',
+                            textAlign: 'center',
+                            lineHeight: '25px'
+                          }}>
+
+                            <SvgIcon type={e.icon} />
+                          </span>
+                        )}
+                        {i == 5 && (
+                          <span style={{
+                            display: "inline-block",
+                            color: "#fff",
+                            width: '25px',
+                            height: '25px',
+                            fontSize: "18px",
+                            backgroundColor: ta ? (ta.red > 0 ? "red" : "#DE8205") : "#13c2c2",
+                            borderRadius: '30px',
+                            textAlign: 'center',
+                            lineHeight: '25px'
+                          }}>
+                            <SvgIcon type="icon-shalou" />
+
+                          </span>
+                        )}
+
+                        {i == 6 && (
+
+                          <Badge count={ta ? ta?.amber + ta?.red : 0} style={{ boxShadow: 'none', marginTop: 8 }}>
+                            <SvgIcon style={{ fontSize: "20px", color: (!ta || (ta?.amber == 0 && ta?.red == 0) ? '#d5d5d5' : (ta.red > 0 ? "red" : "#ED7D31")), marginTop: 8 }} type={(!ta || (ta?.amber == 0 && ta?.red == 0)) ? 'icon-tixingshixin' : 'icon-2'} />
+                          </Badge>
+
+
+                        )}
+
+                      </div>
+                      {i < 5 && (
+                        <div style={{ position: 'relative', zIndex: 1, fontSize: '12px', color: "#333", lineHeight: "12px" }}>{p ? (p.event_count > 0 ? parseInt((val / 3600) + "") + "h " + parseInt((val % 3600) / 60) + "m" : "") : ""}</div>
+                      )}
+                      {i == 5 && (
+                        <div style={{ position: 'relative', zIndex: 1, fontSize: '12px', color: "#333", lineHeight: "12px" }}> {parseInt((total_duration / 3600) + "") + "h " + parseInt((total_duration % 3600) / 60) + "m"}</div>
+                      )}
+                    </div>
+                  }
+                }
+
+
+
+              }))}
+
+            /></ConfigProvider>
+
+
+
+          </ProCard>
+        </ProCard>
+
 
 
         <ProCard ghost={true} style={{ marginBlockStart: 16, marginLeft: -4 }} gutter={8} wrap={isMP} >
@@ -616,10 +846,10 @@ const Welcome: React.FC = () => {
               paddingBottom:11
             }} >
 
-              <ProCard.Group className="my-font-size" ghost={true} direction={'row'} bodyStyle={{ paddingLeft: 10, backgroundColor: "#8f9aa8", borderRadius: '10px' }}>
-                <ProCard ghost={true} bodyStyle={{ padding: 5, textAlign: isMP ? 'center' : 'left' }}>
+              <ProCard.Group className="my-font-size" ghost={true} direction={'row'} bodyStyle={{ paddingLeft: 10, backgroundColor: "#d2faf5",  borderRadius: '10px' }}>
+                <ProCard ghost={true} bodyStyle={{ padding: 5, textAlign: isMP ? 'center' : 'left', }}>
 
-                  <Statistic title={dateArr[0] && dateArr[1] ? <span style={{ fontSize: 16, display: 'inline-block', lineHeight: '16px', height: 30 }}>Selected Filter Period</span> : <span style={{ fontSize: 16, display: 'inline-block', lineHeight: '16px', height: 30 }}>All Time &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>}
+                  <Statistic title={dateArr[0] && dateArr[1] ? <span style={{ fontSize: 16, display: 'inline-block', color: "#000", lineHeight: '16px', height: 30 }}>Selected Filter Period</span> : <span style={{ fontSize: 16, display: 'inline-block', lineHeight: '16px', height: 30 }}>All Time &nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</span>}
                     value={statisticsObj?.average_total_duration_per_transaction?.all_time ? getTimeStr(statisticsObj?.average_total_duration_per_transaction?.all_time) : "-"}
                     suffix={statisticsObj?.average_total_duration_per_transaction?.all_time ? "" : ""} />
                 </ProCard>
@@ -804,218 +1034,7 @@ const Welcome: React.FC = () => {
         </ProCard>
 
 
-        <ProCard collapsed={collapsed4} colSpan={24} style={{ marginBlockStart: 16 }} wrap title={<div style={{ fontWeight: '500', fontSize: 14 }}>  {getFilterStr(organization_id, organizationList, dateArr, 0, "Transactions") + " ( Count:" + transactionList.length+" )"} </div>} extra={< EyeOutlined onClick={() => {
-          setCollapsed4(!collapsed4);
-          localStorage.setItem('collapsed4', !collapsed4);
-        }} style={{ fontWeight: 'normal', fontSize: 14 }} />} bordered headerBordered >
-         
-          <ProCard ghost={true} colSpan={24} bodyStyle={{ overflow: isMP ? 'auto' : 'hidden' }}>
-
-
-
-
-            <ConfigProvider renderEmpty={customizeRenderEmpty}> <ProTable<any, API.PageParams>
-
-           
-              className="mytable2"
-             
-              rowKey="id"
-              scroll={{ x: 2000, y: 300 }}
-               size="small"
-              search={false }
-              options={false}
-              dataSource={transactionList}
-             // pagination={false }
-              columns={[
-
-                {
-                  title: (
-                    <FormattedMessage
-                      id="pages.transaction.transactionID"
-                      defaultMessage="EOS ID"
-                    />
-                  ),
-                  dataIndex: 'eos_id',
-                
-                  renderText: (dom, entity) => {
-                    return entity.eos_id
-                  },
-                  render: (dom, entity) => {
-                    return (
-                      <a
-
-                        onClick={() => {
-                          
-                          history.push(`/transaction/detail`, { transaction_id: entity.id,tab });
-                          // setShowDetail(true);
-                        }}
-                      >
-                        {dom}
-                      </a>
-                    );
-                  },
-                },
-                
-                {
-                  title: <FormattedMessage id="pages.transaction.imoNumber" defaultMessage="IMO Number" />,
-                  dataIndex: 'imo_number',
-                  valueType: 'text',
-                },
-                {
-                  title: <FormattedMessage id="pages.transaction.vesselName" defaultMessage="Vessel Name" />,
-                  dataIndex: 'vessel_name',
-                  valueType: 'text',
-                },
-
-                {
-                  title: getOrganizationName(),
-                  dataIndex: 'organization_id',
-                  valueEnum: organizationList,
-                
-                  render: (dom, entity) => {
-                    if (currentUser?.role_type == 'Super') {
-                      return organizationList[entity.terminal_id] + "," + organizationList[entity.trader_id]
-                    } else if (currentUser?.role_type == 'Trader') {
-                      return organizationList[entity.terminal_id]
-                    } else if (currentUser?.role_type == 'Terminal') {
-                      return organizationList[entity.trader_id]
-                    } else {
-                      return "-"
-                    }
-                  },
-                },
-                {
-                  title: <FormattedMessage id="pages.transaction.jettyName" defaultMessage="Jetty Name" />,
-                  dataIndex: 'jetty_id',
-                  valueEnum: jettyList,
-                 
-                  search: {
-                    transform: (value) => {
-                      if (value) {
-                        return {
-                          'jetty_id': {
-                            'field': 'jetty_id',
-                            'op': 'eq',
-                            'data': value
-                          }
-                        }
-                      }
-
-                    }
-                  }
-                },
-
-                {
-                  title: <FormattedMessage id="pages.alertrule.xxx" defaultMessage="Total Nominated Quantity (MT) / (BLS-60-F)" />,
-                  dataIndex: 'total_nominated_quantity_m',
-                  width: 250,
-                  hideInSearch: true,
-                  valueType: "text",
-                  render: (dom, entity) => {
-                    if (dom) {
-
-
-                      return numeral(dom).format('0,0') + " / " + numeral(entity.total_nominated_quantity_b).format('0,0')
-                    }
-
-                  },
-                },
-                {
-                  title: <FormattedMessage id="pages.transaction.vesselName" defaultMessage="Vessel Name" />,
-                  dataIndex: 'vessel_name',
-                  valueType: 'text',
-                },
-                {
-                  title: <FormattedMessage id="pages.transaction.startOfTransaction" defaultMessage="Start Of Transaction" />,
-                  dataIndex: 'start_of_transaction',
-                  width: 150,
-                  //sorter: true,
-                  // defaultSortOrder: 'descend',
-                  valueType: 'dateTime',
-                  hideInSearch: true,
-                },
-
-              ].concat(flowList.map((e, i) => {
-
-              
-                return {
-                  title:  e.name ,
-                  dataIndex: 'vessel_name',
-                  valueType: 'text',
-                  render: (dom, entity) => {
-                    var p = transactionMap[entity.id]?.processMap[e.id]
-                    var val = p?.duration
-                    var total_duration = entity.total_duration
-                    var ta = transactionAlert[entity.id]?.[e.id]
-                   return <div style={{ position: 'relative', float: 'left', zIndex: 1, textAlign: 'center', height: "50px", width: '100%' }}>
-
-
-                     <div style={{ position: 'absolute', zIndex: 0, top: 12, left: i == 0 ? '50%' : 0, width: i == 0 || i == 4 ? ( i == 0?'70%':"50%") : (i > 4 ? '0' : '120%'), height: 2, backgroundColor: '#8aabe5', overflow: 'hidden', }}></div>
-
-                      <div style={{ position: 'relative', zIndex: 1 }}>
-                        {i < 5 && (
-                          <span style={{
-                            display: "inline-block",
-                            color: "#fff",
-                            width: '25px',
-                            height: '25px',
-                            fontSize: "20px",
-                            backgroundColor: p ? (p.event_count > 0 ? (ta ? (ta.red > 0 ? "red" : "#DE8205") : color[e.icon]) : "#595959") : "#595959",
-                            borderRadius: '50%',
-                            textAlign: 'center',
-                            lineHeight: '25px'
-                          }}>
-
-                            <SvgIcon type={e.icon} />
-                          </span>
-                        )}
-                        {i == 5 && (
-                          <span style={{
-                            display: "inline-block",
-                            color: "#fff",
-                            width: '25px',
-                            height: '25px',
-                            fontSize: "18px",
-                            backgroundColor: ta ? (ta.red > 0 ? "red" : "#DE8205") : "#13c2c2",
-                            borderRadius: '30px',
-                            textAlign: 'center',
-                            lineHeight: '25px'
-                          }}>
-                            <SvgIcon type="icon-shalou" />
-
-                          </span>
-                        )}
-
-                        {i == 6 && (
-
-                          <Badge count={ta ? ta?.amber + ta?.red : 0} style={{ boxShadow: 'none', marginTop: 8 }}>
-                            <SvgIcon style={{ fontSize: "20px", color: (!ta || (ta?.amber == 0 && ta?.red == 0) ? '#d5d5d5' : (ta.red > 0 ? "red" : "#ED7D31")), marginTop: 8 }} type={(!ta || (ta?.amber == 0 && ta?.red == 0)) ? 'icon-tixingshixin' : 'icon-2'} />
-                          </Badge>
-
-
-                        )}
-
-                      </div>
-                      {i < 5 && (
-                        <div style={{ position: 'relative', zIndex: 1, fontSize: '12px', color: "#333", lineHeight: "12px" }}>{p ? (p.event_count > 0 ? parseInt((val / 3600) + "") + "h " + parseInt((val % 3600) / 60) + "m" : "") : ""}</div>
-                      )}
-                      {i == 5 && (
-                        <div style={{ position: 'relative', zIndex: 1, fontSize: '12px', color: "#333", lineHeight: "12px" }}> {parseInt((total_duration / 3600) + "") + "h " + parseInt((total_duration % 3600) / 60) + "m"}</div>
-                      )}
-                    </div>
-                  }
-                }
-
-                 
- 
-              }))}
-              
-            /></ConfigProvider>
-
-
-
-          </ProCard>
-        </ProCard>
+       
 
 
 

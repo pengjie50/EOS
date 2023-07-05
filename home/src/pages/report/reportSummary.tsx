@@ -3,17 +3,17 @@ import RcResizeObserver from 'rc-resize-observer';
 import { addTransaction, removeTransaction, transaction, updateTransaction } from '../transaction/service';
 import { operlog } from '../system/operlog/service';
 import { loginlog } from '../system/loginlog/service';
-
+import MPSort from "@/components/MPSort";
 
 import { addReport } from '../report/service';
 import { organization } from '../system/company/service';
 import { alert as getAlert } from '../alert/service';
 import { reportSummary } from './service';
 
-import { columns as columns4 } from '../system/operlog/SuperUserActivity';
-import { columns as columns5 } from '../system/loginlog/index';
-import { columns as columns6 } from '../system/operlog/index';
-import { columns as columns7 } from '../system/operlog/APIActivity';
+import { columnsBase as columns4 } from '../system/operlog/SuperUserActivity';
+import { columnsBase as columns5 } from '../system/loginlog/index';
+import { columnsBase as columns6 } from '../system/operlog/index';
+import { columnsBase as columns7 } from '../system/operlog/APIActivity';
 import { exportCSV } from "../../components/export";
 
 import { PlusOutlined, SearchOutlined, PrinterOutlined, FileExcelOutlined, ExclamationCircleOutlined, DeleteOutlined, FormOutlined, EllipsisOutlined } from '@ant-design/icons';
@@ -247,15 +247,15 @@ const TableList: React.FC = () => {
     a.data = value.vessel_name
     filter.vessel_name = a
   }
-  var product_type_str ="All Product"
-  if (value.product_type) {
+  var product_name_str ="All Product"
+  if (value.product_name) {
     var a = {}
-    a.field = 'product_type'
+    a.field = 'product_name'
     a.op = 'like'
-    a.data = value.product_type
-    filter.product_type = a
+    a.data = value.product_name
+    filter.product_name = a
 
-    product_type_str = value.product_type
+    product_name_str = value.product_name
   }
 
 
@@ -638,17 +638,17 @@ const TableList: React.FC = () => {
     },
     {
       title: <FormattedMessage id="pages.transaction.vesselName" defaultMessage="Vessel Size" />,
-      dataIndex: 'size_of_vessel',
+      dataIndex: 'vessel_size_dwt',
 
     },
     {
       title: <FormattedMessage id="pages.transaction.productType" defaultMessage="Product Type" />,
-      dataIndex: 'product_type',
+      dataIndex: 'product_name',
 
     },
     {
       title: <FormattedMessage id="pages.transaction.xxx" defaultMessage="Total Nominated Quantity (Bls-60-F)" />,
-      dataIndex: 'total_nominated_quantity_b',
+      dataIndex: 'product_quantity_in_bls_60_f',
       render: (dom, entity) => {
         if (dom) {
           return numeral(dom).format('0,0')
@@ -759,18 +759,18 @@ const TableList: React.FC = () => {
     {
 
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Threshold Vessel Size" />,
-      dataIndex: 'ar.size_of_vessel_from',
+      dataIndex: 'ar.vessel_size_dwt_from',
 
     },
     {
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Threshold Nominated Quantity Range" />,
-      dataIndex: 'ar.total_nominated_quantity_from_m',
+      dataIndex: 'ar.product_quantity_in_mt_from',
 
 
     },
     {
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Transaction Vessel Size" />,
-      dataIndex: 't.size_of_vessel',
+      dataIndex: 't.vessel_size_dwt',
 
 
     },
@@ -778,14 +778,14 @@ const TableList: React.FC = () => {
     {
 
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Transaction Nominated Quantity Range" />,
-      dataIndex: 't.total_nominated_quantity_b',
+      dataIndex: 't.product_quantity_in_bls_60_f',
 
 
     },
 
     {
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Product Type" />,
-      dataIndex: 't.product_type',
+      dataIndex: 't.product_name',
 
 
     },
@@ -992,7 +992,7 @@ const TableList: React.FC = () => {
 
     {
       title: <FormattedMessage id="pages.transaction.productType" defaultMessage="Product Type" />,
-      dataIndex: 'product_type',
+      dataIndex: 'product_name',
       // valueEnum: producttypeList,
     },
     
@@ -1225,7 +1225,7 @@ const TableList: React.FC = () => {
 
           scroll={{ x: columns.length*140, y: resizeObj.tableScrollHeight }}
         
-      
+          pagination={{ size: "default" }}
         formRef={formRef}
         bordered size="small"
         actionRef={actionRef}
@@ -1311,6 +1311,7 @@ const TableList: React.FC = () => {
               <ProDescriptions<any>
                 bordered={true}
                 size="small"
+                className="jetty-descriptions"
                 layout="horizontal"
                 column={1}
                 title={""}
@@ -1349,10 +1350,10 @@ const TableList: React.FC = () => {
 
 
 
-      <div style={{ marginTop: 15, paddingLeft: 0 }}>
+      <div style={{ marginTop: 15, paddingLeft: 0 }} className="re-back">
         <Button
           style={isMP ? { width: '100%' } : null}
-          type="primary"
+          type="default"
           onClick={async () => {
             history.push('/Report')
           }}

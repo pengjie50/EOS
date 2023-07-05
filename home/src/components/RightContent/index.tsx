@@ -42,7 +42,7 @@ export const Alert = () => {
     <div
       style={{
         display: 'flex',
-        height: 26,
+        height: 30,
       }}
       onClick={() => {
         if (currentUser.userUnreadAlertCount>0) {

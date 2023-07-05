@@ -7,7 +7,27 @@ export default function access(initialState: { currentUser?: API.CurrentUser } |
   
   return {
     canAdmin: currentUser && currentUser.role_type === 'Super',
-   
+    canInterfacedataAdd: () => {
+      return currentUser && currentUser?.role_type != "Trader" && currentUser.permissions.some((a) => {
+        return a == 'interfacedata_add'
+      }) || currentUser?.role_type === 'Super'
+    },
+    canInterfacedataList: () => {
+      return currentUser && currentUser.permissions.some((a) => {
+        return a == 'interfacedata_list'
+      }) || currentUser?.role_type === 'Super'
+    },
+    canInterfacedataDel: () => {
+      return currentUser && currentUser.permissions.some((a) => {
+        return a == 'interfacedata_del'
+      }) || currentUser?.role_type === 'Super'
+    },
+
+    canInterfacedataMod: () => {
+      return currentUser && currentUser?.role_type == "Super" && currentUser.permissions.some((a) => {
+        return a == 'interfacedata_mod'
+      }) || currentUser?.role_type === 'Super'
+    },
     canJettyAdd: () => {
       return currentUser &&  currentUser?.role_type != "Trader" && currentUser.permissions.some((a) => {
         return a == 'jetty_add'

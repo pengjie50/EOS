@@ -9,7 +9,7 @@ const { REACT_APP_ENV = 'dev' } = process.env;
 
 export default defineConfig({
     // 多tabs布局，只需要配置下面两项即可
-  keepalive: ['/Dashboard', '/Report/add', '/Transactions','/Report'],
+  keepalive: ['/Dashboard', '/Report', '/Transactions'],
   tabsLayout: {},
 
   /**

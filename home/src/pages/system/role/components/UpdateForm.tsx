@@ -4,16 +4,17 @@ import {
   ProFormTreeSelect,
   ProFormSelect,
   ProFormText,
-  ProFormSwitch,
   ProFormTextArea,
+  ProFormCheckbox,
   ModalForm,
+  ProCard,
   ProFormInstance
   
 } from '@ant-design/pro-components';
 import { RoleListItem } from '../data.d';
 import { FormattedMessage, useIntl } from '@umijs/max';
-import { Modal, Form, TreeSelect } from 'antd';
-import React, { useRef, useState } from 'react';
+import { Modal, Form, TreeSelect, Tree } from 'antd';
+import React, { useRef, useState, useEffect } from 'react';
 import { flow } from '../../../system/flow/service';
 import { tree, isPC } from "@/utils/utils";
 import { company } from '../../../system/company/service';
@@ -30,6 +31,8 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
   const restFormRef = useRef<ProFormInstance>();
   const intl = useIntl();
   const [flowConf, setFlowConf] = useState<any>([]);
+  const [permissionConf, setPermissionConf] = useState<any>([]);
+  const [companyConf, setCompanyConf] = useState<any>([]);
   const [isMP, setIsMP] = useState<boolean>(!isPC());
   const {
     onSubmit,
@@ -38,7 +41,49 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
     values,
   } = props;
 
-  
+  useEffect(() => {
+
+    flow({ sorter: { sort: 'ascend' } }).then((res) => {
+
+      res.data = res.data.map((r) => {
+        r['key'] = r.id
+        r['title'] = r.name
+        return r
+      })
+      res.data.unshift({ value: 'all', title: 'All', name: 'All', id: "                                    ", pid: "all" })
+      setFlowConf(tree(res.data, "all", 'pid'))
+      return tree(res.data, "all", 'pid')
+    });
+    company().then((res) => {
+
+      res.data = res.data.map((r) => {
+        r['key'] = r.id
+        r['title'] = r.name
+        return r
+      })
+      var d = tree(res.data, "                                    ", 'pid')
+
+      d[0].title = "All"
+      setCompanyConf(d)
+      return d
+    });
+
+
+    permission().then((res) => {
+
+      res.data = res.data.map((r) => {
+        r['key'] = r.id
+        r['title'] = r.name
+        return r
+      })
+      res.data.unshift({ value: 'all', title: 'All', name: 'All', id: null, pid: "all" })
+      setPermissionConf(tree(res.data, "all", 'pid'))
+      return tree(res.data, "all", 'pid')
+
+      return d
+    });
+
+  }, [true]);
   return (
    
     <ModalForm
@@ -72,6 +117,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           defaultMessage: 'Modify Role',
         })}
       >
+      <ProCard title="Basic Information" colSpan={24} headerBordered collapsible={true} headStyle={{ backgroundColor: "#d4d4d4" }}>
         <ProFormText
           name="name"
           label={intl.formatMessage({
@@ -90,25 +136,36 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
               ),
             },
           ]}
-      />
-      <ProFormSelect
-        name="type"
-        label={intl.formatMessage({
-          id: 'pages.xxx',
-          defaultMessage: 'Role Type',
-        })}
-        width="md"
-        valueEnum={{
-          "Surveyor": "Surveyor",
-          "Trader": "Trader",
-          "Agent": "Agent",
-          "Terminal": "Oil Terminal",
-          "Pilot": "Pilot",
-          "Super": "Super",
+        />
+        <ProFormSelect
+          name="type"
+          label={intl.formatMessage({
+            id: 'pages.xxx',
+            defaultMessage: 'Role Type',
+          })}
+          width="md"
+          rules={[
+            {
+              required: true,
+              message: (
+                <FormattedMessage
+                  id="pages.rules.required"
+                  defaultMessage=""
+                />
+              ),
+            },
+          ]}
+          valueEnum={{
+            "Surveyor": "Surveyor",
+            "Trader": "Trader",
+            "Agent": "Agent",
+            "Terminal": "Oil Terminal",
+            "Pilot": "Pilot",
+            "Super": "Super",
 
 
-        }}
-      />
+          }}
+        />
 
         <ProFormTextArea
           name="description"
@@ -117,259 +174,67 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
             id: 'pages.role.description',
             defaultMessage: 'Role Description',
           })}
-         
-      />
-      <ProFormTreeSelect
-        name="accessible_feature"
-        label={intl.formatMessage({
-          id: 'pages.xxx',
-          defaultMessage: "Accessible Feature",
-        })}
 
-        rules={[
-          {
-            required: true,
-            message: (
-              <FormattedMessage
-                id="pages.rules.required"
-                defaultMessage=""
-              />
-            ),
-          },
-        ]}
-        placeholder="Please select"
-        allowClear
-        width="md"
+        />
+      </ProCard>
 
-        request={async () => {
+      <ProCard title="Accessible feature" colSpan={24} headerBordered collapsible={true} headStyle={{ backgroundColor: "#d4d4d4" }}>
 
-          var data = [
-            {
-              name: 'All', id: "all", pid: "                                    "
-            },
-            {
-              name: 'Dashboard', id: "dashboard"
-            },
-            {
-              name: 'Threshold–Triggered Alert', id: "alert"
-
-            },
-            {
-              name: 'Threshold–Summary', id: "alertrule"
-
-            },
-            {
-              name: 'Information Page–Jetty', id: "jetty"
-
-            },
-            {
-              name: 'Transaction', id: "transaction"
-
-            },
-            {
-              name: 'Report–Report  History', id: "report"
-
-            }
+        <ProFormCheckbox name="accessible_permissions" hidden={true} />
+        <Tree
+          checkable
+          multiple={true}
+          defaultCheckedKeys={values.accessible_permissions}
+          defaultExpandAll={true}
+          onSelect={(e) => {
 
 
-          ]
-
-          data = data.map((r) => {
-            r['value'] = r.id
-            r['title'] = r.name
-            r.pid="all"
-            return r
-          })
-          data[0].pid = "                                    "
-          var d = tree(data, "                                    ", 'pid')
-         
-          return d
+          }}
+          onCheck={(e) => {  restFormRef.current?.setFieldValue("accessible_permissions", e) }}
+          treeData={permissionConf}
+        />
 
 
-        }}
-        // tree-select args
-        fieldProps={{
-          showArrow: false,
-          treeCheckable: true,
-          multiple: true,
-          maxTagCount: 0,
-          dropdownMatchSelectWidth: isMP ? true : false,
-          // treeCheckStrictly:true,
-          // showCheckedStrategy: TreeSelect.SHOW_ALL,
-          treeNodeFilterProp: 'name',
-          fieldNames: {
-            label: 'name',
-          },
-        }}
-      />
-      <ProFormTreeSelect
-        name="accessible_organization"
-        label={intl.formatMessage({
-          id: 'pages.xxx',
-          defaultMessage: "Accessible Organization's  Data",
-        })}
 
-        rules={[
-          {
-            required: true,
-            message: (
-              <FormattedMessage
-                id="pages.rules.required"
-                defaultMessage=""
-              />
-            ),
-          },
-        ]}
-        placeholder="Please select"
-        allowClear
-        width="md"
 
-        request={async () => {
-          return company().then((res) => {
 
-            res.data = res.data.map((r) => {
-              r['value'] = r.id
-              r['title'] = r.name
-              return r
-            })
-            var d = tree(res.data, "                                    ", 'pid')
-            d[0].name = "All"
-            return d
-          });
 
-        }}
+      </ProCard>
 
-        // tree-select args
-        fieldProps={{
-          showArrow: false,
-          treeCheckable: true,
-          multiple: true,
-          maxTagCount: 0,
-          dropdownMatchSelectWidth: isMP ? true : false,
-          // treeCheckStrictly:true,
-          //showCheckedStrategy: TreeSelect.SHOW_ALL,
-          treeNodeFilterProp: 'name',
-          fieldNames: {
-            label: 'name',
-          },
-        }}
-      />
-      <ProFormTreeSelect
-        name="accessible_permissions"
-        label={intl.formatMessage({
-          id: 'pages.xxx',
-          defaultMessage: "Accessible Permissions",
-        })}
 
-        rules={[
-          {
-            required: true,
-            message: (
-              <FormattedMessage
-                id="pages.rules.required"
-                defaultMessage=""
-              />
-            ),
-          },
-        ]}
-        placeholder="Please select"
-        allowClear
-        width="md"
+      <ProCard title="Data Available" colSpan={24} headerBordered collapsible={true} headStyle={{ backgroundColor: "#d4d4d4" }}>
+        <ProFormCheckbox name="accessible_organization" hidden={true} />
+        <Tree
+          checkable
+          defaultCheckedKeys={values.accessible_organization}
+          defaultExpandAll={true}
+          onSelect={() => { }}
+          onCheck={(e) => { restFormRef.current?.setFieldValue("accessible_organization", e) }}
+          treeData={companyConf}
+        />
 
-        request={async () => {
-          
-          return permission().then((res) => {
 
-            queryMenuByRoleId({ role_id: values.id }).then((res2) => {
-              var dd = res2.data.map((rr) => {
-              
-                return rr.permission_id+""
-              })
-             
-              restFormRef.current?.setFieldValue('accessible_permissions',dd)
-            })
+      </ProCard>
 
-            res.data = res.data.map((r) => {
-              r['value'] = r.id
-              r['title'] = r.d
-              r['pid'] = "all"
-              return r
-            })
-            res.data.unshift({ value: 'all', title: 'All', name: 'All', pid: "                                    ", id: "all" })
-            var d = tree(res.data, "                                    ", 'pid')
+      <ProCard title="Accessible Timestamp" colSpan={24} headerBordered collapsible={true} headStyle={{ backgroundColor: "#d4d4d4" }}>
+        <ProFormCheckbox name="accessible_timestamp" hidden={true} />
+        {/*accessible_timestamp*/}
 
-            return d
-          });
+        <Tree
+          checkable
+          defaultCheckedKeys={values.accessible_timestamp}
+          defaultExpandAll={true}
+          onSelect={() => { }}
+          onCheck={(e) => { restFormRef.current?.setFieldValue("accessible_timestamp", e) }}
+          treeData={flowConf}
+        />
 
-        }}
 
-        // tree-select args
-        fieldProps={{
-          showArrow: false,
-          treeCheckable: true,
-          multiple: true,
-          maxTagCount: 0,
-          dropdownMatchSelectWidth: isMP ? true : false,
-          // treeCheckStrictly:true,
-          // showCheckedStrategy: TreeSelect.SHOW_ALL,
-          treeNodeFilterProp: 'name',
-          fieldNames: {
-            label: 'name',
-          },
-        }}
-      />
-      <ProFormTreeSelect
-        name="accessible_timestamp"
-        label={intl.formatMessage({
-          id: 'pages.xxx',
-          defaultMessage: 'Accessible Timestamp',
-        })}
 
-        rules={[
-          {
-            required: true,
-            message: (
-              <FormattedMessage
-                id="pages.rules.required"
-                defaultMessage=""
-              />
-            ),
-          },
-        ]}
-        placeholder="Please select"
-        allowClear
-        width="md"
 
-        request={async () => {
-          return flow({ pageSize: 1000, current: 1, sorter: { sort: 'ascend' } }).then((res) => {
 
-            res.data = res.data.map((r) => {
-              r['value'] = r.id
-              r['title'] = r.name
-              return r
-            })
 
-            setFlowConf(tree(res.data, "                                    ", 'pid'))
-            return tree(res.data, "                                    ", 'pid')
-          });
-
-        }}
-
-        // tree-select args
-        fieldProps={{
-          showArrow: false,
-          treeCheckable: true,
-          multiple: true,
-          maxTagCount: 0,
-          dropdownMatchSelectWidth: isMP ? true : false,
-          // treeCheckStrictly:true,
-          showCheckedStrategy: TreeSelect.SHOW_ALL,
-          treeNodeFilterProp: 'name',
-          fieldNames: {
-            label: 'name',
-          },
-        }}
-      />
+      </ProCard>
     </ModalForm>
      
   );

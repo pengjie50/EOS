@@ -7,7 +7,9 @@ import { OperlogList, OperlogListItem } from './data.d';
 import FrPrint from "../../../components/FrPrint";
 import { exportCSV } from "../../../components/export";
 import FileSaver from "file-saver";
+import MPSort from "@/components/MPSort";
 import moment from 'moment'
+import { fieldSelectData } from '@/services/ant-design-pro/api';
 const Json2csvParser = require("json2csv").Parser;
 import { user } from '../user/service';
 import { company } from '../company/service';
@@ -23,7 +25,7 @@ import {
   ProFormInstance
 } from '@ant-design/pro-components';
 import { FormattedMessage, useIntl, formatMessage } from '@umijs/max';
-import { Button, Drawer, Input, message, Modal, Popover } from 'antd';
+import { Button, Drawer, Input, message, Modal, Popover, Empty } from 'antd';
 import React, { useRef, useState, useEffect } from 'react';
 import CreateForm from './components/CreateForm';
 import UpdateForm from './components/UpdateForm';
@@ -119,24 +121,22 @@ const handleUpdate = async (fields: Partial<any>) => {
 
 
 
-export var columns: ProColumns<OperlogListItem>[] = [
+export var columnsBase: ProColumns<OperlogListItem>[] = [
 
   {
     title: <FormattedMessage id="pages.user.username" defaultMessage="username" />,
     dataIndex: 'username',
    // valueEnum: userList,
-    fieldProps: {
-      showSearch: true,
-    },
+   
     search: {
       transform: (value) => {
 
         if (value !== null) {
           return {
 
-            status: {
+            user_id: {
               'field': 'user_id',
-              'op': 'eq',
+              'op': 'in',
               'data': value
             }
 
@@ -151,6 +151,7 @@ export var columns: ProColumns<OperlogListItem>[] = [
   {
     title: <FormattedMessage id="pages.operlog.module" defaultMessage="module" />,
     dataIndex: 'module',
+    fieldProps: { multiple: true, mode: 'multiple' },
     valueEnum: {
       //"user": "User Account",
       // "company": "Organization",
@@ -162,17 +163,46 @@ export var columns: ProColumns<OperlogListItem>[] = [
       //"transaction": "Transaction",
       "jetty": "Jetty"
 
+    },
+    search: {
+      transform: (value) => {
+        if (value && value.length > 0) {
+          return {
+            'module': {
+              'field': 'module',
+              'op': 'in',
+              'data': value
+            }
+          }
+        }
+
+      }
     }
 
   },
   {
     title: <FormattedMessage id="pages.operlog.action" defaultMessage="Action Type" />,
     dataIndex: 'action',
+    fieldProps: { multiple: true, mode: 'multiple' },
     valueEnum: {
       "add": "Create",
       "mod": "Update",
       "del": "Delete"
 
+    },
+    search: {
+      transform: (value) => {
+        if (value && value.length > 0) {
+          return {
+            'action': {
+              'field': 'action',
+              'op': 'in',
+              'data': value
+            }
+          }
+        }
+
+      }
     }
 
   },
@@ -186,20 +216,99 @@ export var columns: ProColumns<OperlogListItem>[] = [
   {
     title: <FormattedMessage id="pages.operlog.url" defaultMessage="url" />,
     dataIndex: 'url',
-
     valueType: 'text',
+    search: {
+      transform: (value) => {
+        if (value.length > 0) {
+
+          return {
+            'url': {
+              'field': 'url',
+              'op': 'in',
+              'data': value
+            }
+          }
+        }
+
+      }
+    },
   },
   {
     title: <FormattedMessage id="pages.operlog.ip" defaultMessage="Ip" />,
     dataIndex: 'ip',
+    search: {
+      transform: (value) => {
+        if (value.length > 0) {
 
+          return {
+            'ip': {
+              'field': 'ip',
+              'op': 'in',
+              'data': value
+            }
+          }
+        }
+
+      }
+    },
     valueType: 'text',
   },
+  {
+    title: <FormattedMessage id="pages.loginlog.xxx" defaultMessage="activity duration" />,
+    dataIndex: 'activity_duration',
+    sorter:true,
+    valueType: 'text',
+    render: (a) => {
+      return a+"ms"
+    }
+  },
+  
+  {
+    title: <FormattedMessage id="pages.loginlog.xxx" defaultMessage="Organisation" />,
+    dataIndex: 'company_id',
+    // valueEnum: organizationList,
+    fieldProps: { multiple: true, mode: 'multiple', showSearch: true },
 
+    search: {
+      transform: (value) => {
+
+        if (value !== null) {
+          return {
+
+            status: {
+              'field': 'company_id',
+              'op': 'in',
+              'data': value
+            }
+
+          }
+        }
+
+      }
+    },
+    valueType: 'text',
+
+  },
   {
     title: <FormattedMessage id="pages.loginlog.xxx" defaultMessage="Device Type" />,
     dataIndex: 'device_type',
     valueType: 'text',
+    fieldProps: { multiple: true, mode: 'multiple' },
+    search: {
+      transform: (value) => {
+        if (value.length > 0) {
+
+          return {
+            'device_type': {
+              'field': 'device_type',
+              'op': 'in',
+              'data': value
+            }
+          }
+        }
+
+      }
+    },
     valueEnum: {
       "PC": "PC",
       "Laptop": "Laptop",
@@ -219,10 +328,10 @@ export var columns: ProColumns<OperlogListItem>[] = [
      ellipsis: true,
      valueType: 'text',
    },*/
+
   {
     title: <FormattedMessage id="pages.loginlog.status" defaultMessage="Status" />,
     dataIndex: 'status',
-    hideInForm: true,
     search: {
       transform: (value) => {
 
@@ -231,8 +340,8 @@ export var columns: ProColumns<OperlogListItem>[] = [
 
             status: {
               'field': 'status',
-              'op': 'eq',
-              'data': Number(value)
+              'op': 'in',
+              'data': value
             }
 
           }
@@ -240,6 +349,7 @@ export var columns: ProColumns<OperlogListItem>[] = [
 
       }
     },
+    fieldProps: { multiple: true, mode: 'multiple' },
     valueEnum: {
       0: {
         text: (
@@ -361,10 +471,98 @@ const TableList: React.FC = () => {
   const [showMPSearch, setShowMPSearch] = useState<boolean>(false);
   const [isMP, setIsMP] = useState<boolean>(!isPC());
   const [organizationList, setOrganizationList] = useState<any>({});
+  const [user_idData, setUser_idData] = useState<any>({});
+  const [urlData, setUrlData] = useState<any>({});
+  const [ipData, setIpData] = useState<any>({});
   const [userList, setUserList] = useState<any>({});
 
 
-  columns[0].valueEnum = userList
+
+
+  var columns: ProColumns<OperlogListItem>[] = columnsBase.map((a) => {
+
+
+    var b = { ...a }
+    if (b.dataIndex == "company_id") {
+
+      b.valueEnum = organizationList
+    }
+    if (b.dataIndex == "url") {
+      b.valueEnum = urlData
+      b.fieldProps = {
+        notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
+        showSearch: true,
+        allowClear: true,
+        multiple: true,
+        mode: 'multiple',
+
+        onFocus: () => {
+          fieldSelectData({ model: "Operlog", value: '', field: 'url', where: { type: 2 } }).then((res) => {
+            console.log(res.data)
+            setUrlData(res.data)
+          })
+        },
+        onSearch: (newValue: string) => {
+
+          fieldSelectData({ model: "Operlog", value: newValue, field: 'url', where: { type: 2 } }).then((res) => {
+            console.log(res.data)
+            setUrlData(res.data)
+          })
+
+        }
+      }
+    }
+
+    if (b.dataIndex == "ip") {
+      b.valueEnum = ipData
+      b.fieldProps = {
+        notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
+        showSearch: true,
+        allowClear: true,
+        multiple: true,
+        mode: 'multiple',
+
+        onFocus: () => {
+          fieldSelectData({ model: "Operlog", value: '', field: 'ip', where: { type: 2 } }).then((res) => {
+            console.log(res.data)
+            setIpData(res.data)
+          })
+        },
+        onSearch: (newValue: string) => {
+
+          fieldSelectData({ model: "Operlog", value: newValue, field: 'ip', where: { type: 2 } }).then((res) => {
+            console.log(res.data)
+            setIpData(res.data)
+          })
+
+        }
+      }
+    }
+
+    if (b.dataIndex == "username") {
+      b.valueEnum = userList
+      b.fieldProps = {
+        notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
+        showSearch: true,
+        allowClear: true,
+        multiple: true,
+        mode: 'multiple',
+
+        
+      }
+    }
+    return b
+
+
+
+
+
+
+  })
+
+
+
+  
   useEffect(() => {
 
     user({ sorter: { username: 'ascend' } }).then((res) => {
@@ -373,7 +571,7 @@ const TableList: React.FC = () => {
         b[r.id] = r.username
       })
       setUserList(b)
-
+      columns[0].valueEnum = b
     });
 
 
@@ -467,10 +665,13 @@ const TableList: React.FC = () => {
         "current": page,
         "pageSize": 10
 
-      }, ...filter
+      }, ...filter, sorter
     })
 
+    if (page == 1) {
 
+      setData([]);
+    }
     console.log(append)
     setData(val => [...val, ...append.data])
     setHasMore(10 * (page - 1) + append.data.length < append.total)
@@ -531,7 +732,7 @@ const TableList: React.FC = () => {
       }} >
         {!isMP && (<ProTable<OperlogListItem, API.PageParams>
           //scroll={{ x: 2500, y: 300 }}
-
+          pagination={{ size: "default" }}
           actionRef={actionRef}
           rowKey="id"
           scroll={{ x: 1800, y: resizeObj.tableScrollHeight }}
@@ -551,6 +752,7 @@ const TableList: React.FC = () => {
             'data': 2
           } })}
           columns={columns}
+          bordered
           rowSelection={{
             onChange: (_, selectedRows) => {
               setSelectedRows(selectedRows);
@@ -560,37 +762,18 @@ const TableList: React.FC = () => {
 
         {isMP && (<>
 
-          <NavBar backArrow={false} left={<div>  <Popover placement="bottom" title={""} content={<div>{columns.filter(a => (a.hasOwnProperty('sorter') && a['sorter'])).map((a) => {
-
-            return (<div><Button onClick={() => {
-              setMPSorter({ [a.dataIndex]: 'ascend' })
-
-
+          <NavBar backArrow={false} left={
+            <MPSort columns={columns} onSort={(k) => {
+              setMPSorter(k)
               getData(1)
-
-
-            }} icon={<SortAscendingOutlined />} />
-              <Button style={{ margin: 5 }} onClick={() => {
-                setMPSorter({ [a.dataIndex]: 'descend' })
-
-                getData(1)
-
-              }} icon={<SortDescendingOutlined />} />
-              <span>{a.title}</span>
-            </div>)
-
-          })}</div>} trigger="click">
-            <SwapOutlined rotate={90} />
-
-
-          </Popover> </div>} right={right} onBack={back}>
+            }} />} right={right} onBack={back}>
             {intl.formatMessage({
               id: 'pages.operlog.xxx',
               defaultMessage: 'User Activity Log',
             })}
           </NavBar>
 
-          <div style={{ padding: '20px', backgroundColor: "#5187c4", display: showMPSearch ? 'block' : 'none' }}>
+          <div style={{ padding: '20px', backgroundColor: "#5000B9", display: showMPSearch ? 'block' : 'none' }}>
             <Search columns={columns.filter(a => !(a.hasOwnProperty('hideInSearch') && a['hideInSearch']))} action={actionRef} loading={false}
 
               onFormSearchSubmit={onFormSearchSubmit}
@@ -620,6 +803,7 @@ const TableList: React.FC = () => {
                 <ProDescriptions<any>
                   bordered={true}
                   size="small"
+                  className="jetty-descriptions"
                   layout="horizontal"
                   column={1}
                   title={""}

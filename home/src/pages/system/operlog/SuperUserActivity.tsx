@@ -6,7 +6,9 @@ import type { ActionType, ProColumns, ProDescriptionsItemProps } from '@ant-desi
 import { OperlogList, OperlogListItem } from './data.d';
 import FrPrint from "../../../components/FrPrint";
 import { exportCSV } from "../../../components/export";
+import { fieldSelectData } from '@/services/ant-design-pro/api';
 import FileSaver from "file-saver";
+import MPSort from "@/components/MPSort";
 import moment from 'moment'
 const Json2csvParser = require("json2csv").Parser;
 import {
@@ -21,8 +23,8 @@ import {
   ProFormInstance
 } from '@ant-design/pro-components';
 import { FormattedMessage, useIntl, formatMessage } from '@umijs/max';
-import { Button, Drawer, Input, message, Modal, Popover } from 'antd';
-import React, { useRef, useState } from 'react';
+import { Button, Drawer, Input, message, Modal, Popover, Empty } from 'antd';
+import React, { useRef, useState, useEffect } from 'react';
 import CreateForm from './components/CreateForm';
 import UpdateForm from './components/UpdateForm';
 
@@ -118,7 +120,7 @@ const handleUpdate = async (fields: Partial<any>) => {
 
 
 //--MP end
-export  const columns: ProColumns<OperlogListItem>[] = [
+export  var columnsBase: ProColumns<OperlogListItem>[] = [
 
   {
     title: <FormattedMessage id="pages.user.username" defaultMessage="username" />,
@@ -130,6 +132,7 @@ export  const columns: ProColumns<OperlogListItem>[] = [
   {
     title: <FormattedMessage id="pages.operlog.module" defaultMessage="module" />,
     dataIndex: 'module',
+   
     valueEnum: {
       "user": "User Account",
       "company": "Organization",
@@ -141,6 +144,21 @@ export  const columns: ProColumns<OperlogListItem>[] = [
       "transaction": "Transaction",
       "jetty": "Jetty"
 
+    },
+    fieldProps: { multiple: true, mode: 'multiple' },
+    search: {
+      transform: (value) => {
+        if (value && value.length > 0) {
+          return {
+            'module': {
+              'field': 'module',
+              'op': 'in',
+              'data': value
+            }
+          }
+        }
+
+      }
     }
 
   },
@@ -152,6 +170,21 @@ export  const columns: ProColumns<OperlogListItem>[] = [
       "mod": "Update",
       "del": "Delete"
 
+    },
+    fieldProps: { multiple: true, mode: 'multiple' },
+    search: {
+      transform: (value) => {
+        if (value && value.length > 0) {
+          return {
+            'action': {
+              'field': 'action',
+              'op': 'in',
+              'data': value
+            }
+          }
+        }
+
+      }
     }
 
   },
@@ -165,13 +198,41 @@ export  const columns: ProColumns<OperlogListItem>[] = [
   {
     title: <FormattedMessage id="pages.operlog.url" defaultMessage="url" />,
     dataIndex: 'url',
-
     valueType: 'text',
+    search: {
+      transform: (value) => {
+        if (value.length > 0) {
+          
+          return {
+            'url': {
+              'field': 'url',
+              'op': 'in',
+              'data': value
+            }
+          }
+        }
+
+      }
+    },
   },
   {
     title: <FormattedMessage id="pages.operlog.ip" defaultMessage="Ip" />,
     dataIndex: 'ip',
+    search: {
+      transform: (value) => {
+        if (value.length > 0) {
 
+          return {
+            'ip': {
+              'field': 'ip',
+              'op': 'in',
+              'data': value
+            }
+          }
+        }
+
+      }
+    },
     valueType: 'text',
   },
   /* {
@@ -186,10 +247,10 @@ export  const columns: ProColumns<OperlogListItem>[] = [
      ellipsis: true,
      valueType: 'text',
    },*/
+
   {
     title: <FormattedMessage id="pages.loginlog.status" defaultMessage="Status" />,
     dataIndex: 'status',
-    hideInForm: true,
     search: {
       transform: (value) => {
 
@@ -198,8 +259,8 @@ export  const columns: ProColumns<OperlogListItem>[] = [
 
             status: {
               'field': 'status',
-              'op': 'eq',
-              'data': Number(value)
+              'op': 'in',
+              'data': value
             }
 
           }
@@ -207,6 +268,7 @@ export  const columns: ProColumns<OperlogListItem>[] = [
 
       }
     },
+    fieldProps: { multiple: true, mode: 'multiple' },
     valueEnum: {
       0: {
         text: (
@@ -330,11 +392,107 @@ const TableList: React.FC = () => {
    * */
   const intl = useIntl();
   const [MPSorter, setMPSorter] = useState<any>({});
+
+ 
+  
   //--MP start
   const MPSearchFormRef = useRef<ProFormInstance>();
   const [moreOpen, setMoreOpen] = useState<boolean>(false);
   const [showMPSearch, setShowMPSearch] = useState<boolean>(false);
   const [isMP, setIsMP] = useState<boolean>(!isPC());
+  const [urlData, setUrlData] = useState<any>({});
+  const [ipData, setIpData] = useState<any>({});
+
+
+
+
+
+  var columns: ProColumns<OperlogListItem>[] = columnsBase.map((a) => {
+
+
+    var b = { ...a }
+
+    if (b.dataIndex=="url") {
+      b.valueEnum = urlData
+      b.fieldProps = {
+        notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
+        showSearch: true,
+        allowClear: true,
+        multiple: true,
+        mode: 'multiple',
+
+        onFocus: () => {
+          fieldSelectData({ model: "Operlog", value: '', field: 'url', where: { type: 1 } }).then((res) => {
+            console.log(res.data)
+            setUrlData(res.data)
+          })
+        },
+        onSearch: (newValue: string) => {
+
+          fieldSelectData({ model: "Operlog", value: newValue, field: 'url', where: { type: 1 } }).then((res) => {
+            console.log(res.data)
+            setUrlData(res.data)
+          })
+
+        }
+      }
+    }
+
+    if (b.dataIndex == "ip") {
+      b.valueEnum = ipData
+      b.fieldProps = {
+        notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
+        showSearch: true,
+        allowClear: true,
+        multiple: true,
+        mode: 'multiple',
+
+        onFocus: () => {
+          fieldSelectData({ model: "Operlog", value: '', field: 'ip', where: { type: 1 } }).then((res) => {
+            console.log(res.data)
+            setIpData(res.data)
+          })
+        },
+        onSearch: (newValue: string) => {
+
+          fieldSelectData({ model: "Operlog", value: newValue, field: 'ip', where: { type: 1 } }).then((res) => {
+            console.log(res.data)
+            setIpData(res.data)
+          })
+
+        }
+      }
+    }
+    
+
+    return b
+
+
+
+
+
+
+     })
+
+  
+
+  
+  
+  
+
+
+  
+
+   
+
+  console.log(columns)
+
+
+
+
+
+
+
 
   const right = (
     <div style={{ fontSize: 24 }}>
@@ -415,9 +573,12 @@ const TableList: React.FC = () => {
         "current": page,
         "pageSize": 10
 
-      }, ...filter
+      }, ...filter, sorter
     })
+    if (page == 1) {
 
+      setData([]);
+    }
 
     console.log(append)
     setData(val => [...val, ...append.data])
@@ -428,7 +589,7 @@ const TableList: React.FC = () => {
     await getData(currentPage, MPfilter)
     setCurrentPage(currentPage + 1)
   }
- 
+  console.log(columns)
 
   return (
     <RcResizeObserver
@@ -478,7 +639,7 @@ const TableList: React.FC = () => {
     }} >
       {!isMP && (<ProTable<OperlogListItem, API.PageParams>
         //scroll={{ x: 2500, y: 300 }}
-       
+          pagination={{ size: "default" }}
         actionRef={actionRef}
           rowKey="id"
           scroll={{ x: 1800, y: resizeObj.tableScrollHeight }}
@@ -497,7 +658,8 @@ const TableList: React.FC = () => {
         'op': 'eq',
         'data': 1
           } })}
-        columns={columns}
+          columns={columns}
+          bordered
         rowSelection={{
           onChange: (_, selectedRows) => {
             setSelectedRows(selectedRows);
@@ -507,37 +669,18 @@ const TableList: React.FC = () => {
 
       {isMP && (<>
 
-          <NavBar backArrow={false} left={<div>  <Popover placement="bottom" title={""} content={<div>{columns.filter(a => (a.hasOwnProperty('sorter') && a['sorter'])).map((a) => {
-
-            return (<div><Button onClick={() => {
-              setMPSorter({ [a.dataIndex]: 'ascend' })
-
-
+          <NavBar backArrow={false} left={
+            <MPSort columns={columns} onSort={(k) => {
+              setMPSorter(k)
               getData(1)
-             
-
-            }} icon={<SortAscendingOutlined />} />
-              <Button style={{ margin: 5 }} onClick={() => {
-                setMPSorter({ [a.dataIndex]: 'descend' })
-
-                getData(1)
-
-              }} icon={<SortDescendingOutlined />} />
-              <span>{a.title}</span>
-            </div>)
-
-          })}</div>} trigger="click">
-            <SwapOutlined rotate={90} />
-
-
-          </Popover> </div>} right={right} onBack={back}>
+            }} />} right={right} onBack={back}>
           {intl.formatMessage({
             id: 'pages.operlog.xxx',
             defaultMessage: 'Super User Activity Log',
           })}
         </NavBar>
 
-        <div style={{ padding: '20px', backgroundColor: "#5187c4", display: showMPSearch ? 'block' : 'none' }}>
+        <div style={{ padding: '20px', backgroundColor: "#5000B9", display: showMPSearch ? 'block' : 'none' }}>
           <Search columns={columns.filter(a => !(a.hasOwnProperty('hideInSearch') && a['hideInSearch']))} action={actionRef} loading={false}
 
             onFormSearchSubmit={onFormSearchSubmit}
@@ -567,6 +710,7 @@ const TableList: React.FC = () => {
               <ProDescriptions<any>
                 bordered={true}
                 size="small"
+                className="jetty-descriptions"
                 layout="horizontal"
                 column={1}
                 title={""}
