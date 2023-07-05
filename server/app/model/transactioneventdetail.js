@@ -25,7 +25,7 @@ module.exports = app => {
             type: STRING(50)
            
         },
-        product_type: {
+        product_name: {
             type: STRING(100)
          
         },
@@ -41,7 +41,7 @@ module.exports = app => {
             type: STRING(20)
            
         },
-        bliockchain_hex_key: {
+        blockchain_hex_key: {
             type: STRING(200)
            
         }

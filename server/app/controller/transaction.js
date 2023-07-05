@@ -46,13 +46,15 @@ class TransactionController extends Controller {
       this.addOperlog()
   }
  async writetoBC() {
-    const { ctx, service } = this;
+     const { ctx, service } = this;
+     ctx.activity_duration_start = new Date
     const params = ctx.request.body;
     const result = await service.transaction.writetoBC(params);
      this.addAPILog(result)
 }
     async validateBC() {
         const { ctx, service } = this;
+        ctx.activity_duration_start = new Date
         const params = ctx.request.body;
         const result = await service.transaction.validateBC(params);
 

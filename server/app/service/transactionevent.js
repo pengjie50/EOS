@@ -70,9 +70,9 @@ class TransactioneventService extends Service {
 
 
         params.work_order_id = Math.ceil(Math.random() * 1000);
-        params.product_type = transaction.product_type
+        params.product_name = transaction.product_name
         params.tank_id = Math.ceil(Math.random() * 1000);
-        params.volume = transaction.total_nominated_quantity_m
+        params.volume = transaction.product_quantity_in_mt
         params.unit_of_measurement="MT"
         params.event_time = new Date()
 
@@ -122,9 +122,9 @@ class TransactioneventService extends Service {
         var transaction = await ctx.model.Transaction.findOne({ where: { id: user.transaction_id } })
 
         params.work_order_id = Math.ceil(Math.random() * 100000);
-        params.product_type = transaction.product_type
+        params.product_name = transaction.product_name
         params.tank_id = Math.ceil(Math.random() * 100000);
-        params.volume = transaction.total_nominated_quantity_m
+        params.volume = transaction.product_quantity_in_mt
         params.unit_of_measurement = "MT"
 
         if (!user) {
@@ -154,9 +154,9 @@ class TransactioneventService extends Service {
             var transaction = await ctx.model.Transaction.findOne({ where: { id: user.transaction_id } })
 
             params.work_order_id = Math.ceil(Math.random() * 100000);
-            params.product_type = transaction.product_type
+            params.product_name = transaction.product_name
             params.tank_id = Math.ceil(Math.random() * 100000);
-            params.volume = transaction.total_nominated_quantity_m
+            params.volume = transaction.product_quantity_in_mt
             params.unit_of_measurement = "MT"
 
             console.log("sssssssssssssssssssssssss")

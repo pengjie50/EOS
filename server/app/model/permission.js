@@ -15,6 +15,14 @@ module.exports = app => {
             defaultValue: DataTypes.UUIDV4
 
         },
+        pid: {
+            type: UUID
+
+        },
+        sort: {
+            type: INTEGER
+
+        },
         name: {
           type: STRING(200)
         

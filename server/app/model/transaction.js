@@ -16,6 +16,7 @@ module.exports = app => {
            
         },
         eos_id: {
+           // type: STRING(100)
             type: INTEGER,
             allowNull: false,
             autoIncrement: true
@@ -38,16 +39,13 @@ module.exports = app => {
             type: STRING(100)
            
         },
-        product_type: {
+        product_name: {
             type: STRING(200)
           
         },
       
-        product_of_volume: {
-            type: INTEGER
-           
-        },
-        size_of_vessel: {
+       
+        vessel_size_dwt: {
             type: INTEGER
            
         },
@@ -78,15 +76,30 @@ module.exports = app => {
             type: INTEGER
         },
         
-        total_nominated_quantity_b: {
-            type: INTEGER
-          
+        agent: {
+            type: STRING(200)
         },
-       total_nominated_quantity_m: {
+        "product_quantity_in_l_obs" : {
             type: INTEGER
-           
+
         },
-        bliockchain_hex_key: {
+        "product_quantity_in_l_15_c": {
+            type: INTEGER
+
+        },
+        "product_quantity_in_mt": {
+            type: INTEGER
+
+        },
+        "product_quantity_in_mtv": {
+            type: INTEGER
+
+        },
+        "product_quantity_in_bls_60_f": {
+            type: INTEGER
+
+        },
+        blockchain_hex_key: {
             type: STRING(200)
            
         },
@@ -94,7 +107,7 @@ module.exports = app => {
             type: TEXT
            
         }
-        
+       
 
     }, {
         indexes: [

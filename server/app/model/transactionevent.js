@@ -26,23 +26,65 @@ module.exports = app => {
             type: STRING(50)
            
         },
-        product_type: {
+        work_order_status:{
+            type: STRING(50)
+
+        },
+        product_name: {
             type: STRING(100)
          
         },
-        tank_id: {
-            type: STRING(50)
-           
-        },
-        volume: {
+        "product_quantity_in_l_obs": {
             type: INTEGER
-           
+
         },
-        unit_of_measurement: {
-            type: STRING(20)
-           
+        "product_quantity_in_l_15_c": {
+            type: INTEGER
+
         },
-        bliockchain_hex_key: {
+        "product_quantity_in_mt": {
+            type: INTEGER
+
+        },
+        "product_quantity_in_mtv": {
+            type: INTEGER
+
+        },
+        "product_quantity_in_bls_60_f": {
+            type: INTEGER
+
+        },
+        tank_number: {
+            type: STRING(50)
+
+        },
+        order_sequence_number:{
+            type: STRING(50)
+
+        },
+     
+        surveyor: {
+            type: STRING(200)
+
+        },
+        location_to: {
+            type: STRING(200)
+
+        },
+        location_from: {
+            type: STRING(200)
+
+        },
+        delay_duration: {
+            type: STRING(200)
+
+        },
+        delay_reason: {
+            type: STRING(200)
+
+        },
+        
+        blockchain_hex_key: {
             type: STRING(200)
            
         }

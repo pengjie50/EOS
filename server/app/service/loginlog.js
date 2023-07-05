@@ -81,7 +81,7 @@ class LoginlogService extends Service {
         if (count_ > count) {
             return false
         }
-        return true
+        return count_
     }
     
     

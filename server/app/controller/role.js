@@ -33,7 +33,7 @@ class RoleController extends Controller {
     
       params.accessible_organization = params.accessible_organization.join(",")
       params.accessible_timestamp = params.accessible_timestamp.join(",")
-      params.accessible_feature = params.accessible_feature.join(",")
+    //  params.accessible_feature = params.accessible_permissions.join(",")
     const result = await service.role.add(params);
       this.addOperlog()
   }
@@ -43,7 +43,7 @@ class RoleController extends Controller {
       const params = ctx.request.body;
       params.accessible_organization = params.accessible_organization.join(",")
       params.accessible_timestamp = params.accessible_timestamp.join(",")
-      params.accessible_feature = params.accessible_feature.join(",")
+     // params.accessible_feature = params.accessible_permissions.join(",")
       const result = await service.role.mod(params);
       this.addOperlog()
   }

@@ -51,7 +51,8 @@ const createTitle = (alert, alertrule,flowMap) => {
     return str
 }
 
-
+var AlertruleTransactionMap = {}
+var AlertMap = {}
 class SendAlarmEmail extends Subscription {
    
     static get schedule() {
@@ -69,10 +70,31 @@ class SendAlarmEmail extends Subscription {
     async subscribe() {
        
         const { ctx, service, app } = this;
+
+        var AlertruleTransaction = await ctx.model.AlertruleTransaction.findAll()
+
+        AlertruleTransaction.forEach((t) => {
+            AlertruleTransactionMap[t.transaction_id+t.alert_rule_id]=t
+        })
+
+
+        var Alert = await ctx.model.Alert.findAll()
+
+        Alert.forEach((t) => {
+            AlertMap[t.transaction_id+ t.alert_rule_transaction_id+ t.type] = t
+        })
         
-        const SaveAlertruleTransaction = async (a, t,amber,red) =>{
+        const SaveAlertruleTransaction = async (a, t, amber, red) => {
+
+
+            var oh = AlertruleTransactionMap[t.id + a.id]
+
+            if (!oh) {
+                oh = await ctx.model.AlertruleTransaction.findOne({ where: { transaction_id: t.id, alert_rule_id: a.id } })
+                AlertruleTransactionMap[t.id + a.id]=oh
+            }
             
-            var h = await ctx.model.AlertruleTransaction.findOne({ where: { transaction_id: t.id, alert_rule_id: a.id } })
+            var h = oh
 
             var alert_rule_transaction_id = ''
 
@@ -112,10 +134,22 @@ class SendAlarmEmail extends Subscription {
             return alert_rule_transaction_id
 
         }
-        const alertDo = async (a, t, flowMap, type, alert_rule_transaction_id, trueTime ) => {
+        const alertDo = async (a, t, flowMap, type, alert_rule_transaction_id, trueTime) => {
 
-            var h = await ctx.model.Alert.findOne({ where: { transaction_id: t.id, alert_rule_transaction_id: alert_rule_transaction_id, type: type } })
 
+
+            var oh = AlertMap[t.id + alert_rule_transaction_id+type]
+
+            if (!oh) {
+                oh = await ctx.model.Alert.findOne({ where: { transaction_id: t.id, alert_rule_transaction_id: alert_rule_transaction_id, type: type } })
+                AlertMap[t.id + alert_rule_transaction_id + type] = oh
+            }
+
+            var h = oh
+
+
+
+         
             if (h) {
                 return
 
@@ -219,8 +253,9 @@ class SendAlarmEmail extends Subscription {
         var transactionList = await ctx.model.Transaction.findAll({ raw: true })
 
         var transactionList = transactionList.map((t) => {
-            t.terminal_name = terminalMap[t.terminal_id].name
-            t.jetty_name = jettyMap[t.jetty_id].name
+            console.log(t.terminal_id)
+            t.terminal_name = terminalMap[t.terminal_id]?.name  || ""
+            t.jetty_name = jettyMap[t.jetty_id]?.name || ""
             return t
         })
         var ids = transactionList.map((t) => {
@@ -298,25 +333,25 @@ class SendAlarmEmail extends Subscription {
            
 
             var t1 = false
-            if ((ar.size_of_vessel_from == null && ar.size_of_vessel_to == null)
-                || (ar.size_of_vessel_from <= transaction.size_of_vessel && transaction.size_of_vessel < ar.size_of_vessel_to)) {
+            if ((ar.vessel_size_dwt_from == null && ar.vessel_size_dwt_to == null)
+                || (ar.vessel_size_dwt_from <= transaction.vessel_size_dwt && transaction.vessel_size_dwt < ar.vessel_size_dwt_to)) {
 
                 t1 = true
             }
 
             var t2 = false
-            if (ar.total_nominated_quantity_from_m == null && ar.total_nominated_quantity_to_m == null && ar.total_nominated_quantity_from_b == null && ar.total_nominated_quantity_to_b == null) {
+            if (ar.product_quantity_in_mt_from == null && ar.product_quantity_in_mt_to == null && ar.product_quantity_in_bls_60_f_from == null && ar.product_quantity_in_bls_60_f_to == null) {
 
                 t2 = true
-            } else if (ar.total_nominated_quantity_from_b == null && ar.total_nominated_quantity_to_b == null) {
+            } else if (ar.product_quantity_in_bls_60_f_from == null && ar.product_quantity_in_bls_60_f_to == null) {
 
-                if (ar.total_nominated_quantity_from_m <= transaction.total_nominated_quantity_m && transaction.total_nominated_quantity_m < ar.total_nominated_quantity_to_m) {
+                if (ar.product_quantity_in_mt_from <= transaction.product_quantity_in_mt && transaction.product_quantity_in_mt < ar.product_quantity_in_mt_to) {
                     t2 = true
 
                 }
-            } else if (ar.total_nominated_quantity_from_m == null && ar.total_nominated_quantity_to_m == null) {
+            } else if (ar.product_quantity_in_mt_from == null && ar.product_quantity_in_mt_to == null) {
 
-                if (ar.total_nominated_quantity_from_b <= transaction.total_nominated_quantity_b && transaction.total_nominated_quantity_b < ar.total_nominated_quantity_to_b) {
+                if (ar.product_quantity_in_bls_60_f_from <= transaction.product_quantity_in_bls_60_f && transaction.product_quantity_in_bls_60_f < ar.product_quantity_in_bls_60_f_to) {
                     t2 = true
 
                 }
@@ -365,7 +400,7 @@ class SendAlarmEmail extends Subscription {
                 if (ar.type == 0) {
                    
 
-                    if (flowMap[lastEvent.flow_id].sort > flowMap[ar.flow_id].sort) {
+                    if (flowMap[lastEvent.flow_id] && flowMap[ar.flow_id] && flowMap[lastEvent.flow_id].sort > flowMap[ar.flow_id].sort) {
 
 
 
@@ -389,7 +424,7 @@ class SendAlarmEmail extends Subscription {
 
                        
 
-                        if (trueTime > ar_amber_time) {
+                        if (ar_amber_time > 0  && trueTime > ar_amber_time && trueTime < ar_red_time) {
 
                             var alert_rule_transaction_id = await SaveAlertruleTransaction(ar, transaction,1,null)
 
@@ -400,7 +435,7 @@ class SendAlarmEmail extends Subscription {
                         }
 
 
-                        if (trueTime > ar_red_time) {
+                        if (ar_red_time>0 && trueTime > ar_red_time) {
 
                             var alert_rule_transaction_id = await SaveAlertruleTransaction(ar, transaction,null,1)
                             await alertDo(ar, transaction, flowMap, 1, alert_rule_transaction_id, trueTime)
@@ -419,7 +454,7 @@ class SendAlarmEmail extends Subscription {
 
                     
 
-                    if (flowMap[lastEvent.flow_id].sort >= flowMap[ar.flow_id].sort) {
+                    if (flowMap[lastEvent.flow_id] && flowMap[ar.flow_id] && flowMap[lastEvent.flow_id].sort >= flowMap[ar.flow_id].sort) {
 
                         if (!transactioneeventMap ) {
                             step1++
@@ -436,7 +471,10 @@ class SendAlarmEmail extends Subscription {
                        
                         var lt = transactioneeventMap[ar.flow_id_to]
                         if (!lt) {
-                            lt = new Date()
+                            //lt = new Date()
+                            step1++
+                            await oneDo()
+                            return
                         } else {
                           lt= lt.event_time
                         }
@@ -453,7 +491,7 @@ class SendAlarmEmail extends Subscription {
 
 
 
-                        if (trueTime > ar_amber_time) {
+                        if (ar_amber_time > 0 && trueTime > ar_amber_time && trueTime < ar_red_time) {
 
                             var alert_rule_transaction_id = await SaveAlertruleTransaction(ar, transaction, 1, null)
 
@@ -464,7 +502,7 @@ class SendAlarmEmail extends Subscription {
                         }
 
 
-                        if (trueTime > ar_red_time) {
+                        if (ar_red_time>0 && trueTime > ar_red_time) {
 
                             var alert_rule_transaction_id = await SaveAlertruleTransaction(ar, transaction, null, 1)
                             await alertDo(ar, transaction, flowMap, 1, alert_rule_transaction_id, trueTime)
@@ -473,8 +511,16 @@ class SendAlarmEmail extends Subscription {
                         var alert_rule_transaction_id = await SaveAlertruleTransaction(ar, transaction, null, null)
                     }
                 } else if (ar.type == 2) {
-                    console.log("4444444444444444444444444444444444444")
-                    var trueTime = (new Date()).getTime() / 1000 - (new Date(oneEvent.event_time)).getTime() / 1000
+
+                    if (transaction.status == 1 && lastEvent && oneEvent) {
+                        
+                    } else {
+                        step1++
+                        await oneDo()
+                        return
+                    }
+                   
+                    var trueTime = (new Date(lastEvent.event_time)).getTime() / 1000 - (new Date(oneEvent.event_time)).getTime() / 1000
                     await SaveAlertruleTransaction(ar, transaction)
 
                     
@@ -483,7 +529,7 @@ class SendAlarmEmail extends Subscription {
 
 
 
-                    if (trueTime > ar_amber_time) {
+                    if (ar_amber_time > 0 && trueTime > ar_amber_time && trueTime < ar_red_time) {
 
                         var alert_rule_transaction_id = await SaveAlertruleTransaction(ar, transaction, 1, null)
 
@@ -494,7 +540,7 @@ class SendAlarmEmail extends Subscription {
                     }
 
 
-                    if (trueTime > ar_red_time) {
+                    if (ar_red_time>0 && trueTime > ar_red_time) {
 
                         var alert_rule_transaction_id = await SaveAlertruleTransaction(ar, transaction, null, 1)
                         await alertDo(ar, transaction, flowMap, 1, alert_rule_transaction_id, trueTime)

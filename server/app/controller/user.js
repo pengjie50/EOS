@@ -89,7 +89,18 @@ class UserController extends Controller {
       this.addOperlog()
    
    
-  }
+    }
+
+    async acceptInvitation() {
+        const { ctx, service } = this;
+
+        const params = ctx.request.query;
+        await service.user.acceptInvitation(params);
+        this.addOperlog()
+
+
+    }
+    
 
   async del() {
     const {ctx, service} = this;

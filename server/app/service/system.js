@@ -78,6 +78,52 @@ class SystemService extends Service {
         ctx.body = { success: true, data: data }
     }
 
+    async receiveSGTradexData(params) {
+
+        const { ctx, app } = this;
+
+        if (!ctx.checkToken) {
+            ctx.status = 401;
+            ctx.body = { error: "unauthorized" }
+            return
+        }
+        var res=null
+        if (params.payload) {
+            var arr = params.payload.map((a) => {
+                var type = 0
+                var work_order_id = a.towoi_work_order_id || a.tosi_work_order_id || null
+                var imo_number = a.toai_imo_number || a.atosi_work_order_id || a.pilot_imo_no || a.pilot_lqb_imo_no || null
+                if (a.hasOwnProperty("toai_imo_number")) {
+                    type = 1 
+                } else if (a.hasOwnProperty("towoi_work_order_id")) {
+                    type = 2
+                } else if (a.hasOwnProperty("tosi_work_order_id")) {
+                    type = 3
+                } else if (a.hasOwnProperty("pilot_imo_no")) {
+                    type = 4
+                } else if (a.hasOwnProperty("pilot_lqb_imo_no")) {
+                    type = 5
+                }
+               return  {
+                   json_string: JOSN.stringify(a),
+                   work_order_id: work_order_id,
+                   imo_number: imo_number,
+                   already_used: 0,
+                   type: type
+               }
+
+
+            })
+
+           res= await ctx.model.bulkCreate(arr)
+        }
+       
+        ctx.status = 200;
+        ctx.body = { success: true }
+        
+        
+    }
+
     
 }
 

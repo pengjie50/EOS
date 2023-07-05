@@ -19,6 +19,10 @@ module.exports = app => {
         permission_id:UUID
        
     }, {
+        indexes: [
+            {
+                fields: ['role_id', 'permission_id']
+            }],
         timestamps: false,
         tableName: 'role_permission',
       

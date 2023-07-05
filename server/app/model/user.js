@@ -63,10 +63,7 @@ module.exports = app => {
             type: STRING(500)
            
         },
-        email_notification: {
-            type: TINYINT
-
-        },
+        
         login_time: {
             type: INTEGER
           

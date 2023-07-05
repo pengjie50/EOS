@@ -100,25 +100,25 @@ class AlertruleService extends Service {
                         return false
                     }
                     var t1 = false
-                    if ((ar.size_of_vessel_from == null && ar.size_of_vessel_to == null)
-                        || (ar.size_of_vessel_from <= transaction.size_of_vessel && transaction.size_of_vessel < ar.size_of_vessel_to)) {
+                    if ((ar.vessel_size_dwt_from == null && ar.vessel_size_dwt_to == null)
+                        || (ar.vessel_size_dwt_from <= transaction.vessel_size_dwt && transaction.vessel_size_dwt < ar.vessel_size_dwt_to)) {
 
                         t1 = true
                     }
 
                     var t2 = false
-                    if (ar.total_nominated_quantity_from_m == null && ar.total_nominated_quantity_to_m == null && ar.total_nominated_quantity_from_b == null && ar.total_nominated_quantity_to_b == null) {
+                    if (ar.product_quantity_in_mt_from == null && ar.product_quantity_in_mt_to == null && ar.product_quantity_in_bls_60_f_from == null && ar.product_quantity_in_bls_60_f_to == null) {
 
                         t2 = true
-                    } else if (ar.total_nominated_quantity_from_b == null && ar.total_nominated_quantity_to_b == null) {
+                    } else if (ar.product_quantity_in_bls_60_f_from == null && ar.product_quantity_in_bls_60_f_to == null) {
 
-                        if (ar.total_nominated_quantity_from_m <= transaction.total_nominated_quantity_m && transaction.total_nominated_quantity_m < ar.total_nominated_quantity_to_m) {
+                        if (ar.product_quantity_in_mt_from <= transaction.product_quantity_in_mt && transaction.product_quantity_in_mt < ar.product_quantity_in_mt_to) {
                             t2 = true
 
                         }
-                    } else if (ar.total_nominated_quantity_from_m == null && ar.total_nominated_quantity_to_m == null) {
+                    } else if (ar.product_quantity_in_mt_from == null && ar.product_quantity_in_mt_to == null) {
 
-                        if (ar.total_nominated_quantity_from_b <= transaction.total_nominated_quantity_b && transaction.total_nominated_quantity_b < ar.total_nominated_quantity_to_b) {
+                        if (ar.product_quantity_in_bls_60_f_from <= transaction.product_quantity_in_bls_60_f && transaction.product_quantity_in_bls_60_f < ar.product_quantity_in_bls_60_f_to) {
                             t2 = true
 
                         }
@@ -256,12 +256,12 @@ class AlertruleService extends Service {
                  arr.push({
                      company_id: params.company_id || ctx.user.company_id,
                      user_id: ctx.user.user_id,
-                     total_nominated_quantity_from_m: params.total_nominated_quantity_from_m,
-                     total_nominated_quantity_to_m: params.total_nominated_quantity_to_m,
-                     total_nominated_quantity_from_b: params.total_nominated_quantity_from_b,
-                     total_nominated_quantity_to_b: params.total_nominated_quantity_to_b,
-                     size_of_vessel_from: params.size_of_vessel_from,
-                     size_of_vessel_to: params.size_of_vessel_to,
+                     product_quantity_in_mt_from: params.product_quantity_in_mt_from,
+                     product_quantity_in_mt_to: params.product_quantity_in_mt_to,
+                     product_quantity_in_bls_60_f_from: params.product_quantity_in_bls_60_f_from,
+                     product_quantity_in_bls_60_f_to: params.product_quantity_in_bls_60_f_to,
+                     vessel_size_dwt_from: params.vessel_size_dwt_from,
+                     vessel_size_dwt_to: params.vessel_size_dwt_to,
                      flow_id: params[a + '_type'] == '1'?params[a + '_from']:params[a + '_flow_id'],
                      flow_id_to: params[a + '_type'] == '1'?params[a + '_to']:null,
 

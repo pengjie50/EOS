@@ -7,7 +7,7 @@ const uuid = require('uuid');
 
 class BaseController extends Controller {
   
-  
+   
 
   async addOperlog() {
     const {ctx, service} = this;
@@ -58,7 +58,7 @@ class BaseController extends Controller {
           operlog.device_type = 'PC'
          
       }
-      
+      operlog.activity_duration = (new Date()).getTime() -ctx.activity_duration_start.getTime()
       operlog.company_id = ctx.user.company_id
       operlog.user_id = ctx.user.user_id
       if (ctx.user.role_type == "Super") {
@@ -86,7 +86,7 @@ class BaseController extends Controller {
         operlog.err_code = params.errorCode
 
         
-
+        operlog.activity_duration = (new Date()).getTime() - ctx.activity_duration_start.getTime()
         operlog.device_type = "PC"
        
         operlog.type = 3

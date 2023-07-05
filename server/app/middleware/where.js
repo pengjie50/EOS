@@ -90,6 +90,7 @@ module.exports = (options, app) => {
 					|| ctx.request.url == '/api/transaction/list'
 					|| ctx.request.url == '/api/reportSummary/list'
 					|| ctx.request.url == '/api/flow/list'
+					|| ctx.request.url == '/api/interfacedata/list'
 					//|| ctx.request.url == '/api/alert/list'
 					//|| ctx.request.url == '/api/alertrule/list'
 					|| ctx.request.url == '/api/sysconfig/list'

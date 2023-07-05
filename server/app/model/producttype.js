@@ -7,7 +7,7 @@
 'use strict'
 module.exports = app => {
     const { DATE, STRING, INTEGER, UUID, TEXT, DataTypes } = app.Sequelize;
-    const Model = app.model.define('product_type', {
+    const Model = app.model.define('product_name', {
         id: {
             type: UUID,
             primaryKey: true,
@@ -33,7 +33,7 @@ module.exports = app => {
         }],
         
         timestamps: false,
-        tableName: 'product_type'
+        tableName: 'product_name'
         
     });
 

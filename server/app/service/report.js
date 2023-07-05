@@ -210,6 +210,7 @@ class ReportService extends Service {
         const {ctx} = this;
        
         params.company_id = ctx.user.company_id
+        params.user_id = ctx.user.user_id
         const res = await ctx.model.Report.create(params);
         if(res){
             ctx.body = { success: true,data:res};

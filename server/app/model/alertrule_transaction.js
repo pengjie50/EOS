@@ -15,10 +15,12 @@ module.exports = app => {
             defaultValue: DataTypes.UUIDV4
 
         },
-        company_id: {
+        alert_rule_id: {
             type: UUID
 
         },
+
+       
         transaction_id: {
             type: UUID
 
@@ -33,7 +35,14 @@ module.exports = app => {
 
 
         },
-        alert_rule_id: {
+        
+        alertrule_id: {
+            type: INTEGER,
+            allowNull: false,
+            autoIncrement: true
+
+        },
+        company_id: {
             type: UUID
 
         },
@@ -49,28 +58,28 @@ module.exports = app => {
             type: UUID
 
         },
-        total_nominated_quantity_from_m: {
+        product_quantity_in_mt_from: {
             type: INTEGER,
 
         },
-        total_nominated_quantity_to_m: {
+        product_quantity_in_mt_to: {
             type: INTEGER,
 
         },
-        total_nominated_quantity_from_b: {
+        product_quantity_in_bls_60_f_from: {
             type: INTEGER,
 
         },
-        total_nominated_quantity_to_b: {
+        product_quantity_in_bls_60_f_to: {
             type: INTEGER,
 
         },
 
-        size_of_vessel_from: {
+        vessel_size_dwt_from: {
             type: INTEGER,
 
         },
-        size_of_vessel_to: {
+        vessel_size_dwt_to: {
             type: INTEGER,
 
         },
@@ -109,17 +118,17 @@ module.exports = app => {
     }, {
         indexes: [
             {
-                fields: ['transaction_id', 'alert_rule_id']
+                fields: ['transaction_id', 'alert_rule_id','alertrule_id']
             },
             
             {
-                fields: ['flow_id', 'type', 'user_id', 'size_of_vessel_from', 'size_of_vessel_to']
+                fields: ['flow_id', 'type', 'user_id', 'vessel_size_dwt_from', 'vessel_size_dwt_to']
             },
             {
-                fields: ['total_nominated_quantity_from_m', 'total_nominated_quantity_to_m']
+                fields: ['product_quantity_in_mt_from', 'product_quantity_in_mt_to']
             },
             {
-                fields: ['total_nominated_quantity_from_b', 'total_nominated_quantity_to_b']
+                fields: ['product_quantity_in_bls_60_f_from', 'product_quantity_in_bls_60_f_to']
             }
 
         ],

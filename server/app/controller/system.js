@@ -24,8 +24,16 @@ class SystemController extends Controller {
         const res = await service.system.fieldSelectData(params);
 
     }
+
+
+    async receiveSGTradexData() {
+        const { ctx, service, app } = this;
+        const params = ctx.request.body;
+        const res = await service.system.receiveSGTradexData(params);
+
+    }
     
-  
+    
   
 
 }

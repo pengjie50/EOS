@@ -6,9 +6,9 @@
 module.exports = app => {
     const { router, controller } = app;
     app.beforeStart(async () => {
-       // await app.model.Operlog.sync({ alter: true });//force  false 为不覆盖 true会删除再创建; alter true可以 添加或删除字段;
+       //await app.model.Transaction.sync({ alter: true });//force  false 为不覆盖 true会删除再创建; alter true可以 添加或删除字段;
     });
-    
+    //truncate table alert; truncate table alertrule_transaction;
     router.get('/', controller.home.index);
     router.post('/api/user/login', controller.user.login);
     router.post('/api/user/logout', controller.user.logout);
@@ -20,6 +20,14 @@ module.exports = app => {
     router.post('/api/user/retrievePassword', controller.user.retrievePassword);
     router.post('/api/user/modifyPassword', controller.user.modifyPassword);
     router.post('/api/user/checkEmail', controller.user.checkEmail);
+    router.get('/api/user/acceptInvitation', controller.user.acceptInvitation);
+    
+
+    router.get('/api/receiveSGTradexData/data/receive/:data_element_id', controller.system.receiveSGTradexData);
+
+   
+
+
     
     
 
@@ -63,6 +71,12 @@ module.exports = app => {
     router.post('/api/jetty/add', controller.jetty.add);
     router.post('/api/jetty/mod', controller.jetty.mod);
     router.post('/api/jetty/del', controller.jetty.del);
+
+
+    router.post('/api/interfacedata/list', controller.interfacedata.list);
+    router.post('/api/interfacedata/add', controller.interfacedata.add);
+    router.post('/api/interfacedata/mod', controller.interfacedata.mod);
+    router.post('/api/interfacedata/del', controller.interfacedata.del);
 
     router.post('/api/permissiontorole/list', controller.rolepermission.list);
     router.post('/api/permissiontorole/add', controller.rolepermission.add);

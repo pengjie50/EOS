@@ -7,7 +7,7 @@ module.exports = (options, app) => {
         } else {
 
             var Authorization = ctx.get('Authorization')
-
+            ctx.activity_duration_start=new Date
             console.log("ddddddd===================================================", Authorization)
            
             let decoded;

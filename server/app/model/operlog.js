@@ -19,6 +19,11 @@ module.exports = app => {
             type: STRING(10)
           
         },
+        activity_duration: {
+            type: INTEGER
+
+        },
+        
         type: {
             type: TINYINT
          
@@ -80,7 +85,7 @@ module.exports = app => {
     }, {
         indexes: [
         {
-                fields: ['type', 'oper_time', 'status', 'user_id', 'module','action']
+                fields: ['type', 'oper_time', 'status', 'user_id', 'module', 'action', 'url','ip']
         }],
         timestamps: false,
         tableName: 'oper_log',
