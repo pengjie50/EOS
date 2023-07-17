@@ -20,47 +20,47 @@ module.exports = app => {
 
         },
         name: {
-          type: STRING(100)
-          
+            type: STRING(100)
+
         },
         depth_alongside: {
             type: STRING(100)
-           
+
         },
         depth_approaches: {
             type: STRING(100)
-           
+
         },
         max_loa: {
             type: STRING(100)
-           
+
         },
         min_loa: {
             type: STRING(100)
-           
+
         },
         max_displacement: {
             type: STRING(100)
-           
+
         },
         mla_envelop_at_mhws_3m: {
             type: STRING(100)
-           
+
         },
         terminal_id: {
             type: UUID
-           
+
         }
-       
+
     }, {
         indexes: [
-        {
-          fields: ['name']
-        }],
-        
+            {
+                fields: ['name']
+            }],
+
         timestamps: false,
         tableName: 'jetty'
-        
+
     });
 
     return Model;

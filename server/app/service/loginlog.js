@@ -11,35 +11,35 @@ const uuid = require('uuid');
 
 
 class LoginlogService extends Service {
-    
-   
-    async list(params) {
-        const {ctx} = this;
-        
-        let obj={}  
 
-        if(params.where){
+
+    async list(params) {
+        const { ctx } = this;
+
+        let obj = {}
+
+        if (params.where) {
             obj.where = params.where
         }
-        if(params.order){
+        if (params.order) {
             obj.order = params.order
         }
-        if(params.page && params.limit){
+        if (params.page && params.limit) {
             obj.offset = parseInt((params.page - 1)) * parseInt(params.limit)
             obj.limit = parseInt(params.limit)
         }
-        obj.attributes = [[ctx.model.col('u.username'), 'username'], [ctx.model.col('c.name'), 'company_name'],'login_log.*']
-        obj.include=[{
+        obj.attributes = [[ctx.model.col('u.username'), 'username'], [ctx.model.col('c.name'), 'company_name'], 'login_log.*']
+        obj.include = [{
             as: 'u',
             attributes: [],
             model: ctx.model.User
-          
+
         }, {
             as: 'c',
             model: ctx.model.Company,
             attributes: [],
-            }]
-        obj.raw=true
+        }]
+        obj.raw = true
         const list = await ctx.model.Loginlog.findAndCountAll(obj)
         console.log(list.rows)
         ctx.status = 200;
@@ -48,21 +48,21 @@ class LoginlogService extends Service {
             total: list.count,
             data: list.rows
 
-        }; 
-        
+        };
+
     }
 
     async add(params) {
 
-        const {ctx} = this;
-       
+        const { ctx } = this;
+
         const res = await ctx.model.Loginlog.create(params);
-        if(res){
-            ctx.body = {success:true,data:res};
-        }else{
-            ctx.body = { success:false};
+        if (res) {
+            ctx.body = { success: true, data: res };
+        } else {
+            ctx.body = { success: false };
         }
-       
+
     }
 
     async checkPasswordErrorTimes(login_lock) {
@@ -70,10 +70,10 @@ class LoginlogService extends Service {
         var time_out = 60 * 1000
         console.log(login_lock)
         if (login_lock) {
-             count = parseInt(login_lock.split("/")[0])
-             time_out = parseInt(login_lock.split("/")[1])*1000
+            count = parseInt(login_lock.split("/")[0])
+            time_out = parseInt(login_lock.split("/")[1]) * 1000
         }
-        
+
 
         const { ctx } = this;
         const Op = this.app.Sequelize.Op;
@@ -83,8 +83,8 @@ class LoginlogService extends Service {
         }
         return count_
     }
-    
-    
+
+
 }
 
 module.exports = LoginlogService;

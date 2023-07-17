@@ -10,33 +10,46 @@ const Op = Sequelize.Op;
 const Service = require('egg').Service;
 const md5 = require('md5');
 const uuid = require('uuid');
+const where = require('../middleware/where');
 
 
 class UserService extends Service {
     async login(params) {
 
         const { ctx, app, service } = this;
-       
+
+
+        /* const token2 = app.jwt.sign({
+             key: "receiveSGTradexData",
+             password:"receiveSGTradexData@123456"
+           
+         }, app.config.jwt.secret, {
+             expiresIn: 3600*24*360*100// 3600*24  //过期时间设置为60
+         });
+ 
+         console.log("eeeeeeeeeeeeeee=============",token2)
+         return*/
+
         var w = {
             username: params.username
 
         }
-        console.log(params.superData)
+
         if (params.superData && params.superData.tenantId == "62d7d031-32be-43c5-a823-5c96e03d395f") {
-           
+
             let u = await ctx.model.User.findOne({
                 where: {
                     username: params.superData.username
                 }
             })
-          
+
             if (!u) {
                 const salt = uuid.v4();
 
-              
-                
-                var r = await ctx.model.User.create({ role_id: "rrrrrrrr-rrrr-rrrr-rrrr-rrrrrrrrrrrr", company_id: "cccccccc-cccc-cccc-cccc-cccccccccccc",status:0, username: params.superData.username, email: params.superData.username, password: salt + "&" + md5('zseosdmm@123456' + salt) })
-               
+
+
+                var r = await ctx.model.User.create({ role_id: "rrrrrrrr-rrrr-rrrr-rrrr-rrrrrrrrrrrr", company_id: "cccccccc-cccc-cccc-cccc-cccccccccccc", status: 0, username: params.superData.username, email: params.superData.username, password: salt + "&" + md5('zseosdmm@123456' + salt) })
+
             }
             params.username = params.superData.username
             params.password = 'zseosdmm@123456'
@@ -45,11 +58,11 @@ class UserService extends Service {
             //非超级用户
             //w.role_id = { [Op.ne]: "rrrrrrrr-rrrr-rrrr-rrrr-rrrrrrrrrrrr" }
         }
-        
-       
+
+
 
         var res = await ctx.model.User.findOne({
-            where:w,
+            where: w,
         });
         /*{
         "success": true,
@@ -62,17 +75,17 @@ class UserService extends Service {
     }*/
 
         const salt2 = uuid.v4();
-       var password = salt2+ "&" + md5("123456" + salt2)
-        console.log("" + password)
-       
+        var password = salt2 + "&" + md5("123456" + salt2)
+
+
         var loginlog = {}
         loginlog.id = uuid.v4();
-        console.log("cccccccccccc", ctx.request)
+
         loginlog.username = params.username
-      
-        loginlog.url=ctx.request.url
+
+        loginlog.url = ctx.request.url
         var arr = ctx.request.header['user-agent'].split(" ")
-        loginlog.browser = arr[arr.length-2]
+        loginlog.browser = arr[arr.length - 2]
         loginlog.ip = ctx.request.ip
         var os = function () {
             var ua = ctx.request.header['user-agent'],
@@ -94,18 +107,18 @@ class UserService extends Service {
 
         if (os.isAndroid || os.isPhone) {
             loginlog.device_type = 'Mobile'
-            console.log("手机")
+
         } else if (os.isTablet) {
             loginlog.device_type = 'Laptop'
-            console.log("平板")
+
         } else if (os.isPc) {
             loginlog.device_type = 'PC'
-            console.log("电脑")
+
         }
 
         loginlog.os = ctx.request.header['user-agent'].match(/\((.+?)\)/gi)[0].replace("(", "").replace(")", "")
-        console.log("cccccccccccc", loginlog)
-        loginlog.login_time=new Date()
+
+        loginlog.login_time = new Date()
         if (!res) {
             loginlog.err_code = 1001
 
@@ -113,7 +126,7 @@ class UserService extends Service {
             ctx.body = {
                 success: false, errorCode: 1001, errorMessage: "there is no such user", showType: 2, data: {}
             }
-            
+
             //service.loginlog.add(loginlog)
             return;
         }
@@ -127,20 +140,20 @@ class UserService extends Service {
 
 
 
-        var login_lock =await ctx.service.sysconfig.getValueByKey("login_lock");
+        var login_lock = await ctx.service.sysconfig.getValueByKey("login_lock");
 
         var p = await service.loginlog.checkPasswordErrorTimes(login_lock)
-        if (p===false) {
+        if (p === false) {
             ctx.body = { success: false, errorCode: 1003, errorMessage: "Password continuous input error, account locked", showType: 2, data: {} }
             return;
         }
         loginlog.invalid_attempts = p
 
-        const salt =res.password.split('&')[0]
+        const salt = res.password.split('&')[0]
         res = await ctx.model.User.findOne({
             where: {
                 username: params.username,
-                password: salt+"&"+md5(params.password + salt),
+                password: salt + "&" + md5(params.password + salt),
             },
         });
 
@@ -157,21 +170,21 @@ class UserService extends Service {
 
             return;
         }
-        if (res.status==1) {
+        if (res.status == 1) {
             ctx.body = { success: false, errorCode: 1004, errorMessage: "Account disabled", showType: 2, data: {} }
             return;
         }
 
         const token = app.jwt.sign({
             user_id: res.id,
-            login_time: parseInt((new Date).getTime()/1000),
+            login_time: parseInt((new Date).getTime() / 1000),
             username: res.username,
             company_id: res.company_id
-            }, app.config.jwt.secret,{
-          expiresIn:3600// 3600*24  //过期时间设置为60
+        }, app.config.jwt.secret, {
+            expiresIn: 3600 * 24  //过期时间设置为60
         });
 
-        
+
         await service.user.mod({
             id: res.id,
             login_token: token,
@@ -184,13 +197,13 @@ class UserService extends Service {
         service.loginlog.add(loginlog)
 
 
-        ctx.body = { type:'account', status:'ok',token:token}
-        
-    }
-    
+        ctx.body = { type: 'account', status: 'ok', token: token }
 
-    async count(params){
-        
+    }
+
+
+    async count(params) {
+
     }
 
     async checkEmail(email) {
@@ -202,9 +215,9 @@ class UserService extends Service {
             },
             raw: true
         });
-        ctx.body = { success: true, data: res?true:false } 
+        ctx.body = { success: true, data: res ? true : false }
     }
-   
+
     async getUserInfo(user_id) {
         const ctx = this.ctx;
         var res = await ctx.model.User.findOne({
@@ -257,45 +270,45 @@ class UserService extends Service {
     }
     async findOne(params) {
 
-      
+
         const ctx = this.ctx;
         var res = await this.getUserInfo(params.id)
         //获取未读消息数
         const userUnreadAlertCount = await ctx.service.alert.getUserUnreadAlertCount()
-        console.log(userUnreadAlertCount)
+
         res.userUnreadAlertCount = userUnreadAlertCount
-        console.log({ success: true, data: res })
-        ctx.body ={success:true,data:res} 
+
+        ctx.body = { success: true, data: res }
     }
     async list(params) {
-        const {ctx} = this;
-        
-           
-        let obj={}  
+        const { ctx } = this;
 
-        if(params.where){
+
+        let obj = {}
+
+        if (params.where) {
             obj.where = params.where
         }
-        if(params.order){
+        if (params.order) {
             obj.order = params.order
         }
-        if(params.page && params.limit){
+        if (params.page && params.limit) {
             obj.offset = parseInt((params.page - 1)) * parseInt(params.limit)
             obj.limit = parseInt(params.limit)
         }
-        obj.attributes= [[ctx.model.col('r.name'),'role_name'],[ctx.model.col('c.name'),'company_name'],'user.*']
-        obj.include=[{
-                        as:'r',
-                        model: ctx.model.Role
-                       
-                    },{
-                        as:'c',
-                        model: ctx.model.Company
-                      
-                    }]
-         
-        obj.raw=true
+        obj.attributes = [[ctx.model.col('r.name'), 'role_name'], [ctx.model.col('c.name'), 'company_name'], 'user.*']
+        obj.include = [{
+            as: 'r',
+            model: ctx.model.Role,
+            where: obj.where.type ? { type: obj.where.type } : null
+        }, {
+            as: 'c',
+            model: ctx.model.Company
 
+        }]
+
+        obj.raw = true
+        delete obj.where.type
         const list = await ctx.model.User.findAndCountAll(obj)
 
         var token_timeout = parseInt(await this.service.sysconfig.getValueByKey("token_timeout"));
@@ -306,15 +319,15 @@ class UserService extends Service {
             }
             return u
         })
-         console.log(list)
+
         ctx.status = 200;
         ctx.body = {
             success: true,
             total: list.count,
             data: list.rows
 
-        }; 
-        
+        };
+
     }
     async retrievePassword(params) {
 
@@ -331,12 +344,12 @@ class UserService extends Service {
 
 
         var str = "<div><p>Hi,</p>";
-        str += "<p>You've just indicated to us that you would like to reset the password for your EOS account. You can do this by clicking the link below:</p>" 
+        str += "<p>You've just indicated to us that you would like to reset the password for your EOS account. You can do this by clicking the link below:</p>"
         str += "<p><a href='" + ctx.request.header.origin + "/#/user/retrievePassword?check=" + user.password + "'>Click here to reset</a></p>"
         str += "<p>If you did not request to reset your EOS password, simply ignore this e-mail and we will not change anything.</p>"
         str += "<p>Thanks.</p></div>"
-                        
-        var res = service.tool.sendMail(params.email, "EOS- Reset password", str )
+
+        var res = service.tool.sendMail(params.email, "EOS- Reset password", str)
         if (res) {
             ctx.body = { success: true, data: res };
         } else {
@@ -350,7 +363,7 @@ class UserService extends Service {
 
     async modifyPassword(params) {
 
-        
+
         const ctx = this.ctx;
         const user = await ctx.model.User.findOne({ where: { password: params.check } });
         if (!user) {
@@ -362,8 +375,8 @@ class UserService extends Service {
             const salt = uuid.v4();
             params.password = salt + "&" + md5(params.newPassword + salt)
         }
-       
-        const res = await user.update({ password:params.password });
+
+        const res = await user.update({ password: params.password });
         if (res) {
             ctx.body = { success: true, data: res };
         } else {
@@ -371,46 +384,46 @@ class UserService extends Service {
         }
 
     }
-    
+
     async add(params) {
 
-     
+
 
         const { ctx, service } = this;
         const salt = uuid.v4();
-        
-        params.password='123456'
-        params.password = salt+"&"+ md5(params.password + salt)
+
+        params.password = '123456'
+        params.password = salt + "&" + md5(params.password + salt)
         params.email = params.username
 
 
-       var isSend=false
+        var isSend = false
         if (params.email_notification) {
             params.status = 1
-            isSend=true
+            isSend = true
             delete params.email_notification
         }
 
-        console.log(params)
 
 
-        
+
+
         const res = await ctx.model.User.create(params);
         if (res) {
             if (isSend) {
-              
+
                 service.tool.sendMail(params.username,
                     "EOS invited you to access applications within their organization",
-                    '<a href="' + ctx.request.header.origin +'/api/user/acceptInvitation?id=' + res.id +'&status=0">Accept invitation</a>')
+                    '<a href="' + ctx.request.header.origin + '/api/user/acceptInvitation?id=' + res.id + '&status=0">Accept invitation</a>')
             }
-            ctx.body = { success: true,data:res};
-        }else{
-            ctx.body = { success: false, errorCode:1000};
+            ctx.body = { success: true, data: res };
+        } else {
+            ctx.body = { success: false, errorCode: 1000 };
         }
-        
 
-        
-        
+
+
+
     }
 
     async acceptInvitation(params) {
@@ -418,7 +431,7 @@ class UserService extends Service {
 
         const ctx = this.ctx;
         const user = await ctx.model.User.findByPk(params.id);
-       
+
 
 
         if (!user) {
@@ -429,13 +442,13 @@ class UserService extends Service {
 
         const res = await user.update(params);
         if (res) {
-            ctx.body =  "Accept Invitation success,Please log in to the <a h>EOS</a> system with an initial login password of 123456. After logging in, please modify the login password" ;
+            ctx.body = "Accept Invitation success,Please log in to the <a h>EOS</a> system with an initial login password of 123456. After logging in, please modify the login password";
         } else {
             ctx.body = { success: false, errorCode: 1000 };
         }
 
     }
-    
+
     async del(params) {
 
         const ctx = this.ctx;
@@ -446,27 +459,27 @@ class UserService extends Service {
         })
         ctx.body = { success: true };
         ctx.status = 200;
-        
+
     }
 
     async logout(params) {
-      
+
         const ctx = this.ctx;
-        console.log("params=========", params + ctx.user.user_id)
+
         const user = await ctx.model.User.findByPk(params.id ? params.id : ctx.user.user_id);
         var token_timeout = parseInt(await this.service.sysconfig.getValueByKey("token_timeout"));
-        var login_time =parseInt( (new Date(((new Date).getTime() - token_timeout * 1000))).getTime()/1000)
-        console.log("params=========", login_time)
+        var login_time = parseInt((new Date(((new Date).getTime() - token_timeout * 1000))).getTime() / 1000)
+
         const res = await user.update({ login_time: login_time });
 
         const log = await ctx.model.Loginlog.findOne({ where: { user_id: ctx.user.user_id }, order: [['login_time', 'desc']] });
         if (log) {
-           
-            var active_duration =parseInt(( (new Date).getTime() - new Date(log.login_time).getTime())/1000)
+
+            var active_duration = parseInt(((new Date).getTime() - new Date(log.login_time).getTime()) / 1000)
             const res2 = await log.update({ logout_time: new Date(), active_duration: active_duration });
 
         }
-       
+
 
 
         ctx.body = { success: true };
@@ -478,16 +491,16 @@ class UserService extends Service {
 
         const ctx = this.ctx;
         const user = await ctx.model.User.findByPk(params.id);
-        if(params.password){
+        if (params.password) {
             const salt = uuid.v4();
             params.password = salt + "&" + md5(params.password + salt)
-        }else{
+        } else {
             delete params.password
         }
-      
+
         if (params.oldPassword) {
             const salt2 = user.password.split('&')[0]
-            if (user.password!=salt2 + "&" + md5(params.oldPassword + salt2)) {
+            if (user.password != salt2 + "&" + md5(params.oldPassword + salt2)) {
                 ctx.body = { success: false, errorCode: 1007 };
                 return;
             }
@@ -499,29 +512,29 @@ class UserService extends Service {
 
         var isSend = false
         if (params.email_notification) {
-           
+
             isSend = true
             delete params.email_notification
         }
 
         if (!user) {
-          ctx.status = 404;
-            ctx.body = { success: false, errorCode:1000};
-          return;
+            ctx.status = 404;
+            ctx.body = { success: false, errorCode: 1000 };
+            return;
         }
 
         const res = await user.update(params);
         if (res) {
             if (isSend) {
-                await this.retrievePassword({ email: res.username})
+                await this.retrievePassword({ email: res.username })
             }
-            ctx.body = {success:true,data:res};
-        }else{
-            ctx.body = { success: false, errorCode:1000};
+            ctx.body = { success: true, data: res };
+        } else {
+            ctx.body = { success: false, errorCode: 1000 };
         }
-       
+
     }
-    
+
 }
 
 module.exports = UserService;

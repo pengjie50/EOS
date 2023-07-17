@@ -11,38 +11,38 @@ const uuid = require('uuid');
 
 
 class ReportService extends Service {
-    
-    async findOne(params){
+
+    async findOne(params) {
         const ctx = this.ctx;
-        var res=await ctx.model.Report.findByPk(params.id);
-        ctx.body = { success: true,data:res} 
+        var res = await ctx.model.Report.findByPk(params.id);
+        ctx.body = { success: true, data: res }
     }
     async list(params) {
-        const {ctx} = this;
-        
-        let obj={}  
+        const { ctx } = this;
 
-        if(params.where){
+        let obj = {}
+
+        if (params.where) {
             obj.where = params.where
         }
-        if(params.order){
+        if (params.order) {
             obj.order = params.order
         }
-        if(params.page && params.limit){
+        if (params.page && params.limit) {
             obj.offset = parseInt((params.page - 1)) * parseInt(params.limit)
             obj.limit = parseInt(params.limit)
         }
-        obj.attributes = [[ctx.model.col('u.username'), 'username'], [ctx.model.col('c.name'),'company_name'],'report.*']
-        obj.include=[{
-            as:'c',
+        obj.attributes = [[ctx.model.col('u.username'), 'username'], [ctx.model.col('c.name'), 'company_name'], 'report.*']
+        obj.include = [{
+            as: 'c',
             model: ctx.model.Company
-          
-        }, {
-                as: 'u',
-                model: ctx.model.User
 
-            }]
-        obj.raw=true
+        }, {
+            as: 'u',
+            model: ctx.model.User
+
+        }]
+        obj.raw = true
         const list = await ctx.model.Report.findAndCountAll(obj)
 
         ctx.status = 200;
@@ -50,18 +50,18 @@ class ReportService extends Service {
             success: true,
             total: list.count,
             data: list.rows,
-            
 
-        }; 
-        
+
+        };
+
     }
 
 
 
     async summary(params) {
-        const { ctx,app } = this;
-        var transaction_filter_num=0
-        var transaction_total_num=0
+        const { ctx, app } = this;
+        var transaction_filter_num = 0
+        var transaction_total_num = 0
         let obj = {}
 
         if (params.where) {
@@ -119,8 +119,8 @@ class ReportService extends Service {
                 }
             }
         }
-       
-        obj.raw= true
+
+        obj.raw = true
 
         const transactions = await ctx.model.Transaction.findAll(obj)
 
@@ -130,21 +130,21 @@ class ReportService extends Service {
         var transactionsMap = {}
 
         var transaction_ids = transactions.map((a) => {
-            transactionsMap[a.id]=a
+            transactionsMap[a.id] = a
             return a.id
         })
 
 
-        var alerts = await ctx.model.Alert.findAll({ where: { transaction_id: transaction_ids },raw: true })
-       var alertsMap = {}
+        var alerts = await ctx.model.Alert.findAll({ where: { transaction_id: transaction_ids }, raw: true })
+        var alertsMap = {}
         alerts.forEach((a) => {
 
             var k = a.transaction_id + a.flow_id + a.flow_id_to + a.type
 
             if (!alertsMap.hasOwnProperty(k)) {
-                
-                alertsMap[k]=0
-            } 
+
+                alertsMap[k] = 0
+            }
 
             alertsMap[k]++
 
@@ -158,17 +158,17 @@ class ReportService extends Service {
         Transactionevent.forEach((a) => {
 
             if (!TransactioneventMap[a.transaction_id]) {
-                TransactioneventMap[a.transaction_id]=[]
+                TransactioneventMap[a.transaction_id] = []
             }
             TransactioneventMap[a.transaction_id].push(a)
 
         })
-        var list=[]
+        var list = []
         for (var i in TransactioneventMap) {
             var transactionevents = TransactioneventMap[i]
 
-            transactionevents.forEach((a,index) => {
-                var next = transactionevents[index+1]
+            transactionevents.forEach((a, index) => {
+                var next = transactionevents[index + 1]
                 if (next) {
                     var c = { ...transactionsMap[i] }
                     delete c.flow_id
@@ -179,8 +179,8 @@ class ReportService extends Service {
                     c.flow_id_to = next.flow_id
                     c.event_time = a.event_time
                     c.duration = ((new Date(next.event_time)).getTime() - (new Date(a.event_time)).getTime()) / 1000
-                    
-                        c.amber_alert_num = alertsMap[i + c.flow_id + c.flow_id_to + 0] || 0
+
+                    c.amber_alert_num = alertsMap[i + c.flow_id + c.flow_id_to + 0] || 0
                     c.red_alert_num = alertsMap[i + c.flow_id + c.flow_id_to + 1] || 0
                     list.push(c)
                 }
@@ -202,25 +202,25 @@ class ReportService extends Service {
         };
 
     }
-    
+
     async add(params) {
 
-     
- 
-        const {ctx} = this;
-       
+
+
+        const { ctx } = this;
+
         params.company_id = ctx.user.company_id
         params.user_id = ctx.user.user_id
         const res = await ctx.model.Report.create(params);
-        if(res){
-            ctx.body = { success: true,data:res};
-        }else{
-            ctx.body = { success: false, errorCode:1000};
+        if (res) {
+            ctx.body = { success: true, data: res };
+        } else {
+            ctx.body = { success: false, errorCode: 1000 };
         }
-        
 
-        
-        
+
+
+
     }
 
     async del(params) {
@@ -233,7 +233,7 @@ class ReportService extends Service {
         })
         ctx.body = { success: true };
         ctx.status = 200;
-        
+
     }
     async mod(params) {
 
@@ -241,20 +241,20 @@ class ReportService extends Service {
         const user = await ctx.model.Report.findByPk(params.id);
 
         if (!user) {
-          ctx.status = 404;
-            ctx.body = { success: false, errorCode:1000};
-          return;
+            ctx.status = 404;
+            ctx.body = { success: false, errorCode: 1000 };
+            return;
         }
 
         const res = await user.update(params);
-        if(res){
-            ctx.body = { success: true,data:res};
-        }else{
-            ctx.body = { success: false, errorCode:1000};
+        if (res) {
+            ctx.body = { success: true, data: res };
+        } else {
+            ctx.body = { success: false, errorCode: 1000 };
         }
-       
+
     }
-    
+
 }
 
 module.exports = ReportService;

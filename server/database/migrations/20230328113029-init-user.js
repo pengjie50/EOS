@@ -3,7 +3,7 @@
 /** @type {import('sequelize-cli').Migration} */
 module.exports = {
     async up(queryInterface, Sequelize) {
-        console.log("11111")
+        
         const { DATE, STRING, INTEGER, UUID, TINYINT } = Sequelize;
         await queryInterface.createTable('user', {
             id: {

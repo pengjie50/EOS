@@ -10,11 +10,11 @@ const createRule = {
 
 
 class SystemController extends Controller {
-  
+
     async fieldUniquenessCheck() {
-    const {ctx, service,app} = this;
-    const params = ctx.request.body;
-      const res = await service.system.fieldUniquenessCheck(params);
+        const { ctx, service, app } = this;
+        const params = ctx.request.body;
+        const res = await service.system.fieldUniquenessCheck(params);
 
     }
 
@@ -27,14 +27,16 @@ class SystemController extends Controller {
 
 
     async receiveSGTradexData() {
+
+
         const { ctx, service, app } = this;
         const params = ctx.request.body;
         const res = await service.system.receiveSGTradexData(params);
 
     }
-    
-    
-  
+
+
+
 
 }
 

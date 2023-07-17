@@ -6,41 +6,41 @@
 */
 'use strict'
 
-const Service = require('egg').Service;
+const Service = require('./base_service');
 const uuid = require('uuid');
 const where = require('../middleware/where');
 const Sequelize = require('sequelize');
 const report = require('../model/report');
 
 class AlertService extends Service {
-    
-    async findOne(params){
+
+    async findOne(params) {
         const ctx = this.ctx;
-        var res=await ctx.model.Alert.findByPk(params.id);
-        ctx.body ={success:true,data:res} 
+        var res = await ctx.model.Alert.findByPk(params.id);
+        ctx.body = { success: true, data: res }
     }
     async list(params) {
-        const {ctx,app} = this;
-        
-        let obj={}  
+        const { ctx, app } = this;
+
+        let obj = {}
 
         if (params.where) {
             obj.where = params.where
         } else {
             obj.where = {}
         }
-        if(params.order){
+        if (params.order) {
             obj.order = params.order
         }
-        if(params.page && params.limit){
+        if (params.page && params.limit) {
             obj.offset = parseInt((params.page - 1)) * parseInt(params.limit)
             obj.limit = parseInt(params.limit)
         }
-      
-           
+
+
         var t_where = {}
         for (var i in obj.where) {
-            if (i.indexOf("t.")>-1) {
+            if (i.indexOf("t.") > -1) {
                 if (!t_where) {
                     t_where = {}
                 }
@@ -48,7 +48,7 @@ class AlertService extends Service {
 
                 delete obj.where[i]
             }
-            
+
         }
 
 
@@ -59,51 +59,67 @@ class AlertService extends Service {
 
             if (obj.where.organization_id) {
                 obj.where.company_id = obj.where.organization_id
-            } 
-
-        } else if (ctx.user.role_type == 'Trader') {
-            if (obj.where.organization_id) {
-                obj.where.company_id = obj.where.organization_id
-            } else {
-         
-                obj.where.company_id = {
-                    [app.Sequelize.Op['in']]: [...ctx.user.accessible_organization, ctx.user.company_id]
-                }
-             
             }
 
+        } else {
+            if (this.access("alert_list")) {
 
-        } else if (ctx.user.role_type == 'Terminal') {
-            if (obj.where.tab && obj.where.tab[app.Sequelize.Op.like] == '%Trader%') {
-                if (obj.where.organization_id) {
-                    obj.where.company_id = obj.where.organization_id
-                } else {
-                    obj.where.company_id = {
-                        [app.Sequelize.Op['in']]: ctx.user.accessible_organization
-                    }
+                obj.where.user_id = ctx.user.user_id
+
+                if (this.access("alert_list_company")) {
+                    delete obj.where.user_id
+                    obj.where.company_id = ctx.user.company_id
                 }
 
+                if (this.access("alert_list_tab")) {
+                    if (obj.where.tab) {
+                        if (obj.where.tab[app.Sequelize.Op.eq] == 'Terminal') {
+
+
+
+
+                        } if (obj.where.tab[app.Sequelize.Op.eq] == 'Trader') {
+                            delete obj.where.user_id
+                            if (!obj.where.organization_id) {
+
+                                obj.where.company_id = {
+                                    [app.Sequelize.Op['in']]: ctx.user.accessible_organization
+                                }
+                            } else {
+
+                                obj.where.company_id = obj.where.organization_id
+                            }
+
+                        } else if (obj.where.tab[app.Sequelize.Op.eq] == 'All') {
+                            delete obj.where.user_id
+                            obj.where.company_id = {
+                                [app.Sequelize.Op['in']]: [...ctx.user.accessible_organization, ctx.user.company_id]
+                            }
+                        }
+
+                    }
+                }
             }
 
         }
 
 
 
-      
+
         delete obj.where.tab
         delete obj.where.organization_id
 
-        
+
         obj.include = [{
             as: 't',
             model: ctx.model.Transaction,
             where: t_where
         }, {
-                as: 'ar',
-                model: ctx.model.AlertruleTransaction
-                
-            }]
-        var showNoRead=false
+            as: 'ar',
+            model: ctx.model.AlertruleTransaction
+
+        }]
+        var showNoRead = false
         if (obj.where && obj.where.showNoRead) {
             showNoRead = true
             delete obj.where.showNoRead
@@ -114,8 +130,8 @@ class AlertService extends Service {
 
         if (showNoRead) {
             var noReadArr = await ctx.model.query("select *  FROM alert where id not in (select alert_id from alert_user_read where user_id='" + ctx.user.user_id + "')", { type: Sequelize.QueryTypes.SELECT })
-          
-            var ids=[]
+
+            var ids = []
             noReadArr.forEach((nr) => {
                 m.set(nr.id, true)
                 ids.push(nr.id)
@@ -124,7 +140,7 @@ class AlertService extends Service {
         }
 
 
-       
+
         const list = await ctx.model.Alert.findAndCountAll(obj)
 
         if (params.isCount) {
@@ -132,15 +148,15 @@ class AlertService extends Service {
         }
 
 
-      
-        
+
+
         ctx.status = 200;
-        
-        
+
+
 
 
         if (showNoRead) {
-         
+
             var readArr = []
             list.rows.forEach((a) => {
                 if (m.get(a.id)) {
@@ -154,42 +170,57 @@ class AlertService extends Service {
                 await ctx.model.AlertUserRead.bulkCreate(readArr);
             }
 
-           
-        } 
+
+        }
+        var jetty_id = []
+        list.rows.forEach((a) => {
+            jetty_id.push(a['t.jetty_id'])
+
+        })
+
+        const jettyList = await ctx.model.Jetty.findAll({ raw: true, where: { id: jetty_id } })
+        var jettyMap = {}
+        jettyList.forEach((j) => {
+            jettyMap[j.id] = j
+        })
+
+        list.rows = list.rows.map((a) => {
+            a.jetty_name = jettyMap[a["t.jetty_id"]]?.name || "-"
+
+            return a
+        })
+        ctx.body = {
+            success: true,
+            total: list.count,
+            data: list.rows
+
+        };
 
 
-            ctx.body = {
-                success: true,
-                total: list.count,
-                data: list.rows
 
-            }; 
-        
-       
-        
     }
     async getUserUnreadAlertCount(params) {
         const { ctx, sequelize, app } = this;
 
-      var count= await   this.list({ where: { showNoRead: true }, isCount: true })
+        var count = await this.list({ where: { showNoRead: true }, isCount: true })
 
-        
+
         return count
     }
-    
+
     async add(params) {
 
-     
- 
-        const {ctx} = this;
-        
+
+
+        const { ctx } = this;
+
         const res = await ctx.model.Alert.create(params);
-        if(res){
-            ctx.body = { success: true,data:res};
-        }else{
-            ctx.body = { success: false, errorCode:1000};
+        if (res) {
+            ctx.body = { success: true, data: res };
+        } else {
+            ctx.body = { success: false, errorCode: 1000 };
         }
-       
+
     }
 
     async del(params) {
@@ -202,7 +233,7 @@ class AlertService extends Service {
         })
         ctx.body = { success: true };
         ctx.status = 200;
-        
+
     }
     async mod(params) {
 
@@ -210,20 +241,20 @@ class AlertService extends Service {
         const user = await ctx.model.Alert.findByPk(params.id);
 
         if (!user) {
-          ctx.status = 404;
-            ctx.body = { success: false, errorCode:1000};
-          return;
+            ctx.status = 404;
+            ctx.body = { success: false, errorCode: 1000 };
+            return;
         }
 
         const res = await user.update(params);
-        if(res){
-            ctx.body = { success: true,data:res};
-        }else{
-            ctx.body = { success:false,errorCode:1000};
+        if (res) {
+            ctx.body = { success: true, data: res };
+        } else {
+            ctx.body = { success: false, errorCode: 1000 };
         }
-       
+
     }
-    
+
 }
 
 module.exports = AlertService;

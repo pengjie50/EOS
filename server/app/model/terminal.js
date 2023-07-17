@@ -16,25 +16,25 @@ module.exports = app => {
 
         },
         name: {
-          type: STRING(100)
-         
+            type: STRING(100)
+
         },
         description: {
-          type: TEXT
-        
+            type: TEXT
+
         }
-        
-        
-       
+
+
+
     }, {
         indexes: [
-        {
-          fields: ['name']
-        }],
-        
+            {
+                fields: ['name']
+            }],
+
         timestamps: false,
         tableName: 'terminal'
-        
+
     });
 
     return Model;

@@ -35,7 +35,6 @@
     "stop": "egg-scripts stop --title=egg-server-server",
     "dev": "egg-bin dev",
     "https": "egg-bin dev  --port=443  --https.key=C:/EOS/public/ssl/eosuat.southeastasia.cloudapp.azure.com.key --https.cert=C:/EOS/public/ssl/eosuat.southeastasia.cloudapp.azure.com_bundle.crt",
-    "dev": "egg-bin dev",
     "debug": "egg-bin debug",
     "test": "npm run lint -- --fix && npm run test-local",
     "test-local": "egg-bin test",

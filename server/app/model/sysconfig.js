@@ -16,33 +16,33 @@ module.exports = app => {
 
         },
         name: {
-          type: STRING(100)
-         
+            type: STRING(100)
+
         },
         config_key: {
             type: STRING(100)
-          
+
         },
         value: {
             type: STRING(500)
-          
+
         },
         description: {
-          type: TEXT
-        
+            type: TEXT
+
         }
-        
-        
-       
+
+
+
     }, {
         indexes: [
-        {
-          fields: ['name']
-        }],
-        
+            {
+                fields: ['name']
+            }],
+
         timestamps: false,
         tableName: 'sys_config'
-        
+
     });
 
     return Model;

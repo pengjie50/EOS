@@ -22,16 +22,16 @@ module.exports = app => {
 
         },
         name: {
-          type: STRING(100)
-          
+            type: STRING(100)
+
         },
         type: {
             type: STRING(100)
 
         },
         company_id: {
-          type: UUID
-        
+            type: UUID
+
         },
         accessible_organization: {
             type: TEXT
@@ -41,39 +41,39 @@ module.exports = app => {
             type: TEXT
 
         },
-        
-        
+
+
         accessible_timestamp: {
             type: TEXT
 
         },
         description: {
-          type: TEXT
-        
+            type: TEXT
+
         }
-       
+
     }, {
         indexes: [
-        {
-          fields: ['name','type']
-        }],
+            {
+                fields: ['name', 'type']
+            }],
         timestamps: true,
         paranoid: false,
         tableName: 'role',
-       
+
     });
 
-     Model.associate = function () {
-       
+    Model.associate = function () {
+
         app.model.Role.belongsToMany(app.model.Permission, {
-            as:'p',
+            as: 'p',
             through: app.model.Rolepermission,
             foreignKey: 'role_id',
             otherKey: 'permission_id'
         });
-        app.model.Role.belongsTo(app.model.Company, {foreignKey: 'company_id',as:'c'});
-        
+        app.model.Role.belongsTo(app.model.Company, { foreignKey: 'company_id', as: 'c' });
+
     };
-    
+
     return Model;
 };

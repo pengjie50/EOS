@@ -6,7 +6,7 @@
 module.exports = app => {
     const { router, controller } = app;
     app.beforeStart(async () => {
-       //await app.model.Transaction.sync({ alter: true });//force  false 为不覆盖 true会删除再创建; alter true可以 添加或删除字段;
+        //await app.model.Company.sync({ alter: true });//force  If false does not overwrite true, it will be deleted and re created; Alter true can add or delete fields;
     });
     //truncate table alert; truncate table alertrule_transaction;
     router.get('/', controller.home.index);
@@ -21,17 +21,17 @@ module.exports = app => {
     router.post('/api/user/modifyPassword', controller.user.modifyPassword);
     router.post('/api/user/checkEmail', controller.user.checkEmail);
     router.get('/api/user/acceptInvitation', controller.user.acceptInvitation);
-    
-
-    router.get('/api/receiveSGTradexData/data/receive/:data_element_id', controller.system.receiveSGTradexData);
-
-   
 
 
-    
-    
+    router.post('/api/receiveSGTradexData/data/receive/:data_element_id', controller.system.receiveSGTradexData);
 
-    
+
+
+
+
+
+
+
     //router.post('/system/verify', controller.system.verify);
 
     router.post('/api/role/list', controller.role.list);
@@ -39,7 +39,7 @@ module.exports = app => {
     router.post('/api/role/mod', controller.role.mod);
     router.post('/api/role/del', controller.role.del);
 
-   // router.post('/api/role/getPermissionsByRoleId', controller.role.getPermissionsByRoleId);
+    // router.post('/api/role/getPermissionsByRoleId', controller.role.getPermissionsByRoleId);
 
     router.post('/api/upload/avatar', controller.upload.avatar);
 
@@ -95,7 +95,7 @@ module.exports = app => {
     router.post('/api/system/fieldUniquenessCheck', controller.system.fieldUniquenessCheck);
 
     router.post('/api/system/fieldSelectData', controller.system.fieldSelectData);
-    
+
 
     router.post('/api/filterOfTimestamps/list', controller.filterOfTimestamps.list);
     router.post('/api/filterOfTimestamps/add', controller.filterOfTimestamps.add);
@@ -115,7 +115,7 @@ module.exports = app => {
     router.post('/api/alert/mod', controller.alert.mod);
     router.post('/api/alert/del', controller.alert.del);
     router.post('/api/alert/getUserUnreadAlertCount', controller.alert.getUserUnreadAlertCount);
-    
+
 
     router.post('/api/alertrule/list', controller.alertrule.list);
     router.post('/api/alertrule/add', controller.alertrule.add);
@@ -143,14 +143,17 @@ module.exports = app => {
     router.post('/api/transaction/statistics', controller.transaction.statistics);
     router.post('/api/transaction/writetoBC', controller.transaction.writetoBC);
     router.post('/api/transaction/validateBC', controller.transaction.validateBC);
-    
+
     router.post('/api/transactionevent/list', controller.transactionevent.list);
+
+    router.post('/api/transactioneventlog/list', controller.transactioneventlog.list);
+
     router.post('/api/transactionevent/add', controller.transactionevent.add);
     router.post('/api/transactionevent/mod', controller.transactionevent.mod);
     router.post('/api/transaction/statistics', controller.transaction.statistics);
 
-  
-    
 
-    
+
+
+
 };

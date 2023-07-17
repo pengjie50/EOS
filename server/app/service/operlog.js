@@ -11,31 +11,31 @@ const uuid = require('uuid');
 
 
 class OperlogService extends Service {
-    
-   
-    async list(params) {
-        const {ctx} = this;
-        
-        let obj={}  
 
-        if(params.where){
+
+    async list(params) {
+        const { ctx } = this;
+
+        let obj = {}
+
+        if (params.where) {
             obj.where = params.where
         }
-        if(params.order){
+        if (params.order) {
             obj.order = params.order
         }
-        if(params.page && params.limit){
+        if (params.page && params.limit) {
             obj.offset = parseInt((params.page - 1)) * parseInt(params.limit)
             obj.limit = parseInt(params.limit)
         }
-        obj.attributes = [[ctx.model.col('u.username'),'username'],'oper_log.*']
-        obj.include=[{
+        obj.attributes = [[ctx.model.col('u.username'), 'username'], 'oper_log.*']
+        obj.include = [{
             as: 'u',
-            attributes:[],
+            attributes: [],
             model: ctx.model.User
-          
+
         }]
-        obj.raw=true
+        obj.raw = true
         const list = await ctx.model.Operlog.findAndCountAll(obj)
 
         ctx.status = 200;
@@ -44,13 +44,13 @@ class OperlogService extends Service {
             total: list.count,
             data: list.rows
 
-        }; 
-        
+        };
+
     }
     async add(params) {
 
         const { ctx } = this;
-        
+
         const res = await ctx.model.Operlog.create(params);
         if (res) {
             ctx.body = { success: true, data: res };
@@ -59,7 +59,7 @@ class OperlogService extends Service {
         }
 
     }
-    
+
     async mod(params) {
 
         const ctx = this.ctx;
@@ -79,9 +79,9 @@ class OperlogService extends Service {
         }
 
     }
-   
-    
-    
+
+
+
 }
 
 module.exports = OperlogService;

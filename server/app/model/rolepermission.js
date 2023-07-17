@@ -16,8 +16,8 @@ module.exports = app => {
 
         },
         role_id: UUID,
-        permission_id:UUID
-       
+        permission_id: UUID
+
     }, {
         indexes: [
             {
@@ -25,13 +25,13 @@ module.exports = app => {
             }],
         timestamps: false,
         tableName: 'role_permission',
-      
+
     });
     Model.associate = function () {
-       
-        app.model.Rolepermission.belongsTo(app.model.Permission, {foreignKey: 'permission_id',as:'p'});
-        app.model.Rolepermission.belongsTo(app.model.Role, {foreignKey: 'role_id',as:'r'});
-        
+
+        app.model.Rolepermission.belongsTo(app.model.Permission, { foreignKey: 'permission_id', as: 'p' });
+        app.model.Rolepermission.belongsTo(app.model.Role, { foreignKey: 'role_id', as: 'r' });
+
     };
     return Model;
 };

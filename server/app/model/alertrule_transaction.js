@@ -20,7 +20,7 @@ module.exports = app => {
 
         },
 
-       
+
         transaction_id: {
             type: UUID
 
@@ -35,7 +35,7 @@ module.exports = app => {
 
 
         },
-        
+
         alertrule_id: {
             type: INTEGER,
             allowNull: false,
@@ -118,9 +118,9 @@ module.exports = app => {
     }, {
         indexes: [
             {
-                fields: ['transaction_id', 'alert_rule_id','alertrule_id']
+                fields: ['transaction_id', 'alert_rule_id', 'alertrule_id']
             },
-            
+
             {
                 fields: ['flow_id', 'type', 'user_id', 'vessel_size_dwt_from', 'vessel_size_dwt_to']
             },
@@ -136,8 +136,8 @@ module.exports = app => {
         timestamps: true,
         paranoid: false,
         tableName: 'alert_rule_transaction'
-        
+
     });
-   
+
     return Model;
 };

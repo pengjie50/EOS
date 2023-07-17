@@ -3,45 +3,45 @@
 'use strict';
 
 const Service = require('egg').Service;
-// 引入nodemailer
+// import nodemailer
 const nodemailer = require('nodemailer');
-const user_email = '504475705@qq.com';// 账号
-const auth_code = 'adiclzwfzscxbggi';// 授权码
-// 封装发送者信息
+const user_email = '504475705@qq.com';// account number
+const auth_code = 'adiclzwfzscxbggi';// AUTHORIZE CODE
+
 
 
 class ToolService extends Service {
-   
+
     async sendMail(email, subject, html) {
-       
+
         const { ctx, service, app } = this;
         const transporter = nodemailer.createTransport({
-            service: 'qq',// 调用qq服务器
-            secureConnection: true,// 启动SSL
-            port: 465,// 端口就是465
+            service: 'qq',// Call QQ server
+            secureConnection: true,// Start SSL
+            port: 465,// The port is 465
             auth: {
-                user: app.config.user_email, // 账号
-                pass: app.config.auth_code, // 授权码
+                user: app.config.user_email, // account number
+                pass: app.config.auth_code, // AUTHORIZE CODE
 
             },
         });
-       
-        // 邮件参数及内容
+
+        // Email parameters and content
         const mailOptions = {
-            from: app.config.user_email, // 发送者,与上面的user一致
-            to: email,   // 接收者,可以同时发送多个,以逗号隔开
-            subject,   // 标题
+            from: app.config.user_email, // Sender, consistent with the user above
+            to: email,   // Receiver, can send multiple messages simultaneously, separated by commas
+            subject,   // title
             html,
         };
-       
+
         try {
-            // 调用函数，发送邮件
+            // Call function to send email
             var s = await transporter.sendMail(mailOptions);
+
            
-            console.log(s)
             return true;
         } catch (err) {
-            console.log(err)
+            
             return false;
         }
     }

@@ -19,7 +19,7 @@ module.exports = app => {
             type: UUID,
         },
         eos_id: {
-             type: INTEGER,
+            type: INTEGER,
         },
         imo_number: {
             type: STRING(20)
@@ -32,8 +32,8 @@ module.exports = app => {
             type: TINYINT   //DE1  DE2  DE3  DE4 
         },
         json_string: {
-          type: TEXT
-        
+            type: TEXT
+
         },
         already_used: {
             type: TINYINT
@@ -41,10 +41,10 @@ module.exports = app => {
         }
     }, {
         indexes: [
-        {
-                fields: ['imo_number', 'work_order_id','type']
-        }],
-        
+            {
+                fields: ['imo_number', 'work_order_id', 'type']
+            }],
+
         timestamps: true,
         paranoid: false,
         tableName: 'interfacedata'

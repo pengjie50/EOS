@@ -17,7 +17,7 @@ module.exports = app => {
         },
         user_id: {
             type: UUID
-           
+
         },
         company_id: {
             type: UUID
@@ -29,17 +29,17 @@ module.exports = app => {
         },
         ip: {
             type: STRING(128)
-           
+
         },
         browser: {
             type: STRING(50)
-           
+
         },
         os: {
             type: STRING(50)
-          
+
         },
-        device_type:{
+        device_type: {
             type: STRING(20)
 
         },
@@ -49,7 +49,7 @@ module.exports = app => {
 
         },
         logout_time: {
-           type: DATE
+            type: DATE
 
         },
         active_duration: {
@@ -57,29 +57,29 @@ module.exports = app => {
         },
         status: {
             type: TINYINT
-           
+
         },
         err_code: {
             type: INTEGER
-           
+
         },
         login_time: {
             type: DATE
-           
+
         }
-   
+
     }, {
         indexes: [
-        {
-                fields: ['username', 'login_time', 'status','user_id']
-        }],
+            {
+                fields: ['username', 'login_time', 'status', 'user_id']
+            }],
         timestamps: false,
         tableName: 'login_log'
-      
+
     });
     Model.associate = function () {
-       app.model.Loginlog.belongsTo(app.model.User, { foreignKey: 'user_id',as:'u'});
-       app.model.Loginlog.belongsTo(app.model.Company, { foreignKey: 'company_id', as: 'c' }); 
+        app.model.Loginlog.belongsTo(app.model.User, { foreignKey: 'user_id', as: 'u' });
+        app.model.Loginlog.belongsTo(app.model.Company, { foreignKey: 'company_id', as: 'c' });
     };
     return Model;
 };

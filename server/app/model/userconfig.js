@@ -16,8 +16,8 @@ module.exports = app => {
 
         },
         name: {
-          type: STRING(100)
-         
+            type: STRING(100)
+
         },
         company_id: {
             type: UUID
@@ -25,28 +25,28 @@ module.exports = app => {
         },
         user_id: {
             type: UUID
-          
+
         },
         type: {
             type: TINYINT
-          
+
         },
         value: {
-          type: TEXT
-         
+            type: TEXT
+
         }
-        
-        
-       
+
+
+
     }, {
         indexes: [
-        {
-                fields: ['name', 'user_id','type']
-        }],
-        
+            {
+                fields: ['name', 'user_id', 'type']
+            }],
+
         timestamps: false,
         tableName: 'user_config'
-        
+
     });
 
     return Model;

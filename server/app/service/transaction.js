@@ -6,87 +6,152 @@
 */
 'use strict'
 
-const Service = require('egg').Service;
+
 const uuid = require('uuid');
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
-
+const Service = require('./base_service');
 class TransactionService extends Service {
-    
-    async findOne(params){
+
+    async findOne(params) {
         const ctx = this.ctx;
-        var res=await ctx.model.Transaction.findByPk(params.id);
-        ctx.body ={success:true,data:res} 
+        var res = await ctx.model.Transaction.findByPk(params.id);
+        ctx.body = { success: true, data: res }
     }
     async list(params) {
-        const {ctx,app} = this;
-        
-        let obj={}  
+        const { ctx, app } = this;
+
+        let obj = {}
 
         if (params.where) {
             obj.where = params.where
         } else {
             obj.where = {}
         }
-        if(params.order){
+        if (params.order) {
             obj.order = params.order
         }
-        if(params.page && params.limit){
+        if (params.page && params.limit) {
             obj.offset = parseInt((params.page - 1)) * parseInt(params.limit)
             obj.limit = parseInt(params.limit)
         }
 
+        var w = {}
 
-        if (obj.where && (obj.where.flow_id || obj.where.flow_id_to || obj.where.threshold_organization_id)) {
-            var w = {}
+        if (ctx.user.role_type == 'Super') {
+            if (obj.where.organization_id) {
+                w.company_id = obj.where.organization_id
+            }
+
+
+        } else {
+            if (this.access("transactions_list")) {
+
+                w.user_id = ctx.user.user_id
+
+                if (this.access("transactions_list_company")) {
+                    delete w.user_id
+                    w.company_id = ctx.user.company_id
+                }
+
+                if (this.access("transactions_list_tab")) {
+
+                    delete w.user_id
+                    if (!obj.where.organization_id) {
+
+                        w.company_id = {
+                            [app.Sequelize.Op['in']]: ctx.user.accessible_organization
+                        }
+                    } else {
+
+                        w.company_id = obj.where.threshold_organization_id
+                    }
+
+
+
+
+                }
+            }
+
+        }
+
+        if (obj.where && (obj.where.flow_id || obj.where.flow_id_to)) {
+
             if (obj.where.flow_id) {
                 w.flow_id = obj.where.flow_id
             }
-            if (obj.where.threshold_organization_id) {
-                w.company_id = obj.where.threshold_organization_id
-            }
+
             if (obj.where.flow_id_to) {
                 w.flow_id_to = obj.where.flow_id_to
             }
             const alert = await ctx.model.Alert.findAll({ where: w })
             var ids = alert.map((a) => {
-               return  a.transaction_id
+                return a.transaction_id
             })
-            delete obj.where.flow_id
-            delete obj.where.flow_id_to
-            delete obj.where.threshold_organization_id
-            obj.where.id=ids
-        }
-        var Op = app.Sequelize.Op
-        if (obj.where.organization_id) {
-            if (ctx.user.role_type == 'Super') {
-                obj.where[Op['or']] = [{ terminal_id: obj.where.organization_id }, { trader_id: obj.where.organization_id }]
-            } else if (ctx.user.role_type == 'Trader') {
-                obj.where.trader_id = ctx.user.company_id
-                obj.where.terminal_id = obj.where.organization_id
-            } else if (ctx.user.role_type == 'Terminal') {
-                obj.where.trader_id = obj.where.organization_id
-                obj.where.terminal_id = ctx.user.company_id
-            }
-            delete obj.where.organization_id
-        } else {
-            if (ctx.user.role_type == 'Trader') {
 
-                obj.where.trader_id = ctx.user.company_id
-                obj.where.terminal_id = {
-                    [app.Sequelize.Op['in']]: ctx.user.accessible_organization
-                }
-            } else if (ctx.user.role_type == 'Terminal') {
-                obj.where.terminal_id = ctx.user.company_id
-                obj.where.trader_id = {
-                    [app.Sequelize.Op['in']]: ctx.user.accessible_organization
-                }
-            }
+            obj.where.id = ids
         }
-        
-       
-        
-        const list = await ctx.model.Transaction.findAndCountAll(obj)
+        delete obj.where.flow_id
+        delete obj.where.flow_id_to
+        delete obj.where.threshold_organization_id
+
+
+
+        var Op = app.Sequelize.Op
+
+
+        if (ctx.user.role_type == 'Super') {
+            if (obj.where.organization_id) {
+                
+                obj.where[Op['or']] = [{ terminal_id: obj.where.organization_id }, { trader_id: obj.where.organization_id }]
+            }
+
+        } else {
+
+            if (obj.where.organization_id) {
+                
+                obj.where[Op['or']] = [{ terminal_id: obj.where.organization_id }, { trader_id: obj.where.organization_id }]
+            } else {
+                
+                obj.where[Op['or']] = [{ terminal_id: [...ctx.user.accessible_organization, ctx.user.company_id] }, { trader_id: [...ctx.user.accessible_organization, ctx.user.company_id] }]
+            }
+
+
+        }
+        delete obj.where.organization_id
+
+
+
+
+        console.log(obj.where)
+        obj.raw = true
+        var list = await ctx.model.Transaction.findAndCountAll(obj)
+        var jetty_id = []
+        var company_id = []
+
+        list.rows.forEach((t) => {
+            jetty_id.push(t.jetty_id)
+            company_id.push(t.trader_id)
+            company_id.push(t.terminal_id)
+        })
+
+        const companyList = await ctx.model.Company.findAll({ raw: true, where: { id: company_id } })
+        var companyMap = {}
+        companyList.forEach((c) => {
+            companyMap[c.id] = c
+        })
+        const jettyList = await ctx.model.Jetty.findAll({ raw: true, where: { id: jetty_id } })
+        var jettyMap = {}
+        jettyList.forEach((j) => {
+            jettyMap[j.id] = j
+        })
+
+        list.rows = list.rows.map((t) => {
+            t.jetty_name = jettyMap[t.jetty_id]?.name || "-"
+            t.trader_name = companyMap[t.trader_id]?.name || "-"
+            t.terminal_name = companyMap[t.terminal_id]?.name || "-"
+            return t
+        })
 
         ctx.status = 200;
         ctx.body = {
@@ -94,13 +159,13 @@ class TransactionService extends Service {
             total: list.count,
             data: list.rows
 
-        }; 
-        
+        };
+
     }
 
     async statistics(params) {
 
-        const { ctx,app } = this;
+        const { ctx, app } = this;
 
         let obj = {
             where: {}
@@ -110,8 +175,8 @@ class TransactionService extends Service {
         } else {
             obj.where = {}
         }
-       
-        var data={
+
+        var data = {
             average_total_duration_per_transaction: {
                 all_time: 0,
                 month_12: 0,
@@ -122,7 +187,7 @@ class TransactionService extends Service {
                 total: 0,
                 closed: 0,
                 open: 0,
-                cancelled:0
+                cancelled: 0
             },
 
             threshold_reached: {
@@ -132,69 +197,81 @@ class TransactionService extends Service {
             }
 
         }
-       
-       /* if (obj.where && obj.where.start_of_transaction) {
-            var dateArr = obj.where.start_of_transaction[Op.between]
-            obj.where.start_of_transaction = { [Op.gte]: dateArr[0] }
-            obj.where.end_of_transaction = { [Op.lte]: dateArr[1] }
 
-        }*/
+        /* if (obj.where && obj.where.start_of_transaction) {
+             var dateArr = obj.where.start_of_transaction[Op.between]
+             obj.where.start_of_transaction = { [Op.gte]: dateArr[0] }
+             obj.where.end_of_transaction = { [Op.lte]: dateArr[1] }
+ 
+         }*/
         var Op = app.Sequelize.Op
         var awhere = { transaction_id: null }
+
+
         if (ctx.user.role_type == 'Super') {
             if (obj.where.organization_id) {
                 obj.where[Op['or']] = [{ terminal_id: obj.where.organization_id }, { trader_id: obj.where.organization_id }]
+                awhere.company_id = obj.where.organization_id
             }
-        } else if (ctx.user.role_type == 'Trader') {
+
+        } else {
 
             if (obj.where.organization_id) {
-
-
-                obj.where.terminal_id = obj.where.organization_id
-                obj.where.trader_id = ctx.user.company_id
-
-
+                obj.where[Op['or']] = [{ terminal_id: obj.where.organization_id }, { trader_id: obj.where.organization_id }]
             } else {
-                obj.where.trader_id = ctx.user.company_id
-                obj.where.terminal_id = {
-                    [app.Sequelize.Op['in']]: ctx.user.accessible_organization
-                }
-
-            }
-        } else if (ctx.user.role_type == 'Terminal') {
-
-            if (obj.where.organization_id) {
-
-
-                obj.where.trader_id = obj.where.organization_id
-                obj.where.terminal_id = ctx.user.company_id
-
-
-            } else {
-                obj.where.terminal_id = ctx.user.company_id
-                obj.where.trader_id = {
-                    [app.Sequelize.Op['in']]: ctx.user.accessible_organization
-                }
-
+                obj.where[Op['or']] = [{ terminal_id: [...ctx.user.accessible_organization, ctx.user.company_id] }, { trader_id: [...ctx.user.accessible_organization, ctx.user.company_id] }]
             }
 
 
 
 
-            if (obj.where.tab[app.Sequelize.Op.like] == '%Trader%') {
-                awhere.company_id = {
-                    [app.Sequelize.Op['in']]: ctx.user.accessible_organization
+            if (this.access("dashboard")) {
+
+                awhere.user_id = ctx.user.user_id
+
+                if (this.access("dashboard_company")) {
+                    delete awhere.user_id
+                    awhere.company_id = ctx.user.company_id
                 }
-            } else {
-                awhere.company_id = ctx.user.company_id
+
+                if (this.access("dashboard_tab")) {
+                    if (obj.where.tab) {
+                        if (obj.where.tab[app.Sequelize.Op.eq] == 'Terminal') {
+
+
+
+
+                        } if (obj.where.tab[app.Sequelize.Op.eq] == 'Trader') {
+                            delete awhere.user_id
+                            if (!obj.where.organization_id) {
+
+                                awhere.company_id = {
+                                    [app.Sequelize.Op['in']]: ctx.user.accessible_organization
+                                }
+                            } else {
+
+                                awhere.company_id = obj.where.organization_id
+                            }
+
+                        } else if (obj.where.tab[app.Sequelize.Op.eq] == 'All') {
+                            delete awhere.user_id
+                            awhere.company_id = {
+                                [app.Sequelize.Op['in']]: [...ctx.user.accessible_organization, ctx.user.company_id]
+                            }
+                        }
+
+                    }
+                }
             }
+
 
         }
 
 
 
 
-       
+
+
         delete obj.where.organization_id
         delete obj.where.tab
         if (obj.where && obj.where.status && obj.where.status[Op.eq] == '0') {
@@ -202,13 +279,11 @@ class TransactionService extends Service {
             data.no_of_transaction.open = data.no_of_transaction.total
             data.no_of_transaction.closed = 0
             data.no_of_transaction.cancelled = 0
-           
-           
         } else if (obj.where && obj.where.status && obj.where.status[Op.eq] == '1') {
             data.no_of_transaction.total = await ctx.model.Transaction.count(obj)
             data.no_of_transaction.closed = data.no_of_transaction.total
             data.no_of_transaction.cancelled = 0
-            data.no_of_transaction.open =0
+            data.no_of_transaction.open = 0
         } else if (obj.where && obj.where.status && obj.where.status[Op.eq] == '2') {
             data.no_of_transaction.total = await ctx.model.Transaction.count(obj)
             data.no_of_transaction.cancelled = data.no_of_transaction.total
@@ -223,29 +298,29 @@ class TransactionService extends Service {
             obj.where.status = 0
             data.no_of_transaction.open = await ctx.model.Transaction.count(obj)
             delete obj.where.status
-            
+
         }
-        
-       
 
-       // obj.where.status = 1
-        var transactions = await ctx.model.Transaction.findAll( obj)
 
-        var transaction_ids= transactions.map((a) => {
+
+        // obj.where.status = 1
+        var transactions = await ctx.model.Transaction.findAll(obj)
+
+        var transaction_ids = transactions.map((a) => {
             return a.id
         })
         awhere.transaction_id = transaction_ids
 
 
 
-        
+
         var alerts = await ctx.model.Alert.findAll({ where: awhere })
 
         var alertruleTransactions = await ctx.model.AlertruleTransaction.findAll({ where: awhere })
         var alertruleTransactionCountMap = {}
         alertruleTransactions.forEach((a) => {
 
-            var step=1
+            var step = 1
             if ((a.amber_hours || a.amber_mins) && (a.red_hours || a.red_mins)) {
                 step = 2
             }
@@ -253,16 +328,16 @@ class TransactionService extends Service {
 
 
                 if (!alertruleTransactionCountMap['b2e']) {
-                   
-                    alertruleTransactionCountMap['b2e'] = step
-                    
 
-                   
+                    alertruleTransactionCountMap['b2e'] = step
+
+
+
                 } else {
-                   
-                        alertruleTransactionCountMap['b2e'] += step
-                    
-                   
+
+                    alertruleTransactionCountMap['b2e'] += step
+
+
                 }
             } else {
                 if (!alertruleTransactionCountMap[a.flow_id]) {
@@ -271,16 +346,16 @@ class TransactionService extends Service {
                     alertruleTransactionCountMap[a.flow_id] += step
                 }
             }
-           
+
         })
-       
+
         alerts.forEach((a) => {
-           
-           
-           
+
+
+
             if (a.alertrule_type != 1) {
-               
-                
+
+
                 if (!data.threshold_reached.no[a.flow_id]) {
                     data.threshold_reached.no[a.flow_id] = {}
                 }
@@ -289,28 +364,28 @@ class TransactionService extends Service {
                         amber: 0, red: 0
                     }
                 }
-               
+
 
                 if (a.type == 0) {
                     data.threshold_reached.no[a.flow_id][a.transaction_id].amber++
                 }
 
-                    if (a.type == 1) {
-                        data.threshold_reached.no[a.flow_id][a.transaction_id].red++
-                    }
-               
+                if (a.type == 1) {
+                    data.threshold_reached.no[a.flow_id][a.transaction_id].red++
+                }
+
             } else {
                 if (!data.threshold_reached.no.b2e) {
 
 
-                    data.threshold_reached.no.b2e = { }
+                    data.threshold_reached.no.b2e = {}
                 }
 
-                    if (!data.threshold_reached.no.b2e[a.transaction_id]) {
-                        data.threshold_reached.no.b2e[a.transaction_id] = {
-                            amber: 0, red: 0
-                        }
+                if (!data.threshold_reached.no.b2e[a.transaction_id]) {
+                    data.threshold_reached.no.b2e[a.transaction_id] = {
+                        amber: 0, red: 0
                     }
+                }
 
                 if (a.type == 0) {
                     data.threshold_reached.no.b2e[a.transaction_id].amber++
@@ -320,12 +395,12 @@ class TransactionService extends Service {
                     data.threshold_reached.no.b2e[a.transaction_id].red++
                 }
 
-                
+
             }
 
-           
-            
-           
+
+
+
         })
 
         for (var i in data.threshold_reached.no) {
@@ -335,70 +410,70 @@ class TransactionService extends Service {
 
                 if (data.threshold_reached.no[i][j].amber > 0) {
                     c += data.threshold_reached.no[i][j].amber
-                    color ="#DE8205"
+                    color = "#DE7E39"
                 }
 
                 if (data.threshold_reached.no[i][j].red > 0) {
                     c += data.threshold_reached.no[i][j].red
                     color = "red"
                 }
-                
+
             }
 
             data.threshold_reached.no[i] = {
                 count: c, color: color
             }
-            if (transaction_ids.length>0) {
-                data.threshold_reached.percentage[i] = parseInt((c / alertruleTransactionCountMap[i]) * 100+"")
+            if (transaction_ids.length > 0) {
+                data.threshold_reached.percentage[i] = parseInt((c / alertruleTransactionCountMap[i]) * 100 + "")
             }
-            
+
         }
 
 
 
-        var old_status=obj.where.status
+        var old_status = obj.where.status
 
-       // obj.where.status = 1
+        // obj.where.status = 1
 
-      
-        
-        console.log(obj.where.status)
+
+
+
 
         if (obj.where && obj.where.status && obj.where.status[Op.eq] != '1') {
 
         } else {
 
-          
+
             var num = await ctx.model.Transaction.count(obj)
 
 
-           
+
             data.average_total_duration_per_transaction.all_time = await ctx.model.Transaction.sum('total_duration', obj) / num
 
 
             if (!obj.where.start_of_transaction) {
 
-               
+
                 obj.where.start_of_transaction = { [Op['between']]: [new Date((new Date()).getTime() - 30 * 24 * 3600 * 1000), new Date((new Date()).getTime())] }
 
-               
+
                 num = await ctx.model.Transaction.count(obj)
-              
-                
+
+
                 data.average_total_duration_per_transaction.day_30 = await ctx.model.Transaction.sum('total_duration', obj) / num
 
 
                 obj.where.start_of_transaction = { [Op['between']]: [new Date((new Date()).getTime() - 12 * 30 * 24 * 3600 * 1000), new Date((new Date()).getTime())] }
-                
+
                 num = await ctx.model.Transaction.count(obj)
-              
+
                 data.average_total_duration_per_transaction.month_12 = await ctx.model.Transaction.sum('total_duration', obj) / num
             }
 
         }
-       
 
-        obj.where.status = old_status 
+
+        obj.where.status = old_status
 
 
 
@@ -483,44 +558,44 @@ class TransactionService extends Service {
             }
         }
         to.aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa = { count: 0, duration: 0, avg: data.average_total_duration_per_transaction.all_time }
-            data.threshold_reached.avg_duration = to
+        data.threshold_reached.avg_duration = to
 
 
-       
+
 
         ctx.body = {
             success: true,
 
             data: data
 
-        }; 
+        };
     }
-    
+
     async add(params) {
 
-     
- 
-        const {ctx} = this;
-      
+
+
+        const { ctx } = this;
+
         const res = await ctx.model.Transaction.create(params);
 
 
 
-        if(res){
-            ctx.body = { success: true,data:res};
-        }else{
-            ctx.body = { success: false, errorCode:1000};
+        if (res) {
+            ctx.body = { success: true, data: res };
+        } else {
+            ctx.body = { success: false, errorCode: 1000 };
         }
-        
 
-        
-        
+
+
+
     }
 
     async del(params) {
 
         const ctx = this.ctx;
-       
+
 
         await ctx.model.Transactionevent.destroy({
             where: {
@@ -528,6 +603,16 @@ class TransactionService extends Service {
             }
         })
 
+        await ctx.model.Transactioneventlog.destroy({
+            where: {
+                transaction_id: params.id
+            }
+        })
+        await ctx.model.Alert.destroy({
+            where: {
+                transaction_id: params.id
+            }
+        })
         await ctx.model.AlertruleTransaction.destroy({
             where: {
                 transaction_id: params.id
@@ -542,7 +627,7 @@ class TransactionService extends Service {
         })
         ctx.body = { success: true };
         ctx.status = 200;
-        
+
     }
     async mod(params) {
 
@@ -550,34 +635,34 @@ class TransactionService extends Service {
         const user = await ctx.model.Transaction.findByPk(params.id);
 
 
-       
-        
-            var events = await ctx.model.Transactionevent.findAll({ where: { transaction_id: params.id }, order: [["event_time", "asc"]] })
-            if (events.length>0) {
-                params.start_of_transaction = events[0].event_time
-               
-                 params.end_of_transaction = events[events.length - 1].event_time
-                
 
-                params.total_duration = (new Date(params.end_of_transaction)).getTime() / 1000 - (new Date(params.start_of_transaction)).getTime() / 1000
-            }
-           
-           
-       
+
+        var events = await ctx.model.Transactionevent.findAll({ where: { transaction_id: params.id }, order: [["event_time", "asc"]] })
+        if (events.length > 0) {
+            params.start_of_transaction = events[0].event_time
+
+            params.end_of_transaction = events[events.length - 1].event_time
+
+
+            params.total_duration = (new Date(params.end_of_transaction)).getTime() / 1000 - (new Date(params.start_of_transaction)).getTime() / 1000
+        }
+
+
+
 
         if (!user) {
-          ctx.status = 404;
-            ctx.body = { success: false, errorCode:1000};
-          return;
+            ctx.status = 404;
+            ctx.body = { success: false, errorCode: 1000 };
+            return;
         }
 
         const res = await user.update(params);
-        if(res){
-            ctx.body = { success: true,data:res};
-        }else{
-            ctx.body = { success:false,errorCode:1000};
+        if (res) {
+            ctx.body = { success: true, data: res };
+        } else {
+            ctx.body = { success: false, errorCode: 1000 };
         }
-       
+
     }
     async writetoBC(params) {
         const { ctx, service, app } = this;
@@ -587,7 +672,7 @@ class TransactionService extends Service {
 
         var events = await ctx.model.Transactionevent.findAll({ where: { transaction_id: params.id } });
 
-        var data=events.map((a) => {
+        var data = events.map((a) => {
             return {
                 "EOSID": transaction.eos_id,
                 "EventSubStage": a.flow_id,
@@ -597,8 +682,8 @@ class TransactionService extends Service {
         //data= JSON.stringify(data)
         //data = JSON.parse(data);
 
-        console.log(data)
-        
+
+
         const result = await ctx.curl(app.config.writetoBCUrl, {
             timeout: 30000,
             method: 'POST',
@@ -608,22 +693,21 @@ class TransactionService extends Service {
         });
 
         return {
-            method:"POST",
+            method: "POST",
             data: data,
             url: app.config.writetoBCUrl,
             result: result,
-            status: result.status ,
-            errorCode:0
+            status: result.status,
+            errorCode: 0
         }
-        console.log(result.data)
-        console.log(result.status)
-        
+
+
     }
     async validateBC(params) {
         const { ctx, service, app } = this;
 
         var events = await ctx.model.Transactionevent.findAll({ where: { transaction_id: params.id } });
-       
+
         var data = events.map((a) => {
             return {
                 "EOSID": params.id,
@@ -632,7 +716,7 @@ class TransactionService extends Service {
                 "Timestamp": "2023-06-06T23:10:05+08:00"//new Date(a.event_time).toISOString()
             }
         })
-        console.log(data)
+
 
         ctx.body = { success: true, data: data };
         return {
@@ -643,36 +727,35 @@ class TransactionService extends Service {
             status: 0,
             errorCode: 0
         }
-       /* var data = events.map((a) => {
-            return {
-                "EOSID": params.id,
-                "EventSubStage": a.flow_id,
-                "Timestamp": "2023-06-06T23:10:05+08:00"//new Date(a.event_time).toISOString()
-            }
-        })
-
-        console.log(JSON.stringify(data))
-        const result = await ctx.curl(app.config.writetoBCUrl, {
-            timeout:30000,
-            method: 'POST',
-            contentType: 'json',
-            data: data,
-            dataType: 'json',
-        });
-
+        /* var data = events.map((a) => {
+             return {
+                 "EOSID": params.id,
+                 "EventSubStage": a.flow_id,
+                 "Timestamp": "2023-06-06T23:10:05+08:00"//new Date(a.event_time).toISOString()
+             }
+         })
+ 
+         console.log(JSON.stringify(data))
+         const result = await ctx.curl(app.config.writetoBCUrl, {
+             timeout:30000,
+             method: 'POST',
+             contentType: 'json',
+             data: data,
+             dataType: 'json',
+         });
+ 
+         
         
-       
-
-        if (result.status == 201) {
-
-
-
-
-            ctx.body = { success: true, data: result.data[0] };
-        } else {
-            ctx.body = { success: true, data: [] };
-        }*/
-
+ 
+         if (result.status == 201) {
+ 
+ 
+ 
+ 
+             ctx.body = { success: true, data: result.data[0] };
+         } else {
+             ctx.body = { success: true, data: [] };
+         }*/
 
 
 
@@ -681,10 +764,11 @@ class TransactionService extends Service {
 
 
 
-       // console.log(result.data)
-       // console.log(result.status)
+
+        // console.log(result.data)
+        // console.log(result.status)
     }
-    
+
 }
 
 module.exports = TransactionService;

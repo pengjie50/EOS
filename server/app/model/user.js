@@ -16,63 +16,63 @@ module.exports = app => {
 
         },
         username: {
-          type: STRING(100)
-         
+            type: STRING(100)
+
         },
         nickname: {
-          type: STRING(100)
-          
+            type: STRING(100)
+
         },
         sex: {
             type: TINYINT
-           
-        }, 
+
+        },
         avatar: {
             type: STRING(100)
-           
+
         },
         password: {
-          type: STRING(100)
-        
+            type: STRING(100)
+
         },
         email: {
-          type: STRING(100)
-         
-        },
-        phone: {
-          type: STRING(100)
-         
+            type: STRING(100)
+
         },
         phone: {
             type: STRING(100)
-          
+
+        },
+        phone: {
+            type: STRING(100)
+
         },
         role_id: {
             type: UUID
-           
+
         },
         company_id: {
             type: UUID
-           
+
         },
         status: {
             type: TINYINT
-          
-        }, 
+
+        },
         profile: {
             type: STRING(500)
-           
+
         },
-        
+
         login_time: {
             type: INTEGER
-          
-        }, 
+
+        },
         login_token: {
             type: STRING(500)
-         
+
         },
-       
+
     }, {
         indexes: [
             {
@@ -82,14 +82,14 @@ module.exports = app => {
                 unique: true,
                 fields: ['id', 'phone']
             }, {
-               
-                fields: ['username', 'email','phone']
+
+                fields: ['username', 'email', 'phone']
             }],
         tableName: 'user'
     });
     Model.associate = function () {
-        app.model.User.belongsTo(app.model.Role, {foreignKey: 'role_id',as:'r'});
-        app.model.User.belongsTo(app.model.Company, {foreignKey: 'company_id',as:'c'});
+        app.model.User.belongsTo(app.model.Role, { foreignKey: 'role_id', as: 'r' });
+        app.model.User.belongsTo(app.model.Company, { foreignKey: 'company_id', as: 'c' });
     };
     return Model;
 };

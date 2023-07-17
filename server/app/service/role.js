@@ -22,12 +22,15 @@ class RoleService extends Service {
         
         let obj={}  
 
-        if(params.where){
+        if (params.where) {
             obj.where = params.where
+        } else {
+            obj.where = {}
         }
         if(params.order){
             obj.order = params.order
         }
+       
         if(params.page && params.limit){
             obj.offset = parseInt((params.page - 1)) * parseInt(params.limit)
             obj.limit = parseInt(params.limit)
@@ -59,7 +62,7 @@ class RoleService extends Service {
        
         params.company_id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
 
-
+        params.role_type ="Normal"
         const res = await ctx.model.Role.create(params);
 
        

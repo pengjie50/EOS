@@ -6,7 +6,7 @@
 */
 'use strict'
 module.exports = app => {
-    
+
     const { DATE, STRING, INTEGER, UUID, TEXT, TINYINT, DataTypes } = app.Sequelize;
     const Model = app.model.define('company', {
         id: {
@@ -22,47 +22,52 @@ module.exports = app => {
 
         },
         name: {
-          type: STRING(100)
-         
+            type: STRING(100)
+
         },
+        alias: {
+            type: TEXT
+
+        },
+
         contacts: {
-          type: STRING(100)
-        
+            type: STRING(100)
+
         },
         email: {
-          type: STRING(100)
-         
+            type: STRING(100)
+
         },
         type: {
             type: STRING(100)
 
         },
         phone: {
-          type: STRING(12)
-       
+            type: STRING(12)
+
         },
         pid: {
-          type: UUID
-       
+            type: UUID
+
         },
         description: {
-          type: TEXT
-         
+            type: TEXT
+
         }
     }, {
         indexes: [
-        {
-                fields: ['name', 'phone','email']
-        }],
+            {
+                fields: ['name', 'phone', 'email', 'alias']
+            }],
         tableName: 'company'
     });
 
     Model.associate = function () {
-       
-       // app.model.Company.belongsTo(app.model.Company, {foreignKey: 'pid',as:'pc'});
-       
-        
+
+        // app.model.Company.belongsTo(app.model.Company, {foreignKey: 'pid',as:'pc'});
+
+
     };
-    
+
     return Model;
 };

@@ -17,20 +17,20 @@ module.exports = app => {
         },
         request_method: {
             type: STRING(10)
-          
+
         },
         activity_duration: {
             type: INTEGER
 
         },
-        
+
         type: {
             type: TINYINT
-         
+
         },
         param: {
             type: TEXT
-         
+
         },
         device_type: {
             type: STRING(20)
@@ -38,27 +38,27 @@ module.exports = app => {
         },
         result: {
             type: TEXT
-           
+
         },
         module: {
             type: STRING(50)
-           
+
         },
         action: {
             type: STRING(50)
-           
+
         },
         url: {
-          type: STRING(255)
-          
+            type: STRING(255)
+
         },
         ip: {
-          type: STRING(128)
-        
+            type: STRING(128)
+
         },
         user_id: {
             type: UUID
-          
+
         },
         company_id: {
             type: UUID
@@ -66,16 +66,16 @@ module.exports = app => {
         },
         status: {
             type: TINYINT
-           
+
         },
         err_code: {
             type: INTEGER
-           
+
         },
-        
+
         oper_time: {
             type: DATE
-           
+
         },
         remarks: {
             type: TEXT
@@ -84,16 +84,16 @@ module.exports = app => {
 
     }, {
         indexes: [
-        {
-                fields: ['type', 'oper_time', 'status', 'user_id', 'module', 'action', 'url','ip']
-        }],
+            {
+                fields: ['type', 'oper_time', 'status', 'user_id', 'module', 'action', 'url', 'ip']
+            }],
         timestamps: false,
         tableName: 'oper_log',
-       
+
     });
     Model.associate = function () {
-        app.model.Operlog.belongsTo(app.model.User, { foreignKey: 'user_id',as:'u'});
-       
+        app.model.Operlog.belongsTo(app.model.User, { foreignKey: 'user_id', as: 'u' });
+
     };
     return Model;
 };

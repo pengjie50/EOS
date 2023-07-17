@@ -7,7 +7,7 @@
 'use strict'
 module.exports = app => {
     const { DATE, STRING, INTEGER, UUID, DataTypes, DOUBLE } = app.Sequelize;
-    const Model = app.model.define('transaction_event', {
+    const Model = app.model.define('transaction_event_log', {
         id: {
             type: UUID,
             primaryKey: true,
@@ -15,6 +15,7 @@ module.exports = app => {
             defaultValue: DataTypes.UUIDV4
 
         },
+        transaction_event_id: UUID,
         transaction_id: UUID,
         flow_id: UUID,
         flow_pid: UUID,
@@ -30,8 +31,6 @@ module.exports = app => {
             type: STRING(50)
 
         },
-
-
         work_order_operation_type: {
             type: STRING(100)
 
@@ -64,13 +63,15 @@ module.exports = app => {
             type: STRING(50)
 
         },
-
-
-        work_order_sequence_number_status: {
+        work_order_sequence_number: {
             type: STRING(50)
 
         },
-        work_order_sequence_number: {
+        cancellation_requestor: {
+            type: STRING(200)
+
+        },
+        work_order_sequence_number_status: {
             type: STRING(50)
 
         },
@@ -78,11 +79,11 @@ module.exports = app => {
             type: STRING(50)
 
         },
-        work_order_surveyor: {
-            type: STRING(200)
+        arrival_id_status: {
+            type: STRING(50)
 
         },
-        cancellation_requestor: {
+        work_order_surveyor: {
             type: STRING(200)
 
         },
@@ -102,10 +103,7 @@ module.exports = app => {
             type: STRING(200)
 
         },
-        arrival_id_status: {
-            type: STRING(50)
 
-        },
         blockchain_hex_key: {
             type: STRING(200)
 
@@ -115,7 +113,7 @@ module.exports = app => {
         indexes: [
             {
 
-                fields: ['flow_id', 'transaction_id']
+                fields: ['flow_id', 'transaction_id', 'transaction_event_id']
             },
             {
                 fields: ['flow_pid']
@@ -127,15 +125,14 @@ module.exports = app => {
 
         timestamps: true,
         paranoid: false,
-
-        tableName: 'transaction_event',
+        tableName: 'transaction_event_log',
 
     });
     Model.associate = function () {
 
-        app.model.Transactionevent.belongsTo(app.model.Transaction, { foreignKey: 'transaction_id', as: 't' });
-        app.model.Transactionevent.belongsTo(app.model.Flow, { foreignKey: 'flow_id', as: 'f' });
+        app.model.Transactioneventlog.belongsTo(app.model.Transaction, { foreignKey: 'transaction_id', as: 't' });
 
+        app.model.Transactioneventlog.belongsTo(app.model.Flow, { foreignKey: 'flow_id', as: 'f' });
     };
     return Model;
 };

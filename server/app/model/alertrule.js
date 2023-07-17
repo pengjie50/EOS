@@ -13,7 +13,7 @@ module.exports = app => {
             primaryKey: true,
             allowNull: false,
             defaultValue: DataTypes.UUIDV4
-           
+
         },
         alertrule_id: {
             type: INTEGER,
@@ -23,7 +23,7 @@ module.exports = app => {
         },
         user_id: {
             type: UUID
-           
+
         },
         company_id: {
             type: UUID
@@ -31,86 +31,86 @@ module.exports = app => {
         },
         flow_id: {
             type: UUID
-          
+
         },
         flow_id_to: {
             type: UUID
-           
+
         },
         product_quantity_in_mt_from: {
             type: INTEGER,
-           
+
         },
         product_quantity_in_mt_to: {
             type: INTEGER,
-           
+
         },
         product_quantity_in_bls_60_f_from: {
             type: INTEGER,
-          
+
         },
         product_quantity_in_bls_60_f_to: {
             type: INTEGER,
-            
+
         },
-        
+
         vessel_size_dwt_from: {
             type: INTEGER,
-            
+
         },
         vessel_size_dwt_to: {
             type: INTEGER,
-            
+
         },
         amber_hours: {
             type: INTEGER,
-           
+
         },
         amber_mins: {
             type: INTEGER,
-           
+
         },
         red_hours: {
             type: INTEGER,
-           
+
         },
         red_mins: {
             type: INTEGER,
-           
+
         },
         email: {
             type: TEXT,
-           
+
         },
-      
+
         type: {
             type: TINYINT
-           
-           
-        }, 
-        
-       
+
+
+        },
+
+
     }, {
         indexes: [
             {
                 fields: ['company_id', 'alertrule_id']
             },
             {
-                fields: ['flow_id', 'type', 'user_id' ,'vessel_size_dwt_from', 'vessel_size_dwt_to']
+                fields: ['flow_id', 'type', 'user_id', 'vessel_size_dwt_from', 'vessel_size_dwt_to']
             },
             {
-                fields: [ 'product_quantity_in_mt_from', 'product_quantity_in_mt_to']
+                fields: ['product_quantity_in_mt_from', 'product_quantity_in_mt_to']
             },
             {
                 fields: ['product_quantity_in_bls_60_f_from', 'product_quantity_in_bls_60_f_to']
             }
 
         ],
-        
+
         timestamps: true,
         paranoid: false,
         tableName: 'alert_rule'
-        
+
     });
     Model.associate = function () {
         app.model.Alertrule.belongsTo(app.model.User, { foreignKey: 'user_id', as: 'u' });

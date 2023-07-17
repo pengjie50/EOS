@@ -24,29 +24,29 @@ module.exports = app => {
 
         },
         name: {
-          type: STRING(200)
-        
+            type: STRING(200)
+
         },
         permission_key: {
-           type: STRING(100)
+            type: STRING(100)
 
         },
         description: {
-          type: TEXT
-        
+            type: TEXT
+
         }
-        
-        
-       
+
+
+
     }, {
         indexes: [
-        {
-                fields: ['name','permission_key']
-        }],
-        
+            {
+                fields: ['name', 'permission_key']
+            }],
+
         timestamps: false,
         tableName: 'permission'
-        
+
     });
 
     return Model;

@@ -17,24 +17,24 @@ module.exports = app => {
         },
         user_id: {
             type: UUID
-           
+
         },
         alert_id: {
             type: UUID
-        
+
         }
-       
+
     }, {
         indexes: [
             {
                 unique: true,
                 fields: ['user_id', 'alert_id']
-        }],
-        
+            }],
+
         timestamps: false,
         tableName: 'alert_user_read'
-        
+
     });
-    
+
     return Model;
 };
