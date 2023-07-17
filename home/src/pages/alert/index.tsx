@@ -10,8 +10,8 @@ import { ActionType, ProColumns, ProDescriptionsItemProps, ProCard } from '@ant-
 import { AlertList, AlertListItem } from './data.d';
 import { flow } from '../system/flow/service';
 import { alertrule } from '../alertrule/service';
-import { SvgIcon } from '@/components' // 自定义组件
-import { producttype } from '../system/producttype/service';
+import { SvgIcon } from '@/components' 
+
 import { organization } from '../system/company/service';
 import { history } from '@umijs/max';
 import numeral from 'numeral';
@@ -44,7 +44,6 @@ const { confirm } = Modal;
 
 /**
  *  Delete node
- * @zh-CN 删除节点
  *
  * @param selectedRows
  */
@@ -90,7 +89,6 @@ const handleRemove = async (selectedRows: AlertListItem[]) => {
 
 /**
  * @en-US Update node
- * @zh-CN 更新节点
  *
  * @param fields
  */
@@ -125,12 +123,10 @@ const handleUpdate = async (fields: Partial<any>) => {
 const TableList: React.FC = () => {
   /**
    * @en-US Pop-up window of new window
-   * @zh-CN 新建窗口的弹窗
    *  */
   const [createModalOpen, handleModalOpen] = useState<boolean>(false);
   /**
    * @en-US The pop-up window of the distribution update window
-   * @zh-CN 分布更新窗口的弹窗
    * */
   const [updateModalOpen, handleUpdateModalOpen] = useState<boolean>(false);
 
@@ -140,12 +136,13 @@ const TableList: React.FC = () => {
   const [currentRow, setCurrentRow] = useState<AlertListItem>();
   const [selectedRowsState, setSelectedRows] = useState<AlertListItem[]>([]);
   const [producttypeList, setProducttypeList] = useState<any>({});
-  const [organizationList, setOrganizationList] = useState<any>({});
+  const [organizationList, setOrganizationList] = useState<any>([]);
+  const [organizationMap, setOrganizationMap] = useState<any>({});
   const [flowConf, setFlowConf] = useState<any>({});
   const [flowTree, setFlowTree] = useState<any>([]);
   const [processes, setProcesses] = useState<any>([]);
   const [events, setEvents] = useState<any>([]);
-
+  const [jetty_idData, setJetty_idData] = useState<any>({});
   const [isMP, setIsMP] = useState<boolean>(!isPC());
   const [organization_id, setTerminal_id] = useState<any>(useLocation()?.state?.organization_id);
   const [dateArr, setDateArr] = useState<any>(useLocation()?.state?.dateArr);
@@ -153,14 +150,13 @@ const TableList: React.FC = () => {
   const [flow_id, setFlow_id] = useState<any>(useLocation()?.state?.flow_id);
   const { initialState, setInitialState } = useModel('@@initialState');
   const { currentUser } = initialState || {};
-  const [jettyList, setJettyList] = useState<any>({});
+ 
 
   const [tab, setTab] = useState(useLocation()?.state?.tab || 'Terminal');
   
 
   /**
    * @en-US International configuration
-   * @zh-CN 国际化配置
    * */
   const intl = useIntl();
   const access = useAccess();
@@ -177,13 +173,13 @@ const TableList: React.FC = () => {
   var showNoRead= useLocation()?.state?.showNoRead
 
   const getOrganizationName = () => {
-    if (currentUser?.role_type == "Super") {
+    if (access.canAdmin) {
       return 'Organization'
     }
-    if (currentUser?.role_type == "Trader") {
+    if (!(access.alert_list_tab() || access.canAdmin)) {
       return 'Terminal'
     }
-    if (currentUser?.role_type == "Terminal") {
+    if (access.alert_list_tab()) {
       return 'Customer'
     }
   }
@@ -256,12 +252,16 @@ const TableList: React.FC = () => {
 
       }, ...f, sorter
     }
-    console.log(d)
+    
 
     if (showNoRead) {
       d.showNoRead = 1
     }
-    d.tab = tab1
+    d.tab = {
+      'field': 'tab',
+      'op': 'eq',
+      'data': tab1
+    }
    
     const append1 = await getAlert(d)
     if (page == 1) {
@@ -269,7 +269,7 @@ const TableList: React.FC = () => {
     }
     const append = append1
 
-    console.log(append)
+   
     setData(val => [...val, ...append.data])
     setHasMore(10 * (page - 1) + append.data.length < append.total)
    
@@ -286,14 +286,7 @@ const TableList: React.FC = () => {
   
   useEffect(() => {
   
-    jetty({ sorter: { name: 'ascend' } }).then((res) => {
-      var b = {}
-      res.data.forEach((r) => {
-        b[r.id] = r.name
-      })
-      setJettyList(b)
-
-    });
+    
    
     flow({ sorter: { sort: 'ascend' } }).then((res) => {
       var b = { "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": "Entire Duration" }
@@ -315,13 +308,17 @@ const TableList: React.FC = () => {
       setFlowTree(treeData)
      
       alertrule({
-        tab,
+        tab: {
+          'field': 'tab',
+          'op': 'eq',
+          'data': tab
+        },
         type: {
           'field': 'type',
           'op': 'eq',
           'data': 1
         }
-}).then((res2) => {
+       }).then((res2) => {
         var d = {}
 
 
@@ -335,10 +332,10 @@ const TableList: React.FC = () => {
 
  
 
-  if (status !== "" && status !== undefined) {
+  if (status && status.length>0) {
    
 
-    formRef.current?.setFieldValue('t.status', status+"")
+    formRef.current?.setFieldValue('t.status', status)
   }
 
   if (organization_id) {
@@ -377,22 +374,38 @@ const TableList: React.FC = () => {
       });
     });
 
-    producttype({  sorter: { name: 'ascend' } }).then((res) => {
-      var b = {}
-      res.data.forEach((r) => {
-        b[r.id] = r.name
-      })
-      setProducttypeList(b)
-
-    });
+    
    
 
     organization({ sorter: { name: 'ascend' } }).then((res) => {
-      var b = {}
+      var b = []
+
+      var typeMap = {}
+
+      var m = {}
+
       res.data.forEach((r) => {
-        b[r.id] = r.name
+        m[r.id] = r
+        if (currentUser?.role_type == "Super") {
+          if (!typeMap[r.type]) {
+            typeMap[r.type] = []
+          }
+          typeMap[r.type].push({ label: r.name, value: r.id })
+        } else {
+          b.push({ label: r.name, value: r.id })
+        }
+
       })
-      setOrganizationList(b)
+      setOrganizationMap(m)
+      if (currentUser?.role_type == "Super") {
+        var a = []
+        for (var k in typeMap) {
+          a.push({ label: k, options: typeMap[k] })
+        }
+        setOrganizationList(a)
+      } else {
+        setOrganizationList(b)
+      }
 
 
 
@@ -516,7 +529,7 @@ const TableList: React.FC = () => {
               //setShowDetail(true);
             }}
           >
-            {dom}
+            {"A"+dom}
           </a>
         );
       },
@@ -574,7 +587,7 @@ const TableList: React.FC = () => {
       valueType: 'text',
       render: (dom, entity) => {
 
-        return (<div><div style={{ display: dom == 0 ? "block" : "none" }}> <SvgIcon style={{ color: "#DE8205" }} type="icon-yuan" /> Amber</div>
+        return (<div><div style={{ display: dom == 0 ? "block" : "none" }}> <SvgIcon style={{ color: "#DE7E39" }} type="icon-yuan" /> Amber</div>
           <div style={{ display: dom == 1 ? "block" : "none" }}><SvgIcon style={{ color: "red" }} type="icon-yuan" /> Red</div></div>)
       },
     },
@@ -588,7 +601,7 @@ const TableList: React.FC = () => {
         entity.amber_mins = entity['ar.amber_mins']
         entity.red_hours = entity['ar.red_hours']
         entity.red_mins = entity['ar.red_mins']
-        return (<div><div style={{ display: entity.amber_hours || entity.amber_mins ? "block" : "none" }}> <SvgIcon style={{ color: "#DE8205" }} type="icon-yuan" />{" " + (entity.amber_hours ? entity.amber_hours : '0') + "h " + (entity.amber_mins ? entity.amber_mins : '0') + "m"}</div>
+        return (<div><div style={{ display: entity.amber_hours || entity.amber_mins ? "block" : "none" }}> <SvgIcon style={{ color: "#DE7E39" }} type="icon-yuan" />{" " + (entity.amber_hours ? entity.amber_hours : '0') + "h " + (entity.amber_mins ? entity.amber_mins : '0') + "m"}</div>
           <div style={{ display: entity.red_hours || entity.red_mins ? "block" : "none" }}><SvgIcon style={{ color: "red" }} type="icon-yuan" />{" " + (entity.red_hours ? entity.red_hours : '0') + "h " + (entity.red_mins ? entity.red_mins : '0') + "m"}</div></div>)
       },
     },
@@ -637,7 +650,7 @@ const TableList: React.FC = () => {
     },
 
     {
-      title: <FormattedMessage id="pages.alertrule.ee" defaultMessage="Total Nominated Quantity (Bal-60-F)" />,
+      title: <FormattedMessage id="pages.alertrule.ee" defaultMessage="Total Nominated Quantity (Bls-60-F)" />,
       dataIndex: 'ar.product_quantity_in_bls_60_f',
       hideInSearch: true,
       width: 200,
@@ -649,23 +662,7 @@ const TableList: React.FC = () => {
         }
 
       },
-    },/*
-    {
-      title: <FormattedMessage id="pages.alertrule.ee" defaultMessage="Total Nominated Quantity (MT)" />,
-      dataIndex: 't.product_quantity_in_mt',
-      hideInSearch: true,
-      width: 200,
-      align: "center",
-      valueType: "text",
-      render: (dom, entity) => {
-        if (dom) {
-
-
-          return numeral(dom).format('0,0')
-        }
-
-      },
-    },*/
+    },
    
 
     
@@ -718,28 +715,23 @@ const TableList: React.FC = () => {
      
     },
     
-  /*  {
-      title: <FormattedMessage id="pages.transaction.vesselName" defaultMessage="Vessel Name" />,
-      dataIndex: 't.vessel_name',
-      align: "center",
-      valueType: 'text',
-    },*/
-
+  
     {
       title: getOrganizationName(),
       dataIndex: 'organization_id',
       sorter: true,
-      valueEnum: organizationList,
+      valueEnum: organizationMap,
       render: (dom, entity) => {
 
-        if (currentUser?.role_type == 'Terminal' && tab =="Terminal") {
-          return organizationList[entity['t.trader_id']]
+        if (access.alert_list_tab() && tab =="Terminal") {
+          return organizationMap[entity['t.trader_id']]?.name || "-"
         }
       
-          return organizationList[entity.company_id]
+        return organizationMap[entity.company_id]?.name || "-"
        
       },
       fieldProps: {
+        options: organizationList,
         multiple: true,
         mode: "multiple",
         notFoundContent: <Empty />,
@@ -796,8 +788,7 @@ const TableList: React.FC = () => {
     {
       title: <FormattedMessage id="pages.transaction.startOfTransaction" defaultMessage="Start Of Transaction" />,
       dataIndex: 't.start_of_transaction',
-    //  sorter: true,
-     // defaultSortOrder: 'descend',
+   
       valueType: 'date',
       hideInTable: true,
       hideInDescriptions: true,
@@ -807,7 +798,11 @@ const TableList: React.FC = () => {
       title: <FormattedMessage id="pages.transaction.status" defaultMessage="Status" />,
       dataIndex: 't.status',
       hideInTable: true,
-      hideInDescriptions:true,
+      hideInDescriptions: true,
+      fieldProps: {
+        multiple: true,
+        mode: "multiple",
+      },
       sorter: true,
       valueEnum: {
         0: {
@@ -819,13 +814,13 @@ const TableList: React.FC = () => {
       search: {
         transform: (value) => {
 
-          if (value !== null) {
+          if (value && value.length>0) {
             return {
 
               't.status': {
                 'field': 't.status',
-                'op': 'eq',
-                'data': Number(value)
+                'op': 'in',
+                'data': value
               }
 
             }
@@ -838,11 +833,29 @@ const TableList: React.FC = () => {
       title: <FormattedMessage id="pages.transaction.jettyName" defaultMessage="Jetty Name" />,
       dataIndex: 't.jetty_id',
       sorter: true,
-      valueEnum: jettyList,
+      valueEnum: jetty_idData,
       fieldProps: {
         multiple: true,
-        mode:"multiple",
+        mode: "multiple",
+        onFocus: () => {
+          fieldSelectData({ model: "Transaction", value: '', field: 'jetty_id' }).then((res) => {
+            setJetty_idData(res.data)
+          })
+        },
+        onSearch: (newValue: string) => {
+
+          fieldSelectData({ model: "Transaction", value: newValue, field: 'jetty_id' }).then((res) => {
+            setJetty_idData(res.data)
+          })
+
+        },
         notFoundContent: <Empty />,
+      },
+      render: (dom, entity) => {
+        
+          return entity.jetty_name
+        
+
       },
       search: {
         transform: (value) => {
@@ -954,13 +967,12 @@ const TableList: React.FC = () => {
       extra: isMP ? null : []
       }}>
 
-        {currentUser?.role_type == "Terminal" && <ProCard
+        {access.alert_list_tab() && <ProCard
           className="my-tab"
-        //  title={<div className="my-font-size" style={{ height: 14, lineHeight: '14px', fontSize: 12 }}>{tab =='Terminal'?'Alerts related to my own Terminal Threshold settings':'This threshold alert is reflective of my customer’s threshold alerts'}</div>}
           headStyle={{ height: 14, lineHeight: '14px', fontSize: 12 }}
           tabs={{
             type: 'card',
-            //tabPosition,
+           
             activeKey: tab,
             items: [
               {
@@ -1011,14 +1023,18 @@ const TableList: React.FC = () => {
          
         ]}
           request={async (params, sorter) => {
-            console.log(params)
+            
             var d = { ...params, sorter }
 
             if (showNoRead) {
               d.showNoRead = 1
               
             }
-            d.tab=tab
+            d.tab = {
+              'field': 'tab',
+              'op': 'eq',
+              'data': tab
+            }
             var list = await getAlert(d)
             if (showNoRead) {
              
@@ -1171,18 +1187,7 @@ const TableList: React.FC = () => {
           />
         )}
         </Drawer>
-        {/*
-         <div style={{ marginTop: -45, paddingLeft: 10 }}>
-          <Button
-
-            type="primary"
-            onClick={async () => {
-              history.back()
-            }}
-          >Return to previous page</Button>
-        </div>
-
-        */ }
+        
         
       </PageContainer>
     </RcResizeObserver>

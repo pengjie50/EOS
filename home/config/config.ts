@@ -1,5 +1,6 @@
 // https://umijs.org/config/
 import { defineConfig } from '@umijs/max';
+import { base } from 'antd-mobile/es/locales/base';
 import { join } from 'path';
 import defaultSettings from './defaultSettings';
 import proxy from './proxy';
@@ -9,7 +10,7 @@ const { REACT_APP_ENV = 'dev' } = process.env;
 
 export default defineConfig({
     // 多tabs布局，只需要配置下面两项即可
-  keepalive: ['/Dashboard', '/Report', '/Transactions'],
+  keepalive: ['/Dashboard', '/Report', '/Transactions','/threshold/alert'],
   tabsLayout: {},
 
   /**
@@ -24,9 +25,9 @@ export default defineConfig({
    * @description 设置 ie11 不一定完美兼容，需要检查自己使用的所有依赖
    * @doc https://umijs.org/docs/api/config#targets
    */
-  // targets: {
-  //   ie: 11,
-  // },
+   /*targets: {
+     ie: 11,
+   },*/
   /**
    * @name 路由的配置，不在路由中引入的文件不会编译
    * @description 只支持 path，component，routes，redirect，wrappers，title 的配置
@@ -41,6 +42,7 @@ export default defineConfig({
    * @doc umi 的theme 配置 https://umijs.org/docs/api/config#theme
    */
   theme: {
+   
     // 如果不想要 configProvide 动态设置主题需要把这个设置为 default
     // 只有设置为 variable， 才能使用 configProvide 动态设置主色调
     'root-entry-name': 'variable',

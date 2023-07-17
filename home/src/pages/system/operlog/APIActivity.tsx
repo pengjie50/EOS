@@ -329,14 +329,14 @@ const TableList: React.FC = () => {
 
         onFocus: () => {
           fieldSelectData({ model: "Operlog", value: '', field: 'url', where: { type: 3 } }).then((res) => {
-            console.log(res.data)
+            
             setUrlData(res.data)
           })
         },
         onSearch: (newValue: string) => {
 
           fieldSelectData({ model: "Operlog", value: newValue, field: 'url', where: { type: 3 } }).then((res) => {
-            console.log(res.data)
+            
             setUrlData(res.data)
           })
 
@@ -438,7 +438,7 @@ const TableList: React.FC = () => {
 
       setData([]);
     }
-    console.log(append)
+    
     setData(val => [...val, ...append.data])
     setHasMore(10 * (page - 1) + append.data.length < append.total)
   }

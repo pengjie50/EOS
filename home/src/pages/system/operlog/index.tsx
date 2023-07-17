@@ -498,14 +498,14 @@ const TableList: React.FC = () => {
 
         onFocus: () => {
           fieldSelectData({ model: "Operlog", value: '', field: 'url', where: { type: 2 } }).then((res) => {
-            console.log(res.data)
+           
             setUrlData(res.data)
           })
         },
         onSearch: (newValue: string) => {
 
           fieldSelectData({ model: "Operlog", value: newValue, field: 'url', where: { type: 2 } }).then((res) => {
-            console.log(res.data)
+           
             setUrlData(res.data)
           })
 
@@ -524,14 +524,14 @@ const TableList: React.FC = () => {
 
         onFocus: () => {
           fieldSelectData({ model: "Operlog", value: '', field: 'ip', where: { type: 2 } }).then((res) => {
-            console.log(res.data)
+            
             setIpData(res.data)
           })
         },
         onSearch: (newValue: string) => {
 
           fieldSelectData({ model: "Operlog", value: newValue, field: 'ip', where: { type: 2 } }).then((res) => {
-            console.log(res.data)
+            
             setIpData(res.data)
           })
 
@@ -545,6 +545,7 @@ const TableList: React.FC = () => {
         notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
         showSearch: true,
         allowClear: true,
+        dropdownMatchSelectWidth: isMP ? true : false,
         multiple: true,
         mode: 'multiple',
 
@@ -565,7 +566,13 @@ const TableList: React.FC = () => {
   
   useEffect(() => {
 
-    user({ sorter: { username: 'ascend' } }).then((res) => {
+    user({
+      sorter: { username: 'ascend' }, "type": {
+        'field': 'type',
+        'op': 'ne',
+        'data': "Super"
+      }
+} ).then((res) => {
       var b = {}
       res.data.forEach((r) => {
         b[r.id] = r.username
@@ -672,7 +679,7 @@ const TableList: React.FC = () => {
 
       setData([]);
     }
-    console.log(append)
+   
     setData(val => [...val, ...append.data])
     setHasMore(10 * (page - 1) + append.data.length < append.total)
   }

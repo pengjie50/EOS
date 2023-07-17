@@ -15,7 +15,7 @@ import { Modal, Form } from 'antd';
 import React, { useRef, useEffect, useState } from 'react';
 import { company } from '../service';
 
-
+import { fieldUniquenessCheck } from '@/services/ant-design-pro/api';
 
 import { tree } from "@/utils/utils";
 
@@ -36,7 +36,23 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
     createModalOpen,
    
   } = props;
+  const onlyCheck = (rule: any, value: any, callback: (arg0: string | undefined) => void) => {
 
+
+    fieldUniquenessCheck({ where: { name: value }, model: 'Company' }).then((res) => {
+
+      if (res.data) {
+
+        callback(intl.formatMessage({
+          id: 'pages.xxx',
+          defaultMessage: 'This company name is already in use',
+        }))
+      } else {
+        callback(undefined); // 必须返回一个callback
+      }
+    });
+
+  }
   useEffect(() => {
 
     
@@ -96,6 +112,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
                 />
               ),
             },
+            { validator: onlyCheck }
           ]}
       />
       {/*<ProFormTreeSelect
@@ -150,6 +167,17 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
 
         }}
       />
+
+      <ProFormTextArea
+        name="alias"
+        width="md"
+        label={intl.formatMessage({
+          id: 'pages.company.xxx',
+          defaultMessage: 'Company Alias',
+        })}
+
+      />
+      
         <ProFormTextArea
           name="description"
           width="md"

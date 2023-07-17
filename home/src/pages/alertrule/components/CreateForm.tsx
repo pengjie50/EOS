@@ -41,7 +41,8 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
   const [flowMap, setFlowMap] = useState<any>({});
   const [flowList, setFlowList] = useState<any>([]);
   const [isMP, setIsMP] = useState<boolean>(!isPC());
-  const [organizationList, setOrganizationList] = useState<any>({});
+  const [organizationList, setOrganizationList] = useState<any>([]);
+  const [organizationMap, setOrganizationMap] = useState<any>({});
   const {
     onSubmit,
     onCancel,
@@ -117,33 +118,80 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
         }}
         title={intl.formatMessage({
           id: 'pages.alertrule.add',
-          defaultMessage: 'Creat new threshold limit setting',
+          defaultMessage: 'Create new threshold limit setting',
         })}
     >
       {currentUser?.role_type=="Super" &&   <ProFormSelect
-        valueEnum={organizationList}
+        
         fieldProps={
           {
+            options: organizationList,
             notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
             showSearch: true,
             allowClear: true,
             onFocus: () => {
-              organization({ }).then((res) => {
-                var b = {}
+              organization({}).then((res) => {
+                var b = []
+
+                var typeMap = {}
+
+                var m = {}
+
                 res.data.forEach((r) => {
-                  b[r.id] = r.name
+                  m[r.id] = r
+                  if (currentUser?.role_type == "Super") {
+                    if (!typeMap[r.type]) {
+                      typeMap[r.type] = []
+                    }
+                    typeMap[r.type].push({ label: r.name, value: r.id })
+                  } else {
+                    b.push({ label: r.name, value: r.id })
+                  }
+
                 })
-                setOrganizationList(b)
+                setOrganizationMap(m)
+                if (currentUser?.role_type == "Super") {
+                  var a = []
+                  for (var k in typeMap) {
+                    a.push({ label: k, options: typeMap[k] })
+                  }
+                  setOrganizationList(a)
+                } else {
+                  setOrganizationList(b)
+                }
               })
             },
             onSearch: (newValue: string) => {
 
               organization({ name: newValue }).then((res) => {
-                var b = {}
+                var b = []
+
+                var typeMap = {}
+
+                var m = {}
+
                 res.data.forEach((r) => {
-                  b[r.id] = r.name
+                  m[r.id] = r
+                  if (currentUser?.role_type == "Super") {
+                    if (!typeMap[r.type]) {
+                      typeMap[r.type] = []
+                    }
+                    typeMap[r.type].push({ label: r.name, value: r.id })
+                  } else {
+                    b.push({ label: r.name, value: r.id })
+                  }
+
                 })
-                setOrganizationList(b)
+                setOrganizationMap(m)
+                if (currentUser?.role_type == "Super") {
+                  var a = []
+                  for (var k in typeMap) {
+                    a.push({ label: k, options: typeMap[k] })
+                  }
+                  setOrganizationList(a)
+                } else {
+                  setOrganizationList(b)
+                }
               })
 
             }
@@ -156,7 +204,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
       
       <div style={{ float: 'left', width: '100%', display: "block",marginBottom:"10px" }}>
         <div style={{ fontWeight: 500, fontSize: "14px" }}>Input Applicable Condition(s) For Threshold To Be Applied</div>
-        <span><ExclamationCircleOutlined /> If more than one condition is selected, threshold defined is only applicable to transactions that fulfil ALL of the specified conditions</span>
+        <span><ExclamationCircleOutlined /> If more than one condition is selected, threshold defined is only applicable to transactions that fulfill ALL of the specified conditions</span>
       </div>
 
      
@@ -263,7 +311,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
 
                     }
                   ]}
-          valueEnum={{ m: "Metric Tonnes (MT)", b:"Barrels (Bal-60-F)" } }
+          valueEnum={{ m: "Metric Tonnes (MT)", b:"Barrels (Bls-60-F)" } }
 
 
         />
@@ -319,7 +367,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
             defaultMessage: 'Unit of Measurement (UOM)',
           })}
           
-          initialValue={"Barrels (Bal-60-F)"}
+          initialValue={"Barrels (Bls-60-F)"}
         />
       </ProFormGroup>*/ } 
 
@@ -444,7 +492,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
                           <ProCard ghost={true} wrap={isMP?true:false}>
                             <ProCard wrap={true} ghost={true}>
                                 <ProCard ghost={true }>
-                                 <SvgIcon style={{ color: "#DE8205" }} type="icon-yuan" /> Amber
+                                 <SvgIcon style={{ color: "#DE7E39" }} type="icon-yuan" /> Amber
                                 </ProCard>
                                 <ProCard ghost={true}>
                                  <ProFormGroup>
@@ -649,7 +697,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
                                 <ProCard ghost={true} wrap={isMP ? true : false}>
                                   <ProCard wrap={true} ghost={true}>
                                     <ProCard ghost={true}>
-                                      <SvgIcon style={{ color: "#DE8205" }} type="icon-yuan" /> Amber
+                                      <SvgIcon style={{ color: "#DE7E39" }} type="icon-yuan" /> Amber
                                     </ProCard>
                                     <ProCard ghost={true}>
                                       <ProFormGroup>
@@ -980,7 +1028,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
                               return [<ProCard ghost={true} wrap={isMP ? true : false}>
                                   <ProCard wrap={true} ghost={true}>
                                     <ProCard ghost={true}>
-                                      <SvgIcon style={{ color: "#DE8205" }} type="icon-yuan" /> Amber
+                                      <SvgIcon style={{ color: "#DE7E39" }} type="icon-yuan" /> Amber
                                     </ProCard>
                                     <ProCard ghost={true}>
                                       <ProFormGroup>
@@ -1315,7 +1363,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
                             if (isAmber) {
 
                               arr1.push({
-                                label: <><SvgIcon style={{ color: "#DE8205" }} type="icon-yuan" /> Amber</>,
+                                label: <><SvgIcon style={{ color: "#DE7E39" }} type="icon-yuan" /> Amber</>,
                                 value: 'a',
                                
                               })

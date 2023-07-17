@@ -16,7 +16,7 @@ import { FormattedMessage, useIntl } from '@umijs/max';
 import { Modal, Form, TreeSelect, Tree } from 'antd';
 import React, { useRef, useState, useEffect } from 'react';
 import { flow } from '../../../system/flow/service';
-import { tree, isPC } from "@/utils/utils";
+import { tree, getparentlist, getChildNode, isPC } from "@/utils/utils";
 import { company } from '../../../system/company/service';
 import { queryMenuByRoleId } from '@/pages/system/role/service';
 import { permission } from '@/pages/system/permission/service';
@@ -34,6 +34,9 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
   const [permissionConf, setPermissionConf] = useState<any>([]);
   const [companyConf, setCompanyConf] = useState<any>([]);
   const [isMP, setIsMP] = useState<boolean>(!isPC());
+
+
+  const [accessiblePermissionsCheckedKeys, setAccessiblePermissionsCheckedKeys] = useState<any>(values?.accessible_permissions ||[]); 
   const {
     onSubmit,
     onCancel,
@@ -69,21 +72,29 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
     });
 
 
-    permission().then((res) => {
+    permission({ sorter: { sort: 'ascend' } }).then((res) => {
 
       res.data = res.data.map((r) => {
         r['key'] = r.id
         r['title'] = r.name
+        if (r.pid == null) {
+          r.pid = 'all'
+        }
+
         return r
       })
-      res.data.unshift({ value: 'all', title: 'All', name: 'All', id: null, pid: "all" })
-      setPermissionConf(tree(res.data, "all", 'pid'))
-      return tree(res.data, "all", 'pid')
-
-      return d
+      res.data.unshift({ value: 'all', key: 'all', title: 'All', name: 'All', id: 'all', pid: "pall" })
+      setPermissionConf(tree(res.data, "pall", 'pid'))
+      return tree(res.data, "pall", 'pid')
     });
+    if (values && values.accessible_permissions) {
+      setAccessiblePermissionsCheckedKeys(['all', ...values?.accessible_permissions] || [])
+    }
+    
+    
+  }, [true, values]);
 
-  }, [true]);
+
   return (
    
     <ModalForm
@@ -137,7 +148,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
             },
           ]}
         />
-        <ProFormSelect
+        {/*<ProFormSelect
           name="type"
           label={intl.formatMessage({
             id: 'pages.xxx',
@@ -165,7 +176,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
 
           }}
-        />
+        />*/ }
 
         <ProFormTextArea
           name="description"
@@ -184,13 +195,51 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         <Tree
           checkable
           multiple={true}
-          defaultCheckedKeys={values.accessible_permissions}
+          checkedKeys={accessiblePermissionsCheckedKeys}
+         // defaultCheckedKeys={values.accessible_permissions}
           defaultExpandAll={true}
+          checkStrictly={true}
           onSelect={(e) => {
 
-
+           
           }}
-          onCheck={(e) => {  restFormRef.current?.setFieldValue("accessible_permissions", e) }}
+          onCheck={(e, a) => {
+            var ishas = accessiblePermissionsCheckedKeys.some((b) => {
+              return b == a.node.id
+            })
+            var checks=[]
+            if (!ishas) {
+              var parent = getparentlist(a.node.id, permissionConf)
+
+
+
+              var child = getChildNode(permissionConf, a.node.id, [])
+
+              checks = Array.from(new Set([a.node.id, ...parent, ...child, ...accessiblePermissionsCheckedKeys]))
+              setAccessiblePermissionsCheckedKeys(checks);
+            } else {
+              var child = getChildNode(permissionConf, a.node.id, [])
+
+
+              var checks = accessiblePermissionsCheckedKeys.filter((c) => {
+
+                return ![a.node.id, ...child].some((a) => {
+                  return a == c
+                })
+              })
+              setAccessiblePermissionsCheckedKeys(checks)
+            }
+
+
+            checks=checks?.filter((a) => {
+              return a != "all"
+            })
+          
+
+
+            restFormRef.current?.setFieldValue("accessible_permissions", checks )
+          }}
+
           treeData={permissionConf}
         />
 

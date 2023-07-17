@@ -10,11 +10,12 @@ import {
 } from '@ant-design/pro-components';
 import { JettyListItem } from '../data.d';
 import { FormattedMessage, useIntl, useModel } from '@umijs/max';
-import { Modal, Form } from 'antd';
+import { Modal, Form, Empty } from 'antd';
 import React, { useRef, useState, useEffect } from 'react';
 import { organization } from '../../../system/company/service';
 
-
+import { fieldUniquenessCheck, fieldSelectData } from '@/services/ant-design-pro/api';
+import { isPC } from "@/utils/utils";
 export type CreateFormProps = {
   onCancel: (flag?: boolean, formVals?: Partial<JettyListItem>) => void;
   onSubmit: (values: Partial<JettyListItem>) => Promise<void>;
@@ -26,8 +27,38 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
   const restFormRef = useRef<ProFormInstance>();
   const intl = useIntl();
   const [terminalList, setTerminalList] = useState<any>({});
+
+  
+  const [depth_alongsideData, setDepth_alongsideData] = useState<any>({});
+  const [depth_approachesData, setDepth_approachesData] = useState<any>({});
+
+  const [max_loaData, setMax_loaData] = useState<any>({});
+  const [min_loaData, setMin_loaData] = useState<any>({});
+  const [max_displacementData, setMax_displacementData] = useState<any>({});
+  const [mla_envelop_at_mhws_3mData, setMla_envelop_at_mhws_3mData] = useState<any>({});
+
+  const [isMP, setIsMP] = useState<boolean>(!isPC());
   const { initialState, setInitialState } = useModel('@@initialState');
   const { currentUser } = initialState || {};
+
+
+  const onlyCheck = (rule: any, value: any, callback: (arg0: string | undefined) => void) => {
+
+
+    fieldUniquenessCheck({ where: { name: value }, model: 'Jetty' }).then((res) => {
+
+      if (res.data) {
+
+        callback(intl.formatMessage({
+          id: 'pages.xxx',
+          defaultMessage: 'Chosen Jetty No. already exist within EOS',
+        }))
+      } else {
+        callback(undefined); // 必须返回一个callback
+      }
+    });
+
+  }
   useEffect(() => {
 
 
@@ -91,7 +122,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
             id: 'pages.jetty.xxx',
             defaultMessage: 'Jetty No.',
           })}
-          width="md"
+        width="lg"
           rules={[
           {
             required: true,
@@ -101,58 +132,236 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
                 defaultMessage=""
               />
             ),
-          },
+            }, { validator: onlyCheck }
         ]}
       />
-      <ProFormText
+     
+      <ProFormSelect
         name="depth_alongside"
-        label={intl.formatMessage({
-          id: 'pages.jetty.depthAlongside',
-          defaultMessage: 'Depth Approaches (M)',
-        })}
-        width="md"
+        label="Depth Alongside (M)"
+        width="lg"
+        valueEnum={depth_alongsideData}
+        fieldProps={
+          {
+            notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
+            showSearch: true,
+            dropdownMatchSelectWidth: isMP ? true : false,
+            allowClear: true,
+
+            onFocus: () => {
+              fieldSelectData({ model: "Jetty", value: '', field: 'depth_alongside' }).then((res) => {
+                setDepth_alongsideData(res.data)
+              })
+            },
+            onSearch: (newValue: string) => {
+              if (!newValue) {
+                return
+              }
+              fieldSelectData({ model: "Jetty", value: newValue, field: 'depth_alongside' }).then((res) => {
+                setDepth_alongsideData({ [newValue + ""]: newValue, ...res.data })
+
+                setDepth_alongsideData(val => {
+                  alert(newValue)
+                  restFormRef.current?.setFieldValue("depth_alongside", newValue + "")
+                  return val
+
+                })
+
+                //restFormRef.current?.setFieldValue("depth_approaches",newValue)
+              })
+
+            }
+          }}
       />
-      <ProFormText
+
+      <ProFormSelect
         name="depth_approaches"
-        label={intl.formatMessage({
-          id: 'pages.jetty.depthApproaches',
-          defaultMessage: 'Depth Approaches (M)',
-        })}
-        width="md"
+        label="Depth Approaches (M)"
+        width="lg"
+        valueEnum={depth_approachesData}
+        fieldProps={
+          {
+            notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
+            showSearch: true,
+            dropdownMatchSelectWidth: isMP ? true : false,
+            allowClear: true,
+            
+            onFocus: () => {
+              fieldSelectData({ model: "Jetty", value: '', field: 'depth_approaches' }).then((res) => {
+                setDepth_approachesData(res.data)
+              })
+            },
+            onSearch: (newValue: string) => {
+              if (!newValue) {
+                return
+              }
+              fieldSelectData({ model: "Jetty", value: newValue, field: 'depth_approaches' }).then((res) => {
+                setDepth_approachesData({ [newValue+""]: newValue, ...res.data })
+
+                setDepth_approachesData(val => {
+                  alert(newValue)
+                  restFormRef.current?.setFieldValue("depth_approaches", newValue+"")
+                  return val
+
+                })
+
+                //restFormRef.current?.setFieldValue("depth_approaches",newValue)
+              })
+
+            }
+          }}
       />
-      <ProFormText
+      <ProFormSelect
         name="max_loa"
-        label={intl.formatMessage({
-          id: 'pages.jetty.maxLOA',
-          defaultMessage: 'Max. LOA (M)',
-        })}
-        width="md"
+        label="Max. LOA (M)"
+        width="lg"
+        valueEnum={max_loaData}
+        fieldProps={
+          {
+            notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
+            showSearch: true,
+            dropdownMatchSelectWidth: isMP ? true : false,
+            allowClear: true,
+
+            onFocus: () => {
+              fieldSelectData({ model: "Jetty", value: '', field: 'max_loa' }).then((res) => {
+                setMax_loaData(res.data)
+              })
+            },
+            onSearch: (newValue: string) => {
+              if (!newValue) {
+                return
+              }
+              fieldSelectData({ model: "Jetty", value: newValue, field: 'max_loa' }).then((res) => {
+                setMax_loaData({ [newValue + ""]: newValue, ...res.data })
+
+                setMax_loaData(val => {
+                  
+                  restFormRef.current?.setFieldValue("max_loa", newValue + "")
+                  return val
+
+                })
+
+                //restFormRef.current?.setFieldValue("depth_approaches",newValue)
+              })
+
+            }
+          }}
       />
-      <ProFormText
+      <ProFormSelect
         name="min_loa"
-        label={intl.formatMessage({
-          id: 'pages.jetty.minLOA',
-          defaultMessage: 'Min. LOA (M)',
-        })}
-        width="md"
+        label="Min. LOA (M)"
+        width="lg"
+        valueEnum={min_loaData}
+        fieldProps={
+          {
+            notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
+            showSearch: true,
+            dropdownMatchSelectWidth: isMP ? true : false,
+            allowClear: true,
+
+            onFocus: () => {
+              fieldSelectData({ model: "Jetty", value: '', field: 'min_loa' }).then((res) => {
+                setMin_loaData(res.data)
+              })
+            },
+            onSearch: (newValue: string) => {
+              if (!newValue) {
+                return
+              }
+              fieldSelectData({ model: "Jetty", value: newValue, field: 'min_loa' }).then((res) => {
+                setMin_loaData({ [newValue + ""]: newValue, ...res.data })
+
+                setMin_loaData(val => {
+                 
+                  restFormRef.current?.setFieldValue("min_loa", newValue + "")
+                  return val
+
+                })
+
+                //restFormRef.current?.setFieldValue("depth_approaches",newValue)
+              })
+
+            }
+          }}
       />
-      <ProFormText
+
+      <ProFormSelect
         name="max_displacement"
-        label={intl.formatMessage({
-          id: 'pages.jetty.maxDisplacement',
-          defaultMessage: 'Max. Displacement (MT)D',
-        })}
-        width="md"
+        label="Max. Displacement (MT)D"
+        width="lg"
+        valueEnum={max_displacementData}
+        fieldProps={
+          {
+            notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
+            showSearch: true,
+            dropdownMatchSelectWidth: isMP ? true : false,
+            allowClear: true,
+
+            onFocus: () => {
+              fieldSelectData({ model: "Jetty", value: '', field: 'max_displacement' }).then((res) => {
+                setMax_displacementData(res.data)
+              })
+            },
+            onSearch: (newValue: string) => {
+              if (!newValue) {
+                return
+              }
+              fieldSelectData({ model: "Jetty", value: newValue, field: 'max_displacement' }).then((res) => {
+                setMax_displacementData({ [newValue + ""]: newValue, ...res.data })
+
+                setMax_displacementData(val => {
+                  
+                  restFormRef.current?.setFieldValue("max_displacement", newValue + "")
+                  return val
+
+                })
+
+                //restFormRef.current?.setFieldValue("depth_approaches",newValue)
+              })
+
+            }
+          }}
       />
-      <ProFormText
+    
+      <ProFormSelect
         name="mla_envelop_at_mhws_3m"
-        label={intl.formatMessage({
-          id: 'pages.jetty.mlaEnvelopAtMHWS3m',
-          defaultMessage: 'MLA Envelop At MHWS 3.0m (Unless Otherwise Specified) (M)',
-        })}
-        width="md"
-        
+        label="MLA Envelop At MHWS 3.0m (Unless Otherwise Specified) (M)"
+        width="lg"
+        valueEnum={mla_envelop_at_mhws_3mData}
+        fieldProps={
+          {
+            notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
+            showSearch: true,
+            dropdownMatchSelectWidth: isMP ? true : false,
+            allowClear: true,
+
+            onFocus: () => {
+              fieldSelectData({ model: "Jetty", value: '', field: 'mla_envelop_at_mhws_3m' }).then((res) => {
+                setMla_envelop_at_mhws_3mData(res.data)
+              })
+            },
+            onSearch: (newValue: string) => {
+              if (!newValue) {
+                return
+              }
+              fieldSelectData({ model: "Jetty", value: newValue, field: 'mla_envelop_at_mhws_3m' }).then((res) => {
+                setMla_envelop_at_mhws_3mData({ [newValue + ""]: newValue, ...res.data })
+
+                setMla_envelop_at_mhws_3mData(val => {
+                 
+                  restFormRef.current?.setFieldValue("mla_envelop_at_mhws_3m", newValue + "")
+                  return val
+
+                })
+
+                //restFormRef.current?.setFieldValue("depth_approaches",newValue)
+              })
+
+            }
+          }}
       />
+    
 
       {currentUser?.role_type != 'Terminal' && <ProFormSelect
         name="terminal_id"
@@ -160,7 +369,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
           id: 'pages.jetty.terminals',
           defaultMessage: 'Terminal',
         })}
-        width="md"
+        width="lg"
         valueEnum={terminalList}
       />} 
        

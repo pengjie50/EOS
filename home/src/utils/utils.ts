@@ -32,8 +32,49 @@ export function tree(data: any, pid = null, key = 'pid',no) {
 
   return result;
 }
+export function getChildNode(nodes, item, arr) {
+  for (let el of nodes) {
+    if (el.pid === item) {
+      arr.push(el.id);
+      if (el.children) {
+        childsNodeDeepWay(el.children, arr);
+      }
+    } else if (el.children) {
+      getChildNode(el.children, item, arr);
+    }
+  }
+  return arr;
+}
+function childsNodeDeepWay(nodes, arr) {
+  if (nodes)
+    nodes.forEach((ele) => {
+      arr.push(ele.id);
+      if (ele.children) {
+        childsNodeDeepWay(ele.children, arr);
+      }
+    });
+}
 
 
+export function getparentlist(code, tree) {
+  let arr = [] //要返回的数组
+  for (let i = 0; i < tree.length; i++) {
+    let item = tree[i]
+    arr = []
+    arr.push(item.id) //保存当前节点id
+    if (code == item.id) { //判断当前id是否是默认id
+      return arr //是则退出循环、返回数据
+    } else { //否则进入下面判断，判断当前节点是否有子节点数据
+      if (item.children && item.children.length > 0) {
+        //合并子节点返回的数据
+        arr = arr.concat(getparentlist(code, item.children))
+        if (arr.includes(code)) { //如果当前数据中已包含默认节点，则退出循环、返回数据
+          return arr
+        }
+      }
+    }
+  }
+}
 
 export function isPC() {
   var userAgentInfo = navigator.userAgent;

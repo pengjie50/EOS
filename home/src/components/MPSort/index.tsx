@@ -3,7 +3,7 @@ import { DefaultFooter } from '@ant-design/pro-components';
 import { useIntl } from '@umijs/max';
 import { Button, Popover } from 'antd';
 
-import {  SwapOutlined, SortAscendingOutlined, SortDescendingOutlined } from '@ant-design/icons';
+import { SwapOutlined, SortAscendingOutlined, SortDescendingOutlined, ArrowUpOutlined,ArrowDownOutlined } from '@ant-design/icons';
 import React, { useState } from 'react';
 export interface MPSortProps {
   columns: Array;
@@ -35,7 +35,7 @@ const MPSort: React.FC<MPSortProps> = (props) => {
         //getData(1)
 
 
-      }} icon={<SortAscendingOutlined />} />
+      }} icon={<ArrowUpOutlined />} />
         <Button type={MpSortDataIndex == a.dataIndex + "descend" ? "primary" : "default"} style={{ margin: 5 }} onClick={() => {
 
           if (MpSortDataIndex == a.dataIndex + "descend") {
@@ -50,7 +50,7 @@ const MPSort: React.FC<MPSortProps> = (props) => {
 
          // getData(1)
 
-        }} icon={<SortDescendingOutlined />} />
+        }} icon={<ArrowDownOutlined />} />
         <span>{a.title}</span>
       </div>)
 

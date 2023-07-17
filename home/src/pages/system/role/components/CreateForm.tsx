@@ -17,7 +17,7 @@ import { Modal, Form, TreeSelect, Tree } from 'antd';
 import React, { useRef, useState, useEffect } from 'react';
 import { flow } from '../../../system/flow/service';
 import { company } from '../../../system/company/service';
-import { tree, isPC } from "@/utils/utils";
+import { tree, getparentlist, getChildNode, isPC } from "@/utils/utils";
 import { permission } from '@/pages/system/permission/service';
 import { Checkbox } from 'antd-mobile';
 export type CreateFormProps = {
@@ -32,6 +32,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
   const intl = useIntl();
   const [flowConf, setFlowConf] = useState<any>([]);
   const [permissionConf, setPermissionConf] = useState<any>([]);
+  const [accessiblePermissionsCheckedKeys, setAccessiblePermissionsCheckedKeys] = useState<any>([]); 
   const [companyConf, setCompanyConf] = useState<any>([]);
   const [isMP, setIsMP] = useState<boolean>(!isPC());
   const {
@@ -40,7 +41,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
     createModalOpen,
   
   } = props;
-
+  
   useEffect(() => {
 
     flow({ sorter: { sort: 'ascend' } }).then((res) => {
@@ -69,16 +70,20 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
     });
 
 
-    permission().then((res) => {
+    permission({ sorter: { sort: 'ascend' } }).then((res) => {
 
       res.data = res.data.map((r) => {
         r['key'] = r.id
         r['title'] = r.name
+        if (r.pid==null) {
+          r.pid = 'all'
+        }
+        
         return r
       })
-      res.data.unshift({ value: 'all', title: 'All', name: 'All', id: null, pid: "all" })
-      setPermissionConf(tree(res.data, "all", 'pid'))
-      return tree(res.data, "all", 'pid')
+      res.data.unshift({ value: 'all',key:'all' ,title: 'All', name: 'All', id: 'all', pid: "pall" })
+      setPermissionConf(tree(res.data, "pall", 'pid'))
+      return tree(res.data, "pall", 'pid')
 
       return d
     });
@@ -143,7 +148,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
             },
           ]}
         />
-        <ProFormSelect
+        {/* <ProFormSelect
           name="type"
           label={intl.formatMessage({
             id: 'pages.xxx',
@@ -171,7 +176,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
 
 
           }}
-        />
+        />*/ }
 
         <ProFormTextArea
           name="description"
@@ -189,13 +194,49 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
         <ProFormCheckbox name="accessible_permissions"  hidden={true } />
         <Tree
           checkable
-          multiple={true }
+          multiple={true}
+          checkedKeys={accessiblePermissionsCheckedKeys}
           defaultExpandAll={true}
+          checkStrictly={true }
           onSelect={(e) => {
             
 
           }}
-          onCheck={(e) => { restFormRef.current?.setFieldValue("accessible_permissions",e) }}
+          onCheck={(e, a) => {
+            var ishas=accessiblePermissionsCheckedKeys.some((b) => {
+              return b == a.node.id
+            })
+            if (!ishas) {
+              var parent = getparentlist(a.node.id, permissionConf)
+             
+
+              
+              var child= getChildNode(permissionConf, a.node.id, [])
+              
+              
+              setAccessiblePermissionsCheckedKeys(Array.from(new Set([a.node.id, ...parent, ...child, ...accessiblePermissionsCheckedKeys])));
+            } else {
+              var child = getChildNode(permissionConf, a.node.id, [])
+
+
+             var checks= accessiblePermissionsCheckedKeys.filter((c) => {
+
+                return ![a.node.id, ...child].some((a) => {
+                  return a == c
+                })
+              })
+              setAccessiblePermissionsCheckedKeys(checks)
+            }
+
+
+            
+
+            
+            
+            restFormRef.current?.setFieldValue("accessible_permissions", checks?.filter((a) => {
+              return a != "all"
+            }))
+          }}
           treeData={permissionConf}
         />
 

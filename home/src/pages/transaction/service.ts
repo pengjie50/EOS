@@ -1,9 +1,9 @@
 import { request } from 'umi';
 import { TransactionList, TransactionListItem, TransactionListParams } from './data.d';
 
-/** 获取规则列表 GET /api/rule */
+
 export async function transaction(params?: { [key: string]: any }) {
-  console.log(params)
+
   return request('/api/transaction/list', {
     method: 'POST',
     data: {
@@ -13,29 +13,28 @@ export async function transaction(params?: { [key: string]: any }) {
   });
 }
 
+export async function statistics(params?: { [key: string]: any }) {
 
-  export async function statistics(params?: { [key: string]: any }) {
-    console.log(params)
-    return request('/api/transaction/statistics', {
-      method: 'POST',
-      data: {
-        ...params,
-        hasFilters: true
-      },
-    });
-  }
+  return request('/api/transaction/statistics', {
+    method: 'POST',
+    data: {
+      ...params,
+      hasFilters: true
+    },
+  });
+}
 export async function writetoBC(params?: { [key: string]: any }) {
-  console.log(params)
+
   return request('/api/transaction/writetoBC', {
     method: 'POST',
     data: {
       ...params
-     
+
     },
   });
 }
 export async function validateBC(params?: { [key: string]: any }) {
-  console.log(params)
+
   return request('/api/transaction/validateBC', {
     method: 'POST',
     data: {
@@ -45,7 +44,7 @@ export async function validateBC(params?: { [key: string]: any }) {
   });
 }
 export async function transactionevent(params?: { [key: string]: any }) {
-  console.log(params)
+
   return request('/api/transactionevent/list', {
     method: 'POST',
     data: {
@@ -55,7 +54,16 @@ export async function transactionevent(params?: { [key: string]: any }) {
   });
 }
 
+export async function transactioneventlog(params?: { [key: string]: any }) {
 
+  return request('/api/transactioneventlog/list', {
+    method: 'POST',
+    data: {
+      ...params,
+      hasFilters: true
+    },
+  });
+}
 export async function addTransactionevent(options?: { [key: string]: any }) {
   return request('/api/transactionevent/add', {
     method: 'POST',
@@ -72,7 +80,7 @@ export async function updateTransactionevent(options?: { [key: string]: any }) {
 }
 
 export async function updateTransaction(options?: { [key: string]: any }) {
-  return request <TransactionListItem>('/api/transaction/mod', {
+  return request<TransactionListItem>('/api/transaction/mod', {
     method: 'POST',
     data: options || {}
   });
@@ -81,8 +89,8 @@ export async function updateTransaction(options?: { [key: string]: any }) {
 export async function addTransaction(options?: { [key: string]: any }) {
   return request<TransactionListItem>('/api/transaction/add', {
     method: 'POST',
-    data:options || {}
-    
+    data: options || {}
+
   });
 }
 

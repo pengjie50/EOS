@@ -31,7 +31,7 @@ import {
   ProTable,
 } from '@ant-design/pro-components';
 import { FormattedMessage, useIntl, formatMessage, useLocation, useModel } from '@umijs/max';
-import { Button, Drawer, Input, message, Modal, Tooltip, Empty, ConfigProvider, FloatButton, SelectProps, Popover } from 'antd';
+import { Button, Drawer, Input, message, Modal, Tooltip, Empty, ConfigProvider, FloatButton, SelectProps, Pagination, Popover } from 'antd';
 import React, { useRef, useState, useEffect } from 'react';
 import CreateForm from './components/CreateForm';
 import UpdateForm from './components/UpdateForm';
@@ -53,7 +53,6 @@ import { InfiniteScroll, List, NavBar, Space, DotLoading } from 'antd-mobile'
 import { parseInt, size } from 'lodash';
 /**
  * @en-US Add node
- * @zh-CN 添加节点
  * @param fields
  */
 const handleAdd = async (fields: TransactionListItem) => {
@@ -81,7 +80,6 @@ const handleAdd = async (fields: TransactionListItem) => {
 
 /**
  * @en-US Update node
- * @zh-CN 更新节点
  *
  * @param fields
  */
@@ -249,10 +247,10 @@ const TableList: React.FC = () => {
   const [printModalVisible, handlePrintModalVisible] = useState<boolean>(false);
   const [paramsText, setParamsText] = useState<string>('');
   const [flowConf, setFlowConf] = useState<any>({});
+  const [organizationMap, setOrganizationMap] = useState<any>({});
+  const [organizationList, setOrganizationList] = useState<any>([]);
 
-  const [organizationList, setOrganizationList] = useState<any>({});
-  const [jettyList, setJettyList] = useState<any>({});
-  const [producttypeList, setProducttypeList] = useState<any>({});
+
   const [sumRow, setSumRow] = useState<TransactionListItem>();
   const [processes, setProcesses] = useState<any>([]);
   const [events, setEvents] = useState<any>([]);
@@ -334,6 +332,7 @@ const TableList: React.FC = () => {
   }
   const back = () => { }
   const [data, setData] = useState<string[]>([])
+  const [MPPagination, setMPPagination] = useState<string[]>({})
   const [hasMore, setHasMore] = useState(true)
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [MPfilter, setMPfilter] = useState<any>({})
@@ -369,7 +368,9 @@ const TableList: React.FC = () => {
       
       setData([]);
     }
-    console.log(append)
+
+    setMPPagination({ total:append.total})
+   
     setData(val => [...val, ...append.data])
     setHasMore(10 * (page - 1) + append.data.length < append.total)
        
@@ -384,13 +385,13 @@ const TableList: React.FC = () => {
   //--MP end
 
   const getOrganizationName = () => {
-    if (currentUser?.role_type=="Super") {
+    if (access.canAdmin) {
       return 'Organization'
     }
-    if (currentUser?.role_type == "Trader") {
+    if (!(access.transactions_list_tab() || access.canAdmin)) {
       return 'Terminal'
     }
-    if (currentUser?.role_type == "Terminal") {
+    if (access.transactions_list_tab()) {
       return 'Customer'
     }
   }
@@ -423,7 +424,7 @@ const TableList: React.FC = () => {
 
         res2.data.forEach((r) => {
 
-          console.log(b)
+         
           d[r.flow_id + "_" + r.flow_id_to] = b[r.flow_id] + " -> " + b[r.flow_id_to]
         })
 
@@ -432,35 +433,42 @@ const TableList: React.FC = () => {
       });
     });
 
-    jetty({  sorter: { name: 'ascend' } }).then((res) => {
-      var b = {}
-      res.data.forEach((r) => {
-        b[r.id] = r.name
-      })
-      setJettyList(b)
-
-    });
-
-    producttype({  sorter: { name: 'ascend' } }).then((res) => {
-      var b = {}
-      res.data.forEach((r) => {
-        b[r.id] = r.name
-      })
-      setProducttypeList(b)
-
-    });
+    
     organization({  sorter: { name: 'ascend' } }).then((res) => {
-      var b = {}
+      var b = []
+
+      var typeMap = {}
+
+      var m = {}
+
       res.data.forEach((r) => {
-        b[r.id] = r.name
+        m[r.id] = r
+        if (currentUser?.role_type == "Super") {
+          if (!typeMap[r.type]) {
+            typeMap[r.type] = []
+          }
+          typeMap[r.type].push({ label: r.name, value: r.id })
+        } else {
+          b.push({ label: r.name, value: r.id })
+        }
+
       })
-      setOrganizationList(b)
+      setOrganizationMap(m)
+      if (currentUser?.role_type == "Super") {
+        var a = []
+        for (var k in typeMap) {
+          a.push({ label: k, options: typeMap[k] })
+        }
+        setOrganizationList(a)
+      } else {
+        setOrganizationList(b)
+      }
 
 
 
-      if (status !== "" && status !== undefined) {
+      if (status  && status.length>0) {
        
-        formRef.current?.setFieldValue('status', status + "")
+        formRef.current?.setFieldValue('status', status)
       }
 
       if (organization_id) {
@@ -471,8 +479,10 @@ const TableList: React.FC = () => {
       
         formRef.current?.setFieldValue('start_of_transaction', dateArr)
       }
-     
+      setTimeout(() => {
         formRef.current?.submit();
+      },200)
+      
       
      
 
@@ -493,6 +503,8 @@ const TableList: React.FC = () => {
   const intl = useIntl();
   const access = useAccess();
   const [imo_numberData, setImo_numberData] = useState<any>({});
+  const [jetty_idData, setJetty_idData] = useState<any>({});
+
   const [vessel_nameData, setVessel_nameData] = useState<any>({});
   const [product_nameData, setProduct_nameData] = useState<any>({});
   const columns: ProColumns<TransactionListItem>[] = [
@@ -505,7 +517,8 @@ const TableList: React.FC = () => {
       ),
       dataIndex: 'eos_id',
       hideInSearch: true,
-     
+      fixed: 'left',
+      width:120,
  
       sorter: true,
      
@@ -535,7 +548,7 @@ const TableList: React.FC = () => {
           defaultMessage="Date Range"
         />
       ),
-      sorter: true,
+     
       hideInDescriptions: true,
       hideInTable: true,
       hideInSearch:true,
@@ -543,7 +556,7 @@ const TableList: React.FC = () => {
       defaultSortOrder: 'descend',
       dataIndex: 'start_of_transaction',
       valueType: 'dateRange',
-     
+      
       search: {
         transform: (value) => {
           if (value && value.length > 0) {
@@ -565,7 +578,7 @@ const TableList: React.FC = () => {
     },
     {
       title: null,
-      dataIndex: "aaaaa",
+      dataIndex: "aaa",
       hideInTable: true,
       hideInDescriptions:true,
       renderFormItem: () => (<div style={{ width: '100%' }}>
@@ -596,7 +609,7 @@ const TableList: React.FC = () => {
                   })
                 },
                 onSearch: (newValue: string) => {
-
+                  
                   fieldSelectData({ model: "Transaction", value: newValue, field: 'product_name' }).then((res) => {
                     setProduct_nameData(res.data)
                   })
@@ -612,7 +625,7 @@ const TableList: React.FC = () => {
             <ProFormSelect label="Status"
               width="lg"
               name="status"
-            //  fieldProps={{ mode: "multiple" }}
+              fieldProps={{ mode: "multiple" }}
               valueEnum={{
                 '0': {
                   text: <FormattedMessage id="pages.transaction.active" defaultMessage="Open" />
@@ -625,19 +638,20 @@ const TableList: React.FC = () => {
 
         </div>
 
-          {/*  <div style={{ width: '100%', marginBottom: isMP?0:0 }}>
+          {  <div style={{ width: '100%', marginBottom: isMP?0:0 }}>
 
             <ProFormSelect label={getOrganizationName()}
               width="lg"
               fieldProps={{
+                options: organizationList,
                 showSearch: true,
                 allowClear: true,
               }}
-              valueEnum={organizationList}
+             
             name="organization_id"
           />
 
-        </div>*/ }
+        </div> }
         </div>
       </div>),
       valueType: 'text'
@@ -689,9 +703,21 @@ const TableList: React.FC = () => {
             <ProFormSelect label="Jetty"
               width="lg"
               name="jetty_id"
-              valueEnum={jettyList}
+              valueEnum={jetty_idData}
               fieldProps={{
                 mode: 'multiple',
+                onFocus: () => {
+                  fieldSelectData({ model: "Transaction", value: '', field: 'jetty_id' }).then((res) => {
+                    setJetty_idData(res.data)
+                  })
+                },
+                onSearch: (newValue: string) => {
+
+                  fieldSelectData({ model: "Transaction", value: newValue, field: 'jetty_id' }).then((res) => {
+                    setJetty_idData(res.data)
+                  })
+
+                },
               notFoundContent: <Empty />,
             }}
             />
@@ -737,20 +763,20 @@ const TableList: React.FC = () => {
     
     {
       title:null,
-      dataIndex: "cccc",
+      dataIndex: "ccc",
       hideInTable: true,
       hideInDescriptions: true,
       renderFormItem: () => (<div style={{ width: '100%' }}>
-       
+
         {!collapse && <div style={{ width: '100%', textAlign: "center", color: "#FFF" }}> Threshold Breached  </div>}
-        
-        <div style={{ width: '100%', marginBottom: 20 }}> <ProFormSelect label="Organization" valueEnum={organizationList}
+
+        <div style={{ width: '100%', display: (access.canAdmin || access.transactions_list_tab()) ?'block':'none', marginBottom: 20 }}> <ProFormSelect label="Organization" 
           width="lg"
           name="threshold_organization_id"
           fieldProps={
             {
               notFoundContent: <Empty />,
-
+              options: access.transactions_list_tab() ? [{ label: currentUser?.company_name, value: currentUser?.company_id }, ...organizationList] : organizationList,
               dropdownMatchSelectWidth: isMP ? true : false,
               mode: 'multiple',
               showSearch: false,
@@ -794,6 +820,7 @@ const TableList: React.FC = () => {
       title: <FormattedMessage id="pages.transaction.startOfTransaction" defaultMessage="Start Of Transaction" />,
       dataIndex: 'start_of_transaction',
       sorter: true,
+      width: 150,
       defaultSortOrder:'descend',
       valueType: 'date',
       hideInSearch: true,
@@ -802,7 +829,8 @@ const TableList: React.FC = () => {
       title: <FormattedMessage id="pages.transaction.endOfTransaction" defaultMessage="End Of Transaction" />,
       dataIndex: 'end_of_transaction',
       valueType: 'text',
-      sorter: true,
+      width: 150,
+      sorter: isMP?false:true,
       hideInSearch: true,
       render: (dom, entity) => {
         if (entity.status == 1) {
@@ -818,19 +846,20 @@ const TableList: React.FC = () => {
     {
       title: <FormattedMessage id="pages.transaction.status" defaultMessage="Status" />,
       dataIndex: 'status',
-      sorter: true,
-      hideInSearch:true,
+      sorter: isMP ? false : true,
+      hideInSearch: true,
+      width: 120,
       defaultSortOrder: 'ascend',
       search: {
         transform: (value) => {
 
-          if (value) {
+          if (value && value.length>0) {
             return {
 
               status: {
                 'field': 'status',
-                'op': 'eq',
-                'data': Number(value)
+                'op': 'in',
+                'data':value
               }
 
             }
@@ -848,7 +877,8 @@ const TableList: React.FC = () => {
     {
       title: <FormattedMessage id="pages.transaction.arrivalID" defaultMessage="Arrival ID" />,
       dataIndex: 'arrival_id',
-      sorter: true,
+      width: 120,
+      sorter: isMP ? false : true,
       hideInSearch: true
     },
     
@@ -856,8 +886,9 @@ const TableList: React.FC = () => {
      
       title: <FormattedMessage id="pages.transaction.currentProcess" defaultMessage="Current Process" />,
       dataIndex: 'flow_id',
+      width: 180,
      // valueEnum: flowConf,
-      sorter: true,
+      sorter: isMP ? false : true,
       fieldProps: {
         notFoundContent: <Empty />,
       },
@@ -865,7 +896,7 @@ const TableList: React.FC = () => {
         if (entity.status == 0) {
           return flowConf[dom]
         } else {
-          return ""
+          return "-"
         }
       },
       hideInSearch: true,
@@ -875,8 +906,9 @@ const TableList: React.FC = () => {
     {
       title: <FormattedMessage id="pages.transaction.imoNumber" defaultMessage="IMO Number" />,
       dataIndex: 'imo_number',
-      sorter: true,
-      hideInSearch:true,
+      sorter: isMP ? false : true,
+      hideInSearch: true,
+      width: 120,
       search: {
         transform: (value) => {
           if (value && value.length > 0) {
@@ -896,8 +928,9 @@ const TableList: React.FC = () => {
     {
       title: <FormattedMessage id="pages.transaction.vesselName" defaultMessage="Vessel Name" />,
       dataIndex: 'vessel_name',
-      sorter: true,
-      hideInSearch:true,
+      sorter: isMP ? false : true,
+      hideInSearch: true,
+      width: 150,
       search: {
         transform: (value) => {
           if (value && value.length > 0) {
@@ -917,26 +950,22 @@ const TableList: React.FC = () => {
     {
       title: getOrganizationName(),
       dataIndex: 'organization_id',
-      sorter: true,
+      sorter: isMP ? false : true,
       hideInSearch: true,
+      hideInTable: true,
+      hideInDescriptions:true,
       valueEnum: organizationList,
       render: (dom, entity) => {
-        if (currentUser?.role_type == 'Super') {
-          return organizationList[entity.terminal_id] + "," + organizationList[entity.trader_id]
-        } else if (currentUser?.role_type == 'Trader') {
-          return organizationList[entity.terminal_id]
-        } else if (currentUser?.role_type == 'Terminal') {
-          return organizationList[entity.trader_id]
-        } else {
+        
           return "-"
-        }
+        
       },
       fieldProps: {
         notFoundContent: <Empty />,
       },
       search: {
         transform: (value) => {
-          if (value) {
+          if (value && value.length>0) {
             return {
               'organization_id': {
                 'field': 'organization_id',
@@ -949,12 +978,41 @@ const TableList: React.FC = () => {
         }
       }
     },
+
+
+    {
+      title: access.transactions_list_tab() ? "Customer" : "Trader",
+      dataIndex: 'organization_id',
+      width: 200,
+      hideInSearch:true,
+     
+      align: "center",
+      hideInTable: !(access.transactions_list_tab() || access.canAdmin) ? true : false,
+      render: (dom, entity) => {
+
+        return entity.trader_name
+      }
+    },
+    {
+      title: "Terminal",
+      dataIndex: 'organization_id',
+      width: 200,
+      hideInSearch: true,
+      
+      hideInTable: access.transactions_list_tab() ? true : false,
+      align: "center",
+      render: (dom, entity) => {
+
+        return entity.terminal_name 
+      },
+    },
+
     {
       title: <FormattedMessage id="pages.transaction.jettyName" defaultMessage="Jetty Name" />,
-      dataIndex: 'jetty_id',
-      sorter: true,
+      dataIndex: 'jetty_name',
+      sorter: isMP ? false : true,
       hideInSearch:true,
-      valueEnum: jettyList,
+      width: 150,
       fieldProps: {
         notFoundContent: <Empty />,
       },
@@ -978,9 +1036,9 @@ const TableList: React.FC = () => {
     {
       title: <FormattedMessage id="pages.transaction.productType" defaultMessage="Product Type" />,
       dataIndex: 'product_name',
-      sorter: true,
+      sorter: isMP ? false : true,
       hideInSearch: true,
-     
+      width: 180,
       search: {
         transform: (value) => {
           if (value && value.length > 0) {
@@ -1001,7 +1059,7 @@ const TableList: React.FC = () => {
     {
       title: <FormattedMessage id="pages.alertrule.totalNominatedQuantityM" defaultMessage="Total Nominated Quantity (MT)" />,
       dataIndex: 'product_quantity_in_mt',
-      sorter: true,
+      sorter: isMP ? false : true,
       width:200,
       hideInSearch: true,
       valueType: "text",
@@ -1015,11 +1073,11 @@ const TableList: React.FC = () => {
       },
     },
     {
-      title: <FormattedMessage id="pages.alertrule.totalNominatedQuantityB" defaultMessage="Total Nominated Quantity (Bal-60-F)" />,
+      title: <FormattedMessage id="pages.alertrule.totalNominatedQuantityB" defaultMessage="Total Nominated Quantity (Bls-60-F)" />,
       dataIndex: 'product_quantity_in_bls_60_f',
       hideInSearch: true,
       width: 200,
-      sorter: true,
+      sorter: isMP ? false : true,
       valueType: 'text',
 
       render: (dom, entity) => {
@@ -1033,7 +1091,8 @@ const TableList: React.FC = () => {
     {
       title: <FormattedMessage id="pages.transaction.totalDuration" defaultMessage="Entire Duration (Till Date)" />,
       dataIndex: 'total_duration',
-      sorter: true,
+      sorter: isMP ? false : true,
+      width: 120,
       hideInSearch: true,
       render: (dom, entity) => {
         if (dom > 0 && entity.status == 1) {
@@ -1219,6 +1278,8 @@ const TableList: React.FC = () => {
 
 
   }
+
+
   return (
 
 
@@ -1261,7 +1322,8 @@ const TableList: React.FC = () => {
         key="resize-observer"
         onResize={(offset) => {
           const { innerWidth, innerHeight } = window;
-          var h = document.getElementsByClassName("ant-table-thead")?.[0]?.offsetHeight +300
+          
+          var h = document.getElementsByClassName("ant-table-thead")?.[0]?.offsetHeight +400
           if (offset.width > 1280) {
           
             setResizeObj({ ...resizeObj, searchSpan: 8, tableScrollHeight: innerHeight - h });
@@ -1280,11 +1342,13 @@ const TableList: React.FC = () => {
         }}
       ><ProTable<TransactionListItem, API.PageParams>
 
-          scroll={{ x: columns.length*140, y: resizeObj.tableScrollHeight }}
+          scroll={{ x: 2400, y: resizeObj.tableScrollHeight }}
           beforeSearchSubmit={(params) => {
 
-            console.log("mmmmmmmmmmmmmmmmm",params)
            
+            delete params.aaa
+            delete params.bbb
+            delete params.ccc
             columns.forEach((c) => {
               if (c.search?.transform) {
                
@@ -1400,6 +1464,12 @@ const TableList: React.FC = () => {
             </List.Item>
           ))}
         </List>
+
+        {/* <Pagination onChange={() => {
+
+
+        }} total={50} />*/ }
+
         <InfiniteScroll loadMore={loadMore} hasMore={hasMore}>
           <InfiniteScrollContent hasMore={hasMore} />
         </InfiniteScroll>

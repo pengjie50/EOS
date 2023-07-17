@@ -91,7 +91,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         name="type"
         label="DE Name"
         width="md"
-        disabled
+        
         valueEnum={{
           '1': "DE 1",
           '2': "DE 2",
@@ -104,7 +104,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         name="json_string"
         label="Json String"
         width="lg"
-        disabled
+       
         rules={[
           {
             required: true,
@@ -117,7 +117,35 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           },
         ]}
       />
-        
+      <ProFormRadio.Group
+        name="already_used"
+        label={intl.formatMessage({
+          id: 'pages.user.xxx',
+          defaultMessage: 'Already Used',
+        })}
+        options={[
+          {
+            value: 0,
+            label:
+              intl.formatMessage({
+                id: 'pages.user.xx',
+                defaultMessage: 'No',
+              })
+
+          },
+          {
+            value: 1,
+            label:
+              intl.formatMessage({
+                id: 'pages.user.xx',
+                defaultMessage: 'Yes',
+              })
+
+          },
+        ]}
+      />
+
+      
     </ModalForm>
      
   );

@@ -1,20 +1,20 @@
 import { request } from 'umi';
 import { AlertList, AlertListItem, AlertListParams } from './data.d';
 
-/** 获取规则列表 GET /api/rule */
+
 export async function alert(params?: AlertListParams) {
- console.log("xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx")
+
   return request('/api/alert/list', {
     method: 'POST',
     data: {
       ...params,
-      hasFilters:true
+      hasFilters: true
     },
   });
 }
 
 export async function getAlertBytransactionId(params?: AlertListParams) {
-  console.log(params)
+
   return request('/api/alert/list', {
     method: 'POST',
     data: {
@@ -31,7 +31,7 @@ export async function getUserUnreadAlertCount(options?: { [key: string]: any }) 
   });
 }
 export async function updateAlert(options?: { [key: string]: any }) {
-  return request <AlertListItem>('/api/alert/mod', {
+  return request<AlertListItem>('/api/alert/mod', {
     method: 'POST',
     data: options || {}
   });
@@ -40,8 +40,8 @@ export async function updateAlert(options?: { [key: string]: any }) {
 export async function addAlert(options?: { [key: string]: any }) {
   return request<AlertListItem>('/api/alert/add', {
     method: 'POST',
-    data:options || {}
-    
+    data: options || {}
+
   });
 }
 

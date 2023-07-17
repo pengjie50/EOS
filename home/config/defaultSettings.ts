@@ -9,7 +9,8 @@ const Settings: ProLayoutProps & {
 } = {
   navTheme: 'light',
   // 拂晓蓝
-  colorPrimary: '#722ED1',
+  colorPrimary: '#5000B9',
+  
   layout: 'mix',
  // splitMenus: true, // 切割菜单
   contentWidth: 'Fluid',
@@ -20,7 +21,22 @@ const Settings: ProLayoutProps & {
   pwa: true,
   logo: '/logo.png',
   iconfontUrl: '',
+  siderWidth: 280,
   token: {
+   
+    
+   /* header: {
+      colorHeaderTitle:"#fff",
+      colorTextRightActionsItem:"#fff",
+      colorBgHeader:'#5000B9' ,
+    },
+    sider: {
+      colorTextCollapsedButtonHover:"#000",
+      colorTextMenuItemHover:"#fff",
+      colorBgMenuItemHover:"#000"
+
+
+    }*/
     // 参见ts声明，demo 见文档，通过token 修改样式
     //https://procomponents.ant.design/components/layout#%E9%80%9A%E8%BF%87-token-%E4%BF%AE%E6%94%B9%E6%A0%B7%E5%BC%8F
   },

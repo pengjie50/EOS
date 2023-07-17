@@ -51,7 +51,7 @@ const { confirm } = Modal;
 const handleAdd = async (fields: any) => {
  
   var d = { ...fields }
-  console.log(d)
+  
   if ((d.hasOwnProperty('typeArr') && d.typeArr.length > 0) ) {
     
    
@@ -279,7 +279,8 @@ const TableList: React.FC = () => {
   const [showMPSearch, setShowMPSearch] = useState<boolean>(false);
   const [isMP, setIsMP] = useState<boolean>(!isPC());
   const [paramsText, setParamsText] = useState<string>('');
-  const [organizationList, setOrganizationList] = useState<any>({});
+  const [organizationList, setOrganizationList] = useState<any>([]);
+  const [organizationMap, setOrganizationMap] = useState<any>({});
   const access = useAccess();
   const { initialState, setInitialState } = useModel('@@initialState');
   const { currentUser } = initialState || {};
@@ -367,12 +368,16 @@ const TableList: React.FC = () => {
         "sorter": {
           "type": "ascend"
         }
-      }, ...filter, tab: tab1, sorter
+      }, ...filter, tab: {
+      'field': 'tab',
+      'op': 'eq',
+        'data': tab1
+    }, sorter
     })
     if (page == 1) {
       setData([]);
     }
-    console.log(append)
+    
     setData(val => [...val, ...append.data])
     setHasMore(10 * (page - 1) + append.data.length < append.total)
   }
@@ -396,11 +401,34 @@ const TableList: React.FC = () => {
       }
     }
     organization({ sorter: { name: 'ascend' } }).then((res) => {
-      var b = {}
+      var b = []
+
+      var typeMap = {}
+
+      var m = {}
+
       res.data.forEach((r) => {
-        b[r.id] = r.name
+        m[r.id] = r
+        if (currentUser?.role_type == "Super") {
+          if (!typeMap[r.type]) {
+            typeMap[r.type] = []
+          }
+          typeMap[r.type].push({ label: r.name, value: r.id })
+        } else {
+          b.push({ label: r.name, value: r.id })
+        }
+
       })
-      setOrganizationList(b)
+      setOrganizationMap(m)
+      if (currentUser?.role_type == "Super") {
+        var a = []
+        for (var k in typeMap) {
+          a.push({ label: k, options: typeMap[k] })
+        }
+        setOrganizationList(a)
+      } else {
+        setOrganizationList(b)
+      }
 
     })
 
@@ -431,7 +459,11 @@ const TableList: React.FC = () => {
       setFlowTree(treeData)
      
       alertrule({
-        tab,
+        tab: {
+          'field': 'tab',
+          'op': 'eq',
+          'data': tab
+        },
         type: {
           'field': 'type',
           'op': 'eq',
@@ -473,9 +505,9 @@ const TableList: React.FC = () => {
       dataIndex: 'alertrule_id',
       hideInSearch: true,
       sorter: true,
-      align: "center",
+      align: "left",
       render: (dom, entity) => {
-        return dom
+        return "T"+dom
       },
     },
 
@@ -747,7 +779,7 @@ const TableList: React.FC = () => {
     },
    
     {
-      title:"Total Nominated Quantity (Bal-60-F)",
+      title:"Total Nominated Quantity (Bls-60-F)",
       dataIndex: 'product_quantity_in_bls_60_f_from',
       fieldProps: {
         placeholder: ['From', 'To']},
@@ -787,7 +819,7 @@ const TableList: React.FC = () => {
       hideInSearch: true,
       valueType: 'text',
       render: (dom, entity) => {
-        return (<div><div style={{ display: entity.amber_hours || entity.amber_mins ?"block":"none" }}> <SvgIcon style={{ color: "#DE8205" }} type="icon-yuan" />{" " + (entity.amber_hours ? entity.amber_hours : '0') + "h " + (entity.amber_mins ? entity.amber_mins : '0') + "m"}</div>
+        return (<div><div style={{ display: entity.amber_hours || entity.amber_mins ?"block":"none" }}> <SvgIcon style={{ color: "#DE7E39" }} type="icon-yuan" />{" " + (entity.amber_hours ? entity.amber_hours : '0') + "h " + (entity.amber_mins ? entity.amber_mins : '0') + "m"}</div>
           <div style={{ display: entity.red_hours || entity.red_mins ? "block" : "none" }}><SvgIcon style={{ color: "red" }} type="icon-yuan" />{" " + (entity.red_hours ? entity.red_hours : '0') + "h " + (entity.red_mins ? entity.red_mins :'0') + "m"}</div></div>)
       },
     },
@@ -812,12 +844,12 @@ const TableList: React.FC = () => {
 
 
     {
-      title: currentUser?.role_type == 'Terminal' ? (tab == 'Terminal' ? 'Created By' : 'Customer'): 'Created By',
+      title: access.alertrule_list_tab() ? (tab == 'Terminal' ? 'Created By' : 'Customer'): 'Created By',
       dataIndex: 'username',
       hideInSearch: true,
       render: (dom, entity) => {
-        if (currentUser?.role_type == 'Terminal') {
-          return tab == 'Terminal' ? dom.split('@')[0]: organizationList[entity.company_id]
+        if (access.alertrule_list_tab()) {
+          return tab == 'Terminal' ? dom.split('@')[0] : (entity.company_name || "-")
         } else {
           return dom.split('@')[0]
         }
@@ -835,14 +867,15 @@ const TableList: React.FC = () => {
     },
     
     {
-      title: currentUser?.role_type == 'Terminal' ?"Customer": "Organization",
+      title: access.alertrule_list_tab() ?"Customer": "Organization",
       dataIndex: 'organization_id',
       sorter: true,
-      valueEnum: organizationList,
-      hideInSearch: currentUser?.role_type=='Trader'?true:false,
+      valueEnum: organizationMap,
+      hideInSearch: !(access.alertrule_list_tab() || access.canAdmin) || tab=="Terminal" ?true:false,
       hideInTable: true,
       hideInDescriptions:true,
       fieldProps: {
+        options: organizationList,
         multiple: true,
         mode:"multiple",
         notFoundContent: <Empty />,
@@ -1040,7 +1073,7 @@ const TableList: React.FC = () => {
       }}>
 
 
-        {currentUser?.role_type == "Terminal" && <ProCard
+        {access.dashboard_tab() && <ProCard
          // title={<div className="my-font-size" style={{ height: 14, lineHeight: '14px', fontSize: 12 }}>Threshold set by</div>}
           headStyle={{ height: 14, lineHeight: '14px', fontSize: 12 }}
           className="my-tab"
@@ -1050,12 +1083,12 @@ const TableList: React.FC = () => {
             activeKey: tab,
             items: [
               {
-                label: <div title="Threshold set by">Terminal</div>,
+                label: <div title="Threshold set by Terminal">Terminal</div>,
                 key: 'Terminal',
                 children: null,
               },
               {
-                label: <div title="Threshold set by">Customer</div>,
+                label: <div title="Threshold set by Trader">Customer</div>,
                 key: 'Trader',
                 children: null,
               }
@@ -1090,7 +1123,12 @@ const TableList: React.FC = () => {
 
         }
           pagination={{ size: "default" }}
-        request={(params, sorter) => alertrule({ ...params, sorter,tab })}
+          request={(params, sorter) => alertrule({
+            ...params, sorter, tab: {
+              'field': 'tab',
+              'op': 'eq',
+              'data': tab
+            } })}
         columns={columns}
         rowSelection={access.canAlertruleDel()?{
           onChange: (_, selectedRows) => {

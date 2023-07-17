@@ -36,9 +36,13 @@ import moment from 'moment'
 import { jetty } from '../../system/jetty/service';
 import { isPC } from "@/utils/utils";
 const { confirm } = Modal;
+
+import { useAccess, Access } from 'umi';
 //MP
 import { InfiniteScroll, List, NavBar, Space, DotLoading } from 'antd-mobile'
 import { parseInt, template } from 'lodash';
+
+//import access from '../../../access';
 /**
  * @en-US Add node
  * @zh-CN 添加节点
@@ -64,7 +68,7 @@ const handleAGenerateReport= async (fields: any) => {
       id="pages.addedSuccessfully"
       defaultMessage="Added successfully"
     />);*/
-    console.log("vvvvvvvvvvvv",cc)
+    
     return cc;
   } catch (error) {
    // hide();
@@ -215,7 +219,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
   
   const [isMP, setIsMP] = useState<boolean>(!isPC());
 
- 
+  const access = useAccess();
   const [selectedColumns, setSelectedColumns] = useState<any>([]);
   
 
@@ -226,13 +230,13 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
   const [fields, setFields] = useState<any>([]);
   const getOrganizationName = () => {
-    if (currentUser?.role_type == "Super") {
+    if (access.canAdmin) {
       return 'Organization'
     }
-    if (currentUser?.role_type == "Trader") {
+    if (!(access.canAdmin || access.dashboard_tab())) {
       return 'Terminal'
     }
-    if (currentUser?.role_type == "Terminal") {
+    if (access.dashboard_tab()) {
       return 'Customer'
     }
   }
@@ -266,13 +270,13 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         m[b.id] = b
         var a = {}
         a.value = b.id
-        a.label = <span><DeleteOutlined onClick={() => {
+        a.label = <span>{access.canReportTemplateDel() && < DeleteOutlined onClick={() => {
 
           handleRemove([b], () => {
             formRef.current?.resetFields()
             getReportTemplate()
           })
-        }} /> {b.name} </span>
+        }} />} {b.name} </span>
         return a
       })
 
@@ -408,7 +412,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
      
     },
     {
-      title: currentUser?.role_type == "Terminal" ?"Customer":<FormattedMessage id="pages.transaction.jettyName" defaultMessage="Trader" />,
+      title: access.transactions_list_tab() ? "Customer" : <FormattedMessage id="pages.transaction.jettyName" defaultMessage="Trader" />,
       dataIndex: 'trader_id',
 
     },
@@ -787,7 +791,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
             Reset
           </Button>
 
-          <Button style={{ marginLeft: isMP ? 0 : 20, marginTop: isMP ? 20 : 0,width: isMP ? '100%' : null }} icon={<FileTextOutlined />}  type="primary" onClick={ async () => {
+          <Access accessible={access.canReportAdd()} fallback={<div></div>}> <Button style={{ marginLeft: isMP ? 0 : 20, marginTop: isMP ? 20 : 0,width: isMP ? '100%' : null }} icon={<FileTextOutlined />}  type="primary" onClick={ async () => {
             var reportName = formRef.current?.getFieldValue("name")
             var templateName = formRef.current?.getFieldValue("templateName")
             var data = formRef.current?.getFieldsValue()
@@ -824,13 +828,13 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
            
 
-          } }>Generate Report</Button>
-          <Button style={{ marginLeft: isMP ? 0 : 20, marginTop: isMP ? 20 : 0, width: isMP ? '100%' : null }} onClick={() => {
+          }}>Generate Report</Button></Access>
+          <Access accessible={access.canReportAddWithTemplate()} fallback={<div></div>}><Button style={{ marginLeft: isMP ? 0 : 20, marginTop: isMP ? 20 : 0, width: isMP ? '100%' : null }} onClick={() => {
             setIsModalOpen(true)
 
            
 
-          }} type="primary" icon={<FileAddOutlined />}>Save Template</Button>
+          }} type="primary" icon={<FileAddOutlined />}>Save Template</Button></Access>
          <Modal title="Save Template" open={isModalOpen} onOk={async () => {
 
             var templateName = formRef.current?.getFieldValue("templateName")
@@ -897,10 +901,10 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                         } } >New Template</Button>
                       </ProCard>
                       <ProCard ghost={true} colSpan={isMP ? 24 : 14} style={{ paddingLeft: isMP ? 0 : 10 }}>
-                        <Button type={save_type == "b" ? 'primary' : "default"} style={{ width: '100%' }} onClick={() => {
+                        <Access accessible={access.canReportTemplateList()} fallback={<div></div>}> <Button type={save_type == "b" ? 'primary' : "default"} style={{ width: '100%' }} onClick={() => {
                           formRef.current?.setFieldValue("save_type", 'b')
 
-                        }} >Replace Existing Template</Button>
+                        }} >Replace Existing Template</Button> </Access>
                       </ProCard>
                     </ProCard>
                     
@@ -985,10 +989,10 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
             label: 'New Report',
             value: 'new',
           },
-          {
+          access.canReportAddWithTemplate()? {
             label: 'Existing Report Template',
             value: 'existing',
-          },
+          }:null,
           
         ]}
       />
@@ -1491,7 +1495,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                       rowSelection={{
                         selectedRowKeys: selectedRowKeys.map((a)=>a.dataIndex),
                         onChange: (_, selectedRows) => {
-                          console.log(selectedRows)
+                          
                           setSelectedRowKeys(selectedRows);
                         },
                       }}
@@ -1507,9 +1511,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                         </div>
                       )}
                       onDragSortEnd={(newDataSource: any) => {
-                       // console.log('排序后的数据', newDataSource);
-                        //setDatasource2(newDataSource);
-                       // message.success('修改列表排序成功');
+                       
                       } }
                     />
 
@@ -1586,9 +1588,9 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                         </div>
                       )}
                       onDragSortEnd={(newDataSource: any) => {
-                        // console.log('排序后的数据', newDataSource);
+                       
                        setSelectedColumns(newDataSource);
-                        // message.success('修改列表排序成功');
+                       
                       }}
                     />
 

@@ -1,21 +1,21 @@
 import { request } from 'umi';
 import { LoginlogList, LoginlogListItem, LoginlogListParams } from './data.d';
 
-/** 获取规则列表 GET /api/rule */
+
 export async function loginlog(params?: LoginlogListParams) {
-  console.log(params)
-  
+
+
   return request('/api/loginlog/list', {
     method: 'POST',
     data: {
       ...params,
-      hasFilters:true
+      hasFilters: true
     },
   });
 }
 
 export async function updateLoginlog(options?: { [key: string]: any }) {
-  return request <LoginlogListItem>('/api/loginlog/mod', {
+  return request<LoginlogListItem>('/api/loginlog/mod', {
     method: 'POST',
     data: options || {}
   });
@@ -24,8 +24,8 @@ export async function updateLoginlog(options?: { [key: string]: any }) {
 export async function addLoginlog(options?: { [key: string]: any }) {
   return request<LoginlogListItem>('/api/loginlog/add', {
     method: 'POST',
-    data:options || {}
-    
+    data: options || {}
+
   });
 }
 

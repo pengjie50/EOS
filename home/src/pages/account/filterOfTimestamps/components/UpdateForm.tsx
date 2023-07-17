@@ -72,7 +72,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           searchConfig: {
             resetText: intl.formatMessage({
               id: 'pages.reset',
-              defaultMessage: '重置',
+              defaultMessage: '',
             }),
           },
           resetButtonProps: {

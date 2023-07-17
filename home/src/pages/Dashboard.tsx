@@ -1,4 +1,4 @@
-import { GridContent, ProFormSelect, ProFormDateRangePicker, ProCard, ProFormInstance,ProFormDatePicker, ProTable, ProForm } from '@ant-design/pro-components';
+import { GridContent, ProFormSelect, ProFormDateRangePicker, ProCard, ProFormGroup, ProFormInstance, ProFormDatePicker, ProTable, ProForm } from '@ant-design/pro-components';
 import { useModel } from '@umijs/max';
 import { EyeOutlined } from '@ant-design/icons';
 import { Card, theme, Progress, Statistic, Badge, message, Tooltip, Button, Empty, ConfigProvider, Steps } from 'antd';
@@ -7,7 +7,7 @@ const { Divider } = ProCard;
 import { flow } from './system/flow/service';
 import { jetty } from './system/jetty/service';
 import { getAlertBytransactionId } from './alert/service';
-import { producttype } from './system/producttype/service';
+
 import { alertrule } from './alertrule/service';
 import { organization } from './system/company/service';
 import { transaction, transactionevent, statistics } from './transaction/service';
@@ -16,8 +16,8 @@ import { isPC, tree } from "@/utils/utils";
 import { Calendar } from 'antd-mobile'
 import { history, FormattedMessage } from '@umijs/max';
 import numeral from 'numeral';
-
-import KeepAlive, { withAliveScope, useAliveController } from 'react-activation'
+import { useAccess, Access } from 'umi';
+//import KeepAlive, { withAliveScope, useAliveController } from 'react-activation'
 
 const { Step } = Steps;
 // use your custom format
@@ -25,42 +25,42 @@ numeral().format('0%');
 import moment from 'moment';
 import { read } from 'xlsx';
 
-const getFilterStr = (organization_id, organizationList, dateArr,status,title) => {
-  var dateStr = dateArr[0] && dateArr[1] ? ' - ' + moment(dateArr[0]).format('DD/MM/YYYY') + ' to ' + moment(dateArr[1]).format('DD/MM/YYYY') :''
-  var terminalStr = (organization_id ? organizationList[organization_id] : "")
+const getFilterStr = (organization_id, organizationMap, dateArr, status, title) => {
+
+  var arr = organization_id.map((a) => {
+
+    return organizationMap[a]?.name
+  })
+  var dateStr = dateArr[0] && dateArr[1] ? ' - ' + moment(dateArr[0]).format('DD/MM/YYYY') + ' to ' + moment(dateArr[1]).format('DD/MM/YYYY') : ''
+  var terminalStr = (organization_id ? arr.join(",") : "")
 
   var statusStr = (status === '' ? '' : (status == 1 ? 'Closed' : 'Open'))
   if (terminalStr || dateStr) {
-    return statusStr + ' ' + title +' (' + terminalStr + dateStr + ')'
+    return statusStr + ' ' + title + ' (' + terminalStr + dateStr + ')'
   } else {
     return statusStr + ' ' + title
   }
-  
- 
+
+
 }
 
-/*
- *
-  import { KeepAliveContext, useLocation } from '@umijs/max';
+
+import { KeepAliveContext, useLocation } from '@umijs/max';
+
+
 import { useContext } from 'react';
 
-function xxxx() {
-  const KeepAlive = useContext(KeepAliveContext);
-  const location = useLocation();
+
+
+
   
-  // 取消（去新的页面并且，关闭 tabs）
-  function cancelControl() {
-    delete KeepAlive.keepElements.current[location.pathname];
-    history.push('/administer');
-  }
-	
-  return (<></>)
-}
 
-export default xxxx;
 
- * 
- */
+   
+
+
+
+
 
 
 
@@ -82,13 +82,20 @@ const Welcome: React.FC = () => {
   const [isMP, setIsMP] = useState<boolean>(!isPC());
   const [transactionList, setTransactionList] = useState<any>([]);
   const [transactionMap, setTransactionMap] = useState<any>({});
-  const [organizationList, setOrganizationList] = useState<any>({});
-  const [jettyList, setJettyList] = useState<any>({});
+  const [organizationList, setOrganizationList] = useState<any>([]);
+
+
+
+  const { updateTab, dropByCacheKey } = React.useContext(KeepAliveContext);
+  
   
   const [flowTreeAll, setFlowTreeAll] = useState<any>([]);
-  const [producttypeList, setProducttypeList] = useState<any>({});
+
+
+  const [producttypeMap, setProducttypeMap] = useState<any>({});
+
   const [transactionAlert, setTransactionAlert] = useState<any>({});
-  const [alertruleMap, setAlertruleMap] = useState<any>({});
+  const [organizationMap, setOrganizationMap] = useState<any>({});
 
   const [avg_duration, setAvg_duration] = useState<any>({});
 
@@ -100,12 +107,12 @@ const Welcome: React.FC = () => {
 
   const [organization_id, setOrganization_id] = useState<any>([]);
   const [dateArr, setDateArr] = useState<any>(['', '']);
-  const [status, setStatus] = useState<any>("");
+  const [status, setStatus] = useState<any>([]);
  
   const formRef = useRef<ProFormInstance>();
  // const [terminal_id, setTerminal_id] = useState(false);
   const [tab, setTab] = useState('Terminal');
-
+  const access = useAccess();
  
   const { currentUser } = initialState || {};
   const [statisticsObj, setStatisticsObj] = useState<any>([]);
@@ -124,52 +131,59 @@ const Welcome: React.FC = () => {
 
 
     let p = { pageSize: 100000, current: 1 }
-    if (organization_id && organization_id.length>0) {
+    if (organization_id && organization_id.length > 0) {
       p.organization_id = {
         'field': 'organization_id',
-          'op': 'in',
+        'op': 'in',
         'data': organization_id
-        } 
+      }
     }
 
 
-    if (status!=="") {
+    if (status && status.length) {
       p.status = {
-          'field': 'status',
-          'op': 'eq',
-          'data': status
-        }
+        'field': 'status',
+        'op': 'in',
+        'data': status
+      }
     }
-   
+
     if (dateArr[0] && dateArr[1]) {
 
 
 
-      p.start_of_transaction =  {
-          'field': 'start_of_transaction',
-          'op': 'between',
-          'data': dateArr
-        }
-
-       
-    } 
+      p.start_of_transaction = {
+        'field': 'start_of_transaction',
+        'op': 'between',
+        'data': dateArr
+      }
 
 
-    statistics({ ...p, tab }).then((res) => {
-      
+    }
+
+
+    statistics({
+      ...p, tab: {
+        'field': 'tab',
+        'op': 'eq',
+        'data': tab
+      }
+    }).then((res) => {
+
       setStatisticsObj(res.data)
 
       transaction({
         ...p, status: {
           'field': 'status',
-          'op': 'eq',
-          'data': status == 0 ? 0 : 4 
-        }}).then((res) => {
+          'op': 'in',
+          'data': status.length==0?[0]: status.filter((s) => {return s==0 })
+        }
+      }).then((res) => {
 
         hide()
         setTransactionList(res.data)
 
-       var ids= res.data.map((t) => {
+        var ids = res.data.map((t) => {
           return t.id
         })
 
@@ -178,7 +192,7 @@ const Welcome: React.FC = () => {
             'field': 'transaction_id',
             'op': 'in',
             'data': ids
-          }  ,sorter: { event_time: 'ascend' }
+          }, sorter: { event_time: 'ascend' }
         }).then((res) => {
           var m = {}
           res.data.forEach((a) => {
@@ -232,7 +246,7 @@ const Welcome: React.FC = () => {
 
 
 
-            
+
             m[kk].processMap = processMap
 
           }
@@ -257,8 +271,8 @@ const Welcome: React.FC = () => {
 
             }
           }
-          console.log("dddddddddddddddddddddddd")
-          console.log(to)
+
+
           setAvg_duration(to)
 
 
@@ -267,57 +281,85 @@ const Welcome: React.FC = () => {
 
       });
 
-      
+
     });
 
-    
 
-    
+    organization({ sorter: { name: 'ascend' } }).then((res) => {
 
-    jetty({ sorter: { name: 'ascend' } }).then((res) => {
-      var b = {}
+      var b = []
+
+      var typeMap = {}
+
+      var m = {}
+
       res.data.forEach((r) => {
-        b[r.id] = r.name
+        m[r.id] = r
+        if (currentUser?.role_type == "Super") {
+          if (!typeMap[r.type]) {
+            typeMap[r.type] = []
+          }
+          typeMap[r.type].push({ label: r.name, value: r.id })
+        } else {
+          b.push({ label: r.name, value: r.id })
+        }
+
       })
-      setJettyList(b)
+      setOrganizationMap(m)
+      if (currentUser?.role_type == "Super") {
+        var a = []
+        for (var k in typeMap) {
+          a.push({ label: k, options: typeMap[k] })
+        }
+        setOrganizationList(a)
+      } else {
+        setOrganizationList(b)
+      }
+
+
+      /* [
+         {
+           label: 'Manager',
+           options: [
+             { label: 'Jack', value: 'jack' },
+             { label: 'Lucy', value: 'lucy' },
+           ],
+         },
+         {
+           label: 'Engineer',
+           options: [{ label: 'yiminghe', value: 'Yiminghe' }],
+         },
+       ]*/
+
+
+
 
     });
-
-    producttype({ sorter: { name: 'ascend' } }).then((res) => {
-      var b = {}
-      res.data.forEach((r) => {
-        b[r.id] = r.name
-      })
-      setProducttypeList(b)
-
-    });
-    organization({  sorter: { name: 'ascend' } }).then((res) => {
-      var b = {}
-      res.data.forEach((r) => {
-        b[r.id] = r.name
-      })
-      setOrganizationList(b)
-
-    });
-    flow({  type: 0, sorter: { sort: 'ascend' } }).then((res) => {
-      res.data.push({ name: 'Entire Duration', icon: 'icon-daojishi', pid: '                                    ',id:'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' })
-      res.data.push({ name: 'Between 2 Events', icon: 'icon-yundongguiji', pid: '                                    ',id:'b2e' })
+    flow({ type: 0, sorter: { sort: 'ascend' } }).then((res) => {
+      res.data.push({ name: 'Entire Duration', icon: 'icon-daojishi', pid: '                                    ', id: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' })
+      res.data.push({ name: 'Between 2 Events', icon: 'icon-yundongguiji', pid: '                                    ', id: 'b2e' })
       var ss = res.data.map((bb) => { return { ...bb } })
-      console.log(ss)
+
       var all = tree(ss, "                                    ", 'pid')
-      console.log(all)
+
       setFlowTreeAll(all)
 
-     
-      
+
+
       setFlowList(res.data)
-     // getAlertrule(all)
-     
+      // getAlertrule(all)
+
       get()
 
     })
-    const getAlertrule = (flowTreeAll)=>{
-      alertrule({transaction_id:"", tab }).then((res) => {
+    const getAlertrule = (flowTreeAll) => {
+      alertrule({
+        transaction_id: "", tab: {
+          'field': 'tab',
+          'op': 'eq',
+          'data': tab
+        }
+      }).then((res) => {
         var b = {}
         res.data.forEach((r) => {
           b[r.id] = r
@@ -327,20 +369,26 @@ const Welcome: React.FC = () => {
         get()
       });
     }
-   
 
-    
 
-   
+
+
+
 
     const get = () => {
-      getAlertBytransactionId({tab }).then((res) => {
+      getAlertBytransactionId({
+        tab: {
+          'field': 'tab',
+          'op': 'eq',
+          'data': tab
+        }
+      }).then((res) => {
         var m = {}
-        
-       
+
+
         res.data.forEach((a) => {
-         
-          
+
+
           if (!m[a.transaction_id]) {
             m[a.transaction_id] = {}
           }
@@ -372,11 +420,11 @@ const Welcome: React.FC = () => {
               m[a.transaction_id]['b2e'].red++
             }
           }
-         
+
 
 
         })
-        console.log(m)
+
         setTransactionAlert(m)
 
 
@@ -384,84 +432,93 @@ const Welcome: React.FC = () => {
 
       });
     }
-    
 
-   
-  }, [organization_id, dateArr,status,tab])
+
+
+  }, [organization_id, dateArr, status, tab])
   var color = {
     'icon-daojishimeidian': '#70AD47',
     'icon-matou': '#70AD47',
     'icon-habor': '#70AD47',
     'icon-zhuanyunche': '#70AD47',
     'icon-matou1': '#70AD47',
-    'icon-daojishi': '#13C2C2',
-    'icon-yundongguiji': '#13C2C2'
+    'icon-daojishi': '#70AD47',
+    'icon-yundongguiji': '#70AD47'
   }
   const getOrganizationName = () => {
-    if (currentUser?.role_type == "Super") {
+    if (access.canAdmin) {
       return 'Organization'
     }
-    if (currentUser?.role_type == "Trader") {
+    if (!(access.canAdmin || access.dashboard_tab())) {
       return 'Terminal'
     }
-    if (currentUser?.role_type == "Terminal") {
+    if (access.dashboard_tab()) {
       return 'Customer'
     }
   }
 
   const customizeRenderEmpty = () => {
-   
-   
+
+
     return <Empty description={'No transaction record'} />
-   
+
 
 
   }
+
+
+  
+
   return (
 
             
                 
 
     <GridContent  className="dashboard">
-      {currentUser?.role_type == "Terminal" && <ProCard
-
-       // title={<div className="my-font-size" style={{ height: 14, lineHeight: '14px', fontSize: 12 }}>Threshold set by</div>}
-        headStyle={{ height: 14, lineHeight: '14px', fontSize: 12 }}
-        className="my-tab"
-        tabs={{
-          type: 'card',
-          //tabPosition,
-          activeKey: tab,
-          items: [
-            {
-              label: <div title="Threshold set by">Terminal</div>,
-              key: 'Terminal',
-              children: null,
-            },
-            {
-              label: <div title="Threshold set by">Customer</div>,
-              key: 'Trader',
-              children: null,
-            }
-          ],
-          onChange: (key) => {
-            setTab(key);
-           
-          },
-        }}
-      />}  
+     
       <ProCard ghost={true} bodyStyle={isMP ? { padding: '5px' } : {}} wrap >
-        <ProCard  colSpan={ 24} bodyStyle={{ padding: '5px 0px 5px 25px', fontWeight: '500' }} >
-          {getFilterStr(organization_id, organizationList, dateArr, status, "Transactions Overview")}
+
+
+        <ProCard colSpan={24} bodyStyle={{ padding: '5px 0px 5px 25px', fontWeight: '500' }} >
+          <div className="page_title"> {getFilterStr(organization_id, organizationMap, dateArr, status, "Transactions Overview")}</div>
         </ProCard>
+
+        <Access accessible={access.dashboard_tab()} fallback={<div></div>}> <ProCard
+
+          // title={<div className="my-font-size" style={{ height: 14, lineHeight: '14px', fontSize: 12 }}>Threshold set by</div>}
+          headStyle={{ height: 14, lineHeight: '14px', fontSize: 12 }}
+          className="my-tab"
+          tabs={{
+            type: 'card',
+            //tabPosition,
+            activeKey: tab,
+            items: [
+              {
+                label: <div title="Threshold set by terminal">Terminal</div>,
+                key: 'Terminal',
+                children: null,
+              },
+              {
+                label: <div title="Threshold set by customer">Customer</div>,
+                key: 'Trader',
+                children: null,
+              }
+            ],
+            onChange: (key) => {
+              setTab(key);
+
+            },
+          }}
+        />
+          </Access>
 
         <ProCard wrap={isMP} gutter={8}>
 
           <ProForm<any> formRef={formRef} layout={'inline'}
-            grid={true}
+           
             onReset={() => {
               setOrganization_id([])
-              setStatus("")
+              setStatus([])
               setDateArr([])
             } }
             submitter={{
@@ -469,15 +526,21 @@ const Welcome: React.FC = () => {
                 return doms[0]
               },
             }}
-            rowProps={{
-              gutter: [16, 'inline' === 'inline' ? 16 : 0],
-            }}>
+            >
+           <ProFormGroup>
+
             <ProFormSelect
-              colProps={{ md: 12, xl: 8 }}
+          
               name="organization_id"
               label=""
+              width={240 }
               fieldProps={{
+                options: organizationList ,
                 mode: 'multiple',
+                maxTagCount:0,
+                maxTagPlaceholder: (omittedValues) => {
+                  return omittedValues.length + " Selected" 
+                },
                 showSearch: false,
                 multiple: true
 
@@ -491,19 +554,26 @@ const Welcome: React.FC = () => {
                 }
 
               }}
-              valueEnum={organizationList}
+             
               placeholder={"Filter By: " + getOrganizationName() }
 
             />
             <ProFormSelect
               name="status"
-              colProps={{ md: 12, xl: 6 }}
+                fieldProps={{
+                  mode: 'multiple',
+                  maxTagCount: 0,
+                  maxTagPlaceholder: (omittedValues) => {
+                    return omittedValues.length + " Selected"
+                  },
+                }}
               label=""
+              width={180}
               onChange={(a) => {
                 if (a) {
                   setStatus(a)
                 } else {
-                  setStatus("")
+                  setStatus([])
 
                 }
 
@@ -516,23 +586,25 @@ const Welcome: React.FC = () => {
               placeholder="Filter By: Status"
 
             />
-            <ProFormDateRangePicker colProps={{ md: 12, xl: 10 }} name="dateRange" fieldProps={{ placeholder: ['Start Date (From) ', 'Start Date (To) '] }} onChange={(a, b) => {
+            <ProFormDateRangePicker width={380}  name="dateRange" fieldProps={{ placeholder: ['Start Date (From) ', 'Start Date (To) '] }} onChange={(a, b) => {
 
 
               setDateArr(b)
 
 
 
-            }} />
+              }} />
+
+            </ProFormGroup>
           </ProForm>
 
-          
+         
         
          
         </ProCard>
 
 
-        <ProCard collapsed={collapsed4} colSpan={24} style={{ marginBlockStart: 16 }} wrap title={<div style={{ fontWeight: '500', fontSize: 14 }}>  {getFilterStr(organization_id, organizationList, dateArr, 0, "Transactions") + " ( Count:" + transactionList.length + " )"} </div>} extra={< EyeOutlined onClick={() => {
+        <ProCard collapsed={collapsed4} colSpan={24} style={{ marginBlockStart: 16 }} wrap title={<div className="page_title">  {getFilterStr(organization_id, organizationList, dateArr, 0, "Transactions") + " ( Count:" + transactionList.length + " )"} </div>} extra={< EyeOutlined onClick={() => {
           setCollapsed4(!collapsed4);
           localStorage.setItem('collapsed4', !collapsed4);
         }} style={{ fontWeight: 'normal', fontSize: 14 }} />} bordered headerBordered >
@@ -606,34 +678,34 @@ const Welcome: React.FC = () => {
                 },
 
                 {
-                  title: currentUser?.role_type == "Terminal" ? "Customer" :"Trader",
+                  title: access.dashboard_tab() ? "Customer" :"Trader",
                   dataIndex: 'organization_id',
                   width: 200,
-                  valueEnum: organizationList,
+                 
                   align: "center",
-                  hideInTable: currentUser?.role_type =="Trader"?true:false,
+                  hideInTable: !(access.dashboard_tab() || access.canAdmin) ?true:false,
                   render: (dom, entity) => {
 
-                    return organizationList[entity.trader_id]
+                    return entity.trader_name
                   }
                 },
                 {
                   title: "Terminal",
                   dataIndex: 'organization_id',
                   width: 200,
-                  valueEnum: organizationList,
-                  hideInTable: currentUser?.role_type == "Terminal" ? true : false,
+                
+                  hideInTable: access.dashboard_tab() ? true : false,
                   align: "center",
                   render: (dom, entity) => {
                   
-                      return organizationList[entity.terminal_id] 
+                      return entity.terminal_name
                   },
                 },
 
                 {
                   title: <FormattedMessage id="pages.transaction.jettyName" defaultMessage="Jetty Name" />,
-                  dataIndex: 'jetty_id',
-                  valueEnum: jettyList,
+                  dataIndex: 'jetty_name',
+                  
                   align: "center",
                   search: {
                     transform: (value) => {
@@ -697,7 +769,7 @@ const Welcome: React.FC = () => {
                             width: '25px',
                             height: '25px',
                             fontSize: "20px",
-                            backgroundColor: p ? (p.event_count > 0 ? (ta ? (ta.red > 0 ? "red" : "#DE8205") : color[e.icon]) : "#595959") : "#595959",
+                            backgroundColor: p ? (p.event_count > 0 ? (ta ? (ta.red > 0 ? "red" : "#DE7E39") : color[e.icon]) : "#595959") : "#595959",
                             borderRadius: '50%',
                             textAlign: 'center',
                             lineHeight: '25px'
@@ -713,7 +785,7 @@ const Welcome: React.FC = () => {
                             width: '25px',
                             height: '25px',
                             fontSize: "18px",
-                            backgroundColor: ta ? (ta.red > 0 ? "red" : "#DE8205") : "#13c2c2",
+                            backgroundColor: ta ? (ta.red > 0 ? "red" : "#DE7E39") : "#70ad47",
                             borderRadius: '30px',
                             textAlign: 'center',
                             lineHeight: '25px'
@@ -757,14 +829,15 @@ const Welcome: React.FC = () => {
 
 
         <ProCard ghost={true} style={{ marginBlockStart: 16, marginLeft: -4 }} gutter={8} wrap={isMP} >
-          <ProCard collapsed={collapsed1} colSpan={{ xs: 24, md: 12 }} wrap title={<div style={{ fontWeight: '500', fontSize: 14 }}> No. Of Transaction</div>} extra={< EyeOutlined onClick={() => {
+          <ProCard collapsed={collapsed1} colSpan={{ xs: 24, md: 12 }} wrap title={<div className="page_title"> No. Of Transaction</div>} extra={< EyeOutlined onClick={() => {
             setCollapsed1(!collapsed1);
             localStorage.setItem('collapsed1', !collapsed1);
           }} style={{ fontWeight: 'normal', fontSize: 14 }} />} bordered headerBordered>
 
             <ProCard colSpan={24} ghost={true} bodyStyle={{ fontSize: '30px', lineHeight: '30px', height: '30px' }} >
               <div onClick={() => {
-                history.push(`/Transactions`, { organization_id, dateArr, status: "" });
+                dropByCacheKey("/Transactions");
+                history.push(`/Transactions`, { organization_id, dateArr, status: [] });
 
               }} style={{ cursor: 'pointer', float: 'left', lineHeight: '22px', height: '22px', fontSize: '14px', marginRight: '16px', width: isMP ? '100%' : 'auto' }}>
                 <span style={{ fontWeight: 500 }}>Total</span><span style={{ marginLeft: '8px' }}>{statisticsObj?.no_of_transaction?.total}</span>
@@ -817,19 +890,22 @@ const Welcome: React.FC = () => {
             <ProCard ghost={true} style={{ marginBlockStart: 22 }} gutter={2}>
               
               <div onClick={() => {
-                history.push(`/Transactions`, { organization_id, dateArr, status: 1 });
+                dropByCacheKey("/Transactions");
+                history.push(`/Transactions`, { organization_id, dateArr, status: ['1']});
 
               }} style={{ cursor: 'pointer', float: 'left', lineHeight: '22px', height: '22px', fontSize: '14px', marginRight: '16px' }}>
                 <span style={{ fontWeight: 500 }}><SvgIcon style={{ color: "rgb(19, 194, 194)" }} type="icon-youjiantou" /> Closed</span> <span style={{ marginLeft: '8px' }}>{statisticsObj?.no_of_transaction?.closed}</span>
               </div>
               <div onClick={() => {
-                history.push(`/Transactions`, { organization_id, dateArr, status: 0 });
+                dropByCacheKey("/Transactions");
+                history.push(`/Transactions`, { organization_id, dateArr, status: ['0'] });
 
               }} style={{ cursor: 'pointer', float: 'left', lineHeight: '22px', height: '22px', fontSize: '14px', marginRight: '16px' }}>
                 <span style={{ fontWeight: 500 }}><SvgIcon style={{ color:"#00b578" }}  type="icon-youjiantou" /> Open</span> <span style={{ marginLeft: '8px' }}>{statisticsObj?.no_of_transaction?.open}</span>
               </div>
               <div onClick={() => {
-                history.push(`/Transactions`, {organization_id, dateArr, status: 2 });
+                dropByCacheKey("/Transactions");
+                history.push(`/Transactions`, {organization_id, dateArr, status: ['2'] });
 
               }} style={{ cursor: 'pointer', float: 'left', lineHeight: '22px', height: '22px', fontSize: '14px', marginRight: '16px' }}>
                 <span style={{ fontWeight: 500 }}><SvgIcon style={{ color: "#333" }}  type="icon-youjiantou" /> Cancelled</span> <span style={{ marginLeft: '8px' }}>{statisticsObj?.no_of_transaction?.cancelled}</span>
@@ -837,7 +913,7 @@ const Welcome: React.FC = () => {
             </ProCard>
           </ProCard>
 
-          <ProCard collapsed={collapsed2} colSpan={{ xs: 24, md: 12 }} style={{ marginBlockStart: isMP ? 16 : 0, marginLeft: 4 }} wrap title={<div style={{ fontWeight: '500', fontSize: 14 }}> Average Total Duration Per Completed Transaction</div>} extra={< EyeOutlined onClick={() => {
+          <ProCard collapsed={collapsed2} colSpan={{ xs: 24, md: 12 }} style={{ marginBlockStart: isMP ? 16 : 0, marginLeft: 4 }} wrap title={<div className="page_title"> Average Total Duration Per Completed Transaction</div>} extra={< EyeOutlined onClick={() => {
             setCollapsed2(!collapsed2);
             localStorage.setItem('collapsed2', !collapsed2);
           }} style={{ fontWeight: 'normal', fontSize: 14 }} />} bordered headerBordered>
@@ -869,7 +945,7 @@ const Welcome: React.FC = () => {
         </ProCard>
 
 
-        <ProCard collapsed={collapsed3} colSpan={34} style={{ marginBlockStart: 16 }} bodyStyle={{ padding: '20px'  }} wrap title={<div style={{ fontWeight: '500', fontSize: 14 }}> Overview Of Threshold Breached In Transactions </div>} extra={< EyeOutlined onClick={() => {
+        <ProCard collapsed={collapsed3} colSpan={34} style={{ marginBlockStart: 16 }} bodyStyle={{ padding: '20px' }} wrap title={<div className="page_title"> Overview Of Threshold Breached In Transactions </div>} extra={< EyeOutlined onClick={() => {
           setCollapsed3(!collapsed3);
           localStorage.setItem('collapsed3', !collapsed3);
         }} style={{ fontWeight: 'normal', fontSize: 14 }} />} bordered headerBordered>
@@ -884,6 +960,7 @@ const Welcome: React.FC = () => {
               flowList.map((e, i) => {
 
                 return <Step status="finish" onClick={() => {
+                  dropByCacheKey("/Transactions");
                   history.push(`/threshold/alert`, { organization_id, dateArr, flow_id: e.id, status,tab })
 
                 }} icon={

@@ -231,7 +231,7 @@ const TableList: React.FC = () => {
     if (page == 1) {
       setData([]);
     }
-    console.log(append)
+    
     setData(val => [...val, ...append.data])
     setHasMore(10 * (page - 1) + append.data.length < append.total)
   }

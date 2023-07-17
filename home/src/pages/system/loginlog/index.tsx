@@ -167,8 +167,8 @@ export var  columnsBase: ProColumns<LoginlogListItem>[] = [
   {
     title: (
       <FormattedMessage
-        id="pages.loginlog.loginTime"
-        defaultMessage="Login Time"
+        id="pages.loginlog.xxx"
+        defaultMessage="Login Date"
       />
     ),
    
@@ -428,14 +428,14 @@ const TableList: React.FC = () => {
 
         onFocus: () => {
           fieldSelectData({ model: "Loginlog", value: '', field: 'url' }).then((res) => {
-            console.log(res.data)
+            
             setUrlData(res.data)
           })
         },
         onSearch: (newValue: string) => {
 
           fieldSelectData({ model: "Loginlog", value: newValue, field: 'url' }).then((res) => {
-            console.log(res.data)
+           
             setUrlData(res.data)
           })
 
@@ -454,14 +454,14 @@ const TableList: React.FC = () => {
 
         onFocus: () => {
           fieldSelectData({ model: "Loginlog", value: '', field: 'ip' }).then((res) => {
-            console.log(res.data)
+            
             setIpData(res.data)
           })
         },
         onSearch: (newValue: string) => {
 
           fieldSelectData({ model: "Loginlog", value: newValue, field: 'ip' }).then((res) => {
-            console.log(res.data)
+            
             setIpData(res.data)
           })
 
@@ -472,6 +472,7 @@ const TableList: React.FC = () => {
     if (b.dataIndex == "username") {
       b.valueEnum = userList
       b.fieldProps = {
+        dropdownMatchSelectWidth: isMP ? true : false,
         notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
         showSearch: true,
         allowClear: true,
@@ -614,7 +615,7 @@ const TableList: React.FC = () => {
 
       setData([]);
     }
-    console.log(append)
+    
     setData(val => [...val, ...append.data])
     setHasMore(10 * (page - 1) + append.data.length < append.total)
   }

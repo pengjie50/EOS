@@ -226,7 +226,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                     })}
 
                     initialValue={"m"}
-                    valueEnum={{ m: "Metric Tonnes (MT)", b: "Barrels (Bal-60-F)" }}
+                    valueEnum={{ m: "Metric Tonnes (MT)", b: "Barrels (Bls-60-F)" }}
 
 
                   />
@@ -292,7 +292,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                   })}
 
                   initialValue={"b"}
-                  valueEnum={{ m: "Metric Tonnes (MT)", b: "Barrels (Bal-60-F)" }}
+                  valueEnum={{ m: "Metric Tonnes (MT)", b: "Barrels (Bls-60-F)" }}
 
 
                 />
@@ -514,8 +514,8 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
      
       <div style={{ width: '100%' }}>
         
-        <div style={{ float: 'left', width: '265px', fontWeight: "bold", color: "#DE8205" }}>
-          <SvgIcon style={{ color: "#DE8205" }} type="icon-yuan" /> Amber
+        <div style={{ float: 'left', width: '265px', fontWeight: "bold", color: "#DE7E39" }}>
+          <SvgIcon style={{ color: "#DE7E39" }} type="icon-yuan" /> Amber
         </div>
         <div style={{ float: 'left', width: '40%', fontWeight: "bold", color: "red" }}>
           <SvgIcon style={{ color: "red" }} type="icon-yuan" /> Red

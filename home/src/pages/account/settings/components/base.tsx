@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { UploadOutlined } from '@ant-design/icons';
 import { Button, Input, Upload, message } from 'antd';
-import { FormattedMessage, useIntl } from '@umijs/max';
+import { FormattedMessage, useIntl, useModel } from '@umijs/max';
 import { isPC } from "@/utils/utils";
 import  {
   ProFormDependency,
@@ -32,13 +32,11 @@ const validatorPhone = (rule: any, value: string[], callback: (message?: string)
   callback();
 };
 
-// 参考链接：https://www.jianshu.com/p/f356f050b3c9
+//https://www.jianshu.com/p/f356f050b3c9
 const handleBeforeUpload = (file) => {
-  console.log('smyhvae handleBeforeUpload file:' + JSON.stringify(file));
-  console.log('smyhvae handleBeforeUpload file.file:' + JSON.stringify(file.file));
-  console.log('smyhvae handleBeforeUpload file type:' + JSON.stringify(file.type));
+  
 
-  //限制图片 格式、size、分辨率
+  //Restrict image format, size, and resolution
   const isJPG = file.type === 'image/jpeg';
   const isJPEG = file.type === 'image/jpeg';
   const isGIF = file.type === 'image/gif';
@@ -55,7 +53,7 @@ const handleBeforeUpload = (file) => {
   }
   return (isJPG || isJPEG || isPNG) && isLt2M;
 };
-// checkImageWH  返回一个promise  检测通过返回resolve  失败返回reject阻止图片上传
+// CheckImageWH returns a promise. If it passes the detection and returns a resolve, it fails and returns a reject. The image is blocked from uploading
 const checkImageWH=(file)=>{
   return new Promise(function (resolve, reject) {
     let filereader = new FileReader();
@@ -63,7 +61,7 @@ const checkImageWH=(file)=>{
       let src = e.target.result;
       const image = new Image();
       image.onload = function () {
-        // 获取图片的宽高
+        // Obtain the width and height of the image
         file.width = this.width;
         file.height = this.height;
         resolve();
@@ -74,8 +72,9 @@ const checkImageWH=(file)=>{
     filereader.readAsDataURL(file);
   });
 }
-// 头像组件 方便以后独立，增加裁剪之类的功能
-const AvatarView = ({ useravatar, userid, username }: { useravatar: string; userid: string; username: string }) => {
+// The avatar component facilitates future independence and adds functions such as cropping
+const AvatarView = ({ useravatar, userid, avatarText }: { useravatar: string; userid: string; avatarText: string }) => {
+
   const [fileList, setFileList] = useState([]);
   const getAvatarURL = () => {
     if (useravatar) {
@@ -145,14 +144,14 @@ const AvatarView = ({ useravatar, userid, username }: { useravatar: string; user
     setAvatar(src);
    
   };
-
+  
   return (<>
     <div style={{ width: "100%", textAlign: "center" }}></div>
     <div className="my-font-size" style={{ width: "100%", textAlign: "center", position: "relative", lineHeight:"350px" }}>
       {/*<img style={{ width: "200px" }} src={avatar} alt="avatar" />*/}
-      <div style={{ color: "#fff", display: "inline-block", width: "200px", backgroundColor: "#FF4D00", borderRadius: "50%", top: 0, right: 0, fontSize: 100, fontWeight: "bolder", height: '200px', lineHeight: '180px', textAlign: 'center' }}>
-
-        {username.slice(0,2).toUpperCase()}
+      <div style={{ color: "#fff", display: "inline-block", width: "200px", backgroundColor: "#FF4D00", borderRadius: "50%", top: 0, right: 0, fontSize: 100, fontWeight: "bolder", height: '200px', lineHeight: '200px', textAlign: 'center' }}>
+        
+        {avatarText}
       </div>
     </div>
 
@@ -182,9 +181,11 @@ const AvatarView = ({ useravatar, userid, username }: { useravatar: string; user
 };
 
 const BaseView: React.FC = () => {
-  const { data: currentUser, loading } = useRequest(() => {
+  const { initialState } = useModel('@@initialState');
+  const { currentUser } = initialState || {};
+ /* const { data: currentUser, loading } = useRequest(() => {
     return queryCurrent();
-  });
+  });*/
   const intl = useIntl();
   const [isMP, setIsMP] = useState<boolean>(!isPC());
   const emailCheck = (rule: any, value: any, callback: (arg0: string | undefined) => void) => {
@@ -200,7 +201,7 @@ const BaseView: React.FC = () => {
           defaultMessage: 'This email is already in use',
         }))
       } else {
-        callback(undefined); // 必须返回一个callback
+        callback(undefined); 
       }
     });
 
@@ -227,7 +228,7 @@ const BaseView: React.FC = () => {
       breadcrumb: {},
     }}>
       <ProCard style={{ marginBlockStart: 8 }} gutter={8} wrap={isMP ? true : false}>
-        {loading ? null : (
+        {false ? null : (
         
           [ <ProCard colSpan={isMP?24:12}>
           
@@ -299,7 +300,7 @@ const BaseView: React.FC = () => {
             </ProForm>
           </ProCard>
              ,<ProCard colSpan={isMP ? 24 : 12}>
-               <AvatarView useravatar={currentUser?.avatar} userid={currentUser?.id} username={currentUser?.username}  />
+               <AvatarView useravatar={currentUser?.avatar} userid={currentUser?.id} avatarText={currentUser?.avatarText}  />
           </ProCard>]
         
       )}

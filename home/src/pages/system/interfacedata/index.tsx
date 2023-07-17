@@ -253,7 +253,7 @@ const TableList: React.FC = () => {
         if (page == 1) {
           setData([]);
         }
-        console.log(append)
+        
         setData(val => [...val, ...append.data])
         setHasMore(10 * (page - 1) + append.data.length < append.total)
         
@@ -370,6 +370,7 @@ const TableList: React.FC = () => {
         2: "DE 2",
         3: "DE 3",
         4: "DE 4",
+        5: "DE 5",
       },
      
     },
@@ -426,7 +427,7 @@ const TableList: React.FC = () => {
     },
     {
       title: "Created At",
-
+      sorter: true,
       hideInSearch: true,
       dataIndex: 'created_at',
       valueType: 'dateTime'
@@ -687,7 +688,7 @@ const TableList: React.FC = () => {
             var data = eval("(" + value.json_string + ")"); 
             
             value.imo_number = data.toai_imo_number || null
-            value.work_order_id = data.towoi_work_order_id || null
+            value.work_order_id = data.towoi_work_order_id || data.tosi_work_order_id  || null
            
             value.already_used = 0
 

@@ -31,6 +31,7 @@ export default [
   {
     path: '/Dashboard',
     name: 'Dashboard',
+    access: 'canDashboard',
     icon: 'TableOutlined',
     component: './Dashboard',
   },
@@ -38,6 +39,7 @@ export default [
   {
     path: '/Transactions',
     name: 'Transactions',
+    access: 'canTransactionsList',
     icon: 'ReconciliationOutlined',
     component: './transaction',
   },
@@ -49,6 +51,7 @@ export default [
   
   {
     path: '/transaction/detail',
+    access: 'canTransactionsList',
     component: './transaction/components/Detail',
     hideInMenu: true
   },
@@ -140,7 +143,7 @@ export default [
     name: 'Report',
     icon: 'FileZipOutlined',
     component: './report',
-   
+    access: 'canReportList',
    
   },
  

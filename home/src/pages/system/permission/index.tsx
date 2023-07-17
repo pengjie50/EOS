@@ -59,12 +59,15 @@ const handleAdd = async (fields: PermissionListItem) => {
  *
  * @param fields
  */
-const handleUpdate = async (fields: Partial<PermissionListItem> ) => {
+const handleUpdate = async (fields: Partial<PermissionListItem>) => {
+
+  
   const hide = message.loading(<FormattedMessage
     id="pages.modifying"
     defaultMessage="Modifying"
   />);
   try {
+    fields.pid = fields.pid || null
     await updatePermission({ ...fields });
     hide();
 
@@ -228,7 +231,7 @@ const TableList: React.FC = () => {
 
       setData([]);
     }
-    console.log(append)
+    
     setData(val => [...val, ...append.data])
     setHasMore(10 * (page - 1) + append.data.length < append.total)
   }
@@ -247,8 +250,8 @@ const TableList: React.FC = () => {
         />
       ),
       sorter: true,
-      width:300,
-      defaultSortOrder: 'ascend',
+      width:800,
+      
       dataIndex: 'name',
      
       render: (dom, entity) => {
@@ -273,10 +276,11 @@ const TableList: React.FC = () => {
       title: <FormattedMessage id="pages.permission.description" defaultMessage="Description" />,
       dataIndex: 'description',
       valueType: 'textarea',
-    },/*
-    {
+    },
+    /*{
       title: <FormattedMessage id="pages.flow.xxx" defaultMessage="Sort Order" />,
       dataIndex: 'sort',
+      
       hideInSearch: true,
       defaultSortOrder: 'ascend',
       sorter: true,
@@ -366,9 +370,9 @@ const TableList: React.FC = () => {
           pagination={{ size: "default", pageSize: 500 }}
         actionRef={actionRef}
           rowKey="id"
-          scroll={{ x: '100%', y: resizeObj.tableScrollHeight }}
+          scroll={{ x: 2500, y: resizeObj.tableScrollHeight }}
         search={{
-          labelWidth: 150,
+          labelWidth: 220,
           span: resizeObj.searchSpan,
           searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
         }}

@@ -95,11 +95,11 @@ const BaseView: React.FC = () => {
                 />}
                 rules={[
                   {
-                    required: true, pattern: new RegExp(/((?=.*\d)(?=.*\D)|(?=.*[a-zA-Z])(?=.*[^a-zA-Z]))(?!^.*[\u4E00-\u9FA5].*$)^\S{8,22}$/),
+                    required: true, message:"Please Enter Current Password"/* pattern: new RegExp(/(?=.*[0-9])(?=.*[A-Z])(?=.*[a-z])(?=.*[\W])(?=.*[\S])^[0-9A-Za-z\S]{4,100}$/g),
                     message: <>Your password should be at least eight characters and include at least the following:<br />
                       a) At least letters in both upper- and lowercase<br />
                       b) At least one number<br />
-                      c) At least one special character</>
+                      c) At least one special character</>*/
                   }
                 ]}
               />
@@ -113,7 +113,7 @@ const BaseView: React.FC = () => {
                 />}
                 rules={[
                    {
-                    required: true, pattern: new RegExp(/((?=.*\d)(?=.*\D)|(?=.*[a-zA-Z])(?=.*[^a-zA-Z]))(?!^.*[\u4E00-\u9FA5].*$)^\S{8,22}$/),
+                    required: true, pattern: new RegExp(/(?=.*[0-9])(?=.*[A-Z])(?=.*[a-z])(?=.*[\W])(?=.*[\S])^[0-9A-Za-z\S]{4,100}$/g),
                   message: <>Your password should be at least eight characters and include at least the following:<br/>
                     a) At least letters in both upper- and lowercase<br />
                     b) At least one number<br />
@@ -134,7 +134,7 @@ const BaseView: React.FC = () => {
                     rules={[
                      
                       {
-                        required: true, pattern: new RegExp(/((?=.*\d)(?=.*\D)|(?=.*[a-zA-Z])(?=.*[^a-zA-Z]))(?!^.*[\u4E00-\u9FA5].*$)^\S{8,22}$/),
+                        required: true, pattern: new RegExp(/(?=.*[0-9])(?=.*[A-Z])(?=.*[a-z])(?=.*[\W])(?=.*[\S])^[0-9A-Za-z\S]{4,100}$/g),
                         message: <>Your password should be at least eight characters and include at least the following:<br />
                           a) At least letters in both upper- and lowercase<br />
                           b) At least one number<br />

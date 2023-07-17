@@ -186,7 +186,7 @@ const TableList: React.FC = () => {
   const right = (
     <div style={{ fontSize: 24 }}>
       <Space style={{ '--gap': '16px' }}>
-        {currentUser?.role_type != 'Terminal' && <SearchOutlined onClick={e => { setShowMPSearch(!showMPSearch) }} />}
+        {!access.jetty_list_tab() && <SearchOutlined onClick={e => { setShowMPSearch(!showMPSearch) }} />}
         <Access accessible={access.canJettyAdd()} fallback={<div></div>}>
           <PlusOutlined onClick={() => { handleModalOpen(true) }} />
           </Access>
@@ -251,7 +251,7 @@ const TableList: React.FC = () => {
         if (page == 1) {
           setData([]);
         }
-        console.log(append)
+        
         setData(val => [...val, ...append.data])
         setHasMore(10 * (page - 1) + append.data.length < append.total)
         
@@ -345,17 +345,7 @@ const TableList: React.FC = () => {
     },
   };
 
-  const getOrganizationName = () => {
-    if (currentUser?.role_type == "Super") {
-      return 'Terminal'
-    }
-    if (currentUser?.role_type == "Trader") {
-      return 'Terminal'
-    }
-    if (currentUser?.role_type == "Terminal") {
-      return 'Customer'
-    }
-  }
+ 
   const columns: ProColumns<JettyListItem>[] = [
     {
       title: (
@@ -387,8 +377,8 @@ const TableList: React.FC = () => {
       title: "Terminal",
       dataIndex: 'terminal_id',
       sorter: true,
-      hideInTable: currentUser?.role_type == 'Terminal' ? true : false,
-      hideInSearch: currentUser?.role_type == 'Terminal' ? true : false,
+      hideInTable: access.jetty_list_tab()  ? true : false,
+      hideInSearch: access.jetty_list_tab() ? true : false,
     
       valueEnum: organizationList,
       render: (dom, entity) => {
@@ -418,7 +408,7 @@ const TableList: React.FC = () => {
       }
     },
     {
-      title: <FormattedMessage id="pages.jetty.depthAlongside" defaultMessage="Depth Alongside (M)" />,
+      title: <FormattedMessage id="pages.jetty.xxx" defaultMessage="Depth Alongside (M)" />,
       dataIndex: 'depth_alongside',
       valueType: 'text',
       sorter: true,
@@ -468,7 +458,7 @@ const TableList: React.FC = () => {
       title: <FormattedMessage id="pages.searchTable.titleOption" defaultMessage="Operating" />,
       dataIndex: 'option',
       valueType: 'option',
-      hideInTable: !access.canJettyMod(),
+      hideInTable: !access.canJettyMod() && !access.canJettyDel(),
       render: (_, record) => [
         <Access accessible={access.canJettyMod()} fallback={<div></div>}>
         <a
@@ -478,7 +468,9 @@ const TableList: React.FC = () => {
             setCurrentRow(record);
           }}
         >
-          <FormOutlined style={{ fontSize: '20px' }} /> 
+            <FormOutlined style={{ fontSize: '20px' }} />
+
+            
           </a>
         </Access>,
         <Access accessible={access.canJettyDel()} fallback={<div></div>}>
@@ -576,7 +568,7 @@ const TableList: React.FC = () => {
           rowKey="id"
           pagination={{ size: "default" }}
           scroll={{ x: 1800, y: resizeObj.tableScrollHeight }}
-          search={currentUser?.role_type != 'Terminal'?{
+          search={!access.jetty_list_tab() ? {
           labelWidth: 130,
           span: resizeObj.searchSpan,
             searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />

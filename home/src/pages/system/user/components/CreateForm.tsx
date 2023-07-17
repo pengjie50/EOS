@@ -20,7 +20,7 @@ import { Modal, Form } from 'antd';
 import React, { useRef, useState, useEffect } from 'react';
 import { checkEmail, checkUsername } from '../service';
 import { tree } from "@/utils/utils";
-
+ 
 export type CreateFormProps = {
   onCancel: (flag?: boolean, formVals?: Partial<UserListItem>) => void;
   onSubmit: (values: Partial<UserListItem>) => Promise<void>;

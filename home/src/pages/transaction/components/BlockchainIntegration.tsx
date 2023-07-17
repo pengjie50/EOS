@@ -401,7 +401,7 @@ const Detail: React.FC<any> = (props) => {
       
     },
     {
-      title: <FormattedMessage id="pages.alertrule.throughputVolume1" defaultMessage="Total Nominated Quantity (Bal-60-F)" />,
+      title: <FormattedMessage id="pages.alertrule.throughputVolume1" defaultMessage="Total Nominated Quantity (Bls-60-F)" />,
       dataIndex: 'product_quantity_in_bls_60_f',
       hideInSearch: true,
       valueType: 'text',
@@ -562,7 +562,7 @@ const Detail: React.FC<any> = (props) => {
             })
           })
         }
-        console.log("dddddddddd", res.data)
+        
 
 
         setFlowList(res.data)

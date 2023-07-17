@@ -66,20 +66,17 @@ const UpdateRoleForm: React.FC<MenuFormProps> = (props) => {
         })
         res.data.push({ title: "All", key: "0", id: "0", parentId:"" })
 
-        console.log(res.data)
+        
         let tr = toTree(res.data, "", 'parentId');
 
-        console.log(tr)
-        // @ts-ignore
+       
+        
         setTreeData(tr);
 
         if (res.userData) {
-          // @ts-ignore
-         // let map = res.userData.map(r => r + '');
-         // setSelectedKey(map);
-         // setCheckedKeys(map);
+       
 
-          console.log(tr);
+         
         }
       });
 
@@ -87,8 +84,8 @@ const UpdateRoleForm: React.FC<MenuFormProps> = (props) => {
         
 
         if (res.data) {
-          console.log(res.data)
-          // @ts-ignore
+         
+         
           let map = res.data.map(r => r.permission_id +'');
           setSelectedKey(map);
           setCheckedKeys(map);

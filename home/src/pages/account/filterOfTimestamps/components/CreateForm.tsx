@@ -37,6 +37,8 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
   } = props;
 
   useEffect(() => {
+
+  alert(1)
     if (!createModalOpen) {
 
 
@@ -75,7 +77,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
             resetText: 
               intl.formatMessage({
                 id: 'pages.reset',
-                defaultMessage: '重置',
+                defaultMessage: '',
               })
             ,
           },
@@ -116,7 +118,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           id: 'pages.filterOfTimestamps.value',
           defaultMessage: 'Template Content',
         })}
-        
+
         rules={[
           {
             required: true,
@@ -131,7 +133,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         placeholder="Please select"
         allowClear
         width="md"
-       
+        
         request={async () => {
           return flow({ pageSize: 1000, current: 1, sorter: { sort: 'ascend' } }).then((res) => {
 
@@ -152,7 +154,11 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           showArrow: false,
           treeCheckable:true,
           multiple: true,
-          maxTagCount:0,
+          maxTagCount: 0,
+         
+          maxTagPlaceholder: (omittedValues) => {
+            return omittedValues.length + " Selected"
+          },
           dropdownMatchSelectWidth: isMP ? true : false,
          // treeCheckStrictly:true,
           showCheckedStrategy: TreeSelect.SHOW_ALL,

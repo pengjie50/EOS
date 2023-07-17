@@ -1,20 +1,20 @@
 import { request } from 'umi';
 import { ReportList, ReportListItem, ReportListParams } from './data.d';
 
-/** 获取规则列表 GET /api/rule */
+
 export async function report(params?: ReportListParams) {
-  console.log(params)
+
   return request('/api/report/list', {
     method: 'POST',
     data: {
       ...params,
-      hasFilters:true
+      hasFilters: true
     },
   });
 }
 
 export async function reportSummary(params?: ReportListParams) {
-  console.log(params)
+
   return request('/api/reportSummary/list', {
     method: 'POST',
     data: {
@@ -25,7 +25,7 @@ export async function reportSummary(params?: ReportListParams) {
 }
 
 export async function updateReport(options?: { [key: string]: any }) {
-  return request <ReportListItem>('/api/report/mod', {
+  return request<ReportListItem>('/api/report/mod', {
     method: 'POST',
     data: options || {}
   });
@@ -34,8 +34,8 @@ export async function updateReport(options?: { [key: string]: any }) {
 export async function addReport(options?: { [key: string]: any }) {
   return request<ReportListItem>('/api/report/add', {
     method: 'POST',
-    data:options || {}
-    
+    data: options || {}
+
   });
 }
 
@@ -51,7 +51,7 @@ export async function removeReport(options?: { [key: string]: any }) {
 
 
 export async function reportTemplate(params?: ReportListParams) {
-  console.log(params)
+
   return request('/api/reportTemplate/list', {
     method: 'POST',
     data: {

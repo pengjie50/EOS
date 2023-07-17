@@ -349,7 +349,7 @@ const TableList: React.FC = () => {
       },
     },
     {
-      title: <FormattedMessage id="pages.alertrule.totalNominatedQuantityB" defaultMessage="Total Nominated Quantity (Bal-60-F)" />,
+      title: <FormattedMessage id="pages.alertrule.totalNominatedQuantityB" defaultMessage="Total Nominated Quantity (Bls-60-F)" />,
       dataIndex: 'product_quantity_in_bls_60_f',
       hideInSearch: true,
 
@@ -596,14 +596,14 @@ const TableList: React.FC = () => {
               <ProList<any>
 
                 onItem={(record, index) => {
-                  console.log(record)
+                  
                 } }
                 toolbar={{
                  
                   search: {
                     onSearch: (value: string) => {
                       setAllcolumns(columns.filter((a) => {
-                        console.log(a)
+                       
                         return a.title.props.defaultMessage.indexOf(value)>-1
                       }))
                     },
@@ -613,10 +613,10 @@ const TableList: React.FC = () => {
                 onRow={(record: any) => {
                   return {
                     onMouseEnter: () => {
-                      console.log(record);
+                      
                     },
                     onClick: () => {
-                      console.log(record);
+                     
                     },
                   };
                 }}

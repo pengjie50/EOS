@@ -11,6 +11,8 @@ import FileSaver from "file-saver";
 import MPSort from "@/components/MPSort";
 import moment from 'moment'
 const Json2csvParser = require("json2csv").Parser;
+import { user } from '../user/service';
+import { company } from '../company/service';
 import {
   FooterToolbar,
   ModalForm,
@@ -125,9 +127,28 @@ export  var columnsBase: ProColumns<OperlogListItem>[] = [
   {
     title: <FormattedMessage id="pages.user.username" defaultMessage="username" />,
     dataIndex: 'username',
-    hideInSearch: true,
+    // valueEnum: userList,
+
+    search: {
+      transform: (value) => {
+
+        if (value !== null) {
+          return {
+
+            user_id: {
+              'field': 'user_id',
+              'op': 'in',
+              'data': value
+            }
+
+          }
+        }
+
+      }
+    },
     valueType: 'text',
   },
+
 
   {
     title: <FormattedMessage id="pages.operlog.module" defaultMessage="module" />,
@@ -392,9 +413,9 @@ const TableList: React.FC = () => {
    * */
   const intl = useIntl();
   const [MPSorter, setMPSorter] = useState<any>({});
-
+  const [organizationList, setOrganizationList] = useState<any>({});
  
-  
+  const [userList, setUserList] = useState<any>({});
   //--MP start
   const MPSearchFormRef = useRef<ProFormInstance>();
   const [moreOpen, setMoreOpen] = useState<boolean>(false);
@@ -423,14 +444,14 @@ const TableList: React.FC = () => {
 
         onFocus: () => {
           fieldSelectData({ model: "Operlog", value: '', field: 'url', where: { type: 1 } }).then((res) => {
-            console.log(res.data)
+            
             setUrlData(res.data)
           })
         },
         onSearch: (newValue: string) => {
 
           fieldSelectData({ model: "Operlog", value: newValue, field: 'url', where: { type: 1 } }).then((res) => {
-            console.log(res.data)
+           
             setUrlData(res.data)
           })
 
@@ -449,21 +470,33 @@ const TableList: React.FC = () => {
 
         onFocus: () => {
           fieldSelectData({ model: "Operlog", value: '', field: 'ip', where: { type: 1 } }).then((res) => {
-            console.log(res.data)
+           
             setIpData(res.data)
           })
         },
         onSearch: (newValue: string) => {
 
           fieldSelectData({ model: "Operlog", value: newValue, field: 'ip', where: { type: 1 } }).then((res) => {
-            console.log(res.data)
+            
             setIpData(res.data)
           })
 
         }
       }
     }
-    
+    if (b.dataIndex == "username") {
+      b.valueEnum = userList
+      b.fieldProps = {
+        dropdownMatchSelectWidth: isMP ? true : false,
+        notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
+        showSearch: true,
+        allowClear: true,
+        multiple: true,
+        mode: 'multiple',
+
+
+      }
+    }
 
     return b
 
@@ -480,12 +513,42 @@ const TableList: React.FC = () => {
   
   
 
+  useEffect(() => {
 
+    user({
+      sorter: { username: 'ascend' }, "type": {
+        'field': 'type',
+        'op': 'eq',
+        'data': "Super"
+      }
+    }
+).then((res) => {
+      var b = {}
+      res.data.forEach((r) => {
+        b[r.id] = r.username
+      })
+      setUserList(b)
+      columns[0].valueEnum = b
+    });
+
+
+    company({ sorter: { name: 'ascend' } }).then((res) => {
+      var b = {}
+      res.data.forEach((r) => {
+        b[r.id] = r.name
+      })
+      setOrganizationList(b)
+
+    });
+
+
+
+  }, [true]);
   
 
    
 
-  console.log(columns)
+  
 
 
 
@@ -580,7 +643,7 @@ const TableList: React.FC = () => {
       setData([]);
     }
 
-    console.log(append)
+    
     setData(val => [...val, ...append.data])
     setHasMore(10 * (page - 1) + append.data.length < append.total)
   }
@@ -589,7 +652,7 @@ const TableList: React.FC = () => {
     await getData(currentPage, MPfilter)
     setCurrentPage(currentPage + 1)
   }
-  console.log(columns)
+ 
 
   return (
     <RcResizeObserver

@@ -355,7 +355,7 @@ const TableList: React.FC = () => {
 
   }
 
-  console.log("eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee", filter)
+  
 
   const [terminal_id, setTerminal_id] = useState<any>(useLocation()?.state?.terminal_id);
   const [dateArr, setDateArr] = useState<any>(useLocation()?.state?.dateArr);
@@ -439,7 +439,7 @@ const TableList: React.FC = () => {
     })
 
 
-    console.log(append)
+   
     setData(val => [...val, ...append.data])
     setHasMore(10 * (page - 1) + append.data.length < append.total)
   }
@@ -479,7 +479,7 @@ const TableList: React.FC = () => {
 
         res2.data.forEach((r) => {
 
-          console.log(b)
+          
           d[r.flow_id + "_" + r.flow_id_to] = b[r.flow_id] + " -> " + b[r.flow_id_to]
         })
 

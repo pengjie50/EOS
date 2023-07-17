@@ -81,7 +81,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
         setFlowConf(tree(res.data, "                                    ", 'pid'))
         loops(flowConf, null);
-        console.log("rrrrrrrrrr", valueMap)
+        
       });
 
     }
@@ -253,30 +253,26 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
         }}
 
-        // tree-select args
+        
         fieldProps={{
 
           onChange: value => {
-           // console.log("Change", getPath(value));
-            console.log(value)
-           // restFormRef.current?.setFieldValue('value', value)
+          
+           
           },
 
           onSelect: value => {
-           // console.log("Select:", getPath(value));
-            //restFormRef.current?.setFieldValue('value', getPath(value))
+           
           },
-       /* onChange: (checkedKeys, a,e) => {
-          console.log(e)
-          const checkedKeysResult = [...checkedKeys, ...e.halfCheckedKeys]
-          restFormRef.current?.setFieldValue('value', checkedKeysResult)
-        },*/
+      
           showArrow: false,
           treeCheckable:true,
           multiple: true,
           maxTagCount:0,
           dropdownMatchSelectWidth: isMP ? true : false,
-          //treeCheckStrictly:true,
+          maxTagPlaceholder: (omittedValues) => {
+            return omittedValues.length + " Selected"
+          },
           showCheckedStrategy: TreeSelect.SHOW_ALL,
           treeNodeFilterProp: 'name',
           fieldNames: {

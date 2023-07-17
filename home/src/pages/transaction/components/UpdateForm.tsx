@@ -231,7 +231,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         name="product_quantity_in_bls_60_f"
         label={intl.formatMessage({
           id: 'pages.alertrule.totalNominatedQuantityB',
-          defaultMessage: 'Total Nominated Quantity (Bal-60-F)',
+          defaultMessage: 'Total Nominated Quantity (Bls-60-F)',
         })}
         width="md"
 

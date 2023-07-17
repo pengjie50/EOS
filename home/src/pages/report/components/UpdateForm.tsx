@@ -38,11 +38,7 @@ const { confirm } = Modal;
 //MP
 import { InfiniteScroll, List, NavBar, Space, DotLoading } from 'antd-mobile'
 import { parseInt, template } from 'lodash';
-/**
- * @en-US Add node
- * @zh-CN 添加节点
- * @param fields
- */
+
 
 
 
@@ -63,7 +59,7 @@ const handleAGenerateReport = async (fields: any) => {
         id="pages.addedSuccessfully"
         defaultMessage="Added successfully"
       />);*/
-    console.log("vvvvvvvvvvvv", cc)
+    
     return cc;
   } catch (error) {
     // hide();
@@ -178,15 +174,7 @@ export type UpdateFormProps = {
 
 };
 const UpdateForm: React.FC<UpdateFormProps> = (props) => {
-  /**
-   * @en-US Pop-up window of new window
-   * @zh-CN 新建窗口的弹窗
-   *  */
-  //const [updateModalOpen, handleModalOpen] = useState<boolean>(false);
-  /**
-   * @en-US The pop-up window of the distribution update window
-   * @zh-CN 分布更新窗口的弹窗
-   * */
+  
   
 
   const [showDetail, setShowDetail] = useState<boolean>(false);
@@ -234,10 +222,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
   const [selectedRowKeys1, setSelectedRowKeys1] = useState<TransactionListItem[]>([]);
 
-  /**
-   * @en-US International configuration
-   * @zh-CN 国际化配置
-   * */
+  
   const intl = useIntl();
   const [responsive, setResponsive] = useState(false);
 
@@ -905,9 +890,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                         </div>
                       )}
                       onDragSortEnd={(newDataSource: any) => {
-                        // console.log('排序后的数据', newDataSource);
-                        //setDatasource2(newDataSource);
-                        // message.success('修改列表排序成功');
+                       
                       }}
                     />
 
@@ -952,9 +935,9 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                         </div>
                       )}
                       onDragSortEnd={(newDataSource: any) => {
-                        // console.log('排序后的数据', newDataSource);
+                        
                         setSelectedFilterColumns(newDataSource);
-                        // message.success('修改列表排序成功');
+                        
                       }}
                     />
 

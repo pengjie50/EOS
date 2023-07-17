@@ -1,14 +1,16 @@
 {
   "ExpandedNodes": [
     "",
-    "\\config",
     "\\src",
-    "\\src\\locales",
-    "\\src\\locales\\en-US",
     "\\src\\pages",
-    "\\src\\pages\\User",
-    "\\src\\pages\\User\\Login"
+    "\\src\\pages\\account",
+    "\\src\\pages\\account\\filterOfTimestamps",
+    "\\src\\pages\\account\\filterOfTimestamps\\components",
+    "\\src\\pages\\system\\terminal",
+    "\\src\\pages\\system\\user",
+    "\\src\\pages\\transaction",
+    "\\src\\pages\\transaction\\components"
   ],
-  "SelectedNode": "\\src\\locales\\en-US\\pages.ts",
+  "SelectedNode": "\\src\\pages\\transaction\\index.tsx",
   "PreviewInSolutionExplorer": false
 }

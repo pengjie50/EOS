@@ -6,6 +6,20 @@
   "description": "",
   "glyphs": [
     {
+      "icon_id": "807974",
+      "name": "货物",
+      "font_class": "huowu",
+      "unicode": "e636",
+      "unicode_decimal": 58934
+    },
+    {
+      "icon_id": "36405904",
+      "name": "noun-storage-tank-1511795",
+      "font_class": "noun-storage-tank-1511795",
+      "unicode": "e60e",
+      "unicode_decimal": 58894
+    },
+    {
       "icon_id": "35897468",
       "name": "barrels (3)",
       "font_class": "zhuanyunche",

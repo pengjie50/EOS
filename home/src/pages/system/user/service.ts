@@ -1,19 +1,19 @@
 import { request } from 'umi';
 import { UserList, UserListItem, UserListParams } from './data.d';
 
-/** 获取规则列表 GET /api/rule */
+
 export async function user(params?: UserListParams) {
-  console.log(params)
+
   return request('/api/user/list', {
     method: 'POST',
     data: {
       ...params,
-      hasFilters:true
+      hasFilters: true
     },
   });
 }
 
-export async function queryCurrent(options ?: { [key: string]: any }) {
+export async function queryCurrent(options?: { [key: string]: any }) {
 
   return request<{
     data: API.CurrentUser;
@@ -62,8 +62,8 @@ export async function modifyPassword(options?: { [key: string]: any }) {
 export async function addUser(options?: { [key: string]: any }) {
   return request<any>('/api/user/add', {
     method: 'POST',
-    data:options || {}
-    
+    data: options || {}
+
   });
 }
 

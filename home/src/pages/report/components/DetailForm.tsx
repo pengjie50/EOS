@@ -61,7 +61,7 @@ const handleAGenerateReport= async (fields: any) => {
       id="pages.addedSuccessfully"
       defaultMessage="Added successfully"
     />);*/
-    console.log("vvvvvvvvvvvv",cc)
+    
     return cc;
   } catch (error) {
    // hide();
@@ -769,17 +769,17 @@ const TableList: React.FC = () => {
                   rowKey="dataIndex"
                  
                 onItem={(record, index) => {
-                  console.log(record)
+                 
                 }}
 
                  
                 onRow={(record: any) => {
                   return {
                     onMouseEnter: () => {
-                     // console.log(record);
+                     
                     },
                     onClick: () => {
-                    //  console.log(record);
+                    
                     },
                   };
                 }}
@@ -810,7 +810,7 @@ const TableList: React.FC = () => {
                 <ProList<any>
 
                   onItem={(record, index) => {
-                    console.log(record)
+                    
                   }}
                  
                   
@@ -818,10 +818,10 @@ const TableList: React.FC = () => {
                   onRow={(record: any) => {
                     return {
                       onMouseEnter: () => {
-                        console.log(record);
+                       
                       },
                       onClick: () => {
-                        console.log(record);
+                        
                       },
                     };
                   }}

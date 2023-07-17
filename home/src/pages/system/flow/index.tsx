@@ -245,7 +245,7 @@ const TableList: React.FC = () => {
     })
 
     tree(append.data, "                                    ", 'pid')
-    console.log(append)
+    
     setData(val => [...val, ...append.data])
     setHasMore(10 * (page - 1) + append.data.length < append.total)
   }

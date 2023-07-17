@@ -1,7 +1,7 @@
 import { Footer } from '@/components';
 import { login, retrievePassword } from '@/services/ant-design-pro/api';
 import { getFakeCaptcha } from '@/services/ant-design-pro/login';
-
+import { fieldUniquenessCheck } from '@/services/ant-design-pro/api';
 import {
   AlipayCircleOutlined,
   LockOutlined,
@@ -90,7 +90,7 @@ const LoginMessage: React.FC<{
       showIcon
     />
   );
-  };
+};
 
 
 
@@ -103,9 +103,27 @@ const Login: React.FC = () => {
   const { initialState, setInitialState } = useModel('@@initialState');
   const [isMP, setIsMP] = useState<boolean>(!isPC());
   const [redirect, setRedirect] = useState<string>(useLocation()?.search?.split("=")[1] || '/');
-  
- 
-  
+
+
+  const onlyCheck = (rule: any, value: any, callback: (arg0: string | undefined) => void) => {
+    if (!(/^[A-Za-z\d]+([-_.][A-Za-z\d]+)*@([A-Za-z\d]+[-.])+[A-Za-z\d]{2,4}$/.test(value))) {
+      callback(undefined);
+    }
+
+    fieldUniquenessCheck({ where: { username: value }, model: 'User' }).then((res) => {
+
+      if (!res.data) {
+
+        callback(intl.formatMessage({
+          id: 'pages.xxx',
+          defaultMessage: 'No account found with that email.',
+        }))
+      } else {
+        callback(undefined);
+      }
+    });
+
+  }
 
 
   const containerClassName = useEmotionCss(({ token }) => {
@@ -116,8 +134,6 @@ const Login: React.FC = () => {
         flexDirection: 'column',
         height: '100vh',
         overflow: 'hidden',
-      //  backgroundImage:
-        //  "url('/loginbg_xs.jpg')",
         backgroundSize: '100% 100%',
       },
       [`@media screen and (min-width: ${token.screenMD}px)`]: {
@@ -125,16 +141,14 @@ const Login: React.FC = () => {
         flexDirection: 'column',
         height: '100vh',
         overflow: 'hidden',
-       // backgroundImage:
-        //  "url('/loginbg.jpg')",
         backgroundSize: '100% 100%',
       }
     };
-   
+
   });
 
   const titleClassName = useEmotionCss(({ token }) => {
-    console.log(token)
+
     return {
       [`@media screen and (max-width: ${token.screenMD}px)`]: {
         height: 42,
@@ -156,7 +170,7 @@ const Login: React.FC = () => {
         lineHeight: '42px',
         color: '#FFF',
         paddingLeft: '20px',
-      
+
         backgroundColor: 'rgba(0,0, 0, 0.6)',
         top: 0,
         left: 0,
@@ -164,16 +178,17 @@ const Login: React.FC = () => {
         position: 'fixed'
       },
     };
-   
+
   });
 
   const intl = useIntl();
 
   const fetchUserInfo = async () => {
     const userInfo = await initialState?.fetchUserInfo?.();
-   
+
     if (userInfo) {
-      console.log(userInfo)
+
+
       flushSync(() => {
         setInitialState((s) => ({
           ...s,
@@ -181,18 +196,19 @@ const Login: React.FC = () => {
         }));
       });
     }
+    return userInfo
   };
-  
 
-  
+
+
   const handleSubmit = async (values: API.LoginParams) => {
     try {
-      // 登录
+
       const msg = await login({ ...values, type });
       if (msg.status === 'ok') {
         const defaultLoginSuccessMessage = intl.formatMessage({
           id: 'pages.login.success',
-          defaultMessage: '登录成功！',
+          defaultMessage: '',
         });
         message.success(defaultLoginSuccessMessage);
         setInitialState((s) => ({
@@ -200,33 +216,50 @@ const Login: React.FC = () => {
           token: msg.token,
         }));
         localStorage.setItem('token', msg?.token || '');
-       
-        await fetchUserInfo();
-     
-       
-        history.push(redirect || '/');
+
+        var user = await fetchUserInfo();
+        var goto = "/"
+        user.permissions.forEach((a) => {
+          if (goto == "/") {
+            if (a.indexOf("_") > -1) {
+
+            } else {
+              if (a == "jetty") {
+                a = 'InformationPage'
+              }
+              if (a == "alertrule") {
+                a = 'threshold/alertRule'
+              }
+              if (a == "alert") {
+                a = 'threshold/alert'
+              }
+              goto = "/" + a
+            }
+          }
+
+
+        })
+
+        history.push(goto || redirect);
+
+
+
         return;
       }
-      console.log(msg);
-      // 如果失败去设置用户错误信息
+
       setUserLoginState(msg);
     } catch (error) {
-      /*const defaultLoginFailureMessage = intl.formatMessage({
-        id: 'pages.login.failure',
-        defaultMessage: '登录失败，请重试！',
-      });
-      console.log(error);
-      message.error(defaultLoginFailureMessage);*/
+
     }
   };
 
- 
-   
 
-  
+
+
+
 
   if (isAdmin) {
-  
+
     useEffect(() => {
       msalInstance.addEventCallback((event: EventMessage) => {
 
@@ -234,7 +267,7 @@ const Login: React.FC = () => {
           const payload = event.payload as AuthenticationResult;
           const account = payload.account;
 
-          handleSubmit({ "superData": account, username: account?.username, password:"aaa" })
+          handleSubmit({ "superData": account, username: account?.username, password: "aaa" })
           msalInstance.setActiveAccount(account);
 
 
@@ -250,17 +283,14 @@ const Login: React.FC = () => {
           mainWindowRedirectUri: '/#/user/adminlogin'
         });
 
-        //console.log(accounts[0])
-        //handleSubmit({ "username": "admin", password: "abc123456" })
-
       } else {
 
         msalInstance.loginPopup(loginRequest);
       }
-    },[true])
+    }, [true])
   }
 
- 
+
 
   const { status, type: loginType } = userLoginState;
 
@@ -268,24 +298,15 @@ const Login: React.FC = () => {
     <div className={containerClassName}>
 
       <div style={{ position: 'fixed', top: 0, width: '100%', height: '100%', zIndex: -1 }}>
-        <img style={{ width: '100%', height: '100%' }} src="http://eosuat.southeastasia.cloudapp.azure.com/upload/login_bg.png"/>
-        {/* <video id="video" muted loop={true} height={2000} width={1000} style={{ width: '100%', height: '100%', objectFit: 'fill' }} src="http://eosuat.southeastasia.cloudapp.azure.com/upload/login_bg.mp4" autoPlay={true} controls={false}>
-         
-        </video>*/ }
-      </div>
-      <div
+        <img style={{ width: '100%', height: '100%' }} src="http://eosuat.southeastasia.cloudapp.azure.com/upload/login_bg.png" />
 
-        className={titleClassName}
-      
-      >
+      </div>
+      <div className={titleClassName}>
         EOS - Efficiency Optimization System
       </div>
 
-
-
-
-      <div style={{ position: 'absolute', top: isMP ? 'none' : 70, bottom: !isMP ? 'none' : 20, left: 20, right:isMP?20:'none', padding: 20, backgroundColor:'rgba(0,0, 0, 0.6)', fontWeight: "bold", borderRadius: 10, }}>
-        <div className="my-font-size" style={{ fontSize: "50px", color:"#fff" }}>
+      <div style={{ position: 'absolute', top: isMP ? 'none' : 70, bottom: !isMP ? 'none' : 20, left: 20, right: isMP ? 20 : 'none', padding: 20, backgroundColor: 'rgba(0,0, 0, 0.6)', fontWeight: "bold", borderRadius: 10, }}>
+        <div className="my-font-size" style={{ fontSize: "50px", color: "#fff" }}>
           EOS
         </div>
         <div style={{ fontSize: "18px", color: "#fff" }}>
@@ -297,160 +318,117 @@ const Login: React.FC = () => {
         <title>
           {intl.formatMessage({
             id: 'menu.login',
-            defaultMessage: '登录页',
+            defaultMessage: '',
           })}
           - {Settings.title}
         </title>
       </Helmet>
-      {/*<Lang /> */}
+      {/*
+	<Lang /> */}
       {!isAdmin && (<div style={{
-        position: 'absolute', right: isMP ? 20 : 70, left: isMP ? 20 : 'none', top: 70, 
-      }}><div
-        style={{
+        position: 'absolute', right: isMP ? 20 : 70, left: isMP ? 20 : 'none', top: 70,
+      }}>
+        <div style={{
           border: '1px solid #F5F7F9',
           padding: '0px',
-          backgroundColor: '#7BA8D9' }}
-      >
-          <LoginForm
-            style={{ padding: isMP ? 10 : 0 }}
-         
-         // logo={<img alt="logo" src="/logo.png" />}
-          //title="Demurrage Management System (DMS)"
-         // subTitle={intl.formatMessage({ id: 'pages.layouts.userLayout.title' })}
-          initialValues={{
+          backgroundColor: '#d2faf5'
+        }}>
+          <LoginForm style={{ padding: isMP ? 10 : 0 }} initialValues={{
             autoLogin: true,
-          }}
-          
-          onFinish={async (values) => {
+          }} onFinish={async (values) => {
 
-            
+
             await handleSubmit(values as API.LoginParams);
           }}
-        >
-         
+          >
 
-          {status === 'error' && loginType === 'account' && (
-            <LoginMessage
-              content={intl.formatMessage({
-                id: 'pages.login.accountLogin.errorMessage',
-                defaultMessage: '账户或密码错误',
-              })}
-            />
-          )}
-          {type === 'account' && (
-            <>
-              <ProFormText
-                name="username"
-                fieldProps={{
+
+            {status === 'error' && loginType === 'account' && (
+              <LoginMessage content={intl.formatMessage({ id: 'pages.login.accountLogin.errorMessage', defaultMessage: '', })} />
+            )}
+            {type === 'account' && (
+              <>
+                <ProFormText name="username" fieldProps={{
                   size: 'large',
                   prefix: <UserOutlined />,
-                }}
-                placeholder={intl.formatMessage({
-                  id: 'pages.login.username.placeholder',
-                  defaultMessage: '用户名',
-                })}
-                rules={[
-                  {
-                    required: true,
-                    message: (
-                      <FormattedMessage
-                        id="pages.login.username.required"
-                        defaultMessage="请输入用户名!"
-                      />
-                    ),
-                  },
+                }} placeholder={intl.formatMessage({ id: 'pages.login.username.placeholder', defaultMessage: '', })} rules={[{
+                  required: true, message: (<FormattedMessage id="pages.login.username.required" defaultMessage="" />
+                  ),
+                },
                 ]}
-              />
-              <ProFormText.Password
-                name="password"
-                fieldProps={{
+                />
+                <ProFormText.Password name="password" fieldProps={{
                   size: 'large',
                   prefix: <LockOutlined />,
-                }}
-                placeholder={intl.formatMessage({
-                  id: 'pages.login.password.placeholder',
-                  defaultMessage: '密码',
-                })}
-                rules={[
-                  {
-                    required: true,
-                    message: (
-                      <FormattedMessage
-                        id="pages.login.password.required"
-                        defaultMessage="请输入密码！"
-                      />
-                    ),
-                  },
+                }} placeholder={intl.formatMessage({ id: 'pages.login.password.placeholder', defaultMessage: '', })} rules={[{
+                  required: true, message: (<FormattedMessage id="pages.login.password.required" defaultMessage="" />
+                  ),
+                },
                 ]}
-              />
-            </>
-          )}
+                />
+              </>
+            )}
 
-          <div
-            style={{
-              height:'10px',
+            <div style={{
+              height: '10px',
               marginBottom: 24,
-            }}
-          >
-            <ModalForm<{
-              name: string;
-              company: string;
-            }>
-              title="Forgot your password?"
-              trigger={
-                <a
-                  style={{
+            }}>
+              <ModalForm< { name: string; company: string; }>
+                title="Forgot your password?"
+                trigger={
+                  <a style={{
                     color: "#fff",
                     float: 'right',
-                  }}
-                >
-                  <FormattedMessage id="pages.login.forgotPasswordxx" defaultMessage="Forgot your password?" />
-                </a>
-              }
-             // form={form}
-              autoFocusFirstInput
-              modalProps={{
-                destroyOnClose: true,
-                onCancel: () => console.log('run'),
-              }}
-              submitTimeout={2000}
-              onFinish={async (values) => {
-                retrievePassword(values)
-                message.success("Thanks! If your email address exists, you'll get an email with a link to reset your password shortly.");
-                return true;
-              }}
-            >
-              <ProFormText
-                width="md"
-                name="email"
-                  label="Please enter your email address and we will send you a link to reset it"
-                  placeholder="Please enter"
-              />
-            </ModalForm>
-           
-          </div>
-         
-        </LoginForm>
-        
-      </div>
+                  }}>
+                    <FormattedMessage id="pages.login.forgotPasswordxx" defaultMessage="Forgot your password?" />
+                  </a>
+                }
+
+                autoFocusFirstInput
+                modalProps={{
+                  destroyOnClose: true,
+
+                }}
+                submitTimeout={2000}
+                onFinish={async (values) => {
+                  retrievePassword(values)
+                  message.success("Thanks! If your email address exists, you'll get an email with a link to reset your password shortly.");
+                  return true;
+                }}
+              >
+                <ProFormText width="md" name="email" label="Please enter your email address and we will send you a link to reset it" placeholder="Please enter" rules={[{ required: true, message: " Please enter an email address", }, {
+                  pattern: /^[A-Za-z\d]+([-_.][A-Za-z\d]+)*@([A-Za-z\d]+[-.])+[A-Za-z\d]{2,4}$/, message: (<FormattedMessage id="pages.user.rules.incorrectEmailFormat" defaultMessage="Incorrect email format" />
+                  )
+                },
+                { validator: onlyCheck }
+                ]}
+                />
+              </ModalForm>
+
+            </div>
+
+          </LoginForm>
+
+        </div>
         <div style={{
-       
+
           border: '1px solid #F5F7F9',
-        padding: '15px',
+          padding: '15px',
           backgroundColor: 'rgba(0,0, 0, 0.6)',
           marginBottom: 24,
-         borderTop:0,
-          maxWidth:400,
+          borderTop: 0,
+          maxWidth: 400,
           color: '#fff'
         }}>
           By continuing, you agree to Efficiency Optimization System’s Terms of Service, Privacy Policy and Cookie Use.
         </div>
-        </div>
+      </div>
       )}
 
-      
-      
+
+
     </div>
+
   );
 };
 

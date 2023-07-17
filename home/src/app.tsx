@@ -12,6 +12,9 @@ import React from 'react';
 import logo from '../public/logo.svg';
 import { AvatarDropdown, AvatarName } from '@/components';
 import NoticeIconView from '@/components/NoticeIcon';
+
+import UnAccessPage from './pages/403';
+
 const isDev = process.env.NODE_ENV === 'development';
 const loginPath = '/user/login';
 
@@ -25,11 +28,28 @@ export async function getInitialState(): Promise<{
   token?: string;
   fetchUserInfo?: () => Promise<API.CurrentUser | undefined>;
 }> {
+
+
+  function getInitials(fullName, includeLastName) {
+ 
+    fullName = fullName.replace(/[^A-Z]/g, '');
+   
+    if (fullName.length >= 2) {
+      return fullName.toUpperCase().slice(0, 2);
+    } else {
+      return ""
+    }
+   
+   
+  }
   const fetchUserInfo = async () => {
     try {
       const msg = await queryCurrentUser({
         skipErrorHandler: true,
       });
+     
+
+      msg.data.avatarText = getInitials(msg.data.username, true) || msg.data.username.slice(0, 2).toUpperCase()
       return msg.data;
     } catch (error) {
      
@@ -41,8 +61,14 @@ export async function getInitialState(): Promise<{
   // 如果不是登录页面，执行
   const { location } = history;
 
+ 
+ 
   if (location.pathname !== loginPath && location.pathname !== "/user/retrievePassword" && location.pathname !== "/user/adminlogin" ) {
-    const currentUser = await fetchUserInfo();
+    var currentUser = await fetchUserInfo();
+   
+   
+    
+    
     return {
       fetchUserInfo,
       currentUser,
@@ -75,7 +101,7 @@ export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) =
     avatarProps: {
       src:false,
       // src:initialState?.currentUser?.avatar,
-      title: <div><div className="my-font-size" style={{ fontSize: 14, display: 'inline-block', backgroundColor: "#FF4D00", borderRadius: "50%", color: "#fff", height: "28px", textAlign: 'center', lineHeight: '25px', width: 28, fontWeight: "bolder" }}>{initialState?.currentUser?.username.slice(0, 2).toUpperCase()}</div>{/* <AvatarName />*/ }</div>,
+      title: <div><div className="my-font-size" style={{ fontSize: 14, display: 'inline-block', backgroundColor: "#FF4D00", borderRadius: "50%", color: "#fff", height: "28px", textAlign: 'center', lineHeight: '28px', width: 28, fontWeight: "bolder" }}>{initialState?.currentUser?.avatarText}</div>{/* <AvatarName />*/ }</div>,
       render: (_, avatarChildren) => {
         return <AvatarDropdown>{avatarChildren}</AvatarDropdown>;
       },
@@ -124,7 +150,7 @@ export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) =
       : [],
     menuHeaderRender: undefined,
     // 自定义 403 页面
-    // unAccessible: <div>unAccessible</div>,
+    unAccessible: <div><UnAccessPage /></div>,
     // 增加一个 loading 的状态
     childrenRender: (children) => {
    

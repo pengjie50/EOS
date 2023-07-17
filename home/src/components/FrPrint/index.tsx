@@ -24,9 +24,7 @@ export type UpdateFrPrintProps = {
   printModalVisible: boolean;
 
 };
-/**
- * ProTable - 高级表格 通用打印模块
- */
+
 const FrPrint: React.FC<UpdateFrPrintProps> = (props) => {
   const { initialState } = useModel('@@initialState');
   const componentRef = useRef();
@@ -35,7 +33,7 @@ const FrPrint: React.FC<UpdateFrPrintProps> = (props) => {
     content: () => (componentRef.current != undefined) ? componentRef.current : null,
     onBeforeGetContent: () => (props.onCancel())
   });
-  //console.log('columns', props.columns);
+ 
   var columns=[]
 
   
@@ -64,22 +62,17 @@ const FrPrint: React.FC<UpdateFrPrintProps> = (props) => {
         props.onCancel();
       }}
       onOk={() => {
-        console.log(props.columns)
-        console.log(props.dataSource)
-        handlePrint();//打印
+       
+        handlePrint();
       }}
       keyboard={true}
     >
 
       <div className={csstyle.backgroud} style={{ height:'600px' }}>
-        {/*<WaterMark content={initialState?.currentUser?.username}>*/}
+        {}
           <div style={{ paddingTop: 20, width: '100%', height:'580px', overflow: 'auto' }}>
-            {/*<div style={{ width: '100%', textAlign: "center", color: '#aaaaaa' }}>西藏大麦 · Dmart</div>
-            <h3 style={{ width: '100%', textAlign: "center" }}>{props.title}</h3>
-            <h4>{props.subTitle}</h4>*/}
-            {/* 普通 Table columns 不支持 valueType 属性
-              <Table className={csstyle.table} columns={props.columns} dataSource={props.dataSource} pagination={false} bordered size="small" />
-          */}
+            
+          
             <div ref={componentRef}>
             <ProTable<any>
               
@@ -93,9 +86,9 @@ const FrPrint: React.FC<UpdateFrPrintProps> = (props) => {
 
               />
               </div>
-            {/*<div style={{ width: '100%', paddingTop: 30, textAlign: "center", color: '#aaaaaa', fontSize: 10 }}>打印日期:{date}</div>*/}
+           
           </div>
-        {/*</WaterMark>*/}
+       
       </div>
 
     </Modal >

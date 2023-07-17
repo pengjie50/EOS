@@ -4,6 +4,7 @@ import { PlusOutlined, SearchOutlined, FormOutlined, DeleteOutlined, Exclamation
 import type { ActionType, ProColumns, ProDescriptionsItemProps } from '@ant-design/pro-components';
 import { ReportList, ReportListItem } from './data.d';
 import MPSort from "@/components/MPSort";
+import { useAccess, Access } from 'umi';
 import {
   FooterToolbar,
   ModalForm,
@@ -168,7 +169,7 @@ const TableList: React.FC = () => {
    * @zh-CN 国际化配置
    * */
   const intl = useIntl();
-
+  const access = useAccess();
   const [resizeObj, setResizeObj] = useState({ searchSpan: 12, tableScrollHeight: 300 });
   //--MP start
   const MPSearchFormRef = useRef<ProFormInstance>();
@@ -239,7 +240,7 @@ const TableList: React.FC = () => {
     if (page == 1) {
       setData([]);
     }
-    console.log(append)
+    
     setData(val => [...val, ...append.data])
     setHasMore(10 * (page - 1) + append.data.length < append.total)
   }
@@ -428,7 +429,7 @@ const TableList: React.FC = () => {
         >
           <FormOutlined style={{ fontSize: '20px' }} />
         </a>,*/
-        
+        <Access accessible={access.canReportDel()} fallback={<div></div>}>
           <a
             title={formatMessage({ id: "pages.delete", defaultMessage: "Delete" })}
             key="config"
@@ -449,7 +450,7 @@ const TableList: React.FC = () => {
           >
             <DeleteOutlined style={{ fontSize: '20px', color: 'red' }} />
 
-          </a>
+          </a></Access>
        
        
       ],
@@ -479,7 +480,7 @@ const TableList: React.FC = () => {
       title: isMP ? null : < FormattedMessage id="pages.report.xxx" defaultMessage="Report History" />,
       breadcrumb: {},
       extra: isMP ? null : [
-        <Button
+        <Access accessible={access.canReportAdd() || access.canReportAddWithTemplate()} fallback={<div></div>}> <Button
           type="primary"
           key="primary"
           onClick={() => {
@@ -489,7 +490,7 @@ const TableList: React.FC = () => {
           }}
         >
           <PlusOutlined /> <FormattedMessage id="pages.searchTable.new" defaultMessage="New" />
-        </Button>,
+        </Button></Access>,
       ]
     }}>
       {!isMP && (<ConfigProvider renderEmpty={customizeRenderEmpty}><RcResizeObserver

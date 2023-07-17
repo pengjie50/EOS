@@ -5,6 +5,7 @@ import { addRole, removeRole, role, updateRole, updateRoleMenu, queryMenuByRoleI
 import { PlusOutlined, SearchOutlined, FormOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import type { ActionType, ProColumns, ProDescriptionsItemProps } from '@ant-design/pro-components';
 import { RoleList, RoleListItem } from './data.d';
+import { fieldSelectData } from '@/services/ant-design-pro/api';
 import MenuForm from './components/MenuForm';
 import {
   FooterToolbar,
@@ -18,7 +19,7 @@ import {
   ProTable,
 } from '@ant-design/pro-components';
 import { FormattedMessage, useIntl, formatMessage } from '@umijs/max';
-import { Button, Drawer, Input, message, Modal } from 'antd';
+import { Button, Drawer, Input, message, Modal, Empty } from 'antd';
 import React, { useRef, useState } from 'react';
 import CreateForm from './components/CreateForm';
 import UpdateForm from './components/UpdateForm';
@@ -211,7 +212,7 @@ const TableList: React.FC = () => {
   const [hasMore, setHasMore] = useState(true)
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [MPfilter, setMPfilter] = useState<any>({})
-
+  const [nameData, setNameData] = useState<any>({})
   async function getData(page, filter__) {
     var sorter = {}
     await setMPSorter((sorter_) => {
@@ -236,7 +237,7 @@ const TableList: React.FC = () => {
 
       setData([]);
     }
-    console.log(append)
+    
     setData(val => [...val, ...append.data])
     setHasMore(10 * (page - 1) + append.data.length < append.total)
   }
@@ -253,8 +254,10 @@ const TableList: React.FC = () => {
       dataIndex: 'role_id',
       hideInSearch: true,
       width:130,
-      sorter: true
-     
+      sorter: true,
+       render: (dom, entity) => {
+         return "R"+dom
+      }
     },
     {
       title: (
@@ -265,7 +268,42 @@ const TableList: React.FC = () => {
       ),
       sorter: true,
       dataIndex: 'name',
-     
+
+      search: {
+        transform: (value) => {
+          if (value && value.length > 0) {
+            return {
+              'name': {
+                'field': 'name',
+                'op': 'in',
+                'data': value
+              }
+            }
+          }
+
+        }
+      },
+
+      valueEnum: nameData,
+      fieldProps: {
+        multiple: true,
+        mode: 'multiple',
+        notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
+        showSearch: true,
+        allowClear: true,
+        onFocus: () => {
+          fieldSelectData({ model: "Role", value: '', field: 'name' }).then((res) => {
+            setNameData(res.data)
+          })
+        },
+        onSearch: (newValue: string) => {
+
+          fieldSelectData({ model: 'Role', value: newValue, field: 'name' }).then((res) => {
+            setNameData(res.data)
+          })
+
+        }
+      },
       render: (dom, entity) => {
         return (
           <a
@@ -280,7 +318,7 @@ const TableList: React.FC = () => {
       },
     },
 
-    {
+    /*{
       title: <FormattedMessage id="pages.xxx" defaultMessage="Role Type" />,
       dataIndex: 'type',
       sorter: true,
@@ -294,7 +332,7 @@ const TableList: React.FC = () => {
 
 
       }
-    },
+    },*/
 
     {
       title: <FormattedMessage id="pages.role.description" defaultMessage="Description" />,
