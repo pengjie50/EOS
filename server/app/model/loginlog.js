@@ -71,7 +71,7 @@ module.exports = app => {
     }, {
         indexes: [
             {
-                fields: ['username', 'login_time', 'status', 'user_id']
+                fields: ['login_time', 'status','company_id', 'user_id','ip']
             }],
         timestamps: false,
         tableName: 'login_log'

@@ -10,7 +10,7 @@ const { REACT_APP_ENV = 'dev' } = process.env;
 
 export default defineConfig({
     // 多tabs布局，只需要配置下面两项即可
-  keepalive: ['/Dashboard', '/Report', '/Transactions','/threshold/alert'],
+  keepalive: ['/dashboard', '/report', '/transactions', '/threshold/alert', '/threshold/alertRule','/InformationPage/jetty'],
   tabsLayout: {},
 
   /**
@@ -18,7 +18,7 @@ export default defineConfig({
    * @description 让 build 之后的产物包含 hash 后缀。通常用于增量发布和避免浏览器加载缓存。
    * @doc https://umijs.org/docs/api/config#hash
    */
-  hash: true,
+  hash: false,
   history: { type:'hash' },// 默认是 browser
   /**
    * @name 兼容性设置

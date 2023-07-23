@@ -307,13 +307,13 @@ const TableList: React.FC = () => {
 
   const onFormSearchSubmit = (a) => {
 
-
+    console.log(a)
     setData([]);
     delete a._timestamp;
     setMPfilter(a)
     setShowMPSearch(!showMPSearch)
     setCurrentPage(1)
-
+    
     getData(1, a)
   }
   const InfiniteScrollContent = ({ hasMore }: { hasMore?: boolean }) => {
@@ -332,14 +332,14 @@ const TableList: React.FC = () => {
   }
   const back = () => { }
   const [data, setData] = useState<string[]>([])
-  const [MPPagination, setMPPagination] = useState<string[]>({})
+  const [MPPagination, setMPPagination] = useState<any>({})
   const [hasMore, setHasMore] = useState(true)
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [MPfilter, setMPfilter] = useState<any>({})
   const { initialState, setInitialState } = useModel('@@initialState');
   const { currentUser } = initialState || {};
-  async function getData(page, filter__) {
-
+  async function getData(page, filter__, pageSize) {
+   
     var sorter = {}
     await setMPSorter((sorter_) => {
       sorter = sorter_
@@ -357,31 +357,24 @@ const TableList: React.FC = () => {
     const append = await transaction({
       ...{
         "current": page,
-        "pageSize": 10,
+        "pageSize": pageSize ? getData:3,
         "sorter": {
           "start_of_transaction": "descend"
         }
       }, ...filter, sorter
     })
 
-    if (page == 1) {
-      
-      setData([]);
-    }
+    
 
     setMPPagination({ total:append.total})
    
-    setData(val => [...val, ...append.data])
-    setHasMore(10 * (page - 1) + append.data.length < append.total)
+    setData( append.data)
+    
        
 
     
   }
-  async function loadMore(isRetry: boolean) {
-
-    await getData(currentPage, MPfilter)
-    setCurrentPage(currentPage + 1)
-  }
+  
   //--MP end
 
   const getOrganizationName = () => {
@@ -480,6 +473,7 @@ const TableList: React.FC = () => {
         formRef.current?.setFieldValue('start_of_transaction', dateArr)
       }
       setTimeout(() => {
+       
         formRef.current?.submit();
       },200)
       
@@ -530,6 +524,7 @@ const TableList: React.FC = () => {
           <a
            
             onClick={() => {
+              setSelectedRows([]);
               setCurrentRow(entity);
               history.push(`/transaction/detail`,{ transaction_id: entity.id});
               // setShowDetail(true);
@@ -560,6 +555,8 @@ const TableList: React.FC = () => {
       search: {
         transform: (value) => {
           if (value && value.length > 0) {
+            value[0] = moment(new Date(value[0])).format('YYYY-MM-DD') + " 00:00:00"
+            value[1] = moment(new Date(value[1])).format('YYYY-MM-DD') + " 23:59:59"
             return {
               'start_of_transaction': {
                 'field': 'start_of_transaction',
@@ -600,7 +597,12 @@ const TableList: React.FC = () => {
               fieldProps={{
                 notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
                 showSearch: true,
+               
                 mode: 'multiple',
+                maxTagCount: 0,
+                maxTagPlaceholder: (omittedValues) => {
+                  return omittedValues.length + " Selected"
+                },
                 allowClear: true,
                 onFocus: () => {
                   
@@ -625,7 +627,12 @@ const TableList: React.FC = () => {
             <ProFormSelect label="Status"
               width="lg"
               name="status"
-              fieldProps={{ mode: "multiple" }}
+              fieldProps={{
+                mode: "multiple", maxTagCount: 0,
+                maxTagPlaceholder: (omittedValues) => {
+                  return omittedValues.length + " Selected"
+                },
+              }}
               valueEnum={{
                 '0': {
                   text: <FormattedMessage id="pages.transaction.active" defaultMessage="Open" />
@@ -646,6 +653,10 @@ const TableList: React.FC = () => {
                 options: organizationList,
                 showSearch: true,
                 allowClear: true,
+                mode: "multiple", maxTagCount: 0,
+                maxTagPlaceholder: (omittedValues) => {
+                  return omittedValues.length + " Selected"
+                },
               }}
              
             name="organization_id"
@@ -679,8 +690,12 @@ const TableList: React.FC = () => {
               notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
               showSearch: true,
               allowClear: true,
+             
               mode: 'multiple',
-            
+              maxTagCount: 0,
+              maxTagPlaceholder: (omittedValues) => {
+                return omittedValues.length + " Selected"
+              },
               onFocus: () => {
                 fieldSelectData({ model: "Transaction", value: '', field: 'imo_number' }).then((res) => {
                   setImo_numberData(res.data)
@@ -706,6 +721,10 @@ const TableList: React.FC = () => {
               valueEnum={jetty_idData}
               fieldProps={{
                 mode: 'multiple',
+                maxTagCount: 0,
+                maxTagPlaceholder: (omittedValues) => {
+                  return omittedValues.length + " Selected"
+                },
                 onFocus: () => {
                   fieldSelectData({ model: "Transaction", value: '', field: 'jetty_id' }).then((res) => {
                     setJetty_idData(res.data)
@@ -735,6 +754,10 @@ const TableList: React.FC = () => {
                   notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
                   showSearch: true,
                   mode: 'multiple',
+                  maxTagCount: 0,
+                  maxTagPlaceholder: (omittedValues) => {
+                    return omittedValues.length + " Selected"
+                  },
                   allowClear: true,
                   onFocus: () => {
                     fieldSelectData({ model: "Transaction", value: '', field: 'vessel_name' }).then((res) => {
@@ -779,6 +802,10 @@ const TableList: React.FC = () => {
               options: access.transactions_list_tab() ? [{ label: currentUser?.company_name, value: currentUser?.company_id }, ...organizationList] : organizationList,
               dropdownMatchSelectWidth: isMP ? true : false,
               mode: 'multiple',
+              maxTagCount: 0,
+              maxTagPlaceholder: (omittedValues) => {
+                return omittedValues.length + " Selected"
+              },
               showSearch: false,
               multiple: true
 
@@ -793,6 +820,10 @@ const TableList: React.FC = () => {
              
               dropdownMatchSelectWidth: isMP ? true : false,
               mode: 'multiple',
+              maxTagCount: 0,
+              maxTagPlaceholder: (omittedValues) => {
+                return omittedValues.length + " Selected"
+              },
               showSearch: false,
               multiple: true
 
@@ -806,6 +837,10 @@ const TableList: React.FC = () => {
 
               dropdownMatchSelectWidth: isMP ? true : false,
               mode: 'multiple',
+              maxTagCount: 0,
+              maxTagPlaceholder: (omittedValues) => {
+                return omittedValues.length + " Selected"
+              },
               showSearch: false,
               multiple: true
 
@@ -969,7 +1004,7 @@ const TableList: React.FC = () => {
             return {
               'organization_id': {
                 'field': 'organization_id',
-                'op': 'eq',
+                'op': 'in',
                 'data': value
               }
             }
@@ -1123,6 +1158,10 @@ const TableList: React.FC = () => {
         width: '300px',
         dropdownMatchSelectWidth: isMP ? true : false,
         mode: 'multiple',
+        maxTagCount: 0,
+        maxTagPlaceholder: (omittedValues) => {
+          return omittedValues.length + " Selected"
+        },
         showSearch: false,
         multiple: true
 
@@ -1162,6 +1201,10 @@ const TableList: React.FC = () => {
         dropdownMatchSelectWidth: isMP ? true : false,
         width: '300px',
         mode: 'multiple',
+        maxTagCount: 0,
+        maxTagPlaceholder: (omittedValues) => {
+          return omittedValues.length + " Selected"
+        },
         showSearch: false,
         multiple: true
 
@@ -1342,7 +1385,7 @@ const TableList: React.FC = () => {
         }}
       ><ProTable<TransactionListItem, API.PageParams>
 
-          scroll={{ x: 2400, y: resizeObj.tableScrollHeight }}
+          scroll={{ x: 2550, y: resizeObj.tableScrollHeight }}
           beforeSearchSubmit={(params) => {
 
            
@@ -1367,7 +1410,7 @@ const TableList: React.FC = () => {
         formRef={formRef}
         bordered size="small"
           actionRef={actionRef}
-          pagination={ {size:"default"}}
+          pagination={{ size: "default", showSizeChanger: true, pageSizeOptions: [10, 20, 50, 100,500]}}
         rowKey="id"
         options={false}
           search={{
@@ -1383,7 +1426,10 @@ const TableList: React.FC = () => {
         className="mytable"
           request={(params, sorter) => { return transaction({ ...params, sorter }) }}
         columns={columns}
-        rowSelection={{
+          rowSelection={{
+            onSelectAll: (selected, selectedRows, changeRows)=>{
+              
+            },
           onChange: (_, selectedRows) => {
             setSelectedRows(selectedRows);
           },
@@ -1406,17 +1452,24 @@ const TableList: React.FC = () => {
         <div style={{ padding: '20px', backgroundColor: "#5000B9", display: showMPSearch ? 'block' : 'none' }}>
           <Search columns={columns.filter(a => !(a.hasOwnProperty('hideInSearch') && a['hideInSearch']))} action={actionRef} loading={false}
             beforeSearchSubmit={(params) => {
+
+
+              delete params.aaa
+              delete params.bbb
+              delete params.ccc
               columns.forEach((c) => {
                 if (c.search?.transform) {
+
                   var p = c.search?.transform(params[c.dataIndex])
                   params = { ...params, ...p }
+
+
                 }
               })
-              if (params.status == 0 || params.status == 1 || params.status == 2) {
 
-              } else {
-                delete params.status
-              }
+
+
+
               return params
             }}
             onFormSearchSubmit={onFormSearchSubmit}
@@ -1464,15 +1517,22 @@ const TableList: React.FC = () => {
             </List.Item>
           ))}
         </List>
+        {MPPagination.total > 0 ? <div style={{ textAlign: 'center', padding: "20px 10px 90px 10px" }}>
+          <Pagination
 
-        {/* <Pagination onChange={() => {
+            onChange={(page, pageSize) => {
 
-
-        }} total={50} />*/ }
-
-        <InfiniteScroll loadMore={loadMore} hasMore={hasMore}>
-          <InfiniteScrollContent hasMore={hasMore} />
-        </InfiniteScroll>
+              getData(page, MPfilter, pageSize)
+            }}
+            total={MPPagination.total}
+            showSizeChanger={true}
+            pageSizeOptions={[3, 20, 50, 100, 500]}
+            showTotal={(total, range) => `${range[0]}-${range[1]} of ${total} items`}
+            defaultPageSize={3}
+            defaultCurrent={1}
+          />
+        </div> : customizeRenderEmpty()}
+        
         <FloatButton.BackTop visibilityHeight={0} />
       </>)}
       {selectedRowsState?.length > 0 && (

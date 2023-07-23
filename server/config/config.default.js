@@ -100,8 +100,13 @@ module.exports = appInfo => {
     };
     // add your user config here
     const userConfig = {
-        writetoBCUrl: "http://165.232.172.190:3011/eos/WritetoBC",
-        validateBCUrl: "http://165.232.172.190:3011/eos/ValidateBC",
+        WritetoBC: "http://165.22.55.213:3002/eos/WritetoBC",
+        ValidateBC: "http://165.22.55.213:3002/eos/ValidateBC",
+        QueryBC: "http://165.22.55.213:3002/eos/QueryBC",
+        WriteHeaderBC: "http://165.22.55.213:3002/eos/WriteHeaderBC",
+        ValidateHeaderBC: "http://165.22.55.213:3002/eos/ValidateHeaderBC",
+        QueryHeaderBC: "http://165.22.55.213:3002/eos/QueryHeaderBC",
+
         user_email: "504475705@qq.com",
         auth_code: "gatvtdmruiwjbiih"
         // myAppName: 'egg',

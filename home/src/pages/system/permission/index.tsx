@@ -16,8 +16,8 @@ import {
   ProTable,
 } from '@ant-design/pro-components';
 import { FormattedMessage, useIntl, formatMessage } from '@umijs/max';
-import { Button, Drawer, Input, message, Modal } from 'antd';
-import React, { useRef, useState } from 'react';
+import { Button, Drawer, Input, message, Modal, Pagination, FloatButton, Empty, ConfigProvider } from 'antd';
+import React, { useRef, useState, useEffect } from 'react';
 import CreateForm from './components/CreateForm';
 import UpdateForm from './components/UpdateForm';
 import { tree } from "@/utils/utils";
@@ -168,11 +168,20 @@ const TableList: React.FC = () => {
   const [showMPSearch, setShowMPSearch] = useState<boolean>(false);
   const [isMP, setIsMP] = useState<boolean>(!isPC());
   const [MPSorter, setMPSorter] = useState<any>({});
+
+
+  useEffect(() => {
+
+    
+    if (isMP) {
+      getData(1)
+    }
+  }, [true])
   const right = (
     <div style={{ fontSize: 24 }}>
       <Space style={{ '--gap': '16px' }}>
         <SearchOutlined onClick={e => { setShowMPSearch(!showMPSearch) }} />
-        <PlusOutlined onClick={() => { handleModalOpen(true) }} />
+        {/* <PlusOutlined onClick={() => { handleModalOpen(true) }} />*/}
       </Space>
     </div>
   )
@@ -207,7 +216,7 @@ const TableList: React.FC = () => {
   const [hasMore, setHasMore] = useState(true)
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [MPfilter, setMPfilter] = useState<any>({})
-
+  const [MPPagination, setMPPagination] = useState<any>({})
   async function getData(page, filter__) {
     var sorter = {}
     await setMPSorter((sorter_) => {
@@ -222,24 +231,17 @@ const TableList: React.FC = () => {
     const append = await permission({
       ...{
         "current": page,
-        "pageSize": 10
+        "pageSize": 3
 
-      }, ...filter
+      }, ...filter, sorter: { sort: "ascend" }
+    
     })
 
-    if (page == 1) {
 
-      setData([]);
-    }
-    
-    setData(val => [...val, ...append.data])
-    setHasMore(10 * (page - 1) + append.data.length < append.total)
+    setMPPagination({ total: append.total })
+    setData(append.data)
   }
-  async function loadMore(isRetry: boolean) {
-
-    await getData(currentPage, MPfilter)
-    setCurrentPage(currentPage + 1)
-  }
+  
   //--MP end
   const columns: ProColumns<PermissionListItem>[] = [
     {
@@ -250,7 +252,7 @@ const TableList: React.FC = () => {
         />
       ),
       sorter: true,
-      width:800,
+    
       
       dataIndex: 'name',
      
@@ -285,7 +287,7 @@ const TableList: React.FC = () => {
       defaultSortOrder: 'ascend',
       sorter: true,
       valueType: 'text',
-    },*/
+    },
     {
       title: <FormattedMessage id="pages.searchTable.titleOption" defaultMessage="Operating" />,
       dataIndex: 'option',
@@ -325,9 +327,26 @@ const TableList: React.FC = () => {
         </a>,
        
       ],
-    },
+    },*/
   ];
+  const formRef = useRef<ProFormInstance>();
+  const customizeRenderEmpty = () => {
+    var o = formRef.current?.getFieldsValue()
+    var isSearch = false
+    for (var a in o) {
+      if (o[a]) {
+        isSearch = true
+      }
 
+    }
+    if (isSearch) {
+      return <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />
+    } else {
+      return <Empty />
+    }
+
+
+  }
   return (
     <RcResizeObserver
       key="resize-observer"
@@ -354,7 +373,7 @@ const TableList: React.FC = () => {
       <PageContainer className="myPage" header={{
       title: isMP ? null : < FormattedMessage id="pages.permission.title" defaultMessage="Permission" />,
       breadcrumb: {},
-      extra: isMP ? null : [
+      /*extra: isMP ? null : [
         <Button
           type="primary"
           key="primary"
@@ -364,23 +383,25 @@ const TableList: React.FC = () => {
         >
           <PlusOutlined /> <FormattedMessage id="pages.searchTable.new" defaultMessage="New" />
         </Button>,
-      ]
+      ]*/
     }}>
-      {!isMP && (<ProTable<PermissionListItem, API.PageParams>
+        {!isMP && (<ConfigProvider renderEmpty={customizeRenderEmpty}><ProTable<PermissionListItem, API.PageParams>
           pagination={{ size: "default", pageSize: 500 }}
         actionRef={actionRef}
           rowKey="id"
-          scroll={{ x: 2500, y: resizeObj.tableScrollHeight }}
+          formRef={formRef}
+          scroll={{  y: resizeObj.tableScrollHeight }}
         search={{
           labelWidth: 220,
           span: resizeObj.searchSpan,
           searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
         }}
-        className="mytable"
+          className="mytable"
+          indentSize={0 }
         options={false }
           request={async (params, sorter) => {
-            var d = await permission({ ...params, sorter })
-            d.data = tree(d.data, null, 'pid')
+            var d = await permission({ ...params, sorter: { sort: "ascend" } })
+           d.data = tree(d.data, null, 'pid')
             return d
           }}
           columns={columns}
@@ -390,7 +411,7 @@ const TableList: React.FC = () => {
             setSelectedRows(selectedRows);
           },
         }}
-      />)}
+        /></ConfigProvider>)}
 
       {isMP && (<>
 
@@ -411,7 +432,7 @@ const TableList: React.FC = () => {
             onFormSearchSubmit={onFormSearchSubmit}
 
             dateFormatter={'string'}
-            formRef={MPSearchFormRef}
+              formRef={formRef}
             type={'form'}
             cardBordered={true}
             form={{
@@ -451,9 +472,21 @@ const TableList: React.FC = () => {
             </List.Item>
           ))}
         </List>
-        <InfiniteScroll loadMore={loadMore} hasMore={hasMore}>
-          <InfiniteScrollContent hasMore={hasMore} />
-        </InfiniteScroll>
+          {MPPagination.total > 0 ? <div style={{ textAlign: 'center', padding: "20px 10px 90px 10px" }}>
+            <Pagination
+
+              onChange={(page, pageSize) => {
+
+                getData(page)
+              }}
+              total={MPPagination.total}
+              simple
+              showTotal={(total, range) => `${range[0]}-${range[1]} of ${total} items`}
+              defaultPageSize={3}
+              defaultCurrent={1}
+            />
+          </div> : customizeRenderEmpty()}
+          <FloatButton.BackTop visibilityHeight={0} />
       </>)}
       {selectedRowsState?.length > 0 && (
         <FooterToolbar

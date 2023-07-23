@@ -147,9 +147,9 @@ const AvatarView = ({ useravatar, userid, avatarText }: { useravatar: string; us
   
   return (<>
     <div style={{ width: "100%", textAlign: "center" }}></div>
-    <div className="my-font-size" style={{ width: "100%", textAlign: "center", position: "relative", lineHeight:"350px" }}>
+    <div className="my-font-size" style={{ width: "100%", textAlign: "center", position: "relative", lineHeight:"175px" }}>
       {/*<img style={{ width: "200px" }} src={avatar} alt="avatar" />*/}
-      <div style={{ color: "#fff", display: "inline-block", width: "200px", backgroundColor: "#FF4D00", borderRadius: "50%", top: 0, right: 0, fontSize: 100, fontWeight: "bolder", height: '200px', lineHeight: '200px', textAlign: 'center' }}>
+      <div style={{ color: "#fff", display: "inline-block", width: "100px", backgroundColor: "#FF4D00", borderRadius: "50%", top: 0, right: 0, fontSize: 50, fontWeight: "bolder", height: '100px', lineHeight: '100px', textAlign: 'center' }}>
         
         {avatarText}
       </div>

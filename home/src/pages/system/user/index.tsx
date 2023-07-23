@@ -18,7 +18,7 @@ import {
   ProTable,
 } from '@ant-design/pro-components';
 import { FormattedMessage, useIntl, formatMessage } from '@umijs/max';
-import { Button, Drawer, Input, message, Modal, Empty } from 'antd';
+import { Button, Drawer, Input, message, Modal, Empty, Pagination, FloatButton, ConfigProvider } from 'antd';
 import React, { useRef, useState, useEffect } from 'react';
 import CreateForm from './components/CreateForm';
 import UpdateForm from './components/UpdateForm';
@@ -198,7 +198,9 @@ const TableList: React.FC = () => {
       setCompanyList(b)
 
     });
-
+    if (isMP) {
+      getData(1)
+    }
   },[true])
 
   const right = (
@@ -240,7 +242,7 @@ const TableList: React.FC = () => {
   const [hasMore, setHasMore] = useState(true)
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [MPfilter, setMPfilter] = useState<any>({})
-
+  const [MPPagination, setMPPagination] = useState<any>({})
   async function getData(page, filter__) {
     var sorter = {}
     await setMPSorter((sorter_) => {
@@ -255,24 +257,15 @@ const TableList: React.FC = () => {
     const append = await user({
       ...{
         "current": page,
-        "pageSize": 10
+        "pageSize": 3
 
       }, ...filter, sorter
     })
 
-    if (page == 1) {
-
-      setData([]);
-    }
-   
-    setData(val => [...val, ...append.data])
-    setHasMore(10 * (page - 1) + append.data.length < append.total)
+    setMPPagination({ total: append.total })
+    setData(append.data)
   }
-  async function loadMore(isRetry: boolean) {
-
-    await getData(currentPage, MPfilter)
-    setCurrentPage(currentPage + 1)
-  }
+ 
   //--MP end
   const columns: ProColumns<UserListItem>[] = [
 
@@ -299,6 +292,10 @@ const TableList: React.FC = () => {
       fieldProps: {
         multiple: true,
         mode: 'multiple',
+        maxTagCount: 0,
+        maxTagPlaceholder: (omittedValues) => {
+          return omittedValues.length + " Selected"
+        },
         notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
         showSearch: true,
         allowClear: true,
@@ -342,7 +339,11 @@ const TableList: React.FC = () => {
         multiple: true,
         showSearch: true,
         allowClear: true,
-        mode: 'multiple'
+        mode: 'multiple',
+        maxTagCount: 0,
+        maxTagPlaceholder: (omittedValues) => {
+          return omittedValues.length + " Selected"
+        },
       },
       search: {
         transform: (value) => {
@@ -368,7 +369,11 @@ const TableList: React.FC = () => {
         multiple: true,
         showSearch: true,
         allowClear: true,
-        mode: 'multiple'
+        mode: 'multiple',
+        maxTagCount: 0,
+        maxTagPlaceholder: (omittedValues) => {
+          return omittedValues.length + " Selected"
+        },
       },
       search: {
         transform: (value) => {
@@ -392,7 +397,11 @@ const TableList: React.FC = () => {
         multiple: true,
        
         allowClear: true,
-        mode: 'multiple'
+        mode: 'multiple',
+        maxTagCount: 0,
+        maxTagPlaceholder: (omittedValues) => {
+          return omittedValues.length + " Selected"
+        },
       },
       search: {
         transform: (value) => {
@@ -508,7 +517,24 @@ const TableList: React.FC = () => {
       ],
     },
   ];
+  const formRef = useRef<ProFormInstance>();
+  const customizeRenderEmpty = () => {
+    var o = formRef.current?.getFieldsValue()
+    var isSearch = false
+    for (var a in o) {
+      if (o[a]) {
+        isSearch = true
+      }
 
+    }
+    if (isSearch) {
+      return <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />
+    } else {
+      return <Empty />
+    }
+
+
+  }
   return (
     <RcResizeObserver
       key="resize-observer"
@@ -547,10 +573,11 @@ const TableList: React.FC = () => {
         </Button>,
       ]
     }}>
-      {!isMP && (<ProTable<UserListItem, API.PageParams>
+        {!isMP && (<ConfigProvider renderEmpty={customizeRenderEmpty}><ProTable<UserListItem, API.PageParams>
        
         actionRef={actionRef}
           rowKey="id"
+          formRef={formRef}
           scroll={{ x: 1800, y: resizeObj.tableScrollHeight }}
         search={{
           labelWidth: 130,
@@ -562,7 +589,7 @@ const TableList: React.FC = () => {
         request={(params, sorter) => user({ ...params, sorter })}
         columns={columns}
        bordered
-      />)}
+        /></ConfigProvider>)}
 
       {isMP && (<>
 
@@ -583,7 +610,7 @@ const TableList: React.FC = () => {
             onFormSearchSubmit={onFormSearchSubmit}
 
             dateFormatter={'string'}
-            formRef={MPSearchFormRef}
+                formRef={formRef}
             type={'form'}
             cardBordered={true}
               form={{
@@ -622,9 +649,21 @@ const TableList: React.FC = () => {
             </List.Item>
           ))}
         </List>
-        <InfiniteScroll loadMore={loadMore} hasMore={hasMore}>
-          <InfiniteScrollContent hasMore={hasMore} />
-        </InfiniteScroll>
+            {MPPagination.total > 0 ? <div style={{ textAlign: 'center', padding: "20px 10px 90px 10px" }}>
+            <Pagination
+
+              onChange={(page, pageSize) => {
+
+                getData(page)
+              }}
+              total={MPPagination.total}
+              simple
+              showTotal={(total, range) => `${range[0]}-${range[1]} of ${total} items`}
+              defaultPageSize={3}
+              defaultCurrent={1}
+            />
+            </div> : customizeRenderEmpty()}
+          <FloatButton.BackTop visibilityHeight={0} />
       </>)}
      
       

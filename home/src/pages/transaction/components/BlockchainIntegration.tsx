@@ -112,7 +112,11 @@ const Detail: React.FC<any> = (props) => {
   var m = {}
 
   var yesCount = 0
-  useLocation().state.validateData.forEach((v) => {
+  var headValidated = false
+  if (useLocation().state.validateData?.head_data?.[0].Verified == "true") {
+    headValidated=true
+  }
+  useLocation().state.validateData?.event_data?.forEach((v) => {
     m[v.EventSubStage] = v.Verified
     if (v.Verified == "True") {
       yesCount++
@@ -239,18 +243,24 @@ const Detail: React.FC<any> = (props) => {
       title: <FormattedMessage id="pages.transaction.status" defaultMessage="Status" />,
       dataIndex: 'status',
       valueEnum: {
-        0: { text: <FormattedMessage id="pages.transaction.active" defaultMessage="Open" /> },
-        1: { text: <FormattedMessage id="pages.transaction.closed" defaultMessage="Closed" /> },
-        2: { text: <FormattedMessage id="pages.transaction.cancelled" defaultMessage="Cancelled" /> }
+        0:  "Open",
+        1: "Closed",
+        2: "Cancelled" 
       },
       render: (dom, entity) => {
+
+        var obj = {
+          0: "Open",
+          1: "Closed",
+          2: "Cancelled"
+        }
         if (!isMP) {
-          return dom
+          return obj[dom+""]
         }
         if (entity.validated) {
-          return <div><div style={{ height: isMP?'auto': '60px' }}>{dom}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
+          return <div><div style={{ height: isMP ? 'auto' : '60px' }}>{obj[dom+""]}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
         } else {
-          return <div><div style={{ height: isMP?'auto': '60px' }}>{dom}</div><div><CloseOutlined style={{ color: 'red' }} /></div></div>
+          return <div><div style={{ height: isMP ? 'auto' : '60px' }}>{obj[dom+""]}</div><div><CloseOutlined style={{ color: 'red' }} /></div></div>
         }
 
       },
@@ -330,12 +340,12 @@ const Detail: React.FC<any> = (props) => {
      // valueEnum: terminalList,
       render: (dom, entity) => {
         if (!isMP) {
-          return terminalList[dom]
+          return entity.terminal_name
         }
         if (entity.validated) {
-          return <div><div style={{ height: isMP?'auto': '60px' }}>{terminalList[dom]}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
+          return <div><div style={{ height: isMP ? 'auto' : '60px' }}>{entity.terminal_name}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
         } else {
-          return <div><div style={{ height: isMP?'auto': '60px' }}>{terminalList[dom]}</div><div><CloseOutlined style={{ color: 'red' }} /></div></div>
+          return <div><div style={{ height: isMP ? 'auto' : '60px' }}>{entity.terminal_name}</div><div><CloseOutlined style={{ color: 'red' }} /></div></div>
         }
 
       },
@@ -346,12 +356,12 @@ const Detail: React.FC<any> = (props) => {
       //valueEnum: jettyList,
       render: (dom, entity) => {
         if (!isMP) {
-          return jettyList[dom]
+          return entity.jetty_name
         }
         if (entity.validated) {
-          return <div><div style={{ height: isMP?'auto': '60px' }}>{jettyList[dom]}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
+          return <div><div style={{ height: isMP ? 'auto' : '60px' }}>{entity.jetty_name}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
         } else {
-          return <div><div style={{ height: isMP?'auto': '60px' }}>{jettyList[dom]}</div><div><CloseOutlined style={{ color: 'red' }} /></div></div>
+          return <div><div style={{ height: isMP ? 'auto' : '60px' }}>{entity.jetty_name}</div><div><CloseOutlined style={{ color: 'red' }} /></div></div>
         }
 
       },
@@ -625,7 +635,7 @@ const Detail: React.FC<any> = (props) => {
     transaction({ pageSize: 1, current: 1, id: transaction_id }).then((res) => {
 
      
-      res.data[0].validated = yesCount ? 1 : 0
+      res.data[0].validated = headValidated ? 1 : 0
 
       var arr=[]
       for (var k in res.data[0]) {
@@ -797,7 +807,7 @@ const Detail: React.FC<any> = (props) => {
           onClick={async () => {
             history.back()
           }}
-        >Return to detailed transaction</Button>
+        >Return To Detailed Transaction</Button>
       </div>
 
 

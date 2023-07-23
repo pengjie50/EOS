@@ -136,7 +136,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
       <div style={{ float: 'left', width: '100%', display: "block", marginBottom: "10px" }}>
         <div style={{ fontWeight: 500, fontSize: "14px" }}>Input Applicable Condition(s) For Threshold To Be Applied</div>
-        <span><ExclamationCircleOutlined /> If more than one condition is selected, threshold defined is only applicable to transactions that fulfil ALL of the specified conditions</span>
+        <span><ExclamationCircleOutlined /> If more than one condition is selected, threshold defined is only applicable to transactions that fulfill ALL of the specified conditions</span>
       </div>
 
       
@@ -154,15 +154,15 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                   defaultMessage: 'Condition:  Size Of Vessel',
                 })}
 
-                initialValue={"0-25"}
+                initialValue={"0-25000"}
                 valueEnum={{
-                  "0-25": "1. GP (General Purpose): Less than 24.99 DWT",
-                  "25-45": "2. MR (Medium Range): 25 to 44.99 DWT",
-                  "45-80": "3. LR1 (Long Range 1): 45 to 79.99 DWT",
-                  "80-120": "4. AFRA (AFRAMAX): 80 to 119.99 DWT",
-                  "120-160": "5. LR2 (Long Range 2): 120 to 159.99 DWT",
-                  "160-320": "6. VLCC (Very Large Crude Carrier): 160 to 319.99 DWT",
-                  "320-1000000": "7. ULCC (Ultra-Large Crude Carrier): More than 320 DWT",
+                  "0-25000": "1. GP (General Purpose): Less than 24,990 DWT",
+                  "25000-45000": "2. MR (Medium Range): 25,000 to 44,990 DWT",
+                  "45000-80000": "3. LR1 (Long Range 1): 45,000 to 79,990 DWT",
+                  "80000-120000": "4. AFRA (AFRAMAX): 80,000 to 119,990 DWT",
+                  "120000-160000": "5. LR2 (Long Range 2): 120,000 to 159,990 DWT",
+                  "160000-320000": "6. VLCC (Very Large Crude Carrier): 160,000 to 319,990 DWT",
+                  "320000-1000000000": "7. ULCC (Ultra-Large Crude Carrier): More than 320,000 DWT",
                 }} />
 
 

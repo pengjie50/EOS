@@ -5,16 +5,19 @@ import { fieldSelectData } from '@/services/ant-design-pro/api';
 import { updateTransaction } from '../transaction/service';
 import { getInitialState } from '../../app';
 import { Empty } from 'antd';
-import { PlusOutlined, SearchOutlined, ExclamationCircleOutlined, FormOutlined, DeleteOutlined, SwapOutlined, SortAscendingOutlined, SortDescendingOutlined } from '@ant-design/icons';
+import { PlusOutlined, SearchOutlined, ExclamationCircleOutlined, FormOutlined, DeleteOutlined, PrinterOutlined, EllipsisOutlined, FileExcelOutlined, SwapOutlined, SortAscendingOutlined, SortDescendingOutlined } from '@ant-design/icons';
 import { ActionType, ProColumns, ProDescriptionsItemProps, ProCard } from '@ant-design/pro-components';
 import { AlertList, AlertListItem } from './data.d';
 import { flow } from '../system/flow/service';
 import { alertrule } from '../alertrule/service';
 import { SvgIcon } from '@/components' 
-
+import FrPrint from "../../components/FrPrint";
+import { exportCSV } from "../../components/export";
+import FileSaver from "file-saver";
 import { organization } from '../system/company/service';
 import { history } from '@umijs/max';
 import numeral from 'numeral';
+import moment from 'moment'
 import { jetty } from '../system/jetty/service';
 import {
   FooterToolbar,
@@ -28,7 +31,7 @@ import {
   ProTable,
 } from '@ant-design/pro-components';
 import { FormattedMessage, useIntl, useLocation, formatMessage, useModel } from '@umijs/max';
-import { Button, Drawer, Input, message, Modal, ConfigProvider, FloatButton, Popover } from 'antd';
+import { Button, Drawer, Input, message, Modal, ConfigProvider, FloatButton, Popover, Pagination } from 'antd';
 import React, { useRef, useState, useEffect } from 'react';
 import CreateForm from './components/CreateForm';
 import UpdateForm from './components/UpdateForm';
@@ -136,6 +139,8 @@ const TableList: React.FC = () => {
   const [currentRow, setCurrentRow] = useState<AlertListItem>();
   const [selectedRowsState, setSelectedRows] = useState<AlertListItem[]>([]);
   const [producttypeList, setProducttypeList] = useState<any>({});
+  const [work_order_idData, setWork_order_idData] = useState<any>({});
+  const [paramsText, setParamsText] = useState<string>('');
   const [organizationList, setOrganizationList] = useState<any>([]);
   const [organizationMap, setOrganizationMap] = useState<any>({});
   const [flowConf, setFlowConf] = useState<any>({});
@@ -151,7 +156,7 @@ const TableList: React.FC = () => {
   const { initialState, setInitialState } = useModel('@@initialState');
   const { currentUser } = initialState || {};
  
-
+  const [MPPagination, setMPPagination] = useState<any>({})
   const [tab, setTab] = useState(useLocation()?.state?.tab || 'Terminal');
   
 
@@ -160,8 +165,8 @@ const TableList: React.FC = () => {
    * */
   const intl = useIntl();
   const access = useAccess();
-
-
+  const [printModalVisible, handlePrintModalVisible] = useState<boolean>(false);
+  const [moreOpen, setMoreOpen] = useState<boolean>(false);
   const formRef = useRef<ProFormInstance>();
   const [resizeObj, setResizeObj] = useState({ searchSpan: 12, tableScrollHeight: 300 });
   //--MP start
@@ -187,7 +192,22 @@ const TableList: React.FC = () => {
     <div style={{ fontSize: 24 }}>
       <Space style={{ '--gap': '16px' }}>
         <SearchOutlined onClick={e => { setShowMPSearch(!showMPSearch) }} />
+        <Popover onOpenChange={(v) => { setMoreOpen(v) }} open={moreOpen} placement="bottom" title={""} content={<div><Button type="primary" style={{ width: "100%" }} key="print"
+          onClick={() => {
+            setMoreOpen(false)
+            handlePrintModalVisible(true)
+          }}
+        ><PrinterOutlined /> <FormattedMessage id="pages.Print" defaultMessage="Print" />
+        </Button>, <Button style={{ width: "100%" }} type="primary" key="out"
+          onClick={() => exportCSV(data, columns)}
+        ><FileExcelOutlined /> <FormattedMessage id="pages.CSV" defaultMessage="CSV" />
+          </Button>
 
+        </div>} trigger="click">
+          <EllipsisOutlined />
+
+
+        </Popover>
       </Space>
     </div>
   )
@@ -223,8 +243,8 @@ const TableList: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [MPSorter, setMPSorter] = useState<any>({});
 
-  async function getData(page) {
-   
+  async function getData(page,pageSize) {
+
     var sorter = {}
     await setMPSorter((sorter_) => {
        sorter= sorter_
@@ -248,51 +268,47 @@ const TableList: React.FC = () => {
     var d = {
       ...{
         "current": page,
-        "pageSize": 10
+        "pageSize": pageSize || 3
 
       }, ...f, sorter
     }
     
 
-    if (showNoRead) {
-      d.showNoRead = 1
-    }
+    
     d.tab = {
       'field': 'tab',
       'op': 'eq',
       'data': tab1
     }
    
-    const append1 = await getAlert(d)
-    if (page == 1) {
-      setData([]);
+    const append = await getAlert(d)
+
+    
+    if (showNoRead) {
+     
+      var a = await getInitialState()
+      setInitialState(a)
     }
-    const append = append1
-
-   
-    setData(val => [...val, ...append.data])
-    setHasMore(10 * (page - 1) + append.data.length < append.total)
+    setMPPagination({ total: append.total })
+    setData(append.data)
+    
    
    
   }
-  async function loadMore(isRetry: boolean) {
-
-    await getData(currentPage)
-    setCurrentPage(currentPage + 1)
-  }
+ 
 
   
 
   
   useEffect(() => {
-  
-    
-   
+
+
+
     flow({ sorter: { sort: 'ascend' } }).then((res) => {
       var b = { "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": "Entire Duration" }
       var p = { "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": "Entire Duration" }
-   
-     
+
+
       res.data.forEach((r) => {
         if (r.type == 0) {
 
@@ -306,7 +322,7 @@ const TableList: React.FC = () => {
 
       var treeData = tree(res.data, "                                    ", 'pid')
       setFlowTree(treeData)
-     
+
       alertrule({
         tab: {
           'field': 'tab',
@@ -318,7 +334,7 @@ const TableList: React.FC = () => {
           'op': 'eq',
           'data': 1
         }
-       }).then((res2) => {
+      }).then((res2) => {
         var d = {}
 
 
@@ -328,46 +344,49 @@ const TableList: React.FC = () => {
           d[r.flow_id + "_" + r.flow_id_to] = b[r.flow_id] + " -> " + b[r.flow_id_to]
         })
 
-  setEvents(d)
-
- 
-
-  if (status && status.length>0) {
-   
-
-    formRef.current?.setFieldValue('t.status', status)
-  }
-
-  if (organization_id) {
-
-    formRef.current?.setFieldValue('organization_id', organization_id)
-  }
-  if (dateArr && dateArr[0] && dateArr[1]) {
-    formRef.current?.setFieldValue('t.start_of_transaction', dateArr)
-  }
-
-  if (flow_id) {
-    if (flow_id != 'b2e') {
-      formRef.current?.setFieldValue('flow_id', [flow_id])
-    } else {
-      var arr = []
-      for (var i in d) {
-        arr.push(i)
-      }
-   
-      formRef.current?.setFieldValue('flow_id_to', arr)
-    }
-
-    
-    
-     
-      formRef.current?.submit();
-    
-    
-
-  }
+        setEvents(d)
 
 
+
+        if (status && status.length > 0) {
+
+
+          formRef.current?.setFieldValue('t.status', status)
+        }
+
+        if (organization_id) {
+
+          formRef.current?.setFieldValue('organization_id', organization_id)
+        }
+        if (dateArr && dateArr[0] && dateArr[1]) {
+          formRef.current?.setFieldValue('t.start_of_transaction', dateArr)
+        }
+
+        if (flow_id) {
+          if (flow_id != 'b2e') {
+            formRef.current?.setFieldValue('flow_id', [flow_id])
+          } else {
+            var arr = []
+            for (var i in d) {
+              arr.push(i)
+            }
+
+            formRef.current?.setFieldValue('flow_id_to', arr)
+          }
+
+
+
+
+
+
+
+
+        }
+
+        setTimeout(() => {
+
+          formRef.current?.submit();
+        }, 200)
 
 
 
@@ -442,6 +461,10 @@ const TableList: React.FC = () => {
         dropdownMatchSelectWidth: isMP ? true : false,
         width: '300px',
         mode: 'multiple',
+        maxTagCount: 0,
+        maxTagPlaceholder: (omittedValues) => {
+          return omittedValues.length + " Selected"
+        },
         showSearch: false,
         multiple: true
 
@@ -478,6 +501,10 @@ const TableList: React.FC = () => {
         dropdownMatchSelectWidth: isMP ? true : false,
         width: '300px',
         mode: 'multiple',
+        maxTagCount: 0,
+        maxTagPlaceholder: (omittedValues) => {
+          return omittedValues.length + " Selected"
+        },
         showSearch: false,
         multiple: true
 
@@ -519,6 +546,9 @@ const TableList: React.FC = () => {
       hideInSearch: true,
       sorter: true,
       align: "center",
+      renderPrint: (dom, entity) => {
+        return  "A" + dom 
+      },
       render: (dom, entity) => {
         return (
           <a
@@ -549,7 +579,16 @@ const TableList: React.FC = () => {
       sorter: true,
       hideInSearch: true,
       defaultSortOrder: 'ascend',
-     
+      renderPrint: (dom, entity) => {
+        if (dom==0) {
+          return "Single Process" 
+        } else if (dom == 1) {
+          return "Between Two Events" 
+        } else if (dom == 2) {
+          return "Entire Transaction" 
+        }
+       
+      },
       valueEnum: {
         0: { text: <FormattedMessage id="pages.alertrule.singleProcess" defaultMessage="Single Process" /> },
         1: { text: <FormattedMessage id="pages.alertrule.betweenTwoEvents" defaultMessage="Between Two Events" /> },
@@ -585,6 +624,14 @@ const TableList: React.FC = () => {
       dataIndex: 'type',
       hideInSearch: true,
       valueType: 'text',
+      renderPrint: (dom, entity) => {
+        if (dom == 0) {
+          return "Amber"
+        } else if (dom == 1) {
+          return "Red"
+        } 
+
+      },
       render: (dom, entity) => {
 
         return (<div><div style={{ display: dom == 0 ? "block" : "none" }}> <SvgIcon style={{ color: "#DE7E39" }} type="icon-yuan" /> Amber</div>
@@ -596,6 +643,15 @@ const TableList: React.FC = () => {
       dataIndex: 'ar.amber_hours',
       hideInSearch: true,
       valueType: 'text',
+      renderPrint: (dom, entity) => {
+        entity.amber_hours = entity['ar.amber_hours']
+        entity.amber_mins = entity['ar.amber_mins']
+        entity.red_hours = entity['ar.red_hours']
+        entity.red_mins = entity['ar.red_mins']
+        return (entity.amber_hours || entity.amber_mins ? ("Amber: " + (entity.amber_hours ? entity.amber_hours : '0') + "h " + (entity.amber_mins ? entity.amber_mins : '0') + "m" ): "") +
+          (entity.red_hours || entity.red_mins ? (" Red: " + (entity.red_hours ? entity.red_hours : '0') + "h " + (entity.red_mins ? entity.red_mins : '0') + "m") : "")
+
+      },
       render: (dom, entity) => {
         entity.amber_hours = entity['ar.amber_hours']
         entity.amber_mins = entity['ar.amber_mins']
@@ -632,16 +688,16 @@ const TableList: React.FC = () => {
         if (entity['ar.vessel_size_dwt_from'] != null && entity['ar.vessel_size_dwt_to']) {
 
           var valueEnum = {
-            "0-25": "GP",
-            "25-45": "MR",
-            "45-80": "LR1",
-            "80-120": "AFRA",
-            "120-160": "LR2",
-            "160-320": "VLCC",
-            "320-1000000": "ULCC",
+            "0-25000": "GP",
+            "25000-45000": "MR",
+            "45000-80000": "LR1",
+            "80000-120000": "AFRA",
+            "120000-160000": "LR2",
+            "160000-320000": "VLCC",
+            "320000-1000000000": "ULCC",
           }
-
-          return valueEnum[numeral(entity['ar.vessel_size_dwt_from']).format('0,0') + "-" + numeral(entity['ar.vessel_size_dwt_to']).format('0,0')];
+          
+          return valueEnum[entity['ar.vessel_size_dwt_from'] + "-" + entity['ar.vessel_size_dwt_to']];
         } else {
           return '-'
         }
@@ -664,7 +720,6 @@ const TableList: React.FC = () => {
       },
     },
    
-
     
     
     {
@@ -691,6 +746,10 @@ const TableList: React.FC = () => {
         showSearch: true,
         multiple: true,
         mode: "multiple",
+        maxTagCount: 0,
+        maxTagPlaceholder: (omittedValues) => {
+          return omittedValues.length + " Selected"
+        },
         allowClear: true,
         onFocus: () => {
           fieldSelectData({ model: "Transaction", value: '', field: 'imo_number' }).then((res) => {
@@ -706,7 +765,56 @@ const TableList: React.FC = () => {
         }
       }
     },
+    {
+      title: <FormattedMessage id="pages.transaction.xxx" defaultMessage="Work Order ID" />,
+      dataIndex: 'work_order_id',
+      align: "center",
+      valueEnum: work_order_idData,
+      search: {
+        transform: (value) => {
+          if (value && value.length > 0) {
+            return {
+              'work_order_id': {
+                'field': 'work_order_id',
+                'op': 'in',
+                'data': value
+              }
+            }
+          }
 
+        }
+      },
+      fieldProps: {
+        notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
+        showSearch: true,
+        multiple: true,
+        mode: "multiple",
+        maxTagCount: 0,
+        maxTagPlaceholder: (omittedValues) => {
+          return omittedValues.length + " Selected"
+        },
+        allowClear: true,
+        onFocus: () => {
+          fieldSelectData({ model: "Alert", value: '', field: 'work_order_id' }).then((res) => {
+            setWork_order_idData(res.data)
+          })
+        },
+        onSearch: (newValue: string) => {
+
+          fieldSelectData({ model: "Alert", value: newValue, field: 'work_order_id' }).then((res) => {
+            setWork_order_idData(res.data)
+          })
+
+        }
+      }
+    },
+    {
+      title: <FormattedMessage id="pages.alert.xxx" defaultMessage="Sequence No" />,
+      dataIndex: 'work_order_sequence_number',
+      align: "center",
+      hideInSearch: true,
+
+    },
     {
       title: <FormattedMessage id="pages.alert.productType" defaultMessage="Product Type" />,
       dataIndex: 't.product_name',
@@ -719,7 +827,7 @@ const TableList: React.FC = () => {
     {
       title: getOrganizationName(),
       dataIndex: 'organization_id',
-      sorter: true,
+     
       valueEnum: organizationMap,
       render: (dom, entity) => {
 
@@ -734,6 +842,10 @@ const TableList: React.FC = () => {
         options: organizationList,
         multiple: true,
         mode: "multiple",
+        maxTagCount: 0,
+        maxTagPlaceholder: (omittedValues) => {
+          return omittedValues.length + " Selected"
+        },
         notFoundContent: <Empty />,
       },
       search: {
@@ -769,6 +881,8 @@ const TableList: React.FC = () => {
       search: {
         transform: (value) => {
           if (value.length > 0) {
+            value[0] = moment(new Date(value[0])).format('YYYY-MM-DD') + " 00:00:00"
+            value[1] = moment(new Date(value[1])).format('YYYY-MM-DD') + " 23:59:59"
             return {
               'created_at': {
                 'field': 'created_at',
@@ -802,8 +916,12 @@ const TableList: React.FC = () => {
       fieldProps: {
         multiple: true,
         mode: "multiple",
+        maxTagCount: 0,
+        maxTagPlaceholder: (omittedValues) => {
+          return omittedValues.length + " Selected"
+        },
       },
-      sorter: true,
+     
       valueEnum: {
         0: {
           text: <FormattedMessage id="pages.transaction.active" defaultMessage="Open" />
@@ -837,6 +955,10 @@ const TableList: React.FC = () => {
       fieldProps: {
         multiple: true,
         mode: "multiple",
+        maxTagCount: 0,
+        maxTagPlaceholder: (omittedValues) => {
+          return omittedValues.length + " Selected"
+        },
         onFocus: () => {
           fieldSelectData({ model: "Transaction", value: '', field: 'jetty_id' }).then((res) => {
             setJetty_idData(res.data)
@@ -876,7 +998,12 @@ const TableList: React.FC = () => {
       title: <FormattedMessage id="pages.alert.specificProcess" defaultMessage="Remarks" />,
       dataIndex: 'remarks',
       hideInSearch: true,
-      
+      renderPrint: (dom, entity) => {
+       
+        return dom ? dom:"-"
+       
+
+      },
       valueType: 'textarea',
       render: (dom, record) => {
 
@@ -942,7 +1069,7 @@ const TableList: React.FC = () => {
       onResize={(offset) => {
         
         const { innerWidth, innerHeight } = window;
-        var h = document.getElementsByClassName("ant-table-thead")?.[0]?.offsetHeight + 300 || 0
+        var h = document.getElementsByClassName("ant-table-thead")?.[0]?.offsetHeight + 350 || 0
         if (offset.width > 1280) {
          
           setResizeObj({ ...resizeObj, searchSpan: 8, tableScrollHeight: innerHeight - h });
@@ -964,7 +1091,22 @@ const TableList: React.FC = () => {
       <PageContainer className="myPage" header={{
         title: isMP ? null : < FormattedMessage id="pages.transactions.xxx" defaultMessage="Threshold Triggered Alerts" />,
       breadcrumb: {},
-      extra: isMP ? null : []
+        extra: isMP ? null : [ <Button type="primary" key="print"
+          onClick={() => {
+            if (selectedRowsState.length == 0) {
+              message.error(<FormattedMessage
+                id="pages.selectDataFirst"
+                defaultMessage="Please select data first!"
+              />);
+              return false;
+            }
+            handlePrintModalVisible(true)
+          }}
+        ><PrinterOutlined /> <FormattedMessage id="pages.Print" defaultMessage="Print" />
+        </Button>, <Button type="primary" key="out"
+          onClick={() => exportCSV(selectedRowsState, columns)}
+        ><FileExcelOutlined /> <FormattedMessage id="pages.CSV" defaultMessage="CSV" />
+          </Button>]
       }}>
 
         {access.alert_list_tab() && <ProCard
@@ -1026,10 +1168,7 @@ const TableList: React.FC = () => {
             
             var d = { ...params, sorter }
 
-            if (showNoRead) {
-              d.showNoRead = 1
-              
-            }
+           
             d.tab = {
               'field': 'tab',
               'op': 'eq',
@@ -1044,10 +1183,19 @@ const TableList: React.FC = () => {
         
             return list
         }}
-        columns={columns}
-          pagination={showNoRead ? false : { pageSize: 20, size: "default" }  }
+          columns={columns}
+
+        
+          pagination={{ size: "default", showSizeChanger: true, pageSizeOptions: [10, 20, 50, 100, 500] }  }
         options={false}
-        rowSelection={false}
+          rowSelection={{
+            onSelectAll: (selected, selectedRows, changeRows) => {
+
+            },
+            onChange: (_, selectedRows) => {
+              setSelectedRows(selectedRows);
+            },
+          }}
         /></ConfigProvider >)}
 
       {isMP && (<>
@@ -1109,14 +1257,29 @@ const TableList: React.FC = () => {
             </List.Item>
           ))}
         </List>
-        <InfiniteScroll loadMore={loadMore} hasMore={hasMore}>
-          <InfiniteScrollContent hasMore={hasMore} />
-          </InfiniteScroll>
+      
+          {MPPagination.total ? <div style={{ textAlign: 'center', padding: "20px 10px 90px 10px" }}>
+          <Pagination
+
+            onChange={(page, pageSize) => {
+
+              getData(page, pageSize)
+            }}
+            total={MPPagination.total}
+
+            showTotal={(total, range) => `${range[0]}-${range[1]} of ${total} items`}
+            defaultPageSize={3}
+            showSizeChanger={true}
+            pageSizeOptions={[3, 20, 50, 100, 500]}
+            defaultCurrent={1}
+          />
+        </div> : customizeRenderEmpty()}
           <FloatButton.BackTop  visibilityHeight={0} />
          
       </>)}
       
-      
+       
+
       <CreateForm
         onSubmit={async (value) => {
           value.id = currentRow?.id
@@ -1188,7 +1351,17 @@ const TableList: React.FC = () => {
         )}
         </Drawer>
         
-        
+        {/* 调用打印模块 */}
+        <FrPrint
+          title={""}
+          subTitle={paramsText}
+          columns={columns}
+          dataSource={[...(isMP ? data : selectedRowsState)/*, sumRow*/]}
+          onCancel={() => {
+            handlePrintModalVisible(false);
+          }}
+          printModalVisible={printModalVisible}
+        />
       </PageContainer>
     </RcResizeObserver>
   );

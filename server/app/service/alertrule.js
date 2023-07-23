@@ -146,35 +146,12 @@ class AlertruleService extends Service {
 
                 if (t1 && t2) {
 
-                    if (transactioneventList.length == 0) {
-                        return ar
-                    }
-                    var lastEvent = transactioneventList[transactioneventList.length - 1]
 
-                    if (ar.type == 0) {
+                    return ar
 
 
-
-
-
-                        if (flowMap[lastEvent.flow_id].sort < flowMap[ar.flow_id].sort) {
-                            return ar
-                        }
-
-
-
-                    } else if (ar.type == 1) {
-
-                        if (flowMap[lastEvent.flow_id].sort <= flowMap[ar.flow_id_to].sort && flowMap[lastEvent.flow_id].sort >= flowMap[ar.flow_id].sort) {
-                            return ar
-                        }
-                    } else if (ar.type == 2) {
-
-                        if (flowMap[lastEvent.flow_id].sort <= 64) {
-                            return ar
-                        }
-                    }
-
+                } else {
+                    return false
                 }
 
 

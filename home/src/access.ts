@@ -6,188 +6,346 @@ export default function access(initialState: { currentUser?: API.CurrentUser } |
 
   
   return {
-    canAdmin: currentUser && currentUser.role_type === 'Super',
+    canAdmin: (currentUser && currentUser.role_type === 'Super') || false,
     canDashboard: () => {
-      return currentUser && currentUser.permissions.some((a) => {
+      if (currentUser && currentUser.permissions.some((a) => {
         return a == 'dashboard' || a == 'dashboard_company' || a == 'dashboard_tab'
-      }) || currentUser?.role_type === 'Super'
+      }) || currentUser?.role_type === 'Super') {
+        return true
+      } else {
+        return false
+      }
     },
     dashboard_tab: () => {
-      return currentUser && currentUser.permissions.some((a) => {
+
+     
+     
+      if (currentUser && currentUser?.permissions.some((a) => {
         return a == 'dashboard_tab'
-      }) 
+      })) {
+        return true
+      } else {
+        return false
+      }
+     
+
     },
     canBlockchain: () => {
-      return currentUser && currentUser.permissions.some((a) => {
+
+      if ((currentUser && currentUser.permissions.some((a) => {
         return a == 'blockchain'
-      }) || currentUser?.role_type === 'Super'
+      }) || currentUser?.role_type === 'Super')) {
+        return true
+      } else {
+        return false
+      }
+
+
+      
     },
     alertrule_list_tab: () => {
-      return currentUser && currentUser.permissions.some((a) => {
+
+      if (currentUser && currentUser.permissions.some((a) => {
         return a == 'alertrule_list_tab'
-      })
+      })) {
+        return true
+      } else {
+        return false
+      }
+      
     },
     transactions_list_tab: () => {
-     
-      return currentUser && currentUser.permissions.some((a) => {
+      if (currentUser && currentUser.permissions.some((a) => {
         return a == 'transactions_list_tab'
-      })
+      })) {
+        return true
+      } else {
+        return false
+      }
+      
     },
 
     jetty_list_tab: () => {
-
-      return currentUser && currentUser.permissions.some((a) => {
+      if (currentUser && currentUser.permissions.some((a) => {
         return a == 'jetty_list_tab'
-      })
+      })) {
+        return true
+      } else {
+        return false
+      }
+     
     },
 
     alert_list_tab: () => {
-     
-      return currentUser && currentUser.permissions.some((a) => {
+      if (currentUser && currentUser.permissions.some((a) => {
         return a == 'alert_list_tab'
-      })
+      })) {
+        return true
+      } else {
+        return false
+      }
+     
     },
     canInterfacedataAdd: () => {
-      return currentUser && currentUser.permissions.some((a) => {
+      if ((currentUser && currentUser.permissions.some((a) => {
         return a == 'interfacedata_add'
-      }) || currentUser?.role_type === 'Super'
+      })) || currentUser?.role_type === 'Super') {
+        return true
+      } else {
+        return false
+      }
+     
     },
     canInterfacedataList: () => {
-      return currentUser && currentUser.permissions.some((a) => {
+      if ((currentUser && currentUser.permissions.some((a) => {
         return a == 'interfacedata_list'
-      }) || currentUser?.role_type === 'Super'
+      })) || currentUser?.role_type === 'Super') {
+        return true
+      } else {
+        return false
+      }
+     
     },
     canInterfacedataDel: () => {
-      return currentUser && currentUser.permissions.some((a) => {
+      if ((currentUser && currentUser.permissions.some((a) => {
         return a == 'interfacedata_del'
-      }) || currentUser?.role_type === 'Super'
+      })) || currentUser?.role_type === 'Super') {
+        return true
+      } else {
+        return false
+      }
+      
     },
 
     canInterfacedataMod: () => {
-      return currentUser  && currentUser.permissions.some((a) => {
+      if ((currentUser && currentUser.permissions.some((a) => {
         return a == 'interfacedata_mod'
-      }) || currentUser?.role_type === 'Super'
+      })) || currentUser?.role_type === 'Super') {
+        return true
+      } else {
+        return false
+      }
+      
     },
     canJettyAdd: () => {
-      return currentUser && currentUser.permissions.some((a) => {
+      if ((currentUser && currentUser.permissions.some((a) => {
         return a == 'jetty_add'
-      }) || currentUser?.role_type === 'Super'
+      })) || currentUser?.role_type === 'Super') {
+        return true
+      } else {
+        return false
+      }
+     
     },
     canJettyList: () => {
-      return currentUser && currentUser.permissions.some((a) => {
+      if ((currentUser && currentUser.permissions.some((a) => {
         return a == 'jetty' || a == 'jetty_list' || a == 'jetty_list_terminal'
-      }) || currentUser?.role_type === 'Super'
+      })) || currentUser?.role_type === 'Super') {
+        return true
+      } else {
+        return false
+      }
+      
     },
     canJettyDel: () => {
-      return currentUser && currentUser.permissions.some((a) => {
+      if ((currentUser && currentUser.permissions.some((a) => {
         return a == 'jetty_del'
-      }) || currentUser?.role_type === 'Super'
+      })) || currentUser?.role_type === 'Super') {
+        return true
+      } else {
+        return false
+      }
+      
     },
 
     canJettyMod: () => {
-      return currentUser  && currentUser.permissions.some((a) => {
+      if ((currentUser && currentUser.permissions.some((a) => {
         return a == 'jetty_mod'
-      }) || currentUser?.role_type === 'Super'
+      })) || currentUser?.role_type === 'Super') {
+        return true
+      } else {
+        return false
+      }
+     
     },
     canAlertruleAdd: () => {
-      return currentUser && currentUser.permissions.some((a) => {
-        return a == 'alertrule_add' 
-      }) || currentUser?.role_type === 'Super'
+      if ((currentUser && currentUser.permissions.some((a) => {
+        return a == 'alertrule_add'
+      })) || currentUser?.role_type === 'Super') {
+        return true
+      } else {
+        return false
+      }
+     
     },
     canAlertruleList: () => {
-     
-      return currentUser && currentUser.permissions.some((a) => {
+      if ((currentUser && currentUser.permissions.some((a) => {
         return a == 'alertrule' || a == 'alertrule_list' || a == 'alertrule_list_company' || a == 'alertrule_list_tab'
-      }) || currentUser?.role_type === 'Super'
+      })) || currentUser?.role_type === 'Super') {
+        return true
+      } else {
+        return false
+      }
+      
     },
     canAlertruleDel: () => {
-      return currentUser && currentUser.permissions.some((a) => {
-        return a == 'alertrule_del' 
-      }) || currentUser?.role_type === 'Super'
+      if ((currentUser && currentUser.permissions.some((a) => {
+        return a == 'alertrule_del'
+      })) || currentUser?.role_type === 'Super') {
+        return true
+      } else {
+        return false
+      }
+      
     },
     
     canAlertruleMod: () => {
-      return currentUser && currentUser.permissions.some((a) => {
-        return a == 'alertrule_mod' 
-      }) || currentUser?.role_type === 'Super'
+      if ((currentUser && currentUser.permissions.some((a) => {
+        return a == 'alertrule_mod'
+      })) || currentUser?.role_type === 'Super') {
+        return true
+      } else {
+        return false
+      }
+      
     },
 
 
     canAlertDel: () => {
-      return currentUser && currentUser.permissions.some((a) => {
+      if ((currentUser && currentUser.permissions.some((a) => {
         return a == 'alert_del'
-      }) || currentUser?.role_type === 'Super'
+      })) || currentUser?.role_type === 'Super') {
+        return true
+      } else {
+        return false
+      }
+      
     },
 
     canAlertMod: () => {
-      return currentUser && currentUser.permissions.some((a) => {
+      if ((currentUser && currentUser.permissions.some((a) => {
         return a == 'alert_mod'
-      }) || currentUser?.role_type === 'Super'
+      })) || currentUser?.role_type === 'Super') {
+        return true
+      } else {
+        return false
+      }
+      
     },
 
     canTransactionsList: () => {
-      
-      return currentUser && currentUser.permissions.some((a) => {
+      if ((currentUser && currentUser.permissions.some((a) => {
         return a == 'transactions' || a == 'transactions_list' || a == 'transactions_list_company' || a == 'transactions_list_tab'
-      }) || currentUser?.role_type === 'Super'
+      })) || currentUser?.role_type === 'Super') {
+        return true
+      } else {
+        return false
+      }
+     
     },
 
     canAlertList: () => {
-      return currentUser && currentUser.permissions.some((a) => {
+      if ((currentUser && currentUser.permissions.some((a) => {
         return a == 'alert' || a == 'alert_list' || a == 'alert_list_company' || a == 'alert_list_tab'
-      }) || currentUser?.role_type === 'Super'
+      })) || currentUser?.role_type === 'Super') {
+        return true
+      } else {
+        return false
+      }
+     
     },
     canReportDel: () => {
-      return currentUser && currentUser.permissions.some((a) => {
+      if ((currentUser && currentUser.permissions.some((a) => {
         return a == 'report_del'
-      }) || currentUser?.role_type === 'Super'
+      })) || currentUser?.role_type === 'Super') {
+        return true
+      } else {
+        return false
+      }
+      
     },
     canReportTemplateDel: () => {
-      return currentUser && currentUser.permissions.some((a) => {
+      if ((currentUser && currentUser.permissions.some((a) => {
         return a == 'reportTemplate_del'
-      }) || currentUser?.role_type === 'Super'
+      })) || currentUser?.role_type === 'Super') {
+        return true
+      } else {
+        return false
+      }
+     
     },
 
     canReportTemplateMod: () => {
-      return currentUser && currentUser.permissions.some((a) => {
+      if ((currentUser && currentUser.permissions.some((a) => {
         return a == 'reportTemplate_mod'
-      }) || currentUser?.role_type === 'Super'
+      })) || currentUser?.role_type === 'Super') {
+        return true
+      } else {
+        return false
+      }
+     
     },
     canReportTemplateList: () => {
-      return currentUser && currentUser.permissions.some((a) => {
+      if ((currentUser && currentUser.permissions.some((a) => {
         return a == 'reporttemplate_list'
-      }) || currentUser?.role_type === 'Super'
+      })) || currentUser?.role_type === 'Super') {
+        return true
+      } else {
+        return false
+      }
+      
     },
     
     canReportAdd: () => {
-      return currentUser && currentUser.permissions.some((a) => {
+      if ((currentUser && currentUser.permissions.some((a) => {
         return a == 'report_add'
-      }) || currentUser?.role_type === 'Super'
+      })) || currentUser?.role_type === 'Super') {
+        return true
+      } else {
+        return false
+      }
+     
     },
     canReportAddWithTemplate: () => {
-      return currentUser && currentUser.permissions.some((a) => {
+      if ((currentUser && currentUser.permissions.some((a) => {
         return a == 'report_add_template'
-      }) || currentUser?.role_type === 'Super'
+      })) || currentUser?.role_type === 'Super') {
+        return true
+      } else {
+        return false
+      }
+      
     },
 
     canReportList: () => {
-      return currentUser && currentUser.permissions.some((a) => {
-        return a == 'report' || a == 'report_list' 
-      }) || currentUser?.role_type === 'Super'
+      if ((currentUser && currentUser.permissions.some((a) => {
+        return a == 'report' || a == 'report_list'
+      })) || currentUser?.role_type === 'Super') {
+        return true
+      } else {
+        return false
+      }
+      
     },
 
 
     canEOSTools: () => {
-
+      
       var a= currentUser && currentUser.permissions.some((a) => {
         return a == 'alert' || a == 'alert_list' || a == 'alert_list_company' || a == 'alert_list_tab'
-      }) || currentUser?.role_type === 'Super'
+      }) || currentUser?.role_type === 'Super' || false
 
 
       var b =  currentUser && currentUser.permissions.some((a) => {
         return a == 'alertrule' || a == 'alertrule_list' || a == 'alertrule_list_company' || a == 'alertrule_list_tab'
-      }) 
-      return a || b
+      }) || false
+
+      if (a || b) {
+        return true
+      } else {
+        return false
+      }
+     
 
     },
   };

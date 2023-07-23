@@ -35,27 +35,27 @@ export const AvatarDropdown: React.FC<GlobalHeaderRightProps> = ({ menu, childre
    */
   const loginOut = async (a:any) => {
     await outLogin();
+    localStorage.setItem('isAdmin', "false");
     localStorage.setItem('token', "");
-    var url ='/user/login'
+   
     if (a===true) {
-      url = "/user/adminlogin"
-     
     
+      localStorage.setItem('isAdmin', "true");
     }
 
-
+   
    // const urlParams = new URL(window.location.href).searchParams;
     /** 此方法会跳转到 redirect 参数所在的位置 */
     //const redirect = urlParams.get('redirect');
     // Note: There may be security issues, please note
    // if (window.location.pathname !== url && !redirect) {
     
-      
-      history.replace({
+    window.location.href = "/"
+     /* history.replace({
         pathname: url,
         search: 'redirect=/'
        // search: 'redirect=' + redirect,
-      });
+      });*/
    // }
   };
   const actionClassName = useEmotionCss(({ token }) => {

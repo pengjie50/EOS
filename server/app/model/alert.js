@@ -58,6 +58,14 @@ module.exports = app => {
         total_duration: {
             type: INTEGER
         },
+        work_order_id: {
+            type: STRING(50)
+
+        },
+        work_order_sequence_number: {
+            type: STRING(50)
+
+        },
         remarks: {
             type: TEXT
 

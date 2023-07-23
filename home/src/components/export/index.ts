@@ -36,6 +36,8 @@ export function exportCSV(data, columns, filename = "Summary of all transactions
           n[c.title.props.defaultMessage] = s[k] ? moment(s[k]).format('YYYY/MM/DD HH:mm:ss') : ""
         } else if (c.renderText) {
           n[csvK] = "" + c.renderText(s[k], s)
+        } else if (c.renderPrint) {
+          n[csvK] = "" + c.renderPrint(s[k], s)
         }
         else if (c.render && k != 'id') {
           n[csvK] = c.render(s[k], s)

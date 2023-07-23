@@ -10,12 +10,12 @@ import {
   
 } from '@ant-design/pro-components';
 import { FilterOfTimestampsListItem } from '../data.d';
-import { FormattedMessage, useIntl } from '@umijs/max';
+import { FormattedMessage, useIntl, useModel } from '@umijs/max';
 import { Modal, Form, TreeSelect, Button } from 'antd';
 import React, { useRef, useState, useEffect  } from 'react';
 import { flow } from '../../../system/flow/service';
 import { tree, isPC } from "@/utils/utils";
-import { currentUser, fieldUniquenessCheck } from '@/services/ant-design-pro/api';
+import { fieldUniquenessCheck } from '@/services/ant-design-pro/api';
 
 export type UpdateFormProps = {
   onCancel: (flag?: boolean, formVals?: Partial<FilterOfTimestampsListItem>) => void;
@@ -52,6 +52,8 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
   const intl = useIntl();
   const [flowConf, setFlowConf] = useState<any>([]);
   const [isMP, setIsMP] = useState<boolean>(!isPC());
+  const { initialState, setInitialState } = useModel('@@initialState');
+  const { currentUser } = initialState || {};
   var {
     onSubmit,
     onCancel,
@@ -91,8 +93,8 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
   const onlyCheck = (rule: any, value: any, callback: (arg0: string | undefined) => void) => {
 
-
-    fieldUniquenessCheck({ where: { name: value, type: 0, company_id: currentUser?.company_id }, model: 'Userconfig' }).then((res) => {
+   
+    fieldUniquenessCheck({ where: { name: value, type: 0, user_id: currentUser?.id }, model: 'Userconfig' }).then((res) => {
       if (values && values.name == value) {
         callback(undefined);
       }
@@ -114,7 +116,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
   const onlyCheck2 = (rule: any, value: any, callback: (arg0: string | undefined) => void) => {
 
    
-    fieldUniquenessCheck({ where: { value: value.join(','), type: 0, company_id: currentUser?.company_id }, model: 'Userconfig' }).then((res) => {
+    fieldUniquenessCheck({ where: { value: value.join(','), type: 0, user_id: currentUser?.id }, model: 'Userconfig' }).then((res) => {
      
       if (values && values.value == value) {
         callback(undefined);

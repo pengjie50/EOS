@@ -4,6 +4,9 @@ import React from 'react';
 import { history, useModel } from '@umijs/max';
 export type SiderTheme = 'light' | 'dark';
 import { Badge } from 'antd';
+
+import { setUserReadAlert } from "../../pages/alert/service"
+
 export const SelectLang = () => {
   return (
     <UmiSelectLang
@@ -45,8 +48,14 @@ export const Alert = () => {
         height: 30,
       }}
       onClick={() => {
-        if (currentUser.userUnreadAlertCount>0) {
-          history.push(`/threshold/alertNoread`, {showNoRead:true});
+        if (currentUser.userUnreadAlertCount > 0) {
+         
+          setUserReadAlert({}).then((res) => {
+            currentUser.userUnreadAlertCount=0
+            history.push(`/threshold/alert`, { showNoRead: true });
+          })
+
+         // history.push(`/threshold/alert`,);
         } else {
           history.push(`/threshold/alert`);
         }

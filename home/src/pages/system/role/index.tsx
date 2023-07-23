@@ -19,8 +19,8 @@ import {
   ProTable,
 } from '@ant-design/pro-components';
 import { FormattedMessage, useIntl, formatMessage } from '@umijs/max';
-import { Button, Drawer, Input, message, Modal, Empty } from 'antd';
-import React, { useRef, useState } from 'react';
+import { Button, Drawer, Input, message, Modal, Empty, Pagination, FloatButton, ConfigProvider } from 'antd';
+import React, { useRef, useState, useEffect } from 'react';
 import CreateForm from './components/CreateForm';
 import UpdateForm from './components/UpdateForm';
 import { isPC } from "@/utils/utils";
@@ -161,6 +161,7 @@ const TableList: React.FC = () => {
   const actionRef = useRef<ActionType>();
   const [currentRow, setCurrentRow] = useState<RoleListItem>();
   const [selectedRowsState, setSelectedRows] = useState<RoleListItem[]>([]);
+  const [MPPagination, setMPPagination] = useState<any>({})
   const [resizeObj, setResizeObj] = useState({ searchSpan: 12, tableScrollHeight: 300 });
   /**
    * @en-US International configuration
@@ -172,7 +173,17 @@ const TableList: React.FC = () => {
 
   const [showMPSearch, setShowMPSearch] = useState<boolean>(false);
   const [isMP, setIsMP] = useState<boolean>(!isPC());
+  useEffect(() => {
 
+
+
+
+
+    if (isMP) {
+      getData(1)
+    }
+
+  }, [true]);
   const right = (
     <div style={{ fontSize: 24 }}>
       <Space style={{ '--gap': '16px' }}>
@@ -228,18 +239,13 @@ const TableList: React.FC = () => {
     const append = await role({
       ...{
         "current": page,
-        "pageSize": 10
+        "pageSize": 3
 
       }, ...filter, sorter
     })
 
-    if (page == 1) {
-
-      setData([]);
-    }
-    
-    setData(val => [...val, ...append.data])
-    setHasMore(10 * (page - 1) + append.data.length < append.total)
+    setMPPagination({ total: append.total })
+    setData(append.data)
   }
   async function loadMore(isRetry: boolean) {
 
@@ -288,6 +294,10 @@ const TableList: React.FC = () => {
       fieldProps: {
         multiple: true,
         mode: 'multiple',
+        maxTagCount: 0,
+        maxTagPlaceholder: (omittedValues) => {
+          return omittedValues.length + " Selected"
+        },
         notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
         showSearch: true,
         allowClear: true,
@@ -412,7 +422,24 @@ const TableList: React.FC = () => {
       ],
     },
   ];
+  const formRef = useRef<ProFormInstance>();
+  const customizeRenderEmpty = () => {
+    var o = formRef.current?.getFieldsValue()
+    var isSearch = false
+    for (var a in o) {
+      if (o[a]) {
+        isSearch = true
+      }
 
+    }
+    if (isSearch) {
+      return <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />
+    } else {
+      return <Empty />
+    }
+
+
+  }
   return (
     <RcResizeObserver
       key="resize-observer"
@@ -451,10 +478,11 @@ const TableList: React.FC = () => {
         </Button>,
       ]
     }}>
-      {!isMP && ( <ProTable<RoleListItem, API.PageParams>
+        {!isMP && (<ConfigProvider renderEmpty={customizeRenderEmpty}><ProTable<RoleListItem, API.PageParams>
           pagination={{ size: "default" }}
         actionRef={actionRef}
           rowKey="id"
+          formRef={formRef}
           scroll={{ x: '100%', y: resizeObj.tableScrollHeight }}
         search={{
           labelWidth: 120,
@@ -466,7 +494,7 @@ const TableList: React.FC = () => {
         request={(params, sorter) => role({ ...params, sorter })}
           columns={columns}
           bordered
-      />)}
+        /></ConfigProvider >)}
 
       {isMP && (<>
 
@@ -487,7 +515,7 @@ const TableList: React.FC = () => {
             onFormSearchSubmit={onFormSearchSubmit}
 
             dateFormatter={'string'}
-            formRef={MPSearchFormRef}
+              formRef={formRef}
             type={'form'}
             cardBordered={true}
             form={{
@@ -527,9 +555,21 @@ const TableList: React.FC = () => {
             </List.Item>
           ))}
         </List>
-        <InfiniteScroll loadMore={loadMore} hasMore={hasMore}>
-          <InfiniteScrollContent hasMore={hasMore} />
-        </InfiniteScroll>
+          {MPPagination.total > 0 ? <div style={{ textAlign: 'center', padding: "20px 10px 90px 10px" }}>
+            <Pagination
+
+              onChange={(page, pageSize) => {
+
+                getData(page)
+              }}
+              total={MPPagination.total}
+              simple
+              showTotal={(total, range) => `${range[0]}-${range[1]} of ${total} items`}
+              defaultPageSize={3}
+              defaultCurrent={1}
+            />
+          </div> : customizeRenderEmpty()}
+          <FloatButton.BackTop visibilityHeight={0} />
       </>)}
       
       

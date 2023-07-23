@@ -14,7 +14,14 @@ class AlertController extends Controller {
         const res = await service.alert.list(params);
 
     }
+    
 
+    async setUserReadAlert() {
+        console.log("ssssssssssssssssssssssssssssssssssssssssssss")
+        const { ctx, service, app } = this;
+        const params = ctx.request.body;
+        const res = await service.alert.setUserReadAlert(params);
+    }
     async getUserUnreadAlertCount() {
         const { ctx, service, app } = this;
         const params = ctx.request.body;

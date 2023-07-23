@@ -211,6 +211,20 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
   const [eos_idData, setEos_idData] = useState<any>({});
 
   const [terminal_idData, setTerminal_idData] = useState<any>({});
+  const [statusData, setStatusData] = useState<any>({});
+  const [jetty_nameData, setJetty_nameData] = useState<any>({});
+  const [organization_idData, setOrganization_idData] = useState<any>({});
+
+  const [alertrule_typeData, setAlertrule_typeData] = useState<any>({});
+  const [vessel_size_dwtData, setVessel_size_dwtData] = useState<any>({});
+  
+
+
+  const [threshold_organization_idData, setThreshold_organization_idData] = useState<any>({});
+  
+  
+  const [jetty_idData, setJetty_idData] = useState<any>({});
+  
   const [trader_idData, setTrader_idData] = useState<any>({});
   
   const [templateName, setTemplateName] = useState("");
@@ -792,11 +806,16 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           </Button>
 
           <Access accessible={access.canReportAdd()} fallback={<div></div>}> <Button style={{ marginLeft: isMP ? 0 : 20, marginTop: isMP ? 20 : 0,width: isMP ? '100%' : null }} icon={<FileTextOutlined />}  type="primary" onClick={ async () => {
+            await formRef.current?.validateFields(['name'])
+           
+
             var reportName = formRef.current?.getFieldValue("name")
             var templateName = formRef.current?.getFieldValue("templateName")
             var data = formRef.current?.getFieldsValue()
-
+            var report_type = data.report_type
+           
             if (report_type < 4) {
+              
               data.selected_fields = selectedColumns.map((c) => { return c.dataIndex })
             } else {
               data.selected_fields=[]
@@ -804,7 +823,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
             
             
 
-            var report_type = data.report_type
+           
             delete data.report_type
             delete data.useExisting
 
@@ -818,7 +837,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
               
             }
              // var ok = { name: reportName, value: JSON.stringify(data) , template_name: templateName ? templateName : null }
-
+           
             var ok = await handleAGenerateReport({ name: reportName, value: data,  type: report_type,template_name: templateName ? templateName : null })
            
             if (ok) {
@@ -836,7 +855,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
           }} type="primary" icon={<FileAddOutlined />}>Save Template</Button></Access>
          <Modal title="Save Template" open={isModalOpen} onOk={async () => {
-
+            await formRef.current?.validateFields(['templateName'])
             var templateName = formRef.current?.getFieldValue("templateName")
             var data = formRef.current?.getFieldsValue()
             var report_type = data.report_type
@@ -871,7 +890,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
             getReportTemplate()
             setIsModalOpen(false)
 
-            props.onSubmit({})
+           // props.onSubmit({})
 
 
           }} onCancel={() => { setIsModalOpen(false) }}>
@@ -1144,301 +1163,394 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                 </ProFormDependency>
 
               </ProForm.Group>
-              {report_type && report_type<4 && <ProForm.Group >
-                <ProFormSelect
-                  name="eos_id"
-                  label="EOS ID"
-                  width="sm"
-                  valueEnum={eos_idData}
-                  fieldProps={
-                    {
-                      notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
-                      showSearch: true,
-                      allowClear: true,
-                      onFocus: () => {
-                        fieldSelectData({ model: "Transaction", value: '', field: 'eos_id' }).then((res) => {
-                          setEos_idData(res.data)
-                        })
-                      },
-                      onSearch: (newValue: string) => {
+              <ProFormDependency name={['time_period', 'dateRange']}>
+                {({ time_period, dateRange }) => {
+                  var dateArr=[]
+                  if (time_period && time_period != '0') {
 
-                        fieldSelectData({ model: "Transaction", value: newValue, field: 'eos_id' }).then((res) => {
-                          setEos_idData(res.data)
-                        })
+                    dateArr = [new Date((new Date()).getTime() - 3600 * 24 * 1000 * parseInt(time_period)), new Date()]
 
-                      }
-                    }}
-                />
-              
-                <ProFormSelect
 
-                  width="sm"
-                  name="jetty_id"
-                  label="Jetty"
-                  valueEnum={jettyList}
 
-                />
-                <ProFormSelect
-                  name="imo_number"
-                  label="IMO Number"
-                  width="sm"
-                  valueEnum={imo_numberData }
-                  fieldProps={
-                    {
-                      notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
-                      showSearch: true,
-                      dropdownMatchSelectWidth: isMP ? true : false,
-                      allowClear: true,
-                      onFocus: () => {
-                        fieldSelectData({ model: "Transaction", value: '', field: 'imo_number' }).then((res) => {
-                          setImo_numberData(res.data)
-                        })
-                      },
-                      onSearch: (newValue: string) => {
-
-                        fieldSelectData({ model: "Transaction", value: newValue, field: 'imo_number' }).then((res) => {
-                          setImo_numberData(res.data)
-                        })
-
-                      }
-                    }}
-                />
-
-                
-                
-                
-                
-                
-               
-            
-                <ProFormSelect
-                  name="product_name"
-                  label="Product Type"
-                  width="sm"
-                  valueEnum={product_nameData}
-                  fieldProps={{
-                    notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
-                    showSearch: true,
-                    allowClear: true,
-                    onFocus: () => {
-                      fieldSelectData({ model: "Transaction", value: '', field: 'product_name' }).then((res) => {
-                        setProduct_nameData(res.data)
-                      })
-                    },
-                    onSearch: (newValue: string) => {
-
-                      fieldSelectData({ model: "Transaction", value: newValue, field: 'product_name' }).then((res) => {
-                        setProduct_nameData(res.data)
-                      })
-
+                  } else {
+                    if (dateRange) {
+                      dateArr = dateRange
                     }
-                  }}
-                />
-                <ProFormSelect
-                  valueEnum={
-                    {
-                      0: {
-                        text: <FormattedMessage id="pages.transaction.active" defaultMessage="Open" />
-                      },
-                      1: { text: <FormattedMessage id="pages.transaction.closed" defaultMessage="Closed" /> },
-                      2: { text: <FormattedMessage id="pages.transaction.cancelled" defaultMessage="Cancelled" /> }
-                    }}
-                  width="sm"
-                  name="status"
-                  label="Status"
+                  }
 
-                />
-               
-
-
-                {
-                  currentUser?.role_type == "Super" && <ProFormSelect
-                    valueEnum={trader_idData}
-                    width="sm"
-                    name="trader_id"
-                    label={"Trader"}
-                    fieldProps={{
-                      notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
-                      showSearch: true,
-                      allowClear: true,
-                      onFocus: () => {
-                        organization({
-                          type: {
-                            'field': 'type',
-                            'op': 'eq',
-                            'data': "Trader"
-                          }
-                        }).then((res) => {
-                          var b = {}
-                          res.data.forEach((r) => {
-                            b[r.id] = r.name
-                          })
-                          setTrader_idData(b)
-                        })
-                      },
-                      onSearch: (newValue: string) => {
-
-                        organization({
-                          type: {
-                            'field': 'type',
-                            'op': 'eq',
-                            'data': "Trader"
-                          }
-                        }).then((res) => {
-                          var b = {}
-                          res.data.forEach((r) => {
-                            b[r.id] = r.name
-                          })
-                          setTrader_idData(b)
-                        })
-
-                      }
-                    }}
-                  />
-
-                }
-
-                {
-                  currentUser?.role_type == "Super" && <ProFormSelect
-                    valueEnum={terminal_idData}
-                    width="sm"
-                    name="terminal_id"
-                    fieldProps={{
-                      notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
-                      showSearch: true,
-                      allowClear: true,
-                      onFocus: () => {
-                        organization({
-                          type: {
-                            'field': 'type',
-                            'op': 'eq',
-                            'data': "Terminal"
-                          }
-                        }).then((res) => {
-                          var b = {}
-                          res.data.forEach((r) => {
-                            b[r.id] = r.name
-                          })
-                          setTerminal_idData(b)
-                        })
-                      },
-                      onSearch: (newValue: string) => {
-
-                        organization({
-                          type: {
-                            'field': 'type',
-                            'op': 'eq',
-                            'data': "Terminal"
-                          }
-                        }).then((res) => {
-                          var b = {}
-                          res.data.forEach((r) => {
-                            b[r.id] = r.name
-                          })
-                          setTerminal_idData(b)
-                        })
-
-                      }
-                    }}
-                    label={"Terminal"}
-                  />
-
-                }
-
-                {
-                  currentUser?.role_type != "Super" && <ProFormSelect
-                    valueEnum={organizationList}
-
-                    width="sm"
-                    name="organization_id"
-                    label={getOrganizationName()}
-                  />
-
-                }
-
-                {
-                  currentUser?.role_type != "Trader" && <ProFormSelect
-                    valueEnum={organizationList}
-
-                    width="sm"
-                    name="threshold_created_by"
-                    label={"Threshold created by"}
-                  />
-
-                }
-                {((currentUser?.role_type == "Trader" && report_type != 1) || (currentUser?.role_type == "Terminal") || (currentUser?.role_type == "Super"  && report_type != 3) ) && <ProFormSelect
-                  width="sm"
-                  name="alertrule_type"
-                  initialValue={null}
-                  valueEnum={
-                    {
-                      '0': "Single Process",
-                      '1': "Between Two Events",
-                      '2': "Entire Transaction",
-                    }}
-                  label="Threshold Type"
-
-                />}
-
-
-
-                
-               
-                
-                {((currentUser?.role_type == "Trader" && report_type != 1) || (currentUser?.role_type == "Terminal") || (currentUser?.role_type == "Super" && report_type != 3)) && <ProFormSelect
-                  width="sm"
-                  name="vessel_size_from_to"
-                  initialValue={null}
-                  fieldProps={{ dropdownMatchSelectWidth: isMP ? true : false, } }
                   
-                  valueEnum={
-                    {
-                      "0-25": "1. GP (General Purpose): Less than 24.99 DWT",
-                      "25-45": "2. MR (Medium Range): 25 to 44.99 DWT",
-                      "45-80": "3. LR1 (Long Range 1): 45 to 79.99 DWT",
-                      "80-120": "4. AFRA (AFRAMAX): 80 to 119.99 DWT",
-                      "120-160": "5. LR2 (Long Range 2): 120 to 159.99 DWT",
-                      "160-320": "6. VLCC (Very Large Crude Carrier): 160 to 319.99 DWT",
-                      "320-1000000": "7. ULCC (Ultra-Large Crude Carrier): More than 320 DWT",
-                    }}
-                  label="Vessel Size"
 
-                />}
+                  return <> {report_type && report_type < 4 && <ProForm.Group >
+                    <ProFormSelect
+                      name="eos_id"
+                      label="EOS ID"
+                      width="sm"
+                      valueEnum={eos_idData}
+                      fieldProps={
+                        {
 
-                {((currentUser?.role_type == "Trader" && report_type != 1) || (currentUser?.role_type == "Terminal") || (currentUser?.role_type == "Super")) && <ProFormDigitRange
-                  label="Total Nominated Quantity"
-                  name="total_nominated_quantity"
-                  style={{ width:100 }}
-                  separator="-"
-                  placeholder={['From', 'To']}
-                 
-                  
-                />}
+                         
+
+                          dropdownMatchSelectWidth: isMP ? true : false,
+                          mode: 'multiple',
+                          maxTagCount: 0,
+                          maxTagPlaceholder: (omittedValues) => {
+                            return omittedValues.length + " Selected"
+                          },
+                          
+                       
+
+                          notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
+                          showSearch: true,
+                          allowClear: true,
+                          onFocus: () => {
+                            fieldSelectData({ model: "Transaction", value: '', field: 'eos_id', Op: true, where: dateArr.length>0?{ 'start_of_transaction': { "between": dateArr } }:null }).then((res) => {
+
+                              setEos_idData(res.data)
+                            })
+                          },
+                          onSearch: (newValue: string) => {
+
+                            fieldSelectData({ model: "Transaction", value: newValue, field: 'eos_id', Op: true, where: dateArr.length > 0 ? { 'start_of_transaction': { "between": dateArr } } : null }).then((res) => {
+                              setEos_idData(res.data)
+                            })
+
+                          }
+                        }}
+                    />
+
+                    <ProFormSelect
+
+                      width="sm"
+                      name="jetty_name"
+                      label="Jetty"
+                      valueEnum={jetty_nameData}
+                      fieldProps={{
+                        mode: 'multiple',
+                        maxTagCount: 0,
+                        maxTagPlaceholder: (omittedValues) => {
+                          return omittedValues.length + " Selected"
+                        },
+                        onFocus: () => {
+                          fieldSelectData({ model: "Transaction", value: '', field: 'jetty_name', Op: true, where: dateArr.length > 0 ? { 'start_of_transaction': { "between": dateArr } } : null }).then((res) => {
+                            setJetty_nameData(res.data)
+                          })
+                        },
+                        onSearch: (newValue: string) => {
+
+                          fieldSelectData({ model: "Transaction", value: newValue, field: 'jetty_name', Op: true, where: dateArr.length > 0 ? { 'start_of_transaction': { "between": dateArr } } : null }).then((res) => {
+                            setJetty_nameData(res.data)
+                          })
+
+                        },
+                        notFoundContent: <Empty />,
+                      }}
+                    />
+                    <ProFormSelect
+                      name="imo_number"
+                      label="IMO Number"
+                      width="sm"
+                      valueEnum={imo_numberData}
+                      fieldProps={
+                        {
+                          mode: 'multiple',
+                          maxTagCount: 0,
+                          maxTagPlaceholder: (omittedValues) => {
+                            return omittedValues.length + " Selected"
+                          },
+                          notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
+                          showSearch: true,
+                          dropdownMatchSelectWidth: isMP ? true : false,
+                          allowClear: true,
+                          onFocus: () => {
+                            fieldSelectData({ model: "Transaction", value: '', field: 'imo_number', Op: true, where: dateArr.length > 0 ? { 'start_of_transaction': { "between": dateArr } } : null }).then((res) => {
+                              setImo_numberData(res.data)
+                            })
+                          },
+                          onSearch: (newValue: string) => {
+
+                            fieldSelectData({ model: "Transaction", value: newValue, field: 'imo_number', Op: true, where: dateArr.length > 0 ? { 'start_of_transaction': { "between": dateArr } } : null }).then((res) => {
+                              setImo_numberData(res.data)
+                            })
+
+                          }
+                        }}
+                    />
+
+
+
+
+
+
+
+
+                    <ProFormSelect
+                      name="product_name"
+                      label="Product Type"
+                      width="sm"
+                      valueEnum={product_nameData}
+                      fieldProps={{
+                        mode: 'multiple',
+                        maxTagCount: 0,
+                        maxTagPlaceholder: (omittedValues) => {
+                          return omittedValues.length + " Selected"
+                        },
+                        notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
+                        showSearch: true,
+                        allowClear: true,
+                        onFocus: () => {
+                          fieldSelectData({ model: "Transaction", value: '', field: 'product_name', Op: true, where: dateArr.length > 0 ? { 'start_of_transaction': { "between": dateArr } } : null }).then((res) => {
+                            setProduct_nameData(res.data)
+                          })
+                        },
+                        onSearch: (newValue: string) => {
+
+                          fieldSelectData({ model: "Transaction", value: newValue, field: 'product_name', Op: true, where: dateArr.length > 0 ? { 'start_of_transaction': { "between": dateArr } } : null }).then((res) => {
+                            setProduct_nameData(res.data)
+                          })
+
+                        }
+                      }}
+                    />
+                    <ProFormSelect
+
+
+                      fieldProps={{
+                        mode: 'multiple',
+                        maxTagCount: 0,
+                        maxTagPlaceholder: (omittedValues) => {
+                          return omittedValues.length + " Selected"
+                        },
+                        notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
+                        showSearch: true,
+                        allowClear: true,
+                        onFocus: () => {
+                          fieldSelectData({ model: "Transaction", value: '', field: 'status', Op: true, where: dateArr.length > 0 ? { 'start_of_transaction': { "between": dateArr } } : null }).then((res) => {
+                            var o={
+                              0: "Open",
+                              1: "Closed",
+                              2: "Cancelled"
+                              }
+                            
+                            for (var k in res.data) {
+                              res.data[k] =o[k]
+                             }
+                            setStatusData(res.data)
+                          })
+                        },
+                        onSearch: (newValue: string) => {
+
+                          fieldSelectData({ model: "Transaction", value: newValue, field: 'status', Op: true, where: dateArr.length > 0 ? { 'start_of_transaction': { "between": dateArr } } : null }).then((res) => {
+                            var o = {
+                              0: "Open",
+                              1: "Closed",
+                              2: "Cancelled"
+                            }
+
+                            for (var k in res.data) {
+                              res.data[k] = o[k]
+                            }
+                            setStatusData(res.data)
+                          })
+
+                        }
+                      }}
+
+                      valueEnum={statusData }
+                      width="sm"
+                      name="status"
+                      label="Status"
+
+                    />
+
+
+
+                    
+
+                     <ProFormSelect
+                      valueEnum={organization_idData}
+                      fieldProps={{
+                        mode: 'multiple',
+                        maxTagCount: 0,
+                        maxTagPlaceholder: (omittedValues) => {
+                          return omittedValues.length + " Selected"
+                        },
+                        notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
+                        showSearch: true,
+                        allowClear: true,
+                        onFocus: () => {
+                          fieldSelectData({ model: "Transaction", value: '', field: 'organization_id', Op: true, where: dateArr.length > 0 ? { 'start_of_transaction': { "between": dateArr } } : null }).then((res) => {
+                            
+                            setOrganization_idData(res.data)
+                          })
+                        },
+                        onSearch: (newValue: string) => {
+
+                          fieldSelectData({ model: "Transaction", value: newValue, field: 'organization_id', Op: true, where: dateArr.length > 0 ? { 'start_of_transaction': { "between": dateArr } } : null }).then((res) => {
+                           
+                            setOrganization_idData(res.data)
+                          })
+
+                        }
+                      }}
+                        width="sm"
+                        name="organization_id"
+                        label={getOrganizationName()}
+                      />
+
+                    
+
+                    
+                       <ProFormSelect
+                      valueEnum={threshold_organization_idData}
+                      fieldProps={{
+                        mode: 'multiple',
+                        maxTagCount: 0,
+                        maxTagPlaceholder: (omittedValues) => {
+                          return omittedValues.length + " Selected"
+                        },
+                        notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
+                        showSearch: true,
+                        allowClear: true,
+                        onFocus: () => {
+                          fieldSelectData({ model: "Transaction", value: '', field: 'organization_id', Op: true, where: dateArr.length > 0 ? { 'start_of_transaction': { "between": dateArr } } : null }).then((res) => {
+
+                            setThreshold_organization_idData(res.data)
+                          })
+                        },
+                        onSearch: (newValue: string) => {
+
+                          fieldSelectData({ model: "Transaction", value: newValue, field: 'organization_id', Op: true, where: dateArr.length > 0 ? { 'start_of_transaction': { "between": dateArr } } : null }).then((res) => {
+
+                            setThreshold_organization_idData(res.data)
+                          })
+
+                        }
+                      }}
+                        width="sm"
+                      name="threshold_organization_id"
+                        label={"Threshold created by"}
+                      />
+
+                    
+                    {((currentUser?.role_type == "Trader" && report_type != 1) || (currentUser?.role_type == "Terminal") || (currentUser?.role_type == "Super" && report_type != 3)) && <ProFormSelect
+                      width="sm"
+                      name="alertrule_type"
+                    
+                      valueEnum={alertrule_typeData}
+                      fieldProps={{
+                        mode: 'multiple',
+                        maxTagCount: 0,
+                        maxTagPlaceholder: (omittedValues) => {
+                          return omittedValues.length + " Selected"
+                        },
+                        notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
+                        showSearch: true,
+                        allowClear: true,
+                        onFocus: () => {
+                          fieldSelectData({ model: "Transaction", value: '', field: 'alertrule_type', Op: true, where: dateArr.length > 0 ? { 'start_of_transaction': { "between": dateArr } } : null }).then((res) => {
+
+                            setAlertrule_typeData(res.data)
+                          })
+                        },
+                        onSearch: (newValue: string) => {
+
+                          fieldSelectData({ model: "Transaction", value: newValue, field: 'alertrule_type', Op: true, where: dateArr.length > 0 ? { 'start_of_transaction': { "between": dateArr } } : null }).then((res) => {
+
+                            setAlertrule_typeData(res.data)
+                          })
+
+                        }
+                      }}
+                      label="Threshold Type"
+
+                    />}
+
+
+
+
+
+
+                    {((currentUser?.role_type == "Trader" && report_type != 1) || (currentUser?.role_type == "Terminal") || (currentUser?.role_type == "Super" && report_type != 3)) && <ProFormSelect
+                      width="sm"
+                      name="vessel_size_dwt"
+                      
+
+                      valueEnum={vessel_size_dwtData}
+                      fieldProps={{
+                        mode: 'multiple',
+                        dropdownMatchSelectWidth: isMP ? true : false,
+                        maxTagCount: 0,
+                        maxTagPlaceholder: (omittedValues) => {
+                          return omittedValues.length + " Selected"
+                        },
+                        notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
+                        showSearch: true,
+                        allowClear: true,
+                        onFocus: () => {
+                          fieldSelectData({ model: "Transaction", value: '', field: 'vessel_size_dwt', Op: true, where: dateArr.length > 0 ? { 'start_of_transaction': { "between": dateArr } } : null }).then((res) => {
+
+                            setVessel_size_dwtData(res.data)
+                          })
+                        },
+                        onSearch: (newValue: string) => {
+
+                          fieldSelectData({ model: "Transaction", value: newValue, field: 'vessel_size_dwt', Op: true, where: dateArr.length > 0 ? { 'start_of_transaction': { "between": dateArr } } : null }).then((res) => {
+
+                            setVessel_size_dwtData(res.data)
+                          })
+
+                        }
+                      }}
+                      
+
+                     
+                      label="Vessel Size"
+
+                    />}
+
+                    {((currentUser?.role_type == "Trader" && report_type != 1) || (currentUser?.role_type == "Terminal") || (currentUser?.role_type == "Super")) && <ProFormDigitRange
+                      label="Total Nominated Quantity"
+                      name="total_nominated_quantity"
+                      style={{ width: 100 }}
+                      separator="-"
+                      placeholder={['From', 'To']}
+
+
+                    />}
+
+                    <ProFormSelect
+                      width="sm"
+                      name="uom"
+                      label="UOM"
+                      initialValue={"Bls-60-F"}
+                      valueEnum={{
+                        "L-obs": "L-obs",
+                        "L-15-C": "L-15-C",
+                        "Mt": "Mt",
+                        "MtV": "MtV",
+                        "Bls-60-F": "Bls-60-F",
+
+                      }}
+
+
+                    />
+
+
+
+
+
+
+
+                  </ProForm.Group>}</>
+                }
+                }
+
+              </ProFormDependency>
+
+
+
              
-                <ProFormSelect
-                  width="sm"
-                  name="uom"
-                  label="UOM"
-                  initialValue={"Bls-60-F"}
-                  valueEnum={{
-                    "L-obs": "L-obs",
-                    "L-15-C": "L-15-C",
-                    "Mt": "Mt",
-                    "MtV": "MtV",
-                    "Bls-60-F": "Bls-60-F",
-
-                  }}
-                 
-
-                />
-              
-
-               
-
-               
-             
-
-              </ProForm.Group>}
             </ProCard>}
 
             { report_type && report_type < 4   && <RcResizeObserver

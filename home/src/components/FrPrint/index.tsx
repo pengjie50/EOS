@@ -6,7 +6,7 @@ import moment from 'moment';
 import ProTable from '@ant-design/pro-table';
 import { WaterMark } from '@ant-design/pro-layout';
 import { useModel } from 'umi';
-
+import PrintProvider, { Print, NoPrint } from 'react-easy-print';
 export type FormValueType = {
   target?: string;
   template?: string;
@@ -51,7 +51,7 @@ const FrPrint: React.FC<UpdateFrPrintProps> = (props) => {
   const date = moment().format('YYYY-MM-DD HH:mm:ss').toString();
   return (
     <Modal
-      width="100%"
+      width={2000 }
      
       centered
       destroyOnClose
@@ -62,18 +62,25 @@ const FrPrint: React.FC<UpdateFrPrintProps> = (props) => {
         props.onCancel();
       }}
       onOk={() => {
-       
-        handlePrint();
+        window.print();
+        //handlePrint();
       }}
       keyboard={true}
     >
 
+
+
+
+
       <div className={csstyle.backgroud} style={{ height:'600px' }}>
-        {}
-          <div style={{ paddingTop: 20, width: '100%', height:'580px', overflow: 'auto' }}>
+        <PrintProvider>
+          <Print single name="foo">
+          <div style={{ paddingTop: 20, width: '100%' }}>
             
           
-            <div ref={componentRef}>
+          <div ref={componentRef}>
+          
+            
             <ProTable<any>
               
               columns={columns}
@@ -85,10 +92,13 @@ const FrPrint: React.FC<UpdateFrPrintProps> = (props) => {
               bordered size="small"
 
               />
+             
+           
               </div>
            
-          </div>
-       
+            </div>
+          </Print>
+        </PrintProvider>
       </div>
 
     </Modal >

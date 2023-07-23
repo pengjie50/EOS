@@ -36,7 +36,24 @@ class InterfacedataService extends Service {
         }
 
         const list = await ctx.model.Interfacedata.findAndCountAll(obj)
+        var eos_id = []
 
+        list.rows.forEach((t) => {
+           
+            eos_id.push(t.eos_id)
+        })
+
+        const transactionList = await ctx.model.Transaction.findAll({ raw: true, where: { eos_id: eos_id } })
+        var tMap = {}
+        transactionList.forEach((c) => {
+            tMap[c.eos_id] = c
+        })
+
+        list.rows = list.rows.map((t) => {
+            t.transaction_id = tMap[t.eos_id]?.id || null
+          
+            return t
+        })
         ctx.status = 200;
         ctx.body = {
             success: true,

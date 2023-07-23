@@ -221,7 +221,7 @@ class UserService extends Service {
     async getUserInfo(user_id) {
         const ctx = this.ctx;
         var res = await ctx.model.User.findOne({
-            attributes: [[ctx.model.col('c.name'), 'company_name'], [ctx.model.col('r.type'), 'role_type'], [ctx.model.col('r.name'), 'role_name'], 'user.*'],
+            attributes: [[ctx.model.col('c.name'), 'company_name'], [ctx.model.col('c.type'), 'company_type'], [ctx.model.col('r.type'), 'role_type'], [ctx.model.col('r.name'), 'role_name'], 'user.*'],
             where: {
 
                 id: user_id,

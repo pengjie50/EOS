@@ -5,22 +5,13 @@ import { formatMessage } from '@umijs/max';
 import { history, useModel } from '@umijs/max';
 import { outLogin } from '@/services/ant-design-pro/api';
 import { stringify } from 'querystring';
+
 const loginOut = async () => {
-
-
-  //await outLogin();
-
+ 
   localStorage.setItem('token', "");
-  const { search, pathname } = window.location;
-  const urlParams = new URL(window.location.href).searchParams;
-  /** This method will jump to the location where the redirect parameter is located */
-  const redirect = urlParams.get('redirect');
-  // Note: There may be security issues, please note
-  if (window.location.pathname !== '/user/login' && !redirect) {
-    history.replace({
-      pathname: '/user/login',
-      search: 'redirect=/'
-    });
+ 
+  if (window.location.pathname !== '/user/login') {
+    window.location.href="/"
   }
 };
 // Error handling scheme: Error type
@@ -71,7 +62,7 @@ export const errorConfig: RequestConfig = {
           const { errorMessage, errorCode } = errorInfo;
 
           if (errorCode == 1005 || errorCode == 1011) {
-
+          
             if (localStorage.getItem('token')) {
 
               message.warning(errorMessage);

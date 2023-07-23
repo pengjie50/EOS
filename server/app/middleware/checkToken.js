@@ -48,11 +48,29 @@ module.exports = (options, app) => {
 
                 if (ctx.request.url != '/api/user/logout' && login_token != Authorization) {
 
+
+
+                    const log = await ctx.model.Loginlog.findOne({ where: { user_id: ctx.user.user_id }, order: [['login_time', 'desc']] });
+                    if (log) {
+
+                        var active_duration = parseInt(((new Date).getTime() - new Date(log.login_time).getTime()) / 1000)
+                        const res2 = await log.update({ logout_time: new Date(), active_duration: active_duration });
+
+                    }
+
+
                     ctx.body = { success: false, errorCode: 1011, errorMessage: "Account logged in on another device, you have been logged out", showType: 2, data: {} }
 
                     return
                 }
                 if (ctx.request.url != '/api/user/logout' && decoded && (login_time + token_timeout) <= ((new Date()).getTime()) / 1000) {
+                    const log = await ctx.model.Loginlog.findOne({ where: { user_id: ctx.user.user_id }, order: [['login_time', 'desc']] });
+                    if (log) {
+
+                        var active_duration = parseInt(((new Date).getTime() - new Date(log.login_time).getTime()) / 1000)
+                        const res2 = await log.update({ logout_time: new Date(), active_duration: active_duration });
+
+                    }
                     ctx.body = { success: false, errorCode: 1005, errorMessage: "Login status has expired", showType: 2, data: {} }
                     return
                 } else {

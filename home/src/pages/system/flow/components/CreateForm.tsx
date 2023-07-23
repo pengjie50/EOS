@@ -72,7 +72,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           searchConfig: {
             resetText: intl.formatMessage({
               id: 'pages.reset',
-              defaultMessage: '重置',
+              defaultMessage: '',
             }),
           },
           resetButtonProps: {
@@ -83,15 +83,15 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           },
         }}
         title={intl.formatMessage({
-          id: 'pages.flow.add',
-          defaultMessage: '',
+          id: 'pages.flow.xxx',
+          defaultMessage: 'Create New Transaction flow',
         })}
       >
         <ProFormText
           name="name"
           label={intl.formatMessage({
-            id: 'pages.flow.name',
-            defaultMessage: 'Flow name',
+            id: 'pages.flow.xxx',
+            defaultMessage: 'Transaction Flow Name',
           })}
           width="md"
           rules={[
@@ -100,7 +100,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
               message: (
                 <FormattedMessage
                   id="pages.flow.rules.name"
-                  defaultMessage="Please enter a flow name!"
+                  defaultMessage="Please enter a transaction flow name!"
                 />
               ),
             },
@@ -111,8 +111,8 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
       <ProFormTreeSelect
         name="pid"
         label={intl.formatMessage({
-          id: 'pages.flow.fatherFlow',
-          defaultMessage: 'Father Flow',
+          id: 'pages.flow.xxx',
+          defaultMessage: 'Father Transaction Flow',
         })}
         placeholder="Please select"
         allowClear
@@ -213,20 +213,20 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           },
         ]}
       />
-      <ProFormText
+      {/* <ProFormText
         name="icon"
         label={intl.formatMessage({
           id: 'pages.flow.icon',
           defaultMessage: 'Icon',
         })}
         width="md"
-      />
+      />*/ }
         <ProFormTextArea
           name="description"
           width="md"
           label={intl.formatMessage({
-            id: 'pages.flow.description',
-            defaultMessage: 'Flow.description',
+            id: 'pages.flow.xxx',
+            defaultMessage: 'Transaction Flow Description',
           })}
           
         />

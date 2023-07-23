@@ -25,7 +25,7 @@ import React, { useState, useEffect } from 'react';
 import { flushSync } from 'react-dom';
 import { isPC } from "@/utils/utils";
 
-
+import { KeepAliveContext } from '@umijs/max';
 import { PublicClientApplication, EventType, EventMessage, AuthenticationResult } from "@azure/msal-browser";
 import { msalConfig, loginRequest } from "../../../authConfig";
 
@@ -103,7 +103,7 @@ const Login: React.FC = () => {
   const { initialState, setInitialState } = useModel('@@initialState');
   const [isMP, setIsMP] = useState<boolean>(!isPC());
   const [redirect, setRedirect] = useState<string>(useLocation()?.search?.split("=")[1] || '/');
-
+  const { updateTab, dropByCacheKey,dropOtherTabs,refreshTab } = React.useContext(KeepAliveContext);
 
   const onlyCheck = (rule: any, value: any, callback: (arg0: string | undefined) => void) => {
     if (!(/^[A-Za-z\d]+([-_.][A-Za-z\d]+)*@([A-Za-z\d]+[-.])+[A-Za-z\d]{2,4}$/.test(value))) {
@@ -155,6 +155,7 @@ const Login: React.FC = () => {
         fontSize: '14px',
         fontWeight: 'bold',
         lineHeight: '42px',
+        fontFamily: "Alaska !important",
         color: '#fff',
         paddingLeft: `${token.paddingXS}px`,
         backgroundColor: 'rgba(0,0, 0, 0.6)',
@@ -166,6 +167,7 @@ const Login: React.FC = () => {
       [`@media screen and (min-width: ${token.screenMD}px)`]: {
         height: 42,
         fontSize: '24px !important',
+        fontFamily: "Alaska !important" ,
         fontWeight: 'bold',
         lineHeight: '42px',
         color: '#FFF',
@@ -218,6 +220,12 @@ const Login: React.FC = () => {
         localStorage.setItem('token', msg?.token || '');
 
         var user = await fetchUserInfo();
+        if (user.role_type === 'Super') {
+          localStorage.setItem('isAdmin', "true");
+        } else {
+          localStorage.setItem('isAdmin', "false");
+        }
+        
         var goto = "/"
         user.permissions.forEach((a) => {
           if (goto == "/") {
@@ -239,8 +247,14 @@ const Login: React.FC = () => {
 
 
         })
-
-        history.push(goto || redirect);
+        dropByCacheKey("/dashboard")
+        refreshTab("/dashboard")
+        var gotourl = goto || redirect
+        if (gotourl=="/") {
+          gotourl="/dashboard"
+        }
+       
+        history.push("/dashboard");
 
 
 
@@ -259,7 +273,7 @@ const Login: React.FC = () => {
 
 
   if (isAdmin) {
-
+   
     useEffect(() => {
       msalInstance.addEventCallback((event: EventMessage) => {
 
@@ -288,7 +302,7 @@ const Login: React.FC = () => {
         msalInstance.loginPopup(loginRequest);
       }
     }, [true])
-  }
+  } 
 
 
 

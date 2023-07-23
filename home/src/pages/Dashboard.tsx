@@ -1,7 +1,7 @@
 import { GridContent, ProFormSelect, ProFormDateRangePicker, ProCard, ProFormGroup, ProFormInstance, ProFormDatePicker, ProTable, ProForm } from '@ant-design/pro-components';
 import { useModel } from '@umijs/max';
 import { EyeOutlined } from '@ant-design/icons';
-import { Card, theme, Progress, Statistic, Badge, message, Tooltip, Button, Empty, ConfigProvider, Steps } from 'antd';
+import { Card, theme, Progress, Statistic, Badge, message, Tooltip, Button, Empty, ConfigProvider, Steps, Pagination } from 'antd';
 import React, { useEffect, useState, useRef } from 'react';
 const { Divider } = ProCard;
 import { flow } from './system/flow/service';
@@ -31,10 +31,17 @@ const getFilterStr = (organization_id, organizationMap, dateArr, status, title) 
 
     return organizationMap[a]?.name
   })
-  var dateStr = dateArr[0] && dateArr[1] ? ' - ' + moment(dateArr[0]).format('DD/MM/YYYY') + ' to ' + moment(dateArr[1]).format('DD/MM/YYYY') : ''
+  var dateStr = dateArr[0] && dateArr[1] ? (arr?.length>0?' - ':"") + moment(dateArr[0]).format('DD/MM/YYYY') + ' to ' + moment(dateArr[1]).format('DD/MM/YYYY') : ''
   var terminalStr = (organization_id ? arr.join(",") : "")
 
-  var statusStr = (status === '' ? '' : (status == 1 ? 'Closed' : 'Open'))
+ // var statusStr = (status === '' ? '' : (status == 1 ? 'Closed' : 'Open'))
+  var statusStr = ""
+  if (status == "Open") {
+    statusStr = "Open"
+  } else {
+    statusStr=status.join(",").replace("0", "Open").replace("1", "Closed").replace("2", "Cancelled")
+  }
+  
   if (terminalStr || dateStr) {
     return statusStr + ' ' + title + ' (' + terminalStr + dateStr + ')'
   } else {
@@ -45,7 +52,7 @@ const getFilterStr = (organization_id, organizationMap, dateArr, status, title) 
 }
 
 
-import { KeepAliveContext, useLocation } from '@umijs/max';
+import {  KeepAliveContext,useLocation } from '@umijs/max';
 
 
 import { useContext } from 'react';
@@ -84,8 +91,8 @@ const Welcome: React.FC = () => {
   const [transactionMap, setTransactionMap] = useState<any>({});
   const [organizationList, setOrganizationList] = useState<any>([]);
 
-
-
+  const [isLoding, setIsLoding] = useState<boolean>(false);
+  
   const { updateTab, dropByCacheKey } = React.useContext(KeepAliveContext);
   
   
@@ -150,7 +157,7 @@ const Welcome: React.FC = () => {
 
     if (dateArr[0] && dateArr[1]) {
 
-
+      dateArr[1] = new Date((new Date(dateArr[1])).getTime() + 3600 * 24 * 1000 - 1)
 
       p.start_of_transaction = {
         'field': 'start_of_transaction',
@@ -198,7 +205,7 @@ const Welcome: React.FC = () => {
           res.data.forEach((a) => {
             if (!m[a.transaction_id]) {
               m[a.transaction_id] = {
-                eventList: [], processMap: {}
+                eventList: [], processMap: {},
               }
             }
             m[a.transaction_id].eventList.push(a)
@@ -435,7 +442,9 @@ const Welcome: React.FC = () => {
 
 
 
-  }, [organization_id, dateArr, status, tab])
+  }, [isLoding, tab])
+
+ 
   var color = {
     'icon-daojishimeidian': '#70AD47',
     'icon-matou': '#70AD47',
@@ -514,16 +523,24 @@ const Welcome: React.FC = () => {
 
         <ProCard wrap={isMP} gutter={8}>
 
-          <ProForm<any> formRef={formRef} layout={'inline'}
-           
+          <ProForm<any> formRef={formRef} layout={isMP?'vertical':'inline'}
+            
             onReset={() => {
               setOrganization_id([])
               setStatus([])
               setDateArr([])
-            } }
+            }}
+            
             submitter={{
+              searchConfig: {
+               
+                submitText: 'Search',
+              },
+              onSubmit: () => {
+                setIsLoding(!isLoding)
+              },
               render: (props, doms) => {
-                return doms[0]
+                return doms
               },
             }}
             >
@@ -532,8 +549,8 @@ const Welcome: React.FC = () => {
             <ProFormSelect
           
               name="organization_id"
-              label=""
-              width={240 }
+                label=""
+                width={isMP ? 'lg' : 240}
               fieldProps={{
                 options: organizationList ,
                 mode: 'multiple',
@@ -568,7 +585,7 @@ const Welcome: React.FC = () => {
                   },
                 }}
               label=""
-              width={180}
+                width={isMP ? 'lg' : 180}
               onChange={(a) => {
                 if (a) {
                   setStatus(a)
@@ -586,7 +603,7 @@ const Welcome: React.FC = () => {
               placeholder="Filter By: Status"
 
             />
-            <ProFormDateRangePicker width={380}  name="dateRange" fieldProps={{ placeholder: ['Start Date (From) ', 'Start Date (To) '] }} onChange={(a, b) => {
+              <ProFormDateRangePicker width={isMP ? 'lg' : 380}  name="dateRange" fieldProps={{ placeholder: ['Start Date (From) ', 'Start Date (To) '] }} onChange={(a, b) => {
 
 
               setDateArr(b)
@@ -604,7 +621,7 @@ const Welcome: React.FC = () => {
         </ProCard>
 
 
-        <ProCard collapsed={collapsed4} colSpan={24} style={{ marginBlockStart: 16 }} wrap title={<div className="page_title">  {getFilterStr(organization_id, organizationList, dateArr, 0, "Transactions") + " ( Count:" + transactionList.length + " )"} </div>} extra={< EyeOutlined onClick={() => {
+        <ProCard collapsed={collapsed4} colSpan={24} style={{ marginBlockStart: 16 }} wrap title={<div className="page_title">  {getFilterStr(organization_id, organizationMap, dateArr, "Open", "Transactions") + " ( Count:" + transactionList.length + " )"} </div>} extra={< EyeOutlined onClick={() => {
           setCollapsed4(!collapsed4);
           localStorage.setItem('collapsed4', !collapsed4);
         }} style={{ fontWeight: 'normal', fontSize: 14 }} />} bordered headerBordered >
@@ -657,7 +674,7 @@ const Welcome: React.FC = () => {
                 },
                 {
 
-                  title: <FormattedMessage id="pages.transaction.startOfTransaction" defaultMessage="Start Of Transaction" />,
+                  title: <FormattedMessage id="pages.transaction.xxx" defaultMessage="Start Of Transaction" />,
                   dataIndex: 'start_of_transaction',
                   width: 200,
                   //sorter: true,
@@ -666,15 +683,15 @@ const Welcome: React.FC = () => {
                   hideInSearch: true,
                 },
                 {
-                  title: <FormattedMessage id="pages.transaction.imoNumber" defaultMessage="IMO Number" />,
-                  dataIndex: 'imo_number',
-                  valueType: 'text',
+                  title: <span>imo_number</span>,
+                  dataIndex: 'imo_number'
+                  
                 },
                 {
-                  title: <FormattedMessage id="pages.transaction.vesselName" defaultMessage="Vessel Name" />,
-                  dataIndex: 'vessel_name',
+                  title: <span>Vessel Name</span>,
+                  dataIndex: 'vessel_name'
                   
-                  valueType: 'text',
+                
                 },
 
                 {
@@ -703,7 +720,7 @@ const Welcome: React.FC = () => {
                 },
 
                 {
-                  title: <FormattedMessage id="pages.transaction.jettyName" defaultMessage="Jetty Name" />,
+                  title: <span>Jetty Name</span>,
                   dataIndex: 'jetty_name',
                   
                   align: "center",
@@ -754,7 +771,19 @@ const Welcome: React.FC = () => {
                   render: (dom, entity) => {
                     var p = transactionMap[entity.id]?.processMap[e.id]
                     var val = p?.duration
+                    var eventArr=p?.eventArr
+                    if (entity.status == 0 && eventArr?.length > 0 && entity.flow_id==e.id) {
+                      val = ((new Date()).getTime() - (new Date(eventArr[0].event_time)).getTime()) / 1000
+                    }
+                   
+
+                    var eventList = transactionMap[entity.id]?.eventList
                     var total_duration = entity.total_duration
+                    if (entity.status == 0 && eventList?.length>0 ) {
+                      total_duration = ((new Date()).getTime() - (new Date(eventList[0].event_time)).getTime())/1000
+                    }
+
+                    
                     var ta = transactionAlert[entity.id]?.[e.id]
                     return <div style={{ position: 'relative', float: 'left', zIndex: 1, textAlign: 'center', height: "50px", width: '100%' }}>
 
@@ -836,8 +865,8 @@ const Welcome: React.FC = () => {
 
             <ProCard colSpan={24} ghost={true} bodyStyle={{ fontSize: '30px', lineHeight: '30px', height: '30px' }} >
               <div onClick={() => {
-                dropByCacheKey("/Transactions");
-                history.push(`/Transactions`, { organization_id, dateArr, status: [] });
+                dropByCacheKey("/transactions");
+                history.push(`/transactions`, { organization_id, dateArr, status: [] });
 
               }} style={{ cursor: 'pointer', float: 'left', lineHeight: '22px', height: '22px', fontSize: '14px', marginRight: '16px', width: isMP ? '100%' : 'auto' }}>
                 <span style={{ fontWeight: 500 }}>Total</span><span style={{ marginLeft: '8px' }}>{statisticsObj?.no_of_transaction?.total}</span>
@@ -890,22 +919,22 @@ const Welcome: React.FC = () => {
             <ProCard ghost={true} style={{ marginBlockStart: 22 }} gutter={2}>
               
               <div onClick={() => {
-                dropByCacheKey("/Transactions");
-                history.push(`/Transactions`, { organization_id, dateArr, status: ['1']});
+                dropByCacheKey("/transactions");
+                history.push(`/transactions`, { organization_id, dateArr, status: ['1']});
 
               }} style={{ cursor: 'pointer', float: 'left', lineHeight: '22px', height: '22px', fontSize: '14px', marginRight: '16px' }}>
                 <span style={{ fontWeight: 500 }}><SvgIcon style={{ color: "rgb(19, 194, 194)" }} type="icon-youjiantou" /> Closed</span> <span style={{ marginLeft: '8px' }}>{statisticsObj?.no_of_transaction?.closed}</span>
               </div>
               <div onClick={() => {
-                dropByCacheKey("/Transactions");
-                history.push(`/Transactions`, { organization_id, dateArr, status: ['0'] });
+                dropByCacheKey("/transactions");
+                history.push(`/transactions`, { organization_id, dateArr, status: ['0'] });
 
               }} style={{ cursor: 'pointer', float: 'left', lineHeight: '22px', height: '22px', fontSize: '14px', marginRight: '16px' }}>
                 <span style={{ fontWeight: 500 }}><SvgIcon style={{ color:"#00b578" }}  type="icon-youjiantou" /> Open</span> <span style={{ marginLeft: '8px' }}>{statisticsObj?.no_of_transaction?.open}</span>
               </div>
               <div onClick={() => {
-                dropByCacheKey("/Transactions");
-                history.push(`/Transactions`, {organization_id, dateArr, status: ['2'] });
+                dropByCacheKey("/transactions");
+                history.push(`/transactions`, {organization_id, dateArr, status: ['2'] });
 
               }} style={{ cursor: 'pointer', float: 'left', lineHeight: '22px', height: '22px', fontSize: '14px', marginRight: '16px' }}>
                 <span style={{ fontWeight: 500 }}><SvgIcon style={{ color: "#333" }}  type="icon-youjiantou" /> Cancelled</span> <span style={{ marginLeft: '8px' }}>{statisticsObj?.no_of_transaction?.cancelled}</span>
@@ -960,7 +989,7 @@ const Welcome: React.FC = () => {
               flowList.map((e, i) => {
 
                 return <Step status="finish" onClick={() => {
-                  dropByCacheKey("/Transactions");
+                  dropByCacheKey("/threshold/alert");
                   history.push(`/threshold/alert`, { organization_id, dateArr, flow_id: e.id, status,tab })
 
                 }} icon={

@@ -4,7 +4,7 @@
 }
 
 * {
-  font-family: "Alaska" !important;
+  font-family: Arial !important;
 }
 html,
 body,
@@ -15,9 +15,12 @@ body,
   font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, 'Noto Sans', sans-serif, 'Apple Color Emoji', 'Segoe UI Emoji', 'Segoe UI Symbol', 'Noto Color Emoji';
 }
 
-
+.ant-pro-base-menu-item-text, h1 {
+  font-family: "Alaska" !important;
+}
 
 .page_title, .ant-modal-title, .ant-page-header-heading-title {
+  font-family: "Alaska" !important;
   font-size: 20px !important;
 }
 
@@ -38,15 +41,18 @@ body,
   font-weight: bold;
   color: #000;
 }
-
+.ant-pro-table .ant-table-wrapper .ant-table-pagination.ant-pagination {
+ 
+  padding-right: 10px;
+}
 
 @media (min-width: 768px) {
 
 
- 
 
 
-  *:not(.ant-modal-title,.white-icon,.ant-page-header-heading-title,.page_title,.my-font-size,.my-font-size *) {
+
+  *:not(.ant-modal-title,h1,.white-icon,.ant-pro-base-menu-item-text,.ant-page-header-heading-title,.page_title,.my-font-size,.my-font-size *) {
     font-size: 17px !important;
   }
 
@@ -247,6 +253,12 @@ ol {
   color: #fff;
 }*/
 @media screen and (max-width: 600px) {
+
+  .ant-pagination .ant-pagination-options {
+    margin-top: 10px;
+    margin-left: 0;
+    display: block !important;
+  }
   .ant-pro-layout .ant-pro-layout-content {
     padding-block: 6px !important;
     padding-inline: 8px !important;
@@ -512,7 +524,7 @@ a:not(.ant-menu-title-content a) {
 
 .runtime-keep-alive-tabs-layout {
   height: 1px;
-  overflow: hidden;
+  overflow:hidden;
 }
 
 .my-tab .ant-pro-card {
@@ -594,9 +606,21 @@ a:not(.ant-menu-title-content a) {
   border: 1px solid rgba(255, 255, 255, 1);
 }
 
-
+.ant-tooltip .ant-tooltip-inner{
+    max-height:300px;
+    max-width:600px;
+    overflow:auto;
+}
 
 
 .my-descriptions-item-white .ant-descriptions-item {
+  padding-bottom: 0px !important;
+}
+
+.printContent {
+  overflow: hidden;
+  height: 0;
+}
+.eventFromTo .ant-descriptions-item {
   padding-bottom: 0px !important;
 }

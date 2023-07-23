@@ -57,7 +57,7 @@ class SendAlarmEmail extends Subscription {
 
     static get schedule() {
         return {
-            interval: '10s',
+            interval: '60s',
             type: 'worker',
         };
     }
@@ -136,16 +136,20 @@ class SendAlarmEmail extends Subscription {
         }
 
 
+
+
+
       
-        const alertDo = async (a, t, flowMap, type, alert_rule_transaction_id, trueTime) => {
+        const alertDo = async (a, t, flowMap, type, alert_rule_transaction_id, trueTime, fromEventObj, toEventObj) => {
 
-
-           
-            var oh = AlertMap[t.id + alert_rule_transaction_id + type]
+           var work_order_id = toEventObj?.work_order_id || fromEventObj?.work_order_id || null
+           var work_order_sequence_number = toEventObj?.work_order_sequence_number || fromEventObj?.work_order_sequence_number || null
+            var ak = t.id + alert_rule_transaction_id + type + "_" + (work_order_id || 'null')+ "_" + (work_order_sequence_number || "null")
+            var oh = AlertMap[ak]
 
             if (!oh) {
-                oh = await ctx.model.Alert.findOne({ where: { transaction_id: t.id, alert_rule_transaction_id: alert_rule_transaction_id, type: type } })
-                AlertMap[t.id + alert_rule_transaction_id + type] = oh
+                oh = await ctx.model.Alert.findOne({ where: { transaction_id: t.id, work_order_id: work_order_id, work_order_sequence_number: work_order_sequence_number, alert_rule_transaction_id: alert_rule_transaction_id, type: type } })
+                AlertMap[ak] = oh
             }
 
             var h = oh
@@ -169,6 +173,9 @@ class SendAlarmEmail extends Subscription {
             alert.alertrule_type = a.type
             alert.total_duration = trueTime
             alert.type = type
+            alert.work_order_id = work_order_id
+            alert.work_order_sequence_number = work_order_sequence_number
+
 
 
             var ba = await ctx.model.Alert.create(alert);
@@ -218,6 +225,31 @@ class SendAlarmEmail extends Subscription {
 
 
 
+        }
+
+        const compareDo = async (flowMap, ar, transaction, ar_amber_time, ar_red_time, trueTime, fromEventObj, toEventObj ) => {
+            
+            await SaveAlertruleTransaction(ar, transaction)
+            var alert_rule_transaction_id = await SaveAlertruleTransaction(ar, transaction)
+           
+            if (ar_amber_time > 0 && trueTime > ar_amber_time) {
+               
+                var alert_rule_transaction_id = await SaveAlertruleTransaction(ar, transaction, 1, null)
+
+                await alertDo(ar, transaction, flowMap, 0, alert_rule_transaction_id, trueTime, fromEventObj, toEventObj)
+
+
+            }
+
+            if (ar_red_time > 0 && trueTime > ar_red_time) {
+
+
+
+                var alert_rule_transaction_id = await SaveAlertruleTransaction(ar, transaction, null, 1)
+                await alertDo(ar, transaction, flowMap, 1, alert_rule_transaction_id, trueTime, fromEventObj, toEventObj)
+            }
+
+            var alert_rule_transaction_id = await SaveAlertruleTransaction(ar, transaction, null, null)
         }
 
 
@@ -297,7 +329,7 @@ class SendAlarmEmail extends Subscription {
             eventList.forEach((a, index) => {
 
                 if (a.work_order_id && a.work_order_sequence_number) {
-                    eventMap[a.flow_id + a.work_order_id + a.work_order_sequence_number] = a
+                    eventMap[a.flow_id +"_"+ (a.work_order_id || 'null') +"_"+ (a.work_order_sequence_number || 'null')] = a
                 } else {
                     eventMap[a.flow_id] = a
                 }
@@ -339,7 +371,9 @@ class SendAlarmEmail extends Subscription {
 
             var transaction = transactionList[step]
 
-           var work_order_items= transaction.work_order_items_check.split(",")
+            var work_order_items=[]
+
+             work_order_items= transaction.work_order_items_check?.split(",") || []
 
             var ar = alertruleList[step1]
 
@@ -358,8 +392,8 @@ class SendAlarmEmail extends Subscription {
                 t1 = true
             }
 
-            var t2 = true
-            /*if (ar.product_quantity_in_mt_from == null && ar.product_quantity_in_mt_to == null && ar.product_quantity_in_bls_60_f_from == null && ar.product_quantity_in_bls_60_f_to == null) {
+            var t2 = false
+            if (ar.product_quantity_in_mt_from == null && ar.product_quantity_in_mt_to == null && ar.product_quantity_in_bls_60_f_from == null && ar.product_quantity_in_bls_60_f_to == null) {
 
                 t2 = true
             } else if (ar.product_quantity_in_bls_60_f_from == null && ar.product_quantity_in_bls_60_f_to == null) {
@@ -371,15 +405,18 @@ class SendAlarmEmail extends Subscription {
             } else if (ar.product_quantity_in_mt_from == null && ar.product_quantity_in_mt_to == null) {
 
                 if (ar.product_quantity_in_bls_60_f_from <= transaction.product_quantity_in_bls_60_f && transaction.product_quantity_in_bls_60_f < ar.product_quantity_in_bls_60_f_to) {
+
+                  
+
                     t2 = true
 
                 }
-            }*/
+            }
            
             if (t1 && t2) {
 
                 var transactioneventList = null
-
+               
                 if (!m[transaction.id]) {
                     step1++
                     await oneDo()
@@ -387,7 +424,7 @@ class SendAlarmEmail extends Subscription {
                 }
                 var transactioneventProcessMap = {}
 
-
+               
 
                 transactioneventList = m[transaction.id].eventList
 
@@ -397,7 +434,7 @@ class SendAlarmEmail extends Subscription {
                     }
                     transactioneventProcessMap[tel.flow_pid].push(tel)
                 })
-
+              
 
                 var transactioneeventMap = m[transaction.id].eventMap
                 var lastEvent = transactioneventList[transactioneventList.length - 1]
@@ -415,7 +452,7 @@ class SendAlarmEmail extends Subscription {
                     }
 
                 }
-
+               
                 var ar_red_time = 0
                 if (ar.red_hours || ar.red_mins) {
 
@@ -427,17 +464,20 @@ class SendAlarmEmail extends Subscription {
                     }
 
                 }
-
+                
                 if (ar.type == 0) {
                     //第一种情况，事件还不完整，用当前时间去减第一个时间
-                    
+
+
+                 
+                   
                     var processEventList = transactioneventProcessMap[ar.flow_id]
                     if (!processEventList || processEventList.length == 0) {
                         step1++
                         await oneDo()
                         return
                     }
-                    
+                   
                     var isEnd = false
                     var processCode = flowMap[ar.flow_id]
 
@@ -460,7 +500,7 @@ class SendAlarmEmail extends Subscription {
 
                         var pearr = processEventList.filter((pe) => {
 
-                            return flowMap[pe.flow_id].code == 2007
+                            return flowMap[pe.flow_id]?.code == 2007
                         })
 
                         if (work_order_items.length == pearr.length) {
@@ -496,34 +536,15 @@ class SendAlarmEmail extends Subscription {
 
                     }
 
+                    var trueTime=0
+                    
                     if (isEnd) {
-                        var trueTime = (new Date(processEventList[processEventList.length - 1].event_time)).getTime() / 1000 - (new Date(processEventList[0].event_time)).getTime() / 1000
+                         trueTime = (new Date(processEventList[processEventList.length - 1].event_time)).getTime() / 1000 - (new Date(processEventList[0].event_time)).getTime() / 1000
                     } else {
-                        var trueTime = (new Date()).getTime() / 1000 - (new Date(processEventList[0].event_time)).getTime() / 1000
+                         trueTime = (new Date()).getTime() / 1000 - (new Date(processEventList[0].event_time)).getTime() / 1000
                     }
                    
-                    await SaveAlertruleTransaction(ar, transaction)
-
-                    var alert_rule_transaction_id = await SaveAlertruleTransaction(ar, transaction)
-
-                    if (ar_amber_time > 0 && trueTime > ar_amber_time && trueTime < ar_red_time) {
-
-                        var alert_rule_transaction_id = await SaveAlertruleTransaction(ar, transaction, 1, null)
-
-
-                        await alertDo(ar, transaction, flowMap, 0, alert_rule_transaction_id, trueTime)
-
-
-                    }
-
-
-                    if (ar_red_time > 0 && trueTime > ar_red_time) {
-
-                        var alert_rule_transaction_id = await SaveAlertruleTransaction(ar, transaction, null, 1)
-                        await alertDo(ar, transaction, flowMap, 1, alert_rule_transaction_id, trueTime)
-                    }
-
-                    var alert_rule_transaction_id = await SaveAlertruleTransaction(ar, transaction, null, null)
+                    await compareDo(flowMap, ar, transaction, ar_amber_time, ar_red_time, trueTime)
 
 
                 } else if (ar.type == 1) {
@@ -534,53 +555,100 @@ class SendAlarmEmail extends Subscription {
                         return
                     }
 
-                    var fromEvent = transactioneventList.find((tel) => {
+                    var fromEvent = transactioneventList.filter((tel) => {
                         return tel.flow_id == ar.flow_id
 
                     })
+                   
 
-                    var toEvent = transactioneventList.find((tel) => {
+                    var toEvent = transactioneventList.filter((tel) => {
                         return tel.flow_id == ar.flow_id_to
                     })
+                    var step2=0
+                    async function Do2() {
+                        if (step2 >= fromEvent.length) {
+                            return
+                        }
+                        var fromEventObj = fromEvent[step2]
+                        if (fromEventObj) {
+                            
+
+                            var toEventArr= toEvent.filter((te2) => {
+                                if (!fromEventObj.work_order_id && !fromEventObj.work_order_sequence_number) {
+                                   return true
+                                } else if (fromEventObj.work_order_id && !fromEventObj.work_order_sequence_number) {
+                                    if (!te2.work_order_id && !te2.work_order_sequence_number) {
+                                        return true
+                                    } else if (te2.work_order_id) {
+                                        if (te2.work_order_id == fromEventObj.work_order_id) {
+                                            return true
+                                        }
+                                    } 
+                                } else if (fromEventObj.work_order_id && fromEventObj.work_order_sequence_number) {
+                                    
+                                    if (!te2.work_order_id && !te2.work_order_sequence_number) {
+
+                                        
+                                        return true
+                                    }else if (te2.work_order_id && !te2.work_order_sequence_number) {
+                                        if (te2.work_order_id == fromEventObj.work_order_id) {
+
+                                            
+                                            return true
+                                        }
+                                    } else if (te2.work_order_id && te2.work_order_sequence_number) {
+                                        if (te2.work_order_id == fromEventObj.work_order_id && te2.work_order_sequence_number == fromEventObj.work_order_sequence_number) {
+
+                                          
+                                            return true
+                                        }
+                                    }
+                                   
+                                }
+                                return false
+                            })
+
+                            if (toEventArr.length > 0) {
+                               
+                                var step3 = 0
+                                async function Do3() {
+                                    if (step3 >= toEventArr.length) {
+                                        return
+                                    }
+
+                                    var toEventObj = toEventArr[step3]
+                                    var trueTime = (new Date(toEventObj.event_time)).getTime() / 1000 - (new Date(fromEventObj.event_time)).getTime() / 1000
+
+                                    
+
+                                    
+                                    await compareDo(flowMap, ar, transaction, ar_amber_time, ar_red_time, trueTime, fromEventObj, toEventObj)
 
 
 
-                    if (fromEvent && !toEvent) {
-                        var trueTime = (new Date()).getTime() / 1000 - (new Date(fromEvent.event_time)).getTime() / 1000
-                    } else if (fromEvent && toEvent) {
-                        var trueTime = (new Date(toEvent.event_time)).getTime() / 1000 - (new Date(fromEvent.event_time)).getTime() / 1000
-                    } else {
-                        step1++
-                        await oneDo()
-                        return
+                                    step3++
+                                    await Do3()
+                                }
+                                await Do3()
+
+
+                            } else {
+
+                                
+                                var trueTime = (new Date()).getTime() / 1000 - (new Date(fromEventObj.event_time)).getTime() / 1000
+                               
+                                await compareDo(flowMap, ar, transaction, ar_amber_time, ar_red_time, trueTime, fromEventObj)
+
+                            }
+                           
+                        }
+                        step2++
+                        await Do2()
                     }
 
-                    await SaveAlertruleTransaction(ar, transaction)
+                    await Do2()
 
 
-                    var alert_rule_transaction_id = await SaveAlertruleTransaction(ar, transaction)
-
-
-
-
-                    if (ar_amber_time > 0 && trueTime > ar_amber_time && trueTime < ar_red_time) {
-
-                        var alert_rule_transaction_id = await SaveAlertruleTransaction(ar, transaction, 1, null)
-
-
-                        await alertDo(ar, transaction, flowMap, 0, alert_rule_transaction_id, trueTime)
-
-
-                    }
-
-
-                    if (ar_red_time > 0 && trueTime > ar_red_time) {
-
-                        var alert_rule_transaction_id = await SaveAlertruleTransaction(ar, transaction, null, 1)
-                        await alertDo(ar, transaction, flowMap, 1, alert_rule_transaction_id, trueTime)
-                    }
-
-                    var alert_rule_transaction_id = await SaveAlertruleTransaction(ar, transaction, null, null)
 
                 } else if (ar.type == 2) {
 
@@ -589,7 +657,7 @@ class SendAlarmEmail extends Subscription {
                         await oneDo()
                         return
                     }
-
+                    var trueTime=0
                     if (transactioneventList.find((tel) => {
                         return tel.flow_id == flowList[flowList.length - 1].id
 
@@ -600,32 +668,7 @@ class SendAlarmEmail extends Subscription {
                     }
 
 
-                    await SaveAlertruleTransaction(ar, transaction)
-
-
-
-                    var alert_rule_transaction_id = await SaveAlertruleTransaction(ar, transaction)
-
-
-
-                    if (ar_amber_time > 0 && trueTime > ar_amber_time && trueTime < ar_red_time) {
-
-                        var alert_rule_transaction_id = await SaveAlertruleTransaction(ar, transaction, 1, null)
-
-
-                        await alertDo(ar, transaction, flowMap, 0, alert_rule_transaction_id, trueTime)
-
-
-                    }
-
-
-                    if (ar_red_time > 0 && trueTime > ar_red_time) {
-
-                        var alert_rule_transaction_id = await SaveAlertruleTransaction(ar, transaction, null, 1)
-                        await alertDo(ar, transaction, flowMap, 1, alert_rule_transaction_id, trueTime)
-                    }
-
-                    var alert_rule_transaction_id = await SaveAlertruleTransaction(ar, transaction, null, null)
+                    await compareDo(flowMap, ar, transaction, ar_amber_time, ar_red_time, trueTime)
 
 
 

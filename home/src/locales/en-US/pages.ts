@@ -180,7 +180,7 @@ export default {
 
   
 
-  'pages.alertrule.add': 'Creat New Threshold Limit Setting',
+  'pages.alertrule.add': 'Create New Threshold Limit Setting',
   'pages.alertrule.mod': 'Modify Alert Threshold Settings',
   'pages.alertrule.rules.flow_id': 'Please select a process !',
   'pages.alertrule.rules.hours': 'Please enter hours !',
@@ -203,7 +203,7 @@ export default {
   'pages.operlog.result': 'Result',
   'pages.operlog.ip': 'IP',
   
-  'pages.operlog.operTime': 'Operation time',
+  'pages.operlog.operTime': 'Operation Date',
 
 
   'pages.loginlog.ip': 'URL',
@@ -214,7 +214,7 @@ export default {
   'pages.loginlog.success': 'Success',
   'pages.loginlog.error': 'Error',
   'pages.loginlog.information': 'Information',
-  'pages.loginlog.loginTime': 'Login Time',
+  'pages.loginlog.loginTime': 'Login Date',
 
   'pages.alert.addrule': 'Add alert rule',
   'pages.alert.rulelist': 'View alert rules',

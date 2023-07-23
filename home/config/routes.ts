@@ -29,7 +29,7 @@ export default [
     ],
   },
   {
-    path: '/Dashboard',
+    path: '/dashboard',
     name: 'Dashboard',
     access: 'canDashboard',
     icon: 'TableOutlined',
@@ -37,7 +37,7 @@ export default [
   },
  
   {
-    path: '/Transactions',
+    path: '/transactions',
     name: 'Transactions',
     access: 'canTransactionsList',
     icon: 'ReconciliationOutlined',
@@ -45,6 +45,7 @@ export default [
   },
   {
     path: '/transaction/blockchainIntegration',
+    access:"canBlockchain",
     component: './transaction/components/BlockchainIntegration',
     hideInMenu: true
   },
@@ -117,7 +118,7 @@ export default [
       },
 
       {
-        name: 'Jetty Criteria',
+        name: 'Jetty',
         icon: 'idcard',
         onclick: () => {
           alert(1)
@@ -138,7 +139,7 @@ export default [
       },
      
   {
-    path: '/Report',
+    path: '/report',
     key:'Report',
     name: 'Report',
     icon: 'FileZipOutlined',
@@ -343,12 +344,12 @@ export default [
   
   {
     path: '/',
-    redirect: '/Dashboard',
+    redirect: '/dashboard',
   },
   
   {
     path: '*',
     layout: false,
-    redirect: '/Dashboard',
+    redirect: '/dashboard',
   },
 ];

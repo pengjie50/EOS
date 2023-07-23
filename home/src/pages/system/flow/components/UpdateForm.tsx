@@ -76,7 +76,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           searchConfig: {
             resetText: intl.formatMessage({
               id: 'pages.reset',
-              defaultMessage: '重置',
+              defaultMessage: '',
             }),
           },
           resetButtonProps: {
@@ -87,15 +87,15 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           },
         }}
         title={intl.formatMessage({
-          id: 'pages.searchTable.updateForm.basicConfig',
-          defaultMessage: '基本信息',
+          id: 'pages.xxx',
+          defaultMessage: 'Edit Transaction flow',
         })}
       >
       <ProFormText
         name="name"
         label={intl.formatMessage({
-          id: 'pages.flow.name',
-          defaultMessage: 'Flow name',
+          id: 'pages.flow.xx',
+          defaultMessage: 'Transaction Flow name',
         })}
         width="md"
         rules={[
@@ -104,7 +104,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
             message: (
               <FormattedMessage
                 id="pages.flow.rules.name"
-                defaultMessage="Please enter a flow name!"
+                defaultMessage="Please enter a transaction flow name!"
               />
             ),
           },
@@ -116,8 +116,8 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
       <ProFormTreeSelect
         name="pid"
         label={intl.formatMessage({
-          id: 'pages.flow.fatherFlow',
-          defaultMessage: 'Father Flow',
+          id: 'pages.flow.xxx',
+          defaultMessage: 'Transaction Father Flow',
         })}
         placeholder="Please select"
         allowClear
@@ -210,6 +210,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           },
         ]}
       />
+      {/*
       <ProFormText
         name="icon"
         label={intl.formatMessage({
@@ -218,6 +219,8 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         })}
         width="md"
       />
+
+*/ } 
 
       <ProFormText
         name="code"
@@ -231,8 +234,8 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         name="description"
         width="md"
         label={intl.formatMessage({
-          id: 'pages.flow.description',
-          defaultMessage: 'Flow.description',
+          id: 'pages.flow.xxx',
+          defaultMessage: 'Transaction Flow Description',
         })}
 
       />

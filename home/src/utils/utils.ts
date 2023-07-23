@@ -17,7 +17,7 @@ export function tree(data: any, pid = null, key = 'pid',no) {
         temp.no = k
         //data[i].no = k
       } else {
-        temp.no = no + "-" + k
+        temp.no = no + "_" + k
        // data[i].no += no + "-" + k
       }
      

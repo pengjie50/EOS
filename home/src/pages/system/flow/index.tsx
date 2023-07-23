@@ -9,6 +9,7 @@ import MPSort from "@/components/MPSort";
 import {
   FooterToolbar,
   ModalForm,
+  DragSortTable,
   PageContainer,
   ProDescriptions,
   ProFormText,
@@ -18,8 +19,8 @@ import {
   ProTable,
 } from '@ant-design/pro-components';
 import { FormattedMessage, useIntl, formatMessage } from '@umijs/max';
-import { Button, Drawer, Input, message, Modal, Popover } from 'antd';
-import React, { useRef, useState } from 'react';
+import { Button, Drawer, Input, message, Modal, Popover, Pagination, FloatButton } from 'antd';
+import React, { useRef, useState, useEffect } from 'react';
 import CreateForm from './components/CreateForm';
 import UpdateForm from './components/UpdateForm';
 import { tree } from "@/utils/utils";
@@ -188,11 +189,18 @@ const TableList: React.FC = () => {
 
 
         </Popover>
-        {/*<PlusOutlined onClick={() => { handleModalOpen(true) }} />*/ }
+        {<PlusOutlined onClick={() => { handleModalOpen(true) }} /> }
       </Space>
     </div>
   )
+  useEffect(() => {
 
+   
+    if (isMP) {
+      getData(1)
+    }
+
+  }, [true]);
   const onFormSearchSubmit = (a) => {
 
 
@@ -224,7 +232,7 @@ const TableList: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [MPfilter, setMPfilter] = useState<any>({})
   const [MPSorter, setMPSorter] = useState<any>({});
-
+  const [MPPagination, setMPPagination] = useState<any>({})
   async function getData(page, filter__) {
     var sorter = {}
     await setMPSorter((sorter_) => {
@@ -239,21 +247,18 @@ const TableList: React.FC = () => {
     const append = await flow({
       ...{
         "current": page,
-        "pageSize": 10
+        "pageSize": 3
 
       }, ...filter, sorter: { sort: "ascend" }
     })
 
     tree(append.data, "                                    ", 'pid')
     
-    setData(val => [...val, ...append.data])
-    setHasMore(10 * (page - 1) + append.data.length < append.total)
+    setMPPagination({ total: append.total })
+    setData(append.data)
+   
   }
-  async function loadMore(isRetry: boolean) {
-
-    await getData(currentPage, MPfilter)
-    setCurrentPage(currentPage + 1)
-  }
+ 
   //--MP end
   const columns: ProColumns<FlowListItem>[] = [
 
@@ -261,6 +266,7 @@ const TableList: React.FC = () => {
       title: <FormattedMessage id="pages.flow.xxx" defaultMessage="No." />,
       dataIndex: 'no',
       hideInSearch: true,
+     
       valueType: 'text',
     },
     {
@@ -306,7 +312,7 @@ const TableList: React.FC = () => {
       dataIndex: 'description',
       valueType: 'textarea'
      
-    }/*,
+    },
     {
       title: <FormattedMessage id="pages.searchTable.titleOption" defaultMessage="Operating" />,
       dataIndex: 'option',
@@ -320,7 +326,7 @@ const TableList: React.FC = () => {
           }}
         >
           <FormOutlined style={{ fontSize: '20px' }} />
-        </a>,
+        </a>/*,
 
         <a
           title={formatMessage({ id: "pages.delete", defaultMessage: "Delete" })}
@@ -342,10 +348,10 @@ const TableList: React.FC = () => {
         >
           <DeleteOutlined style={{ fontSize: '20px', color: 'red' }} />
 
-        </a>
+        </a>*/
        
       ],
-    },*/
+    },
   ];
 
   return (
@@ -375,7 +381,7 @@ const TableList: React.FC = () => {
         title: isMP ? null : < FormattedMessage id="pages.flow.xxx" defaultMessage="Transaction Flow" />,
       breadcrumb: {},
       extra: isMP ? null : [
-        /*<Button
+        <Button
           type="primary"
           key="primary"
           onClick={() => {
@@ -383,7 +389,7 @@ const TableList: React.FC = () => {
           }}
         >
           <PlusOutlined /> <FormattedMessage id="pages.searchTable.xxx" defaultMessage="Create New Transaction Flow" />
-        </Button>,*/ <Button type="primary" key="print"
+        </Button>, <Button type="primary" key="print"
           onClick={() => {
             if (selectedRowsState.length == 0) {
               message.error(<FormattedMessage
@@ -402,7 +408,21 @@ const TableList: React.FC = () => {
       
       ]
     }}>
-        {!isMP && (<ProTable<FlowListItem, API.PageParams>
+        {!isMP && (<DragSortTable<FlowListItem, API.PageParams>
+
+
+
+          dragSortKey="no"
+          onDragSortEnd={(a) => {
+            
+          }}
+          dragSortHandlerRender={(rowData: any, idx: any) => (
+            <div style={{ cursor: 'grab' }} >
+
+             {rowData.no}
+            </div>
+          )}
+
           pagination={{ size: "default", pageSize:500 }}
           actionRef={actionRef}
         
@@ -483,9 +503,21 @@ const TableList: React.FC = () => {
             </List.Item>
           ))}
         </List>
-        <InfiniteScroll loadMore={loadMore} hasMore={hasMore}>
-          <InfiniteScrollContent hasMore={hasMore} />
-        </InfiniteScroll>
+          {MPPagination.total && <div style={{ textAlign: 'center', padding: "20px 10px 90px 10px" }}>
+            <Pagination
+
+              onChange={(page, pageSize) => {
+
+                getData(page)
+              }}
+              total={MPPagination.total}
+              simple
+              showTotal={(total, range) => `${range[0]}-${range[1]} of ${total} items`}
+              defaultPageSize={3}
+              defaultCurrent={1}
+            />
+          </div>}
+          <FloatButton.BackTop visibilityHeight={0} />
       </>)}
       {selectedRowsState?.length > 0 && (
         <FooterToolbar

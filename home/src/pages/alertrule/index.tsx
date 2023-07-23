@@ -34,7 +34,7 @@ import {
 } from '@ant-design/pro-components';
 
 import { FormattedMessage, useIntl, useLocation, formatMessage, useModel } from '@umijs/max';
-import { Button, Drawer, Input, message, TreeSelect, Modal, Space as SpaceA, Empty, ConfigProvider, FloatButton, Popover } from 'antd';
+import { Button, Drawer, Input, message, TreeSelect, Modal, Space as SpaceA, Empty, ConfigProvider, FloatButton, Popover, Pagination } from 'antd';
 import React, { useRef, useState, useEffect } from 'react';
 import CreateForm from './components/CreateForm';
 import UpdateForm from './components/UpdateForm';
@@ -288,7 +288,7 @@ const TableList: React.FC = () => {
   const [MPSorter, setMPSorter] = useState<any>({});
   const [moreOpen, setMoreOpen] = useState<boolean>(false);
   const [MpSortDataIndex, setMpSortDataIndex] = useState<string>('');
-  
+  const [MPPagination, setMPPagination] = useState<any>({})
   const right = (
     <div style={{ fontSize: 24 }}>
       <Space style={{ '--gap': '16px' }}>
@@ -345,7 +345,7 @@ const TableList: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [MPfilter, setMPfilter] = useState<any>({})
 
-  async function getData(page, filter__) {
+  async function getData(page, filter__, pageSize) {
     var tab1 = ''
     await setTab((tab_) => {
       tab1 = tab_
@@ -364,7 +364,7 @@ const TableList: React.FC = () => {
     const append = await alertrule({
       ...{
         "current": page,
-        "pageSize": 10,
+        "pageSize": pageSize || 3,
         "sorter": {
           "type": "ascend"
         }
@@ -374,19 +374,11 @@ const TableList: React.FC = () => {
         'data': tab1
     }, sorter
     })
-    if (page == 1) {
-      setData([]);
-    }
-    
-    setData(val => [...val, ...append.data])
-    setHasMore(10 * (page - 1) + append.data.length < append.total)
+   
+    setMPPagination({ total: append.total })
+    setData(append.data)
   }
-  async function loadMore(isRetry: boolean) {
-    
-
-    await getData(currentPage , MPfilter)
-    setCurrentPage(currentPage + 1)
-  }
+  
 
 
   
@@ -482,7 +474,11 @@ const TableList: React.FC = () => {
 
       });
     });
-   
+
+
+    if (isMP) {
+      getData(1)
+    }
   },[tab]);
   /**
    * @en-US International configuration
@@ -543,6 +539,10 @@ const TableList: React.FC = () => {
         width: '300px',
         dropdownMatchSelectWidth: isMP ? true : false,
         mode: 'multiple',
+        maxTagCount: 0,
+        maxTagPlaceholder: (omittedValues) => {
+          return omittedValues.length + " Selected"
+        },
         showSearch: false,
         multiple: true
 
@@ -581,7 +581,11 @@ const TableList: React.FC = () => {
        
         dropdownMatchSelectWidth:isMP?true:false,
         width: '300px',
-          mode: 'multiple',
+        mode: 'multiple',
+        maxTagCount: 0,
+        maxTagPlaceholder: (omittedValues) => {
+          return omittedValues.length + " Selected"
+        },
           showSearch: false,
           multiple: true
         
@@ -627,13 +631,13 @@ const TableList: React.FC = () => {
 
       },
       valueEnum: {
-        "0-25": "1. GP (General Purpose): Less than 24.99 DWT",
-        "25-45": "2. MR (Medium Range): 25 to 44.99 DWT",
-        "45-80": "3. LR1 (Long Range 1): 45 to 79.99 DWT",
-        "80-120": "4. AFRA (AFRAMAX): 80 to 119.99 DWT",
-        "120-160": "5. LR2 (Long Range 2): 120 to 159.99 DWT",
-        "160-320": "6. VLCC (Very Large Crude Carrier): 160 to 319.99 DWT",
-        "320-1000000": "7. ULCC (Ultra-Large Crude Carrier): More than 320 DWT",
+        "0-25000": "1. GP (General Purpose): Less than 24,990 DWT",
+        "25000-45000": "2. MR (Medium Range): 25,000 to 44,990 DWT",
+        "45000-80000": "3. LR1 (Long Range 1): 45,000 to 79,990 DWT",
+        "80000-120000": "4. AFRA (AFRAMAX): 80,000 to 119,990 DWT",
+        "120000-160000": "5. LR2 (Long Range 2): 120,000 to 159,990 DWT",
+        "160000-320000": "6. VLCC (Very Large Crude Carrier): 160,000 to 319,990 DWT",
+        "320000-1000000000": "7. ULCC (Ultra-Large Crude Carrier): More than 320,000 DWT",
       },
       search: {
         transform: (value) => {
@@ -723,18 +727,18 @@ const TableList: React.FC = () => {
       
       render: (dom, entity) => {
         if (entity.vessel_size_dwt_from != null && entity.vessel_size_dwt_to) {
-
+         
           var valueEnum = {
-            "0-25": "GP",
-            "25-45": "MR",
-            "45-80": "LR1",
-            "80-120": "AFRA",
-            "120-160": "LR2",
-            "160-320": "VLCC",
-            "320-1000000": "ULCC",
+            "0-25000": "GP",
+            "25000-45000": "MR",
+            "45000-80000": "LR1",
+            "80000-120000": "AFRA",
+            "120000-160000": "LR2",
+            "160000-320000": "VLCC",
+            "320000-1000000000": "ULCC",
           }
 
-          return valueEnum[numeral(entity.vessel_size_dwt_from).format('0,0') + "-" + numeral(entity.vessel_size_dwt_to).format('0,0')];
+          return valueEnum[entity.vessel_size_dwt_from + "-" + entity.vessel_size_dwt_to];
         } else {
           return '-'
         }
@@ -869,7 +873,7 @@ const TableList: React.FC = () => {
     {
       title: access.alertrule_list_tab() ?"Customer": "Organization",
       dataIndex: 'organization_id',
-      sorter: true,
+     
       valueEnum: organizationMap,
       hideInSearch: !(access.alertrule_list_tab() || access.canAdmin) || tab=="Terminal" ?true:false,
       hideInTable: true,
@@ -1023,7 +1027,7 @@ const TableList: React.FC = () => {
       onResize={(offset) => {
         const { innerWidth, innerHeight } = window;
        
-        var h = document.getElementsByClassName("ant-table-thead")?.[0]?.offsetHeight + 300
+        var h = document.getElementsByClassName("ant-table-thead")?.[0]?.offsetHeight + 350
         if (offset.width > 1280) {
          
           setResizeObj({ ...resizeObj, searchSpan: 8, tableScrollHeight: innerHeight - h });
@@ -1122,7 +1126,7 @@ const TableList: React.FC = () => {
         toolBarRender={() => []
 
         }
-          pagination={{ size: "default" }}
+          pagination={{ size: "default", showSizeChanger: true, pageSizeOptions: [10, 20, 50, 100, 500] }}
           request={(params, sorter) => alertrule({
             ...params, sorter, tab: {
               'field': 'tab',
@@ -1155,8 +1159,8 @@ const TableList: React.FC = () => {
 
             onFormSearchSubmit={onFormSearchSubmit}
 
-            dateFormatter={'string'}
-            formRef={MPSearchFormRef}
+              dateFormatter={'string'}
+              formRef={formRef}
             type={'form'}
             cardBordered={true}
             form={{
@@ -1196,9 +1200,22 @@ const TableList: React.FC = () => {
             </List.Item>
           ))}
         </List>
-        <InfiniteScroll loadMore={loadMore} hasMore={hasMore}>
-          <InfiniteScrollContent hasMore={hasMore} />
-          </InfiniteScroll>
+          {MPPagination.total ? <div style={{ textAlign: 'center', padding: "20px 10px 90px 10px" }}>
+            <Pagination
+
+              onChange={(page, pageSize) => {
+
+                getData(page, MPfilter, pageSize)
+              }}
+              total={MPPagination.total}
+              
+              showTotal={(total, range) => `${range[0]}-${range[1]} of ${total} items`}
+              defaultPageSize={3}
+              showSizeChanger={true}
+              pageSizeOptions={ [3, 20, 50, 100, 500] }
+              defaultCurrent={1}
+            />
+          </div> : customizeRenderEmpty()}
 
           <FloatButton.BackTop visibilityHeight={0} />
       </>)}

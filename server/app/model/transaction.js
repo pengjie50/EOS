@@ -63,6 +63,7 @@ module.exports = app => {
         vessel_name: {
             type: STRING(200)
         },
+       
         terminal_id: {
             type: UUID
 
@@ -71,8 +72,13 @@ module.exports = app => {
             type: UUID
 
         },
+       
         jetty_id: {
             type: UUID
+
+        },
+        jetty_name: {
+            type: STRING(100)
 
         },
         total_duration: {
@@ -130,7 +136,7 @@ module.exports = app => {
                 fields: ['start_of_transaction', 'end_of_transaction', 'imo_number', 'vessel_name', 'jetty_id', 'terminal_id']
             }],
 
-        timestamps: false,
+        timestamps: true,
         paranoid: false,
         tableName: 'transaction'
 

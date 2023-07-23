@@ -22,11 +22,11 @@ module.exports = app => {
 
         },
         name: {
-            type: STRING(100)
+            type: STRING(200)
 
         },
         alias: {
-            type: TEXT
+            type: STRING(200)
 
         },
 

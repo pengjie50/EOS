@@ -42,7 +42,7 @@ class CompanyService extends Service {
             if (obj.where.type) {
 
             } else {
-                obj.where.type = { [app.Sequelize.Op['ne']]: 'Super' }
+                //obj.where.type = { [app.Sequelize.Op['ne']]: 'Super' }
             }
         } else {
 

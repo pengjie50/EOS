@@ -3,6 +3,12 @@ const uuid = require('uuid');
 const Sequelize = require('sequelize');
 const Op = Sequelize.Op;
 
+
+
+
+
+
+
 var codeMap = {
     "pilot_service_request_time_agent_toa_to": "1001",
     "pilot_service_request_time_to": "1002",//
@@ -42,8 +48,8 @@ var codeMap = {
     "pilot_arrival_time": "4007",//
     "pilot_onboard_time": "4008",//
     "toai_pilot_on_board_for_unmooring_time": "4009",//
-    "lqb_pilot_on_board_time": "4010",//
-    "lqb_agent_acknowledgment_time": "4011",//
+    "lqb_agent_acknowledgment_time": "4010",//
+    "lqb_pilot_on_board_time": "4011",//
     "pilotage_start_time": "4012",//
     "pilotage_delay_start_time": "4013",//
     "pilotage_end_time": "4014",//
@@ -133,11 +139,18 @@ class ProcessIngInterfaceData extends Subscription {
         }
 
 
+
+
+       
+
+
+
+        var InterfacedataList = await ctx.model.Interfacedata.findAll({ order: [['created_at', 'asc']], where: { already_used: 0 } })
         var step = 0;
         async function oneDo() {
 
-            var InterfacedataList = await ctx.model.Interfacedata.findAll({ order: [['created_at', 'asc']], where: { already_used: 0 } })
-
+            
+  
             var interfaceObj = InterfacedataList[step]
 
             if (!interfaceObj) {
@@ -161,15 +174,15 @@ class ProcessIngInterfaceData extends Subscription {
 
 
 
-                if (jetty) {
+                //if (jetty) {
 
 
 
                     if (!transaction) {
 
-                        // const trader = await ctx.model.Company.findOne({ where: { name: interface.Customer} })
+                       
                         transaction = {
-                            status: 0,
+                            status: i.toai_arrival_id_status =='Cancelled'?2:0,
                             arrival_id: i.toai_arrival_id,
                             arrival_id_status: i.toai_arrival_id_status,
                             vessel_size_dwt: i.toai_vessel_size_dwt,
@@ -178,13 +191,14 @@ class ProcessIngInterfaceData extends Subscription {
                             agent: i.toai_agent || null,
                             terminal_id: jetty ? jetty.terminal_id : null,
                             jetty_id: jetty ? jetty.id : null,
+                            jetty_name: i.toai_jetty_berth_location || null,
                             work_order_items: i.toai_work_order_items ? i.toai_work_order_items.map((a) => { return a.work_order_id }).join(",") : null
                         }
 
 
                         transaction = await ctx.model.Transaction.create(transaction)
 
-
+                       
 
                     }
 
@@ -195,10 +209,15 @@ class ProcessIngInterfaceData extends Subscription {
 
                     if (transaction) {
                         if (i.toai_agent) {
-                            await transaction.update({ agent: jetty.agent })
+                            await transaction.update({ agent: i.toai_agent })
                         }
                         if (i.toai_arrival_id_status != transaction.arrival_id_status) {
-                            await transaction.update({ arrival_id_status: i.toai_arrival_id_status })
+                            if (i.toai_arrival_id_status == 'Cancelled') {
+                                await transaction.update({ arrival_id_status: i.toai_arrival_id_status,status:2 })
+                            } else {
+                                await transaction.update({ arrival_id_status: i.toai_arrival_id_status })
+                            }
+                            
                         }
 
 
@@ -266,12 +285,12 @@ class ProcessIngInterfaceData extends Subscription {
 
                         if (res) {
 
-                            await interfaceObj.update({ already_used: 1 })
+                            await interfaceObj.update({ already_used: 1, eos_id: transaction.eos_id })
 
                         }
                     }
 
-                }
+                //}
             } else if (interfaceObj.type == 2) {
 
                 var transaction = null
@@ -318,9 +337,11 @@ class ProcessIngInterfaceData extends Subscription {
                                         trader_id: customer.id,
                                         terminal_id: transaction.terminal_id,
                                         jetty_id: transaction.jetty_id,
+                                        jetty_name: transaction.jetty_name,
                                         work_order_items_check: i.towoi_work_order_id,
                                         work_order_items: i.towoi_work_order_id
                                     })
+                                    
 
                                 } else {
                                     await transaction.update({ trader_id: customer.id, work_order_items_check: transaction.work_order_items_check + "," + i.towoi_work_order_id })
@@ -396,7 +417,7 @@ class ProcessIngInterfaceData extends Subscription {
                             var res = await ctx.model.Transactionevent.bulkCreate(eventArr)
                             await closeTransaction(transaction, transactioneventList)
                             if (res) {
-                                await interfaceObj.update({ already_used: 1 })
+                                await interfaceObj.update({ already_used: 1, eos_id: transaction.eos_id })
                             }
 
 
@@ -566,7 +587,7 @@ class ProcessIngInterfaceData extends Subscription {
                     }
 
                     if (res) {
-                        await interfaceObj.update({ already_used: 1 })
+                        await interfaceObj.update({ already_used: 1, eos_id: transaction.eos_id })
                     }
 
 
@@ -602,12 +623,12 @@ class ProcessIngInterfaceData extends Subscription {
 
 
 
-                            const jetty = await ctx.model.Jetty.findOne({ where: { name: [i.pilot_location_from, i.pilot_location_to] } })
+                            const transactionJetty = await ctx.model.Transaction.findOne({ where: { imo_number: i.pilot_imo_no,jetty_name: [i.pilot_location_from, i.pilot_location_to] } })
 
-                            if (jetty) {
+                            if (transactionJetty) {
 
-                                const transactionJetty = await ctx.model.Jetty.findOne({ where: { id: transaction.jetty_id } })
-                                if (i.pilot_location_to == transactionJetty.name) {
+                               
+                                if (i.pilot_location_to == transactionJetty.jetty_name) {
                                     if (transactioneventMap[flowMap['1006'].id]) {
 
                                         if ((new Date(i.pilot_onboard_time)).getTime() - (new Date(transactioneventMap[flowMap['1006'].id].event_time)).getTime() > 3600 * 1000) {
@@ -655,7 +676,7 @@ class ProcessIngInterfaceData extends Subscription {
                                         var event = {}
                                         event.transaction_id = transaction.id
                                         event.event_time = i[k]
-                                        if (i.pilot_location_to == transactionJetty.name) {
+                                        if (i.pilot_location_to == transactionJetty.jetty_name) {
                                             event.flow_id = flowMap[codeMap[k + "_to"]].id
                                             event.flow_pid = flowMap[codeMap[k + "_to"]].pid
                                         } else {
@@ -664,7 +685,7 @@ class ProcessIngInterfaceData extends Subscription {
                                         }
                                         event.location_to = i.pilot_location_to
                                         event.location_from = i.pilot_location_from
-
+                                       
                                         event.order_no = i.pilot_order_no
                                         event.delay_duration = i.pilotage_delay_duration || null
                                         event.delay_reason = i.pilotage_delay_reason || null
@@ -720,7 +741,7 @@ class ProcessIngInterfaceData extends Subscription {
                                 var res = await ctx.model.Transactionevent.bulkCreate(eventArr)
                                 await closeTransaction(transaction, transactioneventList)
                                 if (res) {
-                                    await interfaceObj.update({ already_used: 1 })
+                                    await interfaceObj.update({ already_used: 1, eos_id: transaction.eos_id })
                                 }
 
                             }
@@ -753,12 +774,11 @@ class ProcessIngInterfaceData extends Subscription {
                     if (transaction) {
                         var transactioneventList = await ctx.model.Transactionevent.findAll({ raw: true, order: [['event_time', 'asc']], where: { transaction_id: transaction.id } })
 
+                        const transactionJetty = await ctx.model.Transaction.findOne({ where: { imo_number: i.pilot_lqb_imo_no, jetty_name: [i.pilot_lqb_location_from, i.pilot_lqb_location_to] } })
+                      
+                        if (transactionJetty) {
 
-                        const jetty = await ctx.model.Jetty.findOne({ where: { name: [i.pilot_lqb_location_from, i.pilot_lqb_location_to] } })
-
-                        if (jetty) {
-
-                            const transactionJetty = await ctx.model.Jetty.findOne({ where: { id: transaction.jetty_id } })
+                           
                             var eventArr = []
                             var updateEventArr = []
                             var updateLogEventArr = []
@@ -767,7 +787,7 @@ class ProcessIngInterfaceData extends Subscription {
                                     var event = {}
                                     event.transaction_id = transaction.id
                                     event.event_time = i[k]
-                                    if (i.pilot_lqb_location_to == transactionJetty.name) {
+                                    if (i.pilot_lqb_location_to == transactionJetty.jetty_name) {
                                         event.flow_id = flowMap[codeMap[k + "_to"]].id
                                         event.flow_pid = flowMap[codeMap[k + "_to"]].pid
                                     } else {
@@ -819,7 +839,7 @@ class ProcessIngInterfaceData extends Subscription {
                             var res = await ctx.model.Transactionevent.bulkCreate(eventArr)
                             await closeTransaction(transaction, transactioneventList)
                             if (res) {
-                                await interfaceObj.update({ already_used: 1 })
+                                await interfaceObj.update({ already_used: 1, eos_id: transaction.eos_id })
                             }
 
                         }
@@ -844,7 +864,37 @@ class ProcessIngInterfaceData extends Subscription {
 
         await oneDo()
 
+        var updateDoStep = 0
+        var allOpenTransaction = await ctx.model.Transaction.findAll({ where: { status: 0 } })
+        async function updateDo() {
+            if (updateDoStep >= allOpenTransaction.length) {
+                return
+            }
 
+           
+
+            var openTransaction = allOpenTransaction[updateDoStep]
+            var transactioneventList = await ctx.model.Transactionevent.findAll({ raw: true, order: [['event_time', 'asc']], where: { transaction_id: openTransaction.id } })
+            if (transactioneventList.length > 0) {
+                var oneEvent = transactioneventList[0]
+                var lastEvent = transactioneventList[transactioneventList.length - 1]
+                if ((new Date()).getTime() - (new Date(lastEvent.event_time)).getTime() > 3600 * 24 * 5 * 1000) {
+
+                    var total_duration = ((new Date()).getTime() - (new Date(oneEvent.event_time)).getTime()) / 1000
+                    openTransaction.update({ status: 1, end_of_transaction: new Date(), total_duration: total_duration })
+                } else {
+                    var total_duration = ((new Date()).getTime() - (new Date(oneEvent.event_time)).getTime()) / 1000
+                    openTransaction.update({ flow_id: lastEvent.flow_pid, total_duration: total_duration })
+                }
+
+            }
+
+
+            updateDoStep++
+            await updateDo()
+        }
+
+        await updateDo()
 
 
     }

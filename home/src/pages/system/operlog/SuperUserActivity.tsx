@@ -25,7 +25,7 @@ import {
   ProFormInstance
 } from '@ant-design/pro-components';
 import { FormattedMessage, useIntl, formatMessage } from '@umijs/max';
-import { Button, Drawer, Input, message, Modal, Popover, Empty } from 'antd';
+import { Button, Drawer, Input, message, Modal, Popover, Empty, Pagination, FloatButton, ConfigProvider } from 'antd';
 import React, { useRef, useState, useEffect } from 'react';
 import CreateForm from './components/CreateForm';
 import UpdateForm from './components/UpdateForm';
@@ -166,7 +166,11 @@ export  var columnsBase: ProColumns<OperlogListItem>[] = [
       "jetty": "Jetty"
 
     },
-    fieldProps: { multiple: true, mode: 'multiple' },
+    fieldProps: {
+      multiple: true, mode: 'multiple', maxTagCount: 0,
+      maxTagPlaceholder: (omittedValues) => {
+        return omittedValues.length + " Selected"
+      }, },
     search: {
       transform: (value) => {
         if (value && value.length > 0) {
@@ -192,7 +196,11 @@ export  var columnsBase: ProColumns<OperlogListItem>[] = [
       "del": "Delete"
 
     },
-    fieldProps: { multiple: true, mode: 'multiple' },
+    fieldProps: {
+      multiple: true, mode: 'multiple', maxTagCount: 0,
+      maxTagPlaceholder: (omittedValues) => {
+        return omittedValues.length + " Selected"
+      }, },
     search: {
       transform: (value) => {
         if (value && value.length > 0) {
@@ -289,7 +297,11 @@ export  var columnsBase: ProColumns<OperlogListItem>[] = [
 
       }
     },
-    fieldProps: { multiple: true, mode: 'multiple' },
+    fieldProps: {
+      multiple: true, mode: 'multiple', maxTagCount: 0,
+      maxTagPlaceholder: (omittedValues) => {
+        return omittedValues.length + " Selected"
+      }, },
     valueEnum: {
       0: {
         text: (
@@ -334,8 +346,7 @@ export  var columnsBase: ProColumns<OperlogListItem>[] = [
     title: (
       <FormattedMessage
         id="pages.operlog.xxx"
-        defaultMessage="Operation Time 
-"
+        defaultMessage="Operation Date"
       />
     ),
 
@@ -348,7 +359,7 @@ export  var columnsBase: ProColumns<OperlogListItem>[] = [
     title: (
       <FormattedMessage
         id="pages.operlog.operTime"
-        defaultMessage="Operation Time"
+        defaultMessage="Operation Date"
       />
     ),
     sorter: true,
@@ -360,7 +371,8 @@ export  var columnsBase: ProColumns<OperlogListItem>[] = [
     valueType: 'dateRange',
     search: {
       transform: (value) => {
-        if (value.length > 0) {
+        if (value && value.length > 0) {
+          value[1] = new Date((new Date(value[1])).getTime() + 3600 * 24 * 1000-1)
           return {
             'oper_time': {
               'field': 'oper_time',
@@ -375,6 +387,31 @@ export  var columnsBase: ProColumns<OperlogListItem>[] = [
 
 
 
+  },
+  {
+    title: <FormattedMessage id="pages.loginlog.xxx" defaultMessage="Activity Duration (ms)" />,
+    dataIndex: 'activity_duration',
+    fieldProps: { placeholder: ['From', 'To'] },
+    valueType: "digitRange",
+    sorter: true,
+   
+    render: (dom, entity) => {
+      return entity.activity_duration + "ms"
+    },
+    search: {
+      transform: (value) => {
+        if (value && value.length > 0) {
+          return {
+            'activity_duration': {
+              'field': 'activity_duration',
+              'op': 'between',
+              'data': value
+            }
+          }
+        }
+
+      }
+    }
   }
 
 
@@ -441,7 +478,10 @@ const TableList: React.FC = () => {
         allowClear: true,
         multiple: true,
         mode: 'multiple',
-
+        maxTagCount: 0,
+        maxTagPlaceholder: (omittedValues) => {
+          return omittedValues.length + " Selected"
+        },
         onFocus: () => {
           fieldSelectData({ model: "Operlog", value: '', field: 'url', where: { type: 1 } }).then((res) => {
             
@@ -467,7 +507,10 @@ const TableList: React.FC = () => {
         allowClear: true,
         multiple: true,
         mode: 'multiple',
-
+        maxTagCount: 0,
+        maxTagPlaceholder: (omittedValues) => {
+          return omittedValues.length + " Selected"
+        },
         onFocus: () => {
           fieldSelectData({ model: "Operlog", value: '', field: 'ip', where: { type: 1 } }).then((res) => {
            
@@ -493,7 +536,10 @@ const TableList: React.FC = () => {
         allowClear: true,
         multiple: true,
         mode: 'multiple',
-
+        maxTagCount: 0,
+        maxTagPlaceholder: (omittedValues) => {
+          return omittedValues.length + " Selected"
+        },
 
       }
     }
@@ -541,7 +587,9 @@ const TableList: React.FC = () => {
 
     });
 
-
+    if (isMP) {
+      getData(1)
+    }
 
   }, [true]);
   
@@ -612,7 +660,7 @@ const TableList: React.FC = () => {
   const [hasMore, setHasMore] = useState(true)
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [MPfilter, setMPfilter] = useState<any>({})
-
+  const [MPPagination, setMPPagination] = useState<any>({})
   async function getData(page, filter__) {
 
     var sorter = {}
@@ -634,25 +682,35 @@ const TableList: React.FC = () => {
         'data': 1
       },
         "current": page,
-        "pageSize": 10
+        "pageSize": 3
 
       }, ...filter, sorter
     })
-    if (page == 1) {
+   
 
-      setData([]);
+    setMPPagination({ total: append.total })
+    setData(append.data)
+  }
+  
+  const formRef = useRef<ProFormInstance>();
+
+  const customizeRenderEmpty = () => {
+    var o = formRef.current?.getFieldsValue()
+    var isSearch = false
+    for (var a in o) {
+      if (o[a]) {
+        isSearch = true
+      }
+
+    }
+    if (isSearch) {
+      return <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />
+    } else {
+      return <Empty />
     }
 
-    
-    setData(val => [...val, ...append.data])
-    setHasMore(10 * (page - 1) + append.data.length < append.total)
-  }
-  async function loadMore(isRetry: boolean) {
 
-    await getData(currentPage, MPfilter)
-    setCurrentPage(currentPage + 1)
   }
- 
 
   return (
     <RcResizeObserver
@@ -700,9 +758,9 @@ const TableList: React.FC = () => {
 
         ]
     }} >
-      {!isMP && (<ProTable<OperlogListItem, API.PageParams>
+        {!isMP && (<ConfigProvider renderEmpty={customizeRenderEmpty}><ProTable<OperlogListItem, API.PageParams>
         //scroll={{ x: 2500, y: 300 }}
-          pagination={{ size: "default" }}
+          pagination={{ size: "default", showSizeChanger: true, pageSizeOptions: [10, 20, 50, 100, 500] }}
         actionRef={actionRef}
           rowKey="id"
           scroll={{ x: 1800, y: resizeObj.tableScrollHeight }}
@@ -728,7 +786,7 @@ const TableList: React.FC = () => {
             setSelectedRows(selectedRows);
           },
         }}
-      />)}
+        /></ConfigProvider>)}
 
       {isMP && (<>
 
@@ -789,9 +847,22 @@ const TableList: React.FC = () => {
             </List.Item>
           ))}
         </List>
-        <InfiniteScroll loadMore={loadMore} hasMore={hasMore}>
-          <InfiniteScrollContent hasMore={hasMore} />
-        </InfiniteScroll>
+          {MPPagination.total > 0 ? <div style={{ textAlign: 'center', padding: "20px 10px 90px 10px" }}>
+            <Pagination
+
+              onChange={(page, pageSize) => {
+
+                getData(page, MPfilter, pageSize)
+              }}
+              total={MPPagination.total}
+              showSizeChanger={true}
+              pageSizeOptions={[3, 20, 50, 100, 500]}
+              showTotal={(total, range) => `${range[0]}-${range[1]} of ${total} items`}
+              defaultPageSize={3}
+              defaultCurrent={1}
+            />
+          </div> : customizeRenderEmpty()}
+          <FloatButton.BackTop visibilityHeight={0} />
       </>)}
       {selectedRowsState?.length > 0 && (
         <FooterToolbar

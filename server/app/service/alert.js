@@ -155,23 +155,7 @@ class AlertService extends Service {
 
 
 
-        if (showNoRead) {
-
-            var readArr = []
-            list.rows.forEach((a) => {
-                if (m.get(a.id)) {
-                    readArr.push({ user_id: ctx.user.user_id, alert_id: a.id })
-                }
-
-
-            })
-
-            if (readArr.length > 0) {
-                await ctx.model.AlertUserRead.bulkCreate(readArr);
-            }
-
-
-        }
+       
         var jetty_id = []
         list.rows.forEach((a) => {
             jetty_id.push(a['t.jetty_id'])
@@ -197,6 +181,38 @@ class AlertService extends Service {
         };
 
 
+
+    }
+
+
+    async setUserReadAlert(params) {
+        const { ctx, sequelize, app } = this;
+
+
+
+
+
+        var noReadArr = await ctx.model.query("select *  FROM alert where id not in (select alert_id from alert_user_read where user_id='" + ctx.user.user_id + "')", { type: Sequelize.QueryTypes.SELECT })
+
+
+
+
+        var readArr = []
+        noReadArr.forEach((a) => {
+
+            readArr.push({ user_id: ctx.user.user_id, alert_id: a.id })
+
+
+
+        })
+
+        if (readArr.length > 0) {
+
+
+            await ctx.model.AlertUserRead.bulkCreate(readArr);
+        }
+
+        ctx.body = { success: true, data: "dddd" };
 
     }
     async getUserUnreadAlertCount(params) {

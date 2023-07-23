@@ -41,7 +41,7 @@ import {
   ProTable,
 } from '@ant-design/pro-components';
 import { FormattedMessage, useIntl, formatMessage, useLocation, useModel } from '@umijs/max';
-import { Button, Drawer, Input, message, Modal, Tooltip, Empty, ConfigProvider, Popover } from 'antd';
+import { Button, Drawer, Input, message, Modal, Tooltip, Empty, ConfigProvider, Popover, Pagination, FloatButton } from 'antd';
 import React, { useRef, useState, useEffect } from 'react';
 import CreateForm from './components/CreateForm';
 import UpdateForm from './components/UpdateForm';
@@ -226,7 +226,7 @@ const TableList: React.FC = () => {
   if (value.imo_number) {
     var a = {}
     a.field = 'imo_number'
-    a.op = 'like'
+    a.op = 'in'
     a.data = value.imo_number
     filter.imo_number = a
   }
@@ -235,7 +235,7 @@ const TableList: React.FC = () => {
     if (value.eos_id) {
       var a = {}
       a.field = 'eos_id'
-      a.op = 'eq'
+      a.op = 'in'
       a.data = value.eos_id
       filter.eos_id = a
     }
@@ -243,7 +243,7 @@ const TableList: React.FC = () => {
   if (value.vessel_name) {
     var a = {}
     a.field ='vessel_name' 
-    a.op = 'like'
+    a.op = 'in'
     a.data = value.vessel_name
     filter.vessel_name = a
   }
@@ -251,7 +251,7 @@ const TableList: React.FC = () => {
   if (value.product_name) {
     var a = {}
     a.field = 'product_name'
-    a.op = 'like'
+    a.op = 'in'
     a.data = value.product_name
     filter.product_name = a
 
@@ -267,27 +267,51 @@ const TableList: React.FC = () => {
     filter.terminal_id = a
   }
 
-  if (value.jetty_id) {
+
+
+    if (value.vessel_size_dwt) {
+      var a = {}
+      a.field = 'vessel_size_dwt'
+      a.op = 'between'
+      a.data = value.vessel_size_dwt.split("-")
+      filter.vessel_size_dwt = a
+    }
+
+
+
+    if (value.organization_id) {
+      var a = {}
+      a.field = 'organization_id'
+      a.op = 'in'
+      a.data = value.organization_id
+      filter.organization_id = a
+    }
+    if (value.threshold_organization_id) {
+      var a = {}
+      a.field = 'threshold_organization_id'
+      a.op = 'in'
+      a.data = value.threshold_organization_id
+      filter.threshold_organization_id = a
+    }
+
+
+    if (value.jetty_name) {
+
+      
     var a = {}
-    a.field = 'jetty_id'
-    a.op = 'eq'
-    a.data = value.jetty_id
-    filter.jetty_id = a
+    a.field = 'jetty_name'
+    a.op = 'in'
+      a.data = value.jetty_name
+      filter.jetty_name = a
   }
   if (value.hasOwnProperty('status')) {
     var a = {}
     a.field = 'status'
-    a.op = 'eq'
+    a.op = 'in'
     a.data = value.status
     filter.status = a
   }
-  if (value.hasOwnProperty('status')) {
-    var a = {}
-    a.field = 'status'
-    a.op = 'eq'
-    a.data = value.status
-    filter.status = a
-  }
+ 
 
 
 
@@ -337,8 +361,9 @@ const TableList: React.FC = () => {
   }
 
   if (value.dateRange && value.dateRange.length > 0) {
-
-
+    value.dateRange[0] = moment(new Date(value.dateRange[0])).format('YYYY-MM-DD') + " 00:00:00"
+    value.dateRange[1] = moment(new Date(value.dateRange[1])).format('YYYY-MM-DD') + " 23:59:59"
+    
     filter.start_of_transaction = {
       'field': report_type < 4 ? 'start_of_transaction' : 'oper_time',
       'op': 'between',
@@ -426,28 +451,71 @@ const TableList: React.FC = () => {
   const [hasMore, setHasMore] = useState(true)
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [MPfilter, setMPfilter] = useState<any>({})
-
-  async function getData(page, _filter) {
-    const append = await reportSummary({
-      ...{
-        "current": page,
-        "pageSize": 10,
-        "sorter": {
-          "start_of_transaction": "descend"
-        }
-      }, ...filter
-    })
-
-
+  const [MPPagination, setMPPagination] = useState<any>({})
+  async function getData(page, _filter,pageSize) {
    
-    setData(val => [...val, ...append.data])
-    setHasMore(10 * (page - 1) + append.data.length < append.total)
-  }
-  async function loadMore(isRetry: boolean) {
+    var params= {
+      "current": page,
+      "pageSize": pageSize
+         
+    }
 
-    await getData(currentPage, MPfilter)
-    setCurrentPage(currentPage + 1)
+    var sorter=null
+    var ss = ""
+    if (report_type == 1) {
+
+      ss = await transaction({ ...params, sorter, ...filter, is_report: true })
+
+    } else if (report_type == 2) {
+
+      ss = await reportSummary({ ...params, sorter, ...filter })
+
+    } else if (report_type == 3) {
+
+      ss = await getAlert({ ...params, sorter, ...filter })
+
+    } else if (report_type == 4) {
+      ss = await operlog({
+        ...params, sorter, type: {
+          'field': 'type',
+          'op': 'eq',
+          'data': 1
+        }
+      })
+    } else if (report_type == 5) {
+      ss = await loginlog({
+        ...params, sorter
+      })
+    } else if (report_type == 6) {
+
+      ss = await operlog({
+        ...params, sorter, type: {
+          'field': 'type',
+          'op': 'eq',
+          'data': 2
+        }
+      })
+    } else if (report_type == 7) {
+
+      ss = await operlog({
+        ...params, sorter, type: {
+          'field': 'type',
+          'op': 'eq',
+          'data': 3
+        }
+      })
+    } else {
+      ss = await reportSummary({ ...params, sorter, ...filter })
+    }
+
+
+    setTransaction_total_num(ss.all_total)
+    setTransaction_filter_num(ss.total)
+   
+    setMPPagination({ total: ss.total })
+    setData(ss.data)
   }
+  
   //--MP end
 
   var fd=useLocation()?.state
@@ -456,7 +524,7 @@ const TableList: React.FC = () => {
 
 
     setFormData(fd)
-
+    
 
 
     flow({ pageSize: 300, current: 1, sorter: { sort: 'ascend' } }).then((res) => {
@@ -575,7 +643,10 @@ const TableList: React.FC = () => {
       columns = columns7
     } 
 
+    if (isMP) {
+      getData(1)
 
+    }
   }, [true]);
   /**
    * @en-US International configuration
@@ -590,6 +661,15 @@ const TableList: React.FC = () => {
 
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Total/ Current Duration" />,
       dataIndex: 'total_duration',
+      render: (dom, entity) => {
+        if (dom > 0 && entity.status == 1) {
+          return parseInt((dom / 3600) + "") + "h " + parseInt((dom % 3600) / 60) + "m"
+        } else {
+          return '-'
+        }
+
+
+      },
 
     },
     {
@@ -606,19 +686,32 @@ const TableList: React.FC = () => {
       
     },
     {
-      title: currentUser?.role_type == "Terminal" ? "Customer" : <FormattedMessage id="pages.transaction.jettyName" defaultMessage="Trader" />,
+      title: access.transactions_list_tab() ? "Customer" : "Trader",
       dataIndex: 'trader_id',
+      render: (dom, entity) => {
+
+        return entity.trader_name
+
+      }
 
     },
     {
       title: <FormattedMessage id="pages.transaction.jettyName" defaultMessage="Terminal" />,
       dataIndex: 'terminal_id',
-      valueEnum: organizationList
+      render: (dom, entity) => {
+
+        return entity.terminal_name
+
+      }
     },
     {
       title: <FormattedMessage id="pages.transaction.jettyName" defaultMessage="Jetty Name" />,
       dataIndex: 'jetty_id',
-      valueEnum: jettyList
+      render: (dom, entity) => {
+       
+          return entity.jetty_name
+        
+      }
 
     },
     {
@@ -1127,14 +1220,14 @@ const TableList: React.FC = () => {
 
     columns = columns7
   } 
-  if (Fields.length>0) {
-    columns = columns.filter((c) => {
+  if (Fields.length > 0) {
 
-      return Fields.some((b) => {
-        return b == c.dataIndex
+    columns = Fields.map((a) => {
+      return columns.find((b) => {
+        return a == b.dataIndex
       })
-
     })
+   
   }
 
  
@@ -1225,7 +1318,7 @@ const TableList: React.FC = () => {
 
           scroll={{ x: columns.length*140, y: resizeObj.tableScrollHeight }}
         
-          pagination={{ size: "default" }}
+          pagination={{ size: "default", showSizeChanger: true, pageSizeOptions: [10, 20, 50, 100, 500] }}
         formRef={formRef}
         bordered size="small"
         actionRef={actionRef}
@@ -1237,7 +1330,7 @@ const TableList: React.FC = () => {
             var ss = ""
             if (report_type == 1) {
             
-              ss = await transaction({ ...params, sorter, ...filter })
+              ss = await transaction({ ...params, sorter, ...filter, is_report:true })
             
           }else if (report_type == 2) {
 
@@ -1283,8 +1376,8 @@ const TableList: React.FC = () => {
 
            
 
-          setTransaction_total_num(ss.transaction_total_num )
-          setTransaction_filter_num(ss.transaction_filter_num)
+            setTransaction_total_num(ss.all_total)
+            setTransaction_filter_num(ss.total)
           return ss
         }}
         columns={columns}
@@ -1327,9 +1420,22 @@ const TableList: React.FC = () => {
             </List.Item>
           ))}
         </List>
-        <InfiniteScroll loadMore={loadMore} hasMore={hasMore}>
-          <InfiniteScrollContent hasMore={hasMore} />
-        </InfiniteScroll>
+        {MPPagination.total > 0 ? <div style={{ textAlign: 'center', padding: "20px 10px 90px 10px" }}>
+          <Pagination
+
+            onChange={(page, pageSize) => {
+
+              getData(page, MPfilter, pageSize)
+            }}
+            total={MPPagination.total}
+            showSizeChanger={true}
+            pageSizeOptions={[3, 20, 50, 100, 500]}
+            showTotal={(total, range) => `${range[0]}-${range[1]} of ${total} items`}
+            defaultPageSize={3}
+            defaultCurrent={1}
+          />
+        </div> : customizeRenderEmpty()}
+        <FloatButton.BackTop visibilityHeight={0} />
       </>)}
       {selectedRowsState?.length > 0 && (
         <FooterToolbar
@@ -1355,9 +1461,9 @@ const TableList: React.FC = () => {
           style={isMP ? { width: '100%' } : null}
           type="default"
           onClick={async () => {
-            history.push('/Report')
+            history.push('/report')
           }}
-        >Return to report history</Button>
+        >Return To Report History</Button>
         {/*  <Button
           style={isMP ? { width: '100%', marginTop: 15 } : { marginLeft: 10 }}
           type="primary"

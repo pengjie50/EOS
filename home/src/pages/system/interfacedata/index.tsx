@@ -1,5 +1,5 @@
 import RcResizeObserver from 'rc-resize-observer';
-
+import { history } from '@umijs/max';
 import { addInterfacedata, removeInterfacedata, interfacedata, updateInterfacedata } from './service';
 import { PlusOutlined, SearchOutlined, FormOutlined, DeleteOutlined, ExclamationCircleOutlined, SwapOutlined, SortAscendingOutlined, SortDescendingOutlined } from '@ant-design/icons';
 import type { ActionType, ProColumns, ProDescriptionsItemProps } from '@ant-design/pro-components';
@@ -17,7 +17,7 @@ import {
   ProTable,
 } from '@ant-design/pro-components';
 import { FormattedMessage, useIntl, formatMessage, useModel } from '@umijs/max';
-import { Button, Drawer, Input, message, Upload, Tooltip, Modal, Empty, ConfigProvider, FloatButton, Popover } from 'antd';
+import { Button, Drawer, Input, message, Upload, Tooltip, Modal, Empty, ConfigProvider, Pagination, Popover, FloatButton } from 'antd';
 import React, { useRef, useState, useEffect } from 'react';
 import CreateForm from './components/CreateForm';
 import UpdateForm from './components/UpdateForm';
@@ -190,7 +190,7 @@ const TableList: React.FC = () => {
       <Space style={{ '--gap': '16px' }}>
         {currentUser?.role_type != 'Terminal' && <SearchOutlined onClick={e => { setShowMPSearch(!showMPSearch) }} />}
         <Access accessible={access.canInterfacedataAdd()} fallback={<div></div>}>
-          <PlusOutlined onClick={() => { handleModalOpen(true) }} />
+          {/*<PlusOutlined onClick={() => { handleModalOpen(true) }} />*/ } 
           </Access>
       </Space>
     </div>
@@ -226,7 +226,7 @@ const TableList: React.FC = () => {
   const [hasMore, setHasMore] = useState(true)
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [MPfilter, setMPfilter] = useState<any>({})
-
+  const [MPPagination, setMPPagination] = useState<any>({})
   async function getData(page) {
 
     var sorter = {}
@@ -245,26 +245,19 @@ const TableList: React.FC = () => {
         const append = await interfacedata({
           ...{
             "current": page,
-            "pageSize": 10
+            "pageSize": 3
 
           }, ...filter, sorter: sorter
         })
 
-        if (page == 1) {
-          setData([]);
-        }
-        
-        setData(val => [...val, ...append.data])
-        setHasMore(10 * (page - 1) + append.data.length < append.total)
-        
-    
-    
-  }
-  async function loadMore(isRetry: boolean) {
 
-    await getData(currentPage)
-    setCurrentPage(currentPage + 1)
+    setMPPagination({ total: append.total })
+    setData(append.data)
+        
+    
+    
   }
+  
   //--MP end
   const formRef = useRef<ProFormInstance>();
   useEffect(() => {
@@ -279,7 +272,9 @@ const TableList: React.FC = () => {
 
     });
 
-
+    if (isMP) {
+      getData(1)
+    }
 
 
 
@@ -364,6 +359,7 @@ const TableList: React.FC = () => {
       title:"Type",
       dataIndex: 'type',
       valueType: 'text',
+      width:80,
       sorter: true,
       valueEnum:{
         1: "DE 1",
@@ -378,11 +374,13 @@ const TableList: React.FC = () => {
       title: "IMO Number",
       dataIndex: 'imo_number',
       valueType: 'text',
+      width:120,
       sorter: true
     },
     {
       title: "Work Order ID",
       dataIndex: 'work_order_id',
+      width: 120,
       valueType: 'text',
       sorter: true
     },
@@ -391,13 +389,14 @@ const TableList: React.FC = () => {
       title: "Json String",
       dataIndex: 'json_string',
       valueType: 'text',
-      ellipsis: true,
+      ellipsis:isMP?false: true,
       sorter: true
     },
     {
       title: "Already Used",
       dataIndex: 'already_used',
       valueType: 'text',
+      width:120,
       sorter: true,
       valueEnum: {
         1: "already_used",
@@ -413,16 +412,21 @@ const TableList: React.FC = () => {
       dataIndex: 'eos_id',
 
       render: (dom, entity) => {
-        return (
-          <a
-            onClick={() => {
-              setCurrentRow(entity);
-              setShowDetail(true);
-            }}
-          >
-            {dom}
-          </a>
-        );
+        if (entity.already_used == 1) {
+          return (
+            <a
+              onClick={() => {
+                setCurrentRow(entity);
+                history.push(`/transaction/detail`, { transaction_id: entity.transaction_id });
+              }}
+            >
+              {"E" + dom}
+            </a>
+          );
+        } else {
+          return '-'
+        }
+        
       },
     },
     {
@@ -495,6 +499,9 @@ const TableList: React.FC = () => {
 
 
   }
+
+
+  
   return (
     <RcResizeObserver
       key="resize-observer"
@@ -522,7 +529,7 @@ const TableList: React.FC = () => {
         title: isMP ? null : < FormattedMessage id="'pages.interfacedata.title" defaultMessage={"Interfacedata - "+  currentUser?.company_name} />,
       breadcrumb: {},
       extra: isMP ? null : [
-        <Access accessible={access.canInterfacedataAdd()} fallback={<div></div>}> <Button
+       /* <Access accessible={access.canInterfacedataAdd()} fallback={<div></div>}> <Button
           type="primary"
           key="primary"
           onClick={() => {
@@ -530,7 +537,7 @@ const TableList: React.FC = () => {
           }}
         >
           <PlusOutlined /> <FormattedMessage id="pages.searchTable.new" defaultMessage="New" />
-        </Button></Access>/*, <Access accessible={access.canInterfacedataAdd()} fallback={<div></div>}> <Upload {...uploadprops}>
+        </Button></Access>, <Access accessible={access.canInterfacedataAdd()} fallback={<div></div>}> <Upload {...uploadprops}>
           <Tooltip title="">
             <Button type="primary">
               Batch Add
@@ -598,7 +605,7 @@ const TableList: React.FC = () => {
             onFormSearchSubmit={onFormSearchSubmit}
 
             dateFormatter={'string'}
-            formRef={MPSearchFormRef}
+            formRef={formRef}
             type={'form'}
             cardBordered={true}
             form={{
@@ -623,7 +630,7 @@ const TableList: React.FC = () => {
                 className="interfacedata-descriptions"
                 bordered={true}
                 size="small"
-                layout="horizontal"
+                layout="vertical"
                 column={1}
                 title={""}
                 request={async () => ({
@@ -638,9 +645,20 @@ const TableList: React.FC = () => {
             </List.Item>
           ))}
         </List>
-        <InfiniteScroll loadMore={loadMore} hasMore={hasMore}>
-          <InfiniteScrollContent hasMore={hasMore} />
-          </InfiniteScroll>
+          {MPPagination.total > 0 ? <div style={{ textAlign: 'center', padding: "20px 10px 90px 10px" }}>
+            <Pagination
+
+              onChange={(page, pageSize) => {
+
+                getData(page)
+              }}
+              total={MPPagination.total}
+              simple
+              showTotal={(total, range) => `${range[0]}-${range[1]} of ${total} items`}
+              defaultPageSize={3}
+              defaultCurrent={1}
+            />
+          </div> : customizeRenderEmpty()}
           <FloatButton.BackTop visibilityHeight={0} />
       </>)}
       {selectedRowsState?.length > 0 && (

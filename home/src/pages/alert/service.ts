@@ -30,6 +30,19 @@ export async function getUserUnreadAlertCount(options?: { [key: string]: any }) 
     data: options || {}
   });
 }
+
+
+
+export async function setUserReadAlert(options?: { [key: string]: any }) {
+
+  return request<AlertListItem>('/api/alert/setUserReadAlert', {
+    method: 'POST',
+    data: options || {}
+  });
+
+
+
+}
 export async function updateAlert(options?: { [key: string]: any }) {
   return request<AlertListItem>('/api/alert/mod', {
     method: 'POST',

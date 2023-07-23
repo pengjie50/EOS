@@ -12,11 +12,12 @@ import React from 'react';
 import logo from '../public/logo.svg';
 import { AvatarDropdown, AvatarName } from '@/components';
 import NoticeIconView from '@/components/NoticeIcon';
-
+import { Result } from 'antd';
 import UnAccessPage from './pages/403';
 
 const isDev = process.env.NODE_ENV === 'development';
 const loginPath = '/user/login';
+const loginAdminPath = '/user/adminlogin';
 
 /**
  * @see  https://umijs.org/zh-CN/plugins/plugin-initial-state
@@ -29,7 +30,7 @@ export async function getInitialState(): Promise<{
   fetchUserInfo?: () => Promise<API.CurrentUser | undefined>;
 }> {
 
-
+ 
   function getInitials(fullName, includeLastName) {
  
     fullName = fullName.replace(/[^A-Z]/g, '');
@@ -53,7 +54,13 @@ export async function getInitialState(): Promise<{
       return msg.data;
     } catch (error) {
      
-      history.push(loginPath);
+      if (localStorage.getItem('isAdmin')==="true") {
+       
+        history.push(loginAdminPath);
+      } else {
+        history.push(loginPath);
+      }
+     
     }
     return undefined;
   };
@@ -61,9 +68,11 @@ export async function getInitialState(): Promise<{
   // 如果不是登录页面，执行
   const { location } = history;
 
- 
+
  
   if (location.pathname !== loginPath && location.pathname !== "/user/retrievePassword" && location.pathname !== "/user/adminlogin" ) {
+   
+
     var currentUser = await fetchUserInfo();
    
    
@@ -75,11 +84,18 @@ export async function getInitialState(): Promise<{
       settings: defaultSettings as Partial<LayoutSettings>,
     };
   }
+
+
   return {
     fetchUserInfo,
     settings: defaultSettings as Partial<LayoutSettings>,
   };
 }
+
+
+
+
+
 
 // ProLayout 支持的api https://procomponents.ant.design/components/layout
 export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) => {
@@ -117,7 +133,11 @@ export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) =
       const { location } = history;
       // 如果没有登录，重定向到 login
       if (!initialState?.currentUser && location.pathname !== loginPath) {
-        history.push(loginPath);
+
+        
+          history.push(loginPath);
+        
+       
       }
     },
     layoutBgImgList: [
@@ -153,11 +173,37 @@ export const layout: RunTimeLayoutConfig = ({ initialState, setInitialState }) =
     unAccessible: <div><UnAccessPage /></div>,
     // 增加一个 loading 的状态
     childrenRender: (children) => {
-   
+      class BasicLayout extends React.Component {
+        constructor(props) {
+          super(props);
+          // 默认没有错误
+          this.state = {
+            hasError: false
+
+          };
+        }
+        // 增加错误边界代码，当发生错误时，state中的hasError会变成true
+        static getDerivedStateFromError() {
+          return { hasError: true };
+        }
+
+        render() {
+          const { hasError } = this.state;
+          return (
+
+            < >
+
+              {hasError ? <Result status="error" title="Something went wrong. Please refresh the page and try again" />  : children}
+
+            </>
+          )
+        }
+      }
       // if (initialState?.loading) return <PageLoading />;
       return (
         <>
-          {children}
+          {children }
+          
           {isDev && (
             <SettingDrawer
               disableUrlParams
