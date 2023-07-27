@@ -8,7 +8,7 @@ import { GridContent } from '@ant-design/pro-layout';
 import { flow } from '../system/flow/service';
 import { organization } from '../system/company/service';
 import MPSort from "@/components/MPSort";
-
+import { fieldSelectData } from '@/services/ant-design-pro/api';
 import FrPrint from "../../components/FrPrint";
 
 
@@ -289,6 +289,8 @@ const TableList: React.FC = () => {
   const [moreOpen, setMoreOpen] = useState<boolean>(false);
   const [MpSortDataIndex, setMpSortDataIndex] = useState<string>('');
   const [MPPagination, setMPPagination] = useState<any>({})
+  const [user_idData, setUser_idData] = useState<any>({});
+  
   const right = (
     <div style={{ fontSize: 24 }}>
       <Space style={{ '--gap': '16px' }}>
@@ -845,7 +847,51 @@ const TableList: React.FC = () => {
         return dom;
       },
     },*/
+    {
+      title:  'Created By',
+      dataIndex: 'user_id',
+      valueEnum: user_idData,
+      fieldProps:
+                {
+        notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
+        showSearch: true,
+        mode: 'multiple',
+        maxTagCount: 0,
+        maxTagPlaceholder: (omittedValues) => {
+          return omittedValues.length + " Selected"
+        },
+        allowClear: true,
+        onFocus: () => {
+          fieldSelectData({ model: "Alert", value: '', field: 'user_id', Op: true, where: { tab: { "eq": tab } } }).then((res) => {
+            setUser_idData(res.data)
+          })
+        },
+        onSearch: (newValue: string) => {
 
+          fieldSelectData({ model: "Alert", value: newValue, field: 'user_id',Op: true, where: { tab: { "eq": tab } } }).then((res) => {
+            setUser_idData(res.data)
+          })
+
+        }
+      },
+      search: {
+        transform: (value) => {
+          if (value && value.length > 0) {
+            return {
+              'user_id': {
+                'field': 'user_id',
+                'op': 'in',
+                'data': value
+              }
+            }
+          }
+
+        }
+      },
+      hideInTable: true,
+      hideInDescriptions:true,
+     
+    },
 
     {
       title: access.alertrule_list_tab() ? (tab == 'Terminal' ? 'Created By' : 'Customer'): 'Created By',

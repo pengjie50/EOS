@@ -62,6 +62,15 @@ module.exports = app => {
             type: STRING(50)
 
         },
+        transaction_event_id_to: {
+            type: UUID
+
+        },
+        transaction_event_id_from: {
+            type: UUID
+
+        },
+
         work_order_sequence_number: {
             type: STRING(50)
 

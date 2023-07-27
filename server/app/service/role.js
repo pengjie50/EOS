@@ -85,13 +85,26 @@ class RoleService extends Service {
     async del(params) {
 
         const ctx = this.ctx;
-        let res = await ctx.model.Role.destroy({
+
+        var user=await ctx.model.User.findOne({
             where: {
-                id: params.id
+                role_id: params.id
             }
         })
-        ctx.body = { success: true };
-        ctx.status = 200;
+
+        if (!user) {
+            let res = await ctx.model.Role.destroy({
+                where: {
+                    id: params.id
+                }
+            })
+            ctx.body = { success: true };
+            ctx.status = 200;
+        } else {
+            ctx.body = { success: false, errorCode: 1012 };
+        }
+
+        
         
     }
     async mod(params) {

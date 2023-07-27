@@ -569,7 +569,7 @@ const TableList: React.FC = () => {
         actionRef={actionRef}
           rowKey="id"
           pagination={{ size: "default" }}
-          scroll={{ x: 1800, y: resizeObj.tableScrollHeight }}
+          scroll={{  y: resizeObj.tableScrollHeight }}
           search={!access.jetty_list_tab() ? {
           labelWidth: 130,
           span: resizeObj.searchSpan,

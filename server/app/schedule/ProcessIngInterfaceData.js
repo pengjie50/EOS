@@ -878,10 +878,12 @@ class ProcessIngInterfaceData extends Subscription {
             if (transactioneventList.length > 0) {
                 var oneEvent = transactioneventList[0]
                 var lastEvent = transactioneventList[transactioneventList.length - 1]
-                if ((new Date()).getTime() - (new Date(lastEvent.event_time)).getTime() > 3600 * 24 * 5 * 1000) {
 
-                    var total_duration = ((new Date()).getTime() - (new Date(oneEvent.event_time)).getTime()) / 1000
-                    openTransaction.update({ status: 1, end_of_transaction: new Date(), total_duration: total_duration })
+                   
+                if ((new Date()).getTime() - (new Date(lastEvent.event_time)).getTime() > 3600 * 24 * 5 * 1000) {
+                    var end_of_transaction = (new Date(lastEvent.event_time)).getTime() + 3600 * 24 * 5 * 1000
+                    var total_duration = ((new Date(end_of_transaction)).getTime() - (new Date(oneEvent.event_time)).getTime()) / 1000 
+                    openTransaction.update({ status: 1, end_of_transaction: new Date(end_of_transaction), total_duration: total_duration })
                 } else {
                     var total_duration = ((new Date()).getTime() - (new Date(oneEvent.event_time)).getTime()) / 1000
                     openTransaction.update({ flow_id: lastEvent.flow_pid, total_duration: total_duration })

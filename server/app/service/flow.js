@@ -11,8 +11,7 @@ const uuid = require('uuid');
 
 
 class FlowService extends Service {
-
-    async findOne(params) {
+      async findOne(params) {
         const ctx = this.ctx;
         var res = await ctx.model.Flow.findByPk(params.id);
         ctx.body = { success: true, data: res }
@@ -32,9 +31,18 @@ class FlowService extends Service {
             obj.offset = parseInt((params.page - 1)) * parseInt(params.limit)
             obj.limit = parseInt(params.limit)
         }
+        
+       
 
-        const list = await ctx.model.Flow.findAndCountAll(obj)
+        var list = await ctx.model.Flow.findAndCountAll(obj)
+        if (ctx.user.role_type != "Super") {
+            list.rows = list.rows.filter((a) => {
+                return ctx.user.accessible_timestamp.some((b) => {
+                    return b == a.id
+                })
 
+            })
+        }
         ctx.status = 200;
         ctx.body = {
             success: true,

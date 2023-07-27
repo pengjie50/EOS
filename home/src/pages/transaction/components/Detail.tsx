@@ -209,6 +209,7 @@ const Detail: React.FC<any> = (props) => {
   const [transactionAlert, setTransactionAlert] = useState<any>([]);
   const [processes, setProcesses] = useState<any>([]);
   const [transactioneventMap, setTransactioneventMap] = useState<any>({});
+  const [transactioneventList, setTransactioneventList] = useState<any>({});
   const [processMap, setProcessMap] = useState<any>({});
  // const [transaction_id, setTransaction_id] = useState<any>("");
   const [filterOfTimestampsList, setFilterOfTimestampsList] = useState<any>([{ value: 'add', label: 'Select/create new timestamp filter' }]);
@@ -256,8 +257,11 @@ const Detail: React.FC<any> = (props) => {
 
   const [thresholdExpand, setThresholdExpand] = useState<boolean>(false);
   
-  const getTimeStr=(time)=>{
-    return (time ? parseInt((time / 3600) + "") : 0 )+ "h " +( time? parseInt((time % 3600) / 60):0) + "m"
+  const getTimeStr = (time) => {
+    if (time<0) {
+      time=0
+    }
+    return  parseInt((time / 3600) + "") + "h " + parseInt((time % 3600) / 60)+ "m"
   }
 
   const access = useAccess();
@@ -270,7 +274,7 @@ const Detail: React.FC<any> = (props) => {
     agent: "Agent",
     jetty_id: "Jetty Name",
     event_time:"Event Time",
-    product_name: " Product Name",
+    product_name: "Product Name",
     product_quantity_in_bls_60_f: "Product Quantity (Bls-60-f)",
     order_no: "Pilotage ID",
     location_from: "Location From",
@@ -820,15 +824,100 @@ const Detail: React.FC<any> = (props) => {
 
 
   ];
-  const getTimeByTwoEvent = (flow_id, flow_id_to,a) => {
+
+
+  const twoEvenbox = (th,ta,type) => {
+  
+    return (
+      <ProCard ghost={true} colSpan={24} bordered wrap={isMP ? true : false}
+
+        style={{ marginBlockStart: 5, cursor: 'pointer' }}
+        headStyle={{ padding: 0, fontWeight: 'normal', fontSize: '14px' }}
+        bodyStyle={{ paddingLeft: 25 }}
+
+        onClick={(e) => {
+          handlegetFlowFilter([th.flow_id, th.flow_id_to])
+        }}
+      >
+
+
+        <ProCard ghost={true} colSpan={isMP ? 24 : 8}>
+          {flowConf[th.flow_id]}<span >{' -> '}</span>{flowConf[th.flow_id_to]}
+        </ProCard>
+        <ProCard ghost={true} layout={isMP ? "default" : "center"} colSpan={isMP ? 24 : 5}>
+
+          <ProDescriptions
+            className="eventFromTo"
+            column={isMP ? 1 : 1} >
+            <ProDescriptions.Item contentStyle={{ paddingBottom: "0px !important" }} label="Work Order ID" valueType="text" style={{ fontSize: '14px' }} >
+
+              {ta?.work_order_id}
+
+
+            </ProDescriptions.Item>
+            <ProDescriptions.Item contentStyle={{ paddingBottom: "0px !important" }} label="Sequence No" valueType="text" style={{ fontSize: '14px' }} >
+
+              {ta?.work_order_sequence_number}
+
+
+            </ProDescriptions.Item>
+
+          </ProDescriptions>
+        </ProCard>
+        <ProCard ghost={true} layout={isMP ? "default" : "default"} colSpan={isMP ? 24 : 4}>
+          <span style={{
+            display: "inline-block",
+            color: "#fff",
+            width: '22px',
+            height: '22px',
+            fontSize: "16px",
+            backgroundColor: type==2 ? "#70AD47" : "#595959",
+            borderRadius: '50%',
+            textAlign: 'center',
+            lineHeight: '22px'
+          }}>
+            <SvgIcon type={"icon-yundongguiji"} />
+
+          </span>
+          {type == 2 && <span style={{ marginLeft: 5, fontWeight: 500 }}>{getTimeByTwoEvent(ta.transaction_event_id_from, ta.transaction_event_id_to, ta)}</span>}
+          {type == 0 && <span style={{ marginLeft: 5, fontWeight: 500 }}>{"-"}</span>}
+        </ProCard>
+
+        <ProCard ghost={true} layout={isMP ? "default" : "center"} colSpan={isMP ? 24 : 7} onClick={(ev) => { ev.stopPropagation(); setCurrentAlertruleRow(th); setShowDetail(true) }} >
+
+          <ProDescriptions
+            column={isMP ? 1 : 2} >
+            <ProDescriptions.Item label="Threshold" valueType="text" style={{ fontSize: '14px' }} >
+
+              <div style={{ display: 'flex' }}>
+                <Threshold hours={th.amber_hours} opacity={th.amber ? 1 : 0.3} mins={th.amber_mins} type="amber" size={14} />&nbsp;
+
+                <Threshold hours={th.red_hours} opacity={th.red ? 1 : 0.3} mins={th.red_mins} type="red" size={14} />
+              </div>
+            </ProDescriptions.Item>
+
+          </ProDescriptions>
+        </ProCard>
+
+
+
+
+      </ProCard>
+    )
+  }
+
+
+
+
+
+
+
+  const getTimeByTwoEvent = (from, to,a) => {
     try {
       if (!currentRow) {
         return "-"
       }
-      var from = flow_id +"_"+(a.work_order_id || 'null') +"_"+ (a.work_order_sequence_number || 'null')
-      var to = flow_id_to + "_" + (a.work_order_id || 'null') + "_" + (a.work_order_sequence_number || 'null')
-
-     
+      
 
       var fromEventTime=null
       var toEventTime=null
@@ -844,12 +933,11 @@ const Detail: React.FC<any> = (props) => {
         if (currentRow.status == 0) {
           toEventTime = new Date()
         } else {
+          
           toEventTime = currentRow.end_of_transaction
         }
       }
-      
-      console.log("fromEventTime=", fromEventTime)
-      console.log("toEventTime=", toEventTime)
+     
       return getTimeStr((new Date(toEventTime).getTime() - new Date(fromEventTime).getTime()) / 1000)
     } catch (e) {
 
@@ -925,6 +1013,10 @@ const Detail: React.FC<any> = (props) => {
       setEvents(d)
 
       setAlertruleProcessMap(b)
+
+      c=c.sort(function (a, b) {
+        return a.flow_id - b.flow_id;
+      })
       setAlertruleEventList(c)
 
 
@@ -1219,17 +1311,19 @@ const Detail: React.FC<any> = (props) => {
 
         var processMap = {}
         var td = 0
+        var e,s
         try {
 
 
 
-          var e = new Date(res.data[res.data.length - 1].event_time).getTime()
-          var s = new Date(res.data[0].event_time).getTime()
+           e = new Date(res.data[res.data.length - 1].event_time).getTime()
+           s = new Date(res.data[0].event_time).getTime()
           if (currentRow_?.status == 0) {
            
             e = new Date().getTime()
             td = (e - s) / 1000
-          } else{
+          } else {
+            e = new Date(currentRow_.end_of_transaction).getTime()
             td = currentRow_.total_duration
           }
 
@@ -1257,7 +1351,7 @@ const Detail: React.FC<any> = (props) => {
 
          
 
-          tmap[a.flow_id + "_" + (a.work_order_id || 'null') + "_" + (a.work_order_sequence_number || 'null') ]= a
+          tmap[a.id]= a
 
 
 
@@ -1287,19 +1381,7 @@ const Detail: React.FC<any> = (props) => {
 
         })
         setTransactioneventMap(tmap)
-        for (var i in eventTree_) {
-
-          var data = eventTree_[i]
-          data.forEach((a, index) => {
-            var ne = data[index + 1]
-            if (ne && a.flow_pid == ne.flow_pid) {
-
-              a.event_duration = getTimeStr((new Date(ne.event_time).getTime() - new Date(a.event_time).getTime()) / 1000)
-
-            }
-          })
-
-        }
+        setTransactioneventList(res.data)
 
 
         setEventTree(eventTree_)
@@ -1325,7 +1407,7 @@ const Detail: React.FC<any> = (props) => {
         }
 
 
-        processMap["aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"] = { duration: td }
+        processMap["aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"] = { duration: td, start_date: new Date(s), end_date: new Date(e) }
         setProcessMap(processMap)
 
 
@@ -1344,16 +1426,21 @@ const Detail: React.FC<any> = (props) => {
        // res.data[0].blockchain_hex_key = "sssss"
         setValidateStatus(1)
         validateBC({ id: res.data[0].id }).then((res) => {
-          if (res.data && res.data.length == 0) {
-
-            setValidateStatus(0)
-            setValidateData([])
-          } else {
-
+          if (res.data) {
+           
             setValidateStatus(2)
-
-
             setValidateData(res.data)
+            if (res.data.head_data.Verified == "False" || res.data.event_data.some((a) => {
+              return a.Verified == "False"
+            })) {
+              setValidateStatus(3)
+            }
+            
+          } else {
+           
+            setValidateStatus(0)
+            setValidateData(null)
+            
           }
 
 
@@ -1598,7 +1685,7 @@ const Detail: React.FC<any> = (props) => {
 
       {!isMP && (<ProCard ghost={true} style={{ marginBlockStart: 16 }} ><div style={{ paddingRight: 20,width: '100%', height: 'auto', overflow: 'auto', padding: "10px", backgroundColor: "#FFF" }}>
 
-        <div style={{ width:2000 }}>
+        <div style={{ width:2300 }}>
 
 
         <div style={{ position: 'relative', float: 'left', zIndex: 1, textAlign: 'left', marginRight: 10 }}>
@@ -1956,12 +2043,60 @@ const Detail: React.FC<any> = (props) => {
         {alertruleEventList.length == 0 || !transactionAlert && (<Empty />)}
 
 
+
         {transactionAlert &&  transactionAlert.b2e && alertruleEventList.map((th) => {
 
           var aa= transactionAlert.b2e.map((ta) => {
 
+            
+            if (th.id == ta.alert_rule_transaction_id && th.flow_id == ta.flow_id && th.flow_id_to == ta.flow_id_to) {
+
+              return ta
+
+
+             
+
+
+            } else {
+              return null
+            }
            
-            if (th.flow_id == ta.flow_id && th.flow_id_to == ta.flow_id_to) {
+
+          })
+          aa=aa.filter((dd) => {
+           return dd !=null
+          })
+          
+          if (aa.length > 0) {
+            var vvmap = {}
+            var showArr=[]
+            aa.forEach((vv) => {
+              var vvkey = vv.alert_rule_transaction_id + "_" + vv.transaction_event_id_from + "_" + vv.transaction_event_id_to
+                + "_" + vv.work_order_id + "_" + vv.work_order_sequence_number
+
+             
+              if (!vvmap[vvkey]) {
+                vvmap[vvkey]=[]
+              }
+              if (vvmap[vvkey].length == 0 || (vvmap[vvkey].length == 1  && vv.type == 1)) {
+
+               
+                vvmap[vvkey][0]=vv
+                
+              } else {
+                //alert(1)
+              }
+             
+             
+
+            })
+            for (var i in vvmap) {
+              
+              showArr.push(vvmap[i][0])
+            }
+
+
+            return showArr.map((ta) => {
               return (
                 <ProCard ghost={true} colSpan={24} bordered wrap={isMP ? true : false}
 
@@ -1983,7 +2118,7 @@ const Detail: React.FC<any> = (props) => {
                     <ProDescriptions
                       className="eventFromTo"
                       column={isMP ? 1 : 1} >
-                      <ProDescriptions.Item contentStyle={{ paddingBottom:"0px !important" }} label="Work Order ID" valueType="text" style={{ fontSize: '14px' }} >
+                      <ProDescriptions.Item contentStyle={{ paddingBottom: "0px !important" }} label="Work Order ID" valueType="text" style={{ fontSize: '14px' }} >
 
                         {ta?.work_order_id}
 
@@ -2013,7 +2148,7 @@ const Detail: React.FC<any> = (props) => {
                       <SvgIcon type={"icon-yundongguiji"} />
 
                     </span>
-                    <span style={{ marginLeft: 5, fontWeight: 500 }}>{getTimeByTwoEvent(ta.flow_id, ta.flow_id_to, ta)}</span>
+                    <span style={{ marginLeft: 5, fontWeight: 500 }}>{getTimeByTwoEvent(ta.transaction_event_id_from, ta.transaction_event_id_to, ta)}</span>
                   </ProCard>
 
                   <ProCard ghost={true} layout={isMP ? "default" : "default"} colSpan={isMP ? 24 : 7} onClick={(ev) => { ev.stopPropagation(); setCurrentAlertruleRow(th); setShowDetail(true) }} >
@@ -2038,88 +2173,135 @@ const Detail: React.FC<any> = (props) => {
                 </ProCard>
               )
 
-
-            } else {
-              return null
-            }
-           
-
-          })
-          aa=aa.filter((dd) => {
-           return dd !=null
-          })
-          
-          if (aa.length > 0) {
-            return aa
+            })
           } else {
-             return (
-              <ProCard ghost={true} colSpan={24} bordered wrap={isMP ? true : false}
+            var ar_amber_time = 0
+            if (th.amber_hours || th.amber_mins) {
 
-                style={{ marginBlockStart: 5, cursor: 'pointer' }}
-                headStyle={{ padding: 0, fontWeight: 'normal', fontSize: '14px' }}
-                bodyStyle={{ paddingLeft: 25 }}
+              if (th.amber_hours) {
+                ar_amber_time += th.amber_hours * 3600
+              }
+              if (th.amber_mins) {
+                ar_amber_time += th.amber_mins * 60
+              }
 
-                onClick={(e) => {
-                  handlegetFlowFilter([th.flow_id, th.flow_id_to])
-                }}
-              >
+            }
+            var arr=[]
+            var fromEvent = transactioneventList.filter((tel) => {
+              return tel.flow_id == th.flow_id
 
-
-                <ProCard ghost={true} colSpan={isMP ? 24 : 8}>
-                  {flowConf[th.flow_id]}<span >{' -> '}</span>{flowConf[th.flow_id_to]}
-                </ProCard>
-                 <ProCard ghost={true} layout={isMP ? "default" : "default"} colSpan={isMP ? 24 : 5}>
-
-                  <ProDescriptions
-                    column={isMP ? 1 : 2} >
-                    <ProDescriptions.Item label="Work Order ID" valueType="text" style={{ fontSize: '14px' }} >
-
-                      {"-"}
+            })
 
 
-                    </ProDescriptions.Item>
-
-                  </ProDescriptions>
-                </ProCard>
-                 <ProCard ghost={true} layout={isMP ? "default" : "default"} colSpan={isMP ? 24 : 4}>
-                  <span style={{
-                    display: "inline-block",
-                    color: "#fff",
-                    width: '22px',
-                    height: '22px',
-                    fontSize: "16px",
-                    backgroundColor:  "#595959",
-                    borderRadius: '50%',
-                    textAlign: 'center',
-                    lineHeight: '22px'
-                  }}>
-                    <SvgIcon type={"icon-yundongguiji"} />
-
-                  </span>
-                  <span style={{ marginLeft: 5, fontWeight: 500 }}>{"-"}</span>
-                </ProCard>
-
-                <ProCard ghost={true} layout={isMP ? "default" : "center"} colSpan={isMP ? 24 : 7} onClick={(ev) => { ev.stopPropagation(); setCurrentAlertruleRow(th); setShowDetail(true) }} >
-
-                  <ProDescriptions
-                    column={isMP ? 1 : 2} >
-                    <ProDescriptions.Item label="Threshold" valueType="text" style={{ fontSize: '14px' }} >
-
-                      <div style={{ display: 'flex' }}>
-                        <Threshold hours={th.amber_hours} opacity={th.amber ? 1 : 0.3} mins={th.amber_mins} type="amber" size={14} />&nbsp;
-
-                        <Threshold hours={th.red_hours} opacity={th.red ? 1 : 0.3} mins={th.red_mins} type="red" size={14} />
-                      </div>
-                    </ProDescriptions.Item>
-
-                  </ProDescriptions>
-                </ProCard>
+            var toEvent = transactioneventList.filter((tel) => {
+              return tel.flow_id == th.flow_id_to
+            })
+            var step2 = 0
+            function Do2() {
+              if (step2 >= fromEvent.length) {
+                return
+              }
+              var fromEventObj = fromEvent[step2]
+              if (fromEventObj) {
 
 
+                var toEventArr = toEvent.filter((te2) => {
+                  if (!fromEventObj.work_order_id && !fromEventObj.work_order_sequence_number) {
+                    return true
+                  } else if (fromEventObj.work_order_id && !fromEventObj.work_order_sequence_number) {
+                    if (!te2.work_order_id && !te2.work_order_sequence_number) {
+                      return true
+                    } else if (te2.work_order_id) {
+                      if (te2.work_order_id == fromEventObj.work_order_id) {
+                        return true
+                      }
+                    }
+                  } else if (fromEventObj.work_order_id && fromEventObj.work_order_sequence_number) {
+
+                    if (!te2.work_order_id && !te2.work_order_sequence_number) {
 
 
-              </ProCard>
-            )
+                      return true
+                    } else if (te2.work_order_id && !te2.work_order_sequence_number) {
+                      if (te2.work_order_id == fromEventObj.work_order_id) {
+
+
+                        return true
+                      }
+                    } else if (te2.work_order_id && te2.work_order_sequence_number) {
+                      if (te2.work_order_id == fromEventObj.work_order_id && te2.work_order_sequence_number == fromEventObj.work_order_sequence_number) {
+
+
+                        return true
+                      }
+                    }
+
+                  }
+                  return false
+                })
+
+                if (toEventArr.length > 0) {
+
+                  var step3 = 0
+                   function Do3() {
+                    if (step3 >= toEventArr.length) {
+                      return
+                    }
+
+                    var toEventObj = toEventArr[step3]
+                    var trueTime = (new Date(toEventObj.event_time)).getTime() / 1000 - (new Date(fromEventObj.event_time)).getTime() / 1000
+
+
+                     var work_order_id = toEventObj?.work_order_id || fromEventObj?.work_order_id || null
+                     var work_order_sequence_number = toEventObj?.work_order_sequence_number || fromEventObj?.work_order_sequence_number || null
+
+                     if (trueTime <=ar_amber_time) {
+                       arr.push(twoEvenbox(th, { work_order_id, work_order_sequence_number, transaction_event_id_from: fromEventObj.id, transaction_event_id_to: toEventObj.id }, 2))
+
+                     }
+                    
+
+
+                    step3++
+                     Do3()
+                  }
+                   Do3()
+
+
+                } else {
+                  var trueTime = (new Date()).getTime() / 1000 - (new Date(fromEventObj.event_time)).getTime() / 1000
+                  var work_order_id = fromEventObj?.work_order_id || null
+                  var work_order_sequence_number =  fromEventObj?.work_order_sequence_number || null
+                  if (trueTime <= ar_amber_time) {
+                    arr.push(twoEvenbox(th, { work_order_id, work_order_sequence_number, transaction_event_id_from: fromEventObj.id, transaction_event_id_to: null }, 2))
+
+                  }
+
+                 
+
+                 
+
+                }
+
+              }
+              step2++
+              Do2()
+            }
+
+            Do2()
+
+
+            if (arr.length > 0) {
+              return arr
+            } else {
+              return twoEvenbox(th, null, 0)
+            }
+            
+
+
+           
+           
+            
 
           }
           
@@ -2239,7 +2421,7 @@ const Detail: React.FC<any> = (props) => {
             style={{ float: 'left', width: isMP ? '100%' : '70%', marginLeft: isMP ? '0px' : '25%', marginTop: 0, maxWidth:'100%' }}
         >
             
-            {flowTreeFilter.map(e => {
+            {flowTreeFilter.map((e,index1) => {
              
             var p = processMap[e.id]
               var ar = alertruleProcessMap[e.id]
@@ -2302,7 +2484,7 @@ const Detail: React.FC<any> = (props) => {
 
                   {p && <span className="my-title" style={{ display: 'block', textAlign: "left", fontSize: "14px", lineHeight: "20px", height: 20 }}>Process Duration: {p ? getTimeStr(p.duration) : "0h 00m"}</span>}</div>} description={<div >{
 
-                    filterEventTree?.map((c) => {
+                    filterEventTree?.map((c,index2) => {
                     if (!show[e.id]) {
 
                       return
@@ -2310,20 +2492,47 @@ const Detail: React.FC<any> = (props) => {
                     // c.name=flowConf[c.flow_id]
                     var te = c
 
-                   
+                     
+                      var ne = filterEventTree[index2 + 1]
+                      if (ne) {
+
+                        c.event_duration = getTimeStr((new Date(ne.event_time).getTime() - new Date(c.event_time).getTime()) / 1000)
+
+                      } else {
+                        
+
+
+                        var filterEventTree2 = eventTree[flowTreeFilter[index1 + 1].id]?.filter((h) => {
+
+                          return flowTreeFilter[index1 + 1].children.some((m) => {
+                            return m.id == h.flow_id
+                          })
+
+                        })
+                        var pne = filterEventTree2?.[0]
+
+                       
+                        if (pne) {
+                          c.event_duration = getTimeStr((new Date(pne.event_time).getTime() - new Date(c.event_time).getTime()) / 1000)
+                        }
+                        
+
+                      }
+                       
+
+                      
 
                     var event_duration=null
-                    if (te ) {
-                     
-                     
-                      event_duration = te.event_duration
-                        
+                    
+                      if (c.event_duration) {
+                       
+                        event_duration = c.event_duration
+
+
+                       
+                      }
+
                       
-                      
-                    }
-
-
-
                      
                     
                       
@@ -2388,10 +2597,10 @@ const Detail: React.FC<any> = (props) => {
                               newList.forEach((aa, index) => {
                                 if (index < newList.length && aa && newList[index + 1]) {
                                   var diff = getDiff(aa, newList[index + 1])
-
+                                  
                                   if (diff) {
                                     for (var m in diff) {
-                                      if (m != 'created_at' && m != 'updated_at' && m != 'id') {
+                                      if (m != 'created_at' && m != 'updated_at' && m != 'id' && m != 'event_duration') {
                                         var obj = {
                                           TypeOfData: keyNameMap[m],
                                           PreviousValue: newList[index + 1][m],

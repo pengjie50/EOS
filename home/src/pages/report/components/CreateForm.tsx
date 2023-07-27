@@ -512,105 +512,121 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
   const columns2 = [
 
     
-
-     {
-
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Process" />,
-      dataIndex: 'process',
-
-    },
-    {
-
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Description" />,
-      dataIndex: 'description',
-
-    },
-    {
-
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Value" />,
-      dataIndex: 'value',
-
-    },
-
-    {
-
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Type of Data" />,
-      dataIndex: 'type_of_data',
-
-    },
-    {
-
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Time Created" />,
-      dataIndex: 'created_time',
-
-    },
-    {
-
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Alert Type" />,
-      dataIndex: 'alert_type',
-
-    },
-    {
-
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Alert Triggered Time" />,
-      dataIndex: 'alert_triggered_time',
-
-    },
-    {
-
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Threshold Type" />,
-      dataIndex: 'threshold_type',
-
-    },
-    {
-
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Threshold Limit" />,
-      dataIndex: 'threshold_limit',
-
-    },
-   
     {
     title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="EOS ID" />,
       dataIndex: 'eos_id',
       mustSelect: true
 
-  },
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Process" />,
+      dataIndex: 'flow_pid',
+      mustSelect: true
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Event" />,
+      dataIndex: 'flow_id',
+      mustSelect: true
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Event Time" />,
+      dataIndex: 'event_time',
+      mustSelect: true
+    },
     {
 
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Work Order ID" />,
       dataIndex: 'work_order_id',
-      mustSelect: true
-
+     
     },
     {
 
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Sequence No." />,
-      dataIndex: 'sequence_num',
-      mustSelect: true
-
+      dataIndex: 'work_order_sequence_number',
+     
     },
-  
-
+    
     {
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Threshold/Alert" />,
-      dataIndex: 'threshold_or_alert',
-      mustSelect: true
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Tank ID" />,
+      dataIndex: 'tank_number',
 
     },
     {
 
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Alert ID" />,
-      dataIndex: 'alert_id',
-      mustSelect: true
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Product Name" />,
+      dataIndex: 'product_name',
 
     },
     {
 
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Threshold ID" />,
-      dataIndex: 'alertrule_id',
-      mustSelect: true
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Product Quantity (l-15-c)" />,
+      dataIndex: 'product_quantity_in_l_15_c',
+
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Product Quantity (mt)" />,
+      dataIndex: 'product_quantity_in_mt',
+
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Product Quantity (mtv)" />,
+      dataIndex: 'product_quantity_in_mtv',
+
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Product Quantity (l-obs)" />,
+      dataIndex: 'product_quantity_in_l_obs',
+
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Product Quantity (Bls-60-f)" />,
+      dataIndex: 'product_quantity_in_bls_60_f',
+
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Pilotage ID" />,
+      dataIndex: 'order_no',
+
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Location From" />,
+      dataIndex: 'location_from',
+
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Location To" />,
+      dataIndex: 'location_to',
+
+    },
+
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Delay Reason" />,
+      dataIndex: 'delay_reason',
+
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Delay Duration" />,
+      dataIndex: 'delay_duration',
 
     }
+
+
+  
+
+    
 ]
   const columns3 = [
     {
@@ -684,14 +700,15 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
     {
 
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Alert Triggered Time" />,
-      dataIndex: 'create_time',
+      dataIndex: 'created_at',
+      
       mustSelect: true
 
     },
 
     {
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Threshold ID" />,
-      dataIndex: 'alertrule_id',
+      dataIndex: 'ar.alertrule_id',
       mustSelect: true
 
     },
@@ -705,14 +722,14 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
     {
 
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Threshold Limit" />,
-      dataIndex: 'amber_hours',
+      dataIndex: 'ar.amber_hours',
       mustSelect: true
 
     },
     {
 
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="EOS ID" />,
-      dataIndex: 'eos_id',
+      dataIndex: 't.eos_id',
       mustSelect: true
 
     }, 
@@ -720,7 +737,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
     {
 
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Total / Current Duration" />,
-      dataIndex: 'duration',
+      dataIndex: 'total_duration',
       mustSelect: true
 
     }

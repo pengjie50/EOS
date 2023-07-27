@@ -1021,7 +1021,7 @@ const TableList: React.FC = () => {
       width: 200,
       hideInSearch:true,
      
-      align: "center",
+    
       hideInTable: !(access.transactions_list_tab() || access.canAdmin) ? true : false,
       render: (dom, entity) => {
 
@@ -1035,7 +1035,7 @@ const TableList: React.FC = () => {
       hideInSearch: true,
       
       hideInTable: access.transactions_list_tab() ? true : false,
-      align: "center",
+      
       render: (dom, entity) => {
 
         return entity.terminal_name 

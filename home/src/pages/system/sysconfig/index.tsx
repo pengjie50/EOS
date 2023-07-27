@@ -183,7 +183,7 @@ const TableList: React.FC = () => {
     <div style={{ fontSize: 24 }}>
       <Space style={{ '--gap': '16px' }}>
         <SearchOutlined onClick={e => { setShowMPSearch(!showMPSearch) }} />
-        <PlusOutlined onClick={() => { handleModalOpen(true) }} />
+        {/*<PlusOutlined onClick={() => { handleModalOpen(true) }} />*/ }
       </Space>
     </div>
   )
@@ -288,7 +288,7 @@ const TableList: React.FC = () => {
           <FormOutlined style={{ fontSize: '20px' }} />
         </a>,
 
-        <a
+        /*<a
           title={formatMessage({ id: "pages.delete", defaultMessage: "Delete" })}
           key="config"
           onClick={() => {
@@ -305,7 +305,7 @@ const TableList: React.FC = () => {
         >
           <DeleteOutlined style={{ fontSize: '20px', color: 'red' }} />
 
-        </a>,
+        </a>,*/
 
        
       ],
@@ -355,22 +355,27 @@ const TableList: React.FC = () => {
       <PageContainer className="myPage" header={{
       title: isMP ? null : < FormattedMessage id="pages.sysconfig.title" defaultMessage="Security Settings" />,
       breadcrumb: {},
-      extra: isMP ? null : [
-        <Button
+        extra: isMP ? null : [
+          /*
+           <Button
           type="primary"
           key="primary"
           onClick={() => {
             handleModalOpen(true);
           }}
         >
-          <PlusOutlined /> <FormattedMessage id="pages.searchTable.new" defaultMessage="New" />
+           <PlusOutlined /> <FormattedMessage id="pages.searchTable.new" defaultMessage="New" />
         </Button>,
+*/ 
+       
       ]
-    }}>
+      }}>
+        {"" }
         {!isMP && (<ConfigProvider renderEmpty={customizeRenderEmpty}><ProTable<SysconfigListItem, API.PageParams>
           pagination={{ size: "default" }}
         actionRef={actionRef}
           rowKey="id"
+         
           formRef={formRef }
           scroll={{ x: 1800, y: resizeObj.tableScrollHeight }}
         search={{

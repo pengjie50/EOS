@@ -5,6 +5,7 @@ import { PlusOutlined, SearchOutlined, FormOutlined, DeleteOutlined, Exclamation
 import type { ActionType, ProColumns, ProDescriptionsItemProps } from '@ant-design/pro-components';
 import { FlowList, FlowListItem } from './data.d';
 import { exportCSV } from "../../../components/export";
+import { Icon as Iconfy } from '@iconify/react';
 import MPSort from "@/components/MPSort";
 import {
   FooterToolbar,
@@ -165,7 +166,7 @@ const TableList: React.FC = () => {
   const intl = useIntl();
   //--MP start
   const MPSearchFormRef = useRef<ProFormInstance>();
-
+  const [isLock, setIsLock] = useState<boolean>(true);
   const [showMPSearch, setShowMPSearch] = useState<boolean>(false);
   const [isMP, setIsMP] = useState<boolean>(!isPC());
   const [moreOpen, setMoreOpen] = useState<boolean>(false);
@@ -173,7 +174,10 @@ const TableList: React.FC = () => {
     <div style={{ fontSize: 24 }}>
       <Space style={{ '--gap': '16px' }}>
         <SearchOutlined onClick={e => { setShowMPSearch(!showMPSearch) }} />
-        <Popover onOpenChange={(v) => { setMoreOpen(v) }} open={moreOpen} placement="bottom" title={""} content={<div><Button type="primary" style={{ width: "100%" }} key="print"
+        <Popover onOpenChange={(v) => { setMoreOpen(v) }} open={moreOpen} placement="bottom" title={""} content={<div>
+
+
+          <Button type="primary" style={{ width: "100%" }} key="print"
           onClick={() => {
             setMoreOpen(false)
             handlePrintModalVisible(true)
@@ -189,7 +193,14 @@ const TableList: React.FC = () => {
 
 
         </Popover>
-        {<PlusOutlined onClick={() => { handleModalOpen(true) }} /> }
+
+
+        {isLock ? <Iconfy onClick={() => {
+          setIsLock(!isLock)
+        }} className="white-icon" icon="bxs:lock" /> : <Iconfy onClick={() => {
+          setIsLock(!isLock)
+        }} className="white-icon" icon="bytesize:unlock" />}
+        {/*<PlusOutlined onClick={() => { handleModalOpen(true) }} /> */}
       </Space>
     </div>
   )
@@ -320,12 +331,16 @@ const TableList: React.FC = () => {
       render: (_, record) => [
         <a
           key="config"
+          
           onClick={() => {
+            if(isLock){
+              return
+            }
             handleUpdateModalOpen(true);
             setCurrentRow(record);
           }}
         >
-          <FormOutlined style={{ fontSize: '20px' }} />
+          <FormOutlined style={{ fontSize: '20px', color: isLock ? "#999" : '#5000B9' }} />
         </a>/*,
 
         <a
@@ -378,9 +393,28 @@ const TableList: React.FC = () => {
       }}
     >
       <PageContainer className="myPage" header={{
-        title: isMP ? null : < FormattedMessage id="pages.flow.xxx" defaultMessage="Transaction Flow" />,
+        title: isMP ? null : <div>
+          <div>Caution: Do not update this page unless necessary as it may impact system logic</div>
+          <div className="ant-page-header-heading-title">< FormattedMessage id="pages.flow.xxx" defaultMessage="Transaction Flow" /></div>
+          </div>,
       breadcrumb: {},
-      extra: isMP ? null : [
+        extra: isMP ? null : [
+
+          <Button
+            type="default"
+            key="primary"
+            onClick={() => {
+              setIsLock(!isLock)
+            }}
+          >
+
+            {isLock ? <Iconfy onClick={() => {
+              setIsLock(!isLock)
+            }} className="white-icon" icon="bxs:lock" /> : <Iconfy onClick={() => {
+              setIsLock(!isLock)
+            }} className="white-icon" icon="bytesize:unlock" />}
+           
+          </Button>,
         <Button
           type="primary"
           key="primary"
@@ -480,7 +514,8 @@ const TableList: React.FC = () => {
             manualRequest={true}
           />
         </div>
-        <List>
+          <List>
+            <div style={{ padding:10 }}>Caution: Do not update this page unless necessary as it may impact system logic</div>
           {data.map((item, index) => (
             <List.Item key={index}>
 

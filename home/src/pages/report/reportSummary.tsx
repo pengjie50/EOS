@@ -9,7 +9,7 @@ import { addReport } from '../report/service';
 import { organization } from '../system/company/service';
 import { alert as getAlert } from '../alert/service';
 import { reportSummary } from './service';
-
+import { SvgIcon } from '@/components'
 import { columnsBase as columns4 } from '../system/operlog/SuperUserActivity';
 import { columnsBase as columns5 } from '../system/loginlog/index';
 import { columnsBase as columns6 } from '../system/operlog/index';
@@ -225,7 +225,7 @@ const TableList: React.FC = () => {
   var filter = {}
   if (value.imo_number) {
     var a = {}
-    a.field = 'imo_number'
+    a.field = report_type == 3 ? 't.imo_number' :'imo_number'
     a.op = 'in'
     a.data = value.imo_number
     filter.imo_number = a
@@ -234,7 +234,7 @@ const TableList: React.FC = () => {
 
     if (value.eos_id) {
       var a = {}
-      a.field = 'eos_id'
+      a.field = report_type==3?"t.eos_id":'eos_id'
       a.op = 'in'
       a.data = value.eos_id
       filter.eos_id = a
@@ -242,7 +242,7 @@ const TableList: React.FC = () => {
 
   if (value.vessel_name) {
     var a = {}
-    a.field ='vessel_name' 
+    a.field = report_type == 3 ? "t.vessel_name" : 'vessel_name'
     a.op = 'in'
     a.data = value.vessel_name
     filter.vessel_name = a
@@ -250,7 +250,7 @@ const TableList: React.FC = () => {
   var product_name_str ="All Product"
   if (value.product_name) {
     var a = {}
-    a.field = 'product_name'
+    a.field = report_type == 3 ? "t.product_name" : 'product_name'
     a.op = 'in'
     a.data = value.product_name
     filter.product_name = a
@@ -259,19 +259,20 @@ const TableList: React.FC = () => {
   }
 
 
-  if (value.terminal_id) {
-    var a = {}
-    a.field = 'terminal_id'
-    a.op = 'eq'
-    a.data = value.terminal_id
-    filter.terminal_id = a
-  }
+  
 
 
 
     if (value.vessel_size_dwt) {
       var a = {}
-      a.field = 'vessel_size_dwt'
+
+      if (report_type == 1 || report_type == 2) {
+        a.field = 'vessel_size_dwt'
+      } else if (report_type == 3) {
+        a.field = 't.vessel_size_dwt'
+      }
+
+     
       a.op = 'between'
       a.data = value.vessel_size_dwt.split("-")
       filter.vessel_size_dwt = a
@@ -299,14 +300,14 @@ const TableList: React.FC = () => {
 
       
     var a = {}
-    a.field = 'jetty_name'
+      a.field = report_type == 3 ? "t.jetty_name" : 'jetty_name' 
     a.op = 'in'
       a.data = value.jetty_name
       filter.jetty_name = a
   }
   if (value.hasOwnProperty('status')) {
     var a = {}
-    a.field = 'status'
+    a.field = report_type == 3 ? "t.status" : 'status' 
     a.op = 'in'
     a.data = value.status
     filter.status = a
@@ -349,10 +350,15 @@ const TableList: React.FC = () => {
   var dateStr=""
 
   if (value.dateArr && value.dateArr.length>0) {
-
+    var field = "oper_time"
+    if (report_type == 1 || report_type == 2) {
+      field = "start_of_transaction"
+    } else if (report_type == 3) {
+      field = "t.start_of_transaction"
+    }
    
     filter.start_of_transaction={
-      'field': report_type < 4 ? 'start_of_transaction' :'oper_time',
+      'field': field,
           'op': 'between',
       'data': value.dateArr
       }
@@ -363,9 +369,14 @@ const TableList: React.FC = () => {
   if (value.dateRange && value.dateRange.length > 0) {
     value.dateRange[0] = moment(new Date(value.dateRange[0])).format('YYYY-MM-DD') + " 00:00:00"
     value.dateRange[1] = moment(new Date(value.dateRange[1])).format('YYYY-MM-DD') + " 23:59:59"
-    
+    var field = "oper_time"
+    if (report_type == 1 || report_type == 2) {
+      field = "start_of_transaction"
+    } else if (report_type == 3) {
+      field = "t.start_of_transaction"
+    }
     filter.start_of_transaction = {
-      'field': report_type < 4 ? 'start_of_transaction' : 'oper_time',
+      'field': field,
       'op': 'between',
       'data': value.dateRange
     }
@@ -468,11 +479,11 @@ const TableList: React.FC = () => {
 
     } else if (report_type == 2) {
 
-      ss = await reportSummary({ ...params, sorter, ...filter })
+      ss = await transaction({ ...params, sorter, ...filter, is_detail_report: true })
 
     } else if (report_type == 3) {
 
-      ss = await getAlert({ ...params, sorter, ...filter })
+      ss = await getAlert({ ...params, sorter, ...filter, is_report: true })
 
     } else if (report_type == 4) {
       ss = await operlog({
@@ -509,8 +520,8 @@ const TableList: React.FC = () => {
     }
 
 
-    setTransaction_total_num(ss.all_total)
-    setTransaction_filter_num(ss.total)
+    setTransaction_total_num(ss.top_all_total)
+    setTransaction_filter_num(ss.top_total)
    
     setMPPagination({ total: ss.total })
     setData(ss.data)
@@ -522,7 +533,7 @@ const TableList: React.FC = () => {
 
   useEffect(() => {
 
-
+   
     setFormData(fd)
     
 
@@ -619,12 +630,12 @@ const TableList: React.FC = () => {
 
     });
 
-
+    
     if (report_type == 1) {
     
       columns = columns
     } else if (report_type == 2) {
-
+      
         columns = columns2
     } else if (report_type == 3) {
 
@@ -753,6 +764,9 @@ const TableList: React.FC = () => {
     {
       title: (<FormattedMessage id="pages.transaction.transactionID" defaultMessage="EOS ID" />),
       dataIndex: 'eos_id',
+      render: (dom, entity) => {
+        return "E" + dom
+      },
       mustSelect: true
     },
     {
@@ -800,44 +814,121 @@ const TableList: React.FC = () => {
 
 
   const columns2 = [
-    {
-
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Type of Last Change" />,
-      dataIndex: 'type_of_Last_change',
-
-    },
+    
     {
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="EOS ID" />,
       dataIndex: 'eos_id',
-      mustSelect: true
+      mustSelect: true,
+      render: (dom, entity) => {
+        return "E"+dom
+      }
 
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Process" />,
+      dataIndex: 'flow_pid',
+      valueEnum:flowConf,
+      mustSelect: true
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Event" />,
+      dataIndex: 'flow_id',
+      valueEnum: flowConf,
+      mustSelect: true
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Event Time" />,
+      dataIndex: 'event_time',
+      valueType:"dateTime",
+      mustSelect: true
     },
     {
 
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Work Order ID" />,
       dataIndex: 'work_order_id',
-      mustSelect: true
-
-    },
-
-    {
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Description" />,
-      dataIndex: 'description',
-      mustSelect: true
 
     },
     {
 
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Value" />,
-      dataIndex: 'value',
-      mustSelect: true
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Sequence No." />,
+      dataIndex: 'work_order_sequence_number',
+
+    },
+
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Tank ID" />,
+      dataIndex: 'tank_number',
 
     },
     {
 
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Type of Data" />,
-      dataIndex: 'data_type',
-      mustSelect: true
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Product Name" />,
+      dataIndex: 'product_name',
+
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Product Quantity (l-15-c)" />,
+      dataIndex: 'product_quantity_in_l_15_c',
+
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Product Quantity (mt)" />,
+      dataIndex: 'product_quantity_in_mt',
+
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Product Quantity (mtv)" />,
+      dataIndex: 'product_quantity_in_mtv',
+
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Product Quantity (l-obs)" />,
+      dataIndex: 'product_quantity_in_l_obs',
+
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Product Quantity (Bls-60-f)" />,
+      dataIndex: 'product_quantity_in_bls_60_f',
+
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Pilotage ID" />,
+      dataIndex: 'order_no',
+
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Location From" />,
+      dataIndex: 'location_from',
+
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Location To" />,
+      dataIndex: 'location_to',
+
+    },
+
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Delay Reason" />,
+      dataIndex: 'delay_reason',
+
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Delay Duration" />,
+      dataIndex: 'delay_duration',
 
     }
   ]
@@ -900,12 +991,28 @@ const TableList: React.FC = () => {
 
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Alert ID" />,
       dataIndex: 'alert_id',
-      mustSelect: true
+      mustSelect: true,
+      render: (dom, entity) => {
+        return "A" + dom
+      }
 
     },
     {
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Alert Type" />,
       dataIndex: 'type',
+      renderPrint: (dom, entity) => {
+        if (dom == 0) {
+          return "Amber"
+        } else if (dom == 1) {
+          return "Red"
+        }
+
+      },
+      render: (dom, entity) => {
+
+        return (<div><div style={{ display: dom == 0 ? "block" : "none" }}> <SvgIcon style={{ color: "#DE7E39" }} type="icon-yuan" /> Amber</div>
+          <div style={{ display: dom == 1 ? "block" : "none" }}><SvgIcon style={{ color: "red" }} type="icon-yuan" /> Red</div></div>)
+      },
       mustSelect: true
 
     },
@@ -913,35 +1020,51 @@ const TableList: React.FC = () => {
     {
 
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Alert Triggered Time" />,
-      dataIndex: 'create_time',
+      dataIndex: 'created_at',
+      valueType: 'dateTime',
       mustSelect: true
 
     },
 
     {
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Threshold ID" />,
-      dataIndex: 'alertrule_id',
-      mustSelect: true
+      dataIndex: 'ar.alertrule_id',
+      mustSelect: true,
+      render: (dom, entity) => {
+        return "T" + dom
+      }
 
     },
     {
 
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Threshold Type" />,
       dataIndex: 'alertrule_type',
+      valueEnum: {
+        0: { text: <FormattedMessage id="pages.alertrule.singleProcess" defaultMessage="Single Process" /> },
+        1: { text: <FormattedMessage id="pages.alertrule.betweenTwoEvents" defaultMessage="Between Two Events" /> },
+        2: { text: <FormattedMessage id="pages.alertrule.entireTransaction" defaultMessage="Entire Transaction" /> },
+      },
       mustSelect: true
 
     },
     {
 
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Threshold Limit" />,
-      dataIndex: 'amber_hours',
-      mustSelect: true
-
+      dataIndex: 'ar.amber_hours',
+      mustSelect: true,
+      render: (dom, entity) => {
+        entity.amber_hours = entity['ar.amber_hours']
+        entity.amber_mins = entity['ar.amber_mins']
+        entity.red_hours = entity['ar.red_hours']
+        entity.red_mins = entity['ar.red_mins']
+        return (<div><div style={{ display: entity.amber_hours || entity.amber_mins ? "block" : "none" }}> <SvgIcon style={{ color: "#DE7E39" }} type="icon-yuan" />{" " + (entity.amber_hours ? entity.amber_hours : '0') + "h " + (entity.amber_mins ? entity.amber_mins : '0') + "m"}</div>
+          <div style={{ display: entity.red_hours || entity.red_mins ? "block" : "none" }}><SvgIcon style={{ color: "red" }} type="icon-yuan" />{" " + (entity.red_hours ? entity.red_hours : '0') + "h " + (entity.red_mins ? entity.red_mins : '0') + "m"}</div></div>)
+      },
     },
     {
 
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="EOS ID" />,
-      dataIndex: 'eos_id',
+      dataIndex: 't.eos_id',
       mustSelect: true
 
     },
@@ -949,9 +1072,15 @@ const TableList: React.FC = () => {
     {
 
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Total / Current Duration" />,
-      dataIndex: 'duration',
-      mustSelect: true
+      dataIndex: 'total_duration',
+      mustSelect: true,
+      render: (dom, entity) => {
 
+        return parseInt((dom / 3600) + "") + "h " + parseInt((dom % 3600) / 60) + "m"
+
+
+
+      },
     }
   ]
 
@@ -1334,7 +1463,7 @@ const TableList: React.FC = () => {
             
           }else if (report_type == 2) {
 
-              ss = await reportSummary({ ...params, sorter, ...filter })
+              ss = await transaction({ ...params, sorter, ...filter, is_detail_report:true })
 
         } else if (report_type == 3) {
 
@@ -1376,8 +1505,8 @@ const TableList: React.FC = () => {
 
            
 
-            setTransaction_total_num(ss.all_total)
-            setTransaction_filter_num(ss.total)
+            setTransaction_total_num(ss.top_all_total)
+            setTransaction_filter_num(ss.top_total)
           return ss
         }}
         columns={columns}

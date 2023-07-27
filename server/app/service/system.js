@@ -50,7 +50,7 @@ class SystemService extends Service {
         if (params.model == 'Transaction') {
 
 
-        
+
             if (ctx.user.role_type == 'Super') {
 
 
@@ -62,6 +62,57 @@ class SystemService extends Service {
 
 
             }
+        } else if (params.model == 'Alert') {
+            var Op = app.Sequelize.Op
+
+            if (ctx.user.role_type == 'Super') {
+
+                if (obj.where.organization_id) {
+                    obj.where.company_id = obj.where.organization_id
+                }
+
+            } else {
+                if (this.access("alert_list")) {
+
+                    obj.where.user_id = ctx.user.user_id
+
+                    if (this.access("alert_list_company")) {
+                        delete obj.where.user_id
+                        obj.where.company_id = ctx.user.company_id
+                    }
+
+                    if (this.access("alert_list_tab")) {
+                        if (obj.where.tab) {
+                            if (obj.where.tab[app.Sequelize.Op.eq] == 'Terminal') {
+
+
+
+
+                            } if (obj.where.tab[app.Sequelize.Op.eq] == 'Trader') {
+                                delete obj.where.user_id
+                                if (!obj.where.organization_id) {
+
+                                    obj.where.company_id = {
+                                        [app.Sequelize.Op['in']]: ctx.user.accessible_organization
+                                    }
+                                } else {
+
+                                    obj.where.company_id = obj.where.organization_id
+                                }
+
+                            } else if (obj.where.tab[app.Sequelize.Op.eq] == 'All') {
+                                delete obj.where.user_id
+                                obj.where.company_id = {
+                                    [app.Sequelize.Op['in']]: [...ctx.user.accessible_organization, ctx.user.company_id]
+                                }
+                            }
+
+                        }
+                    }
+                }
+
+            }
+            delete obj.where.tab
         }
 
         var companyMap = {}
@@ -80,6 +131,9 @@ class SystemService extends Service {
                
 
             }else if (params.field == 'vessel_size_dwt') {
+
+
+            } else if (params.field == 'user_id') {
 
 
             } else {
@@ -108,6 +162,19 @@ class SystemService extends Service {
             })
             res = await ctx.model.Jetty.findAll({
                 where: { name: { [this.app.Sequelize.Op.like]: params.value + "%" }, id: jetty_id }
+                ,
+                raw: true
+            });
+        } if (params.field == 'user_id') {
+            var user_id = []
+            res.forEach((a) => {
+
+                user_id.push(a.user_id)
+
+
+            })
+            res = await ctx.model.User.findAll({
+                where: { username: { [this.app.Sequelize.Op.like]: params.value + "%" }, id: user_id }
                 ,
                 raw: true
             });
@@ -185,6 +252,8 @@ class SystemService extends Service {
         res.forEach((a) => {
             if (params.field == 'jetty_id') {
                 data[a.id] = a.name
+            } if (params.field == 'user_id') {
+                data[a.id] = a.username
             } else if (params.field == 'organization_id' || params.field == 'threshold_organization_id') {
 
                 if (companyMap[a.trader_id] ) {
@@ -210,22 +279,49 @@ class SystemService extends Service {
 
     async receiveSGTradexData(params) {
 
-        const { ctx, app } = this;
+        const { ctx, service, app } = this;
 
-        app.logger.warn('checkTokenreceiveSGTradexData11111111111');
-        app.logger.warn(ctx.params.data_element_id);
 
+        var addAPILog = async (params) => {
+
+
+            var operlog = {}
+            operlog.request_method = params.method
+            // operlog.ip = ctx.request.ip
+            operlog.url = params.url
+            operlog.param = JSON.stringify(params.data)
+            operlog.result = JSON.stringify(params.result)
+
+            operlog.status = params.status
+            operlog.err_code = params.errorCode
+
+
+            operlog.activity_duration = (new Date()).getTime() - ctx.activity_duration_start.getTime()
+            operlog.device_type = "PC"
+
+            operlog.type = 3
+            operlog.oper_time = new Date()
+
+            const result = await service.operlog.add(operlog);
+
+        }
+
+        
+        
+        ctx.activity_duration_start = new Date()
         if (!ctx.checkToken) {
+
+            await addAPILog({ data: params, result: { error: "unauthorized" }, status: 1, errorCode: 401, url: ctx.request.url })
             ctx.status = 401;
             ctx.body = { error: "unauthorized" }
             return
         }
-        app.logger.warn('checkTokenreceiveSGTradexData22222222222');
+       
 
         var res = null
         app.logger.warn(JSON.stringify(params));
         if (params.payload) {
-            ctx.logger.warn('checkTokenreceiveSGTradexData333333333');
+           
 
 
             var arr = params.payload.map((a) => {
@@ -256,10 +352,10 @@ class SystemService extends Service {
 
             res = await ctx.model.Interfacedata.bulkCreate(arr)
         }
-
+       
         ctx.status = 200;
         ctx.body = { success: true }
-
+        await addAPILog({ data: params, result: { success: true }, status: 0, errorCode: 0, url: ctx.request.url })
 
     }
 

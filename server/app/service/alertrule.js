@@ -31,7 +31,24 @@ class AlertruleService extends Service {
             obj.order = params.order
         }
 
+        if (ctx.user.role_type != "Super") {
+            var Op = app.Sequelize.Op
+            obj.where[Op.or] = [
+                
+                {
+                    type: { [Op.ne]: 1 },
+                    flow_id: { [Op.in]: [ctx.user.accessible_timestamp, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"] },
+                    flow_id_to: { [Op.eq]: null }
+                },
+                {
+                    type: { [Op.eq]: 1 },
+                    flow_id: { [Op.in]: ctx.user.accessible_timestamp },
+                    flow_id_to: { [Op.in]: ctx.user.accessible_timestamp }
+                }
+            ]
 
+
+        }
 
         if (ctx.user.role_type == 'Super') {
             if (obj.where.organization_id) {

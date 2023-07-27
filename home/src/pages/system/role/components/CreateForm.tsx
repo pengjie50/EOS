@@ -269,7 +269,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
           checkable
           defaultExpandAll={true }
           onSelect={() => { } }
-          onCheck={(e) => { restFormRef.current?.setFieldValue("accessible_timestamp", e) }}
+          onCheck={(e, h) => { restFormRef.current?.setFieldValue("accessible_timestamp", e.concat(h)) }}
           treeData={flowConf}
         />
 

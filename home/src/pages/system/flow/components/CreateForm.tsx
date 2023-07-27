@@ -112,23 +112,26 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         name="pid"
         label={intl.formatMessage({
           id: 'pages.flow.xxx',
-          defaultMessage: 'Father Transaction Flow',
+          defaultMessage: 'Process Name （Optional）',
         })}
         placeholder="Please select"
         allowClear
         width="md"
         
         request={async () => {
-         return flow({ pageSize: 1000, current: 1, sorter: { sort: 'ascend' } }).then((res) => {
-
+         return flow({  sorter: { sort: 'ascend' } }).then((res) => {
+           res.data = res.data.filter((f) => {
+             return f.type !=1
+           })
             res.data = res.data.map((r) => {
               r['value'] = r.id
               r['title'] = r.name
               return r
             })
+           var tdata=tree(res.data, "                                    ", 'pid')
+           setFlowConf(tdata)
 
-            setFlowConf(tree(res.data, "                                    ", 'pid'))
-            return tree(res.data, "                                    ", 'pid')
+           return tdata
           });
          
         }}

@@ -6,7 +6,7 @@ import moment from 'moment';
 import ProTable from '@ant-design/pro-table';
 import { WaterMark } from '@ant-design/pro-layout';
 import { useModel } from 'umi';
-import PrintProvider, { Print, NoPrint } from 'react-easy-print';
+
 export type FormValueType = {
   target?: string;
   template?: string;
@@ -39,7 +39,7 @@ const FrPrint: React.FC<UpdateFrPrintProps> = (props) => {
   
 
     props.columns.forEach((a) => {
-      if (a.dataIndex != 'option') {
+      if (a && a.dataIndex != 'option') {
         columns.push(a)
       }
       
@@ -51,7 +51,7 @@ const FrPrint: React.FC<UpdateFrPrintProps> = (props) => {
   const date = moment().format('YYYY-MM-DD HH:mm:ss').toString();
   return (
     <Modal
-      width={2000 }
+      width="100%"
      
       centered
       destroyOnClose
@@ -62,25 +62,18 @@ const FrPrint: React.FC<UpdateFrPrintProps> = (props) => {
         props.onCancel();
       }}
       onOk={() => {
-        window.print();
-        //handlePrint();
+       
+        handlePrint();
       }}
       keyboard={true}
     >
 
-
-
-
-
       <div className={csstyle.backgroud} style={{ height:'600px' }}>
-        <PrintProvider>
-          <Print single name="foo">
-          <div style={{ paddingTop: 20, width: '100%' }}>
+        {}
+          <div style={{ paddingTop: 20, width: '100%', height:'580px', overflow: 'auto' }}>
             
           
-          <div ref={componentRef}>
-          
-            
+            <div ref={componentRef}>
             <ProTable<any>
               
               columns={columns}
@@ -92,13 +85,10 @@ const FrPrint: React.FC<UpdateFrPrintProps> = (props) => {
               bordered size="small"
 
               />
-             
-           
               </div>
            
-            </div>
-          </Print>
-        </PrintProvider>
+          </div>
+       
       </div>
 
     </Modal >

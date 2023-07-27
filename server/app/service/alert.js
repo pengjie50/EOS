@@ -11,6 +11,7 @@ const uuid = require('uuid');
 const where = require('../middleware/where');
 const Sequelize = require('sequelize');
 const report = require('../model/report');
+const { type } = require('tedious/lib/data-types/ntext');
 
 class AlertService extends Service {
 
@@ -36,6 +37,39 @@ class AlertService extends Service {
             obj.offset = parseInt((params.page - 1)) * parseInt(params.limit)
             obj.limit = parseInt(params.limit)
         }
+
+
+
+        if (ctx.user.role_type != "Super") {
+            var Op = Sequelize.Op
+            obj.where[Op.or] = [
+                
+                {
+                    alertrule_type: { [Op.ne]: 1 },
+                    flow_id: { [Op.in]: [...ctx.user.accessible_timestamp,"aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"] },
+                    flow_id_to: { [Op.eq]: null }
+                },
+                {
+                    alertrule_type: { [Op.eq]: 1 },
+                    flow_id: { [Op.in]: ctx.user.accessible_timestamp },
+                    flow_id_to: { [Op.in]: ctx.user.accessible_timestamp }
+                }
+            ]
+                
+               
+        }
+            
+            
+       
+
+        var is_report = false
+        if (obj.where.is_report) {
+            is_report = true
+        }
+        delete obj.where.is_report
+
+
+
 
 
         var t_where = {}
@@ -176,6 +210,8 @@ class AlertService extends Service {
         ctx.body = {
             success: true,
             total: list.count,
+            top_total: 0,
+            top_all_total: 0,
             data: list.rows
 
         };

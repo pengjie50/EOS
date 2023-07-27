@@ -113,7 +113,7 @@ const Detail: React.FC<any> = (props) => {
 
   var yesCount = 0
   var headValidated = false
-  if (useLocation().state.validateData?.head_data?.[0].Verified == "true") {
+  if (useLocation().state.validateData?.head_data?.Verified == "true") {
     headValidated=true
   }
   useLocation().state.validateData?.event_data?.forEach((v) => {
@@ -124,6 +124,9 @@ const Detail: React.FC<any> = (props) => {
 
 
   })
+  console.log(useLocation().state.validateData)
+  const [bc_header_data, setBc_header_data] = useState<any>(useLocation().state.validateData?.bc_head_data);
+
   const [validateData, setValidateData] = useState<any>(m);
   const [createModalOpen, handleModalOpen] = useState<boolean>(false);
   const [isAdd, setIsAdd] = useState<boolean>(false);
@@ -131,6 +134,7 @@ const Detail: React.FC<any> = (props) => {
   const [totalDuration, setTotalDuration] = useState<any>(0);
 
   const [flowConf, setFlowConf] = useState<any>({});
+  const [flowMap, setFlowMap] = useState<any>({});
   const [isMP, setIsMP] = useState<boolean>(!isPC());
 
 
@@ -151,10 +155,21 @@ const Detail: React.FC<any> = (props) => {
       title: (
         <FormattedMessage
           id="pages.xxx"
-          defaultMessage="Details"
+          defaultMessage="Value On EOS System"
         />
       ),
       dataIndex: 'value'
+
+
+    },
+    {
+      title: (
+        <FormattedMessage
+          id="pages.xxx"
+          defaultMessage="Value On Blockchain"
+        />
+      ),
+      dataIndex: 'bc_value'
 
 
     },
@@ -473,7 +488,7 @@ const Detail: React.FC<any> = (props) => {
     {
       title: <FormattedMessage id="pages.blockchainIntegration.timeStamp" defaultMessage="Time Stamp" />,
       dataIndex: 'time_stamp',
-      valueType: 'dateTime',
+      valueType: "dateTime",
       hideInSearch: true,
     },
     {
@@ -488,11 +503,12 @@ const Detail: React.FC<any> = (props) => {
       align:"center",
       
       render: (dom, entity) => {
-
-
-        if (validateData[entity.activity] === 'True') {
+       
+            
+        if (validateData[entity.code] === 'True') {
           return <span><CheckOutlined style={{ color:'green' }} /></span>
         } else {
+          
           return <span><CloseOutlined style={{ color: 'red' }} /></span>
         }
       }
@@ -536,14 +552,17 @@ const Detail: React.FC<any> = (props) => {
     //setTransaction_id(transaction_id)
     handlegetFlow = (f: any) => {
       var fidMap = {}
-      flow({ pageSize: 300, current: 1, sorter: { sort: 'ascend' } }).then((res) => {
+     
+      flow({  sorter: { sort: 'ascend' } }).then((res) => {
 
         var b = {}
+        var flowMap_ = {}
         res.data.forEach((r) => {
           b[r.id] = r.name
+          flowMap_[r.id] = r.code
         })
         setFlowConf(b)
-
+        setFlowMap(flowMap_)
         var ss = res.data.map((bb) => { return { ...bb } })
         var all = tree(ss, "                                    ", 'pid')
         setFlowTreeAll(all)
@@ -581,15 +600,32 @@ const Detail: React.FC<any> = (props) => {
 
 
         transactionevent({
-          pageSize: 1000, current: 1, transaction_id: transaction_id, sorter: { event_time: 'ascend' }
+          transaction_id: transaction_id, sorter: { event_time: 'ascend' }
         }).then((res) => {
 
 
           setTransactioneventList(res.data)
-
+          var reMap = {}
           var blockchainRow = res.data.map((a) => {
+
+            var EventSubStage = flowMap_[a.flow_id]
+
+
+            console.log(EventSubStage)
+
+            if (!reMap[flowMap_[a.flow_id]]) {
+
+              reMap[flowMap_[a.flow_id]] = 0
+            }
+
+            reMap[flowMap_[a.flow_id]] += 1
+           
+
+            EventSubStage = EventSubStage + (("00" + (reMap[flowMap_[a.flow_id]] - 1)).slice(-2))
+
+            console.log(EventSubStage)
             var b = {
-              stage: a.flow_pid, time_stamp: a.event_time, activity: a.flow_id, validated: yesCount ? 1 : 0
+              stage: a.flow_pid, time_stamp: a.event_time, activity: a.flow_id, code: EventSubStage
             }
             return b
           })
@@ -637,7 +673,27 @@ const Detail: React.FC<any> = (props) => {
      
       res.data[0].validated = headValidated ? 1 : 0
 
-      var arr=[]
+      var arr = []
+
+      var dMap = {
+
+        "EOSID": "eos_id",
+        "ArrivalID":"arrival_id",
+        "StartOfTransaction": "start_of_transaction",
+        "EndOfTransaction": "end_of_transaction",
+        "Jetty": "jetty_name",
+        "VesselName": "vessel_name",
+        "TerminalName": "terminal_name",
+        "TraderName": "trader_name",
+        "Agent": "agent",
+        "Status": "status",
+        "VesselSize": "vessel_size_dwt",
+        "ArrivalStatus":"arrival_id_status",
+        "IMONumber": "imo_number",
+       
+
+      }
+
       for (var k in res.data[0]) {
 
         var c = columns.find((a) => { return a.dataIndex == k })
@@ -646,8 +702,16 @@ const Detail: React.FC<any> = (props) => {
           
           r['title'] = c.title
           r['validated'] = false
-
+          
           r['value'] = c.render ? c.render(res.data[0][k], res.data[0]) : res.data[0][k]
+          var obj = {}
+          for (var m in bc_header_data) {
+            obj[dMap[m]] = bc_header_data[m]
+
+          }
+          r['bc_value'] = c.render ? c.render(obj[k], obj) : obj[k]
+
+          
           r['validation_status'] = 1
 
           arr.push(r)
@@ -728,18 +792,7 @@ const Detail: React.FC<any> = (props) => {
           <span>
             Total: {blockchainRow?.length} &nbsp; &nbsp; Validated <CheckOutlined style={{ color: 'green' }} />: {yesCount}&nbsp; &nbsp; Failed <CloseOutlined style={{ color: 'red' }} />: {blockchainRow?.length - yesCount }
           </span>,
-          <Access accessible={access.canAdmin} fallback={<div></div>}> <Button
-            type="primary"
-            key="primary"
-            onClick={() => {
-              
-              writetoBC({ id: currentRow?.id }).then((res) => {
-                
-              })
-            }}
-          >
-            WritetoBC
-          </Button></Access>
+          
          
           ,
         ]}

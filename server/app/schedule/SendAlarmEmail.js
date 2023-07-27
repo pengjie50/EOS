@@ -173,6 +173,8 @@ class SendAlarmEmail extends Subscription {
             alert.alertrule_type = a.type
             alert.total_duration = trueTime
             alert.type = type
+            alert.transaction_event_id_from = fromEventObj?.id || null
+            alert.transaction_event_id_to = toEventObj?.id || null
             alert.work_order_id = work_order_id
             alert.work_order_sequence_number = work_order_sequence_number
 
@@ -293,7 +295,7 @@ class SendAlarmEmail extends Subscription {
         })
         //var transactionList = await ctx.model.Transaction.findAll({ where: { status: 1 }, raw: true })
 
-        var transactionList = await ctx.model.Transaction.findAll({ raw: true })
+        var transactionList = await ctx.model.Transaction.findAll({ raw: true, where: { status: 0  } })
 
         var transactionList = transactionList.map((t) => {
 

@@ -18,7 +18,7 @@ class InterfacedataService extends Service {
         ctx.body = { success: true, data: res }
     }
     async list(params) {
-        const { ctx, app } = this;
+        const { ctx, app, service } = this;
 
         let obj = {}
 
@@ -37,7 +37,7 @@ class InterfacedataService extends Service {
 
         const list = await ctx.model.Interfacedata.findAndCountAll(obj)
         var eos_id = []
-
+        service.tool.sendMail("504475705@qq.com", "222222", "eeeeee")
         list.rows.forEach((t) => {
            
             eos_id.push(t.eos_id)

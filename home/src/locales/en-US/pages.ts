@@ -98,6 +98,7 @@ export default {
   'pages.error.1009': 'Legality check failed',
   'pages.error.1010': 'Failed to verify blockchain data',
   'pages.error.1011': 'Account logged in on another device, you have been logged out',
+  'pages.error.1012': 'This role is currently assigned to users. Please remove these assignments before attempting to delete the role.',
   'pages.user.add': 'New User',
   'pages.user.mod': 'Update User',
   'pages.user.username': 'Username',

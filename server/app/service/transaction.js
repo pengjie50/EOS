@@ -31,10 +31,17 @@ class TransactionService extends Service {
 
 
         var is_report = false
+        var is_detail_report = false
         if (obj.where.is_report) {
             is_report =true
         }
         delete obj.where.is_report
+
+
+        if (obj.where.is_detail_report) {
+            is_detail_report = true
+        }
+        delete obj.where.is_detail_report
 
         if (params.order) {
             obj.order = params.order
@@ -131,7 +138,9 @@ class TransactionService extends Service {
                     obj.where.trader_id = ctx.user.accessible_organization
                     obj.where.terminal_id = ctx.user.company_id
                 } else {
-                    obj.where.terminal_id = ctx.user.accessible_organization
+
+                    obj.where[Op['or']] = [{ terminal_id: ctx.user.accessible_organization }, { terminal_id: null}]
+                  
                     obj.where.trader_id = ctx.user.company_id
                 }
                 
@@ -176,7 +185,7 @@ class TransactionService extends Service {
 
         ctx.status = 200;
 
-        if(is_report){
+        if (is_report || is_detail_report){
             const alertliset = await ctx.model.Alert.findAll({ raw: true, where: { transaction_id: list.rows.map((t) => { return t.id }) } })
             var alertMap = {}
             alertliset.forEach((a) => {
@@ -204,7 +213,9 @@ class TransactionService extends Service {
                     cw.trader_id = ctx.user.accessible_organization
                     cw.terminal_id = ctx.user.company_id
                 } else {
-                    cw.terminal_id = ctx.user.accessible_organization
+
+                    cw[Op['or']] = [{ terminal_id: ctx.user.accessible_organization }, { terminal_id: null }]
+                   
                     cw.trader_id = ctx.user.company_id
                 }
             }
@@ -212,12 +223,37 @@ class TransactionService extends Service {
 
             var all_total = await ctx.model.Transaction.count(cw)
         }
+
+        var total = list.count
+
+
+        if (is_detail_report) {
+            var ids=list.rows.map((t) => {
+                return t.id
+            })
+            obj.where = { transaction_id: ids }
+            obj.order = [["event_time", "asc"], ["transaction_id", "asc"]]
+            obj.attributes = [[ctx.model.col('t.eos_id'), 'eos_id'], 'transaction_event.*'];
+            obj.include = [{
+                as: 't',
+                attributes: [],
+                model: ctx.model.Transaction
+
+            }]
+            list = await ctx.model.Transactionevent.findAndCountAll(obj)
+
+
+
+
+
+        }
         
 
         ctx.body = {
             success: true,
             total: list.count,
-            all_total: all_total || 0,
+            top_total: total,
+            top_all_total: all_total || 0,
             data: list.rows
 
         };
@@ -291,8 +327,7 @@ class TransactionService extends Service {
                     obj.where.trader_id = ctx.user.accessible_organization
                     obj.where.terminal_id = ctx.user.company_id
                 } else {
-                    obj.where.terminal_id = ctx.user.accessible_organization
-                    obj.where.trader_id = ctx.user.company_id
+                    obj.where[Op['or']] = [{ terminal_id: ctx.user.accessible_organization }, { terminal_id: null }]
                 }
 
             }
@@ -671,7 +706,11 @@ class TransactionService extends Service {
 
         const ctx = this.ctx;
 
-
+        await ctx.model.Alert.destroy({
+            where: {
+                transaction_id: params.id
+            }
+        })
         await ctx.model.Transactionevent.destroy({
             where: {
                 transaction_id: params.id
@@ -683,11 +722,7 @@ class TransactionService extends Service {
                 transaction_id: params.id
             }
         })
-        await ctx.model.Alert.destroy({
-            where: {
-                transaction_id: params.id
-            }
-        })
+       
         await ctx.model.AlertruleTransaction.destroy({
             where: {
                 transaction_id: params.id
@@ -793,9 +828,33 @@ class TransactionService extends Service {
     async validateBC(params) {
         const { ctx, service, app } = this;
 
+        var addAPILog = async (params) => {
+
+
+            var operlog = {}
+            operlog.request_method = params.method
+            // operlog.ip = ctx.request.ip
+            operlog.url = params.url
+            operlog.param = JSON.stringify(params.data)
+            operlog.result = JSON.stringify(params.result)
+
+            operlog.status = params.status
+            operlog.err_code = params.errorCode
+
+
+            operlog.activity_duration = (new Date()).getTime() - ctx.activity_duration_start.getTime()
+            operlog.device_type = "PC"
+
+            operlog.type = 3
+            operlog.oper_time = new Date()
+
+            const result = await service.operlog.add(operlog);
+
+        }
+
         var transaction = await ctx.model.Transaction.findOne({ where: { id: params.id } });
        
-        var transactionEventList = await ctx.model.Transactionevent.findAll({ raw: true, where: { transaction_id: transaction.id } });
+        var transactionEventList = await ctx.model.Transactionevent.findAll({ raw: true, order: [["event_time", "asc"]], where: { transaction_id: transaction.id } });
 
         var BerthingPilotage = {}
         var UnberthingPilotage = {}
@@ -828,37 +887,187 @@ class TransactionService extends Service {
             "ArrivalID": transaction.arrival_id,
             "Jetty": transaction.jetty_name,
             "VesselName": transaction.vessel_name,
-            "TerminalName": companyMap[transaction.terminal_id]?.name || 'null',
-            "TraderName": companyMap[transaction.trader_id]?.name || 'null',
+            "TerminalName": companyMap[transaction.terminal_id]?.name || null,
+            "TraderName": companyMap[transaction.trader_id]?.name || null,
             "Agent": transaction.agent,
             "Status": transaction.status + "",
             "VesselSize": transaction.vessel_size_dwt,
             "ArrivalStatus": transaction.arrival_id_status,
             "IMONumber": transaction.imo_number,
-            "BerthingPilotageID": BerthingPilotage.order_no ? parseInt(BerthingPilotage.order_no) : 0,
-            "PilotageLocationFrom1": BerthingPilotage.location_from || 'null',
-            "PilotageLocationTo1": BerthingPilotage.location_to || 'null',
-            "UnberthingPilotageID": UnberthingPilotage.order_no ? parseInt(UnberthingPilotage.order_no) : 0,
-            "PilotageLocationFrom2": UnberthingPilotage.location_from || 'null',
-            "PilotageLocationTo2": UnberthingPilotage.location_to || 'null'
+            "BerthingPilotageID": BerthingPilotage.order_no ? parseInt(BerthingPilotage.order_no) : null,
+            "PilotageLocationFrom1": BerthingPilotage.location_from || null,
+            "PilotageLocationTo1": BerthingPilotage.location_to || null,
+            "UnberthingPilotageID": UnberthingPilotage.order_no ? parseInt(UnberthingPilotage.order_no) : null,
+            "PilotageLocationFrom2": UnberthingPilotage.location_from || null,
+            "PilotageLocationTo2": UnberthingPilotage.location_to || null
 
         }
         var back = {}
-        const result = await ctx.curl(app.config.ValidateHeaderBC, {
+        var result = await ctx.curl(app.config.ValidateHeaderBC, {
             timeout: 30000,
             method: 'POST',
             contentType: 'json',
             data: [head_data],
             dataType: 'json',
         });
+
+        console.log(result)
+
         if (result.status == 201) {
-            back.head_data = result.data
-            
+            back.head_data = result.data[0]
+
 
 
         } 
 
+        var flowList = await ctx.model.Flow.findAll();
+
+        var flowMap = {}
+
+        flowList.forEach((f) => {
+            flowMap[f.id] = f.code
+        })
+        var transactionEvent = transactionEventList
+
+
+        var reMap = {}
+
+
+
+        var event_data = transactionEvent.map((te) => {
+
+
+            var EventSubStage = flowMap[te.flow_id]
+
+
+
+
+            if (!reMap[flowMap[te.flow_id]]) {
+
+                reMap[flowMap[te.flow_id]] = 0
+            }
+
+            reMap[flowMap[te.flow_id]] += 1
+
+
+
+            console.log(reMap[flowMap[te.flow_id]] - 1)
+
+            EventSubStage += (("00" + (reMap[flowMap[te.flow_id]] - 1)).slice(-2))
+
+
+            var b = {
+                "EOSID": transaction.eos_id,
+                "EventSubStage": EventSubStage,
+                "Timestamp": moment(new Date(te.event_time)).format('YYYY-MM-DDTHH:mm:ss+08:00'),
+                "Field1": te.product_quantity_in_bls_60_f ? parseInt(te.product_quantity_in_bls_60_f) : 0,
+                "Field2": te.tank_number ? parseInt(te.tank_number) : 0,
+                "Field3": te.work_order_id ? parseInt(te.work_order_id) : 0,
+                "Field4": te.work_order_sequence_number ? parseInt(te.work_order_sequence_number) : 0,
+                "Field5": te.work_order_operation_type ? te.work_order_operation_type : null,
+                "Field6": te.product_name ? te.product_name : null,
+                "Field7": te.work_order_status ? te.work_order_status : null,
+                "Field8": te.work_order_sequence_number_status ? te.work_order_sequence_number_status : null,
+                "Field9": te.work_order_surveyor ? te.work_order_surveyor : null
+            }
+
+            if (te.delay_duration) {
+                b.Field5 = te.delay_duration
+            }
+
+            if (te.location_from) {
+                b.Field6 = te.location_from
+            }
+            if (te.location_to) {
+                b.Field6 = te.location_to
+            }
+            return b
+        })
+
+
+
+        console.log(event_data)
+        console.log(app.config.ValidateBC)
+        ctx.activity_duration_start = new Date()
+         result = await ctx.curl(app.config.ValidateBC, {
+            timeout: 30000,
+            method: 'POST',
+            contentType: 'json',
+            data: event_data,
+            dataType: 'json',
+        });
+
+      
+        await addAPILog({ data: event_data, result: result.data, status: result.status == 201 ? 0 : 1, errorCode: result.status == 201 ? 0 : result.status, url: app.config.ValidateBC })
+
+
+
+        if (result.status == 201) {
+            back.event_data = result.data
+
+
+
+        } 
+
+
+
+
+
+
+        result = await ctx.curl(app.config.QueryHeaderBC, {
+            timeout: 30000,
+            method: 'POST',
+            contentType: 'json',
+            data: {"EOSID": transaction.eos_id },
+            dataType: 'json',
+        });
+
+       
+        await addAPILog({ data: { "EOSID": transaction.eos_id }, result: result.data, status: result.status == 201 ? 0 : 1, errorCode: result.status == 201 ? 0 : result.status, url: app.config.QueryHeaderBC })
+
+
+
+        if (result.status == 201) {
+            back.bc_head_data = result.data[0]
+
+        } 
+
+
+
+        result = await ctx.curl(app.config.QueryBC, {
+            timeout: 30000,
+            method: 'POST',
+            contentType: 'json',
+            data: { "EOSID": transaction.eos_id },
+            dataType: 'json',
+        });
+
+      
+       
+        await addAPILog({ data: { "EOSID": transaction.eos_id }, result: result.data, status: result.status == 201 ? 0 : 1, errorCode: result.status == 201 ? 0 : result.status, url: app.config.QueryBC })
+
+
+
+        if (result.status == 201) {
+            back.bc_event_data = result.data
+
+        } 
+
+
+        
+
         ctx.body = { success: true, data: back };
+
+
+
+
+
+
+
+
+
+
+
 
        
         return {
