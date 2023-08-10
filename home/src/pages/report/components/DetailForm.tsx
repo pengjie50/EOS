@@ -8,7 +8,7 @@ import {
   ProColumns,
   ProList,
   ProForm,
-  ProFormRadio ,
+  ProFormRadio,
   FooterToolbar,
   ProFormTextArea,
   ProFormSelect,
@@ -18,8 +18,8 @@ import {
   ProTable,
 } from '@ant-design/pro-components';
 import { FormattedMessage, useIntl, useModel, formatMessage, history, useLocation } from '@umijs/max';
-import { FileTextOutlined, FileAddOutlined, ArrowRightOutlined, DeleteOutlined, ExclamationCircleOutlined,CloseOutlined} from '@ant-design/icons';
-import { reportTemplate, addReportTemplate,updateReportTemplate, removeReportTemplate,addReport } from '../service';
+import { FileTextOutlined, FileAddOutlined, ArrowRightOutlined, DeleteOutlined, ExclamationCircleOutlined, CloseOutlined } from '@ant-design/icons';
+import { reportTemplate, addReportTemplate, updateReportTemplate, removeReportTemplate, addReport } from '../service';
 
 
 import RcResizeObserver from 'rc-resize-observer';
@@ -36,35 +36,20 @@ const { confirm } = Modal;
 //MP
 import { InfiniteScroll, List, NavBar, Space, DotLoading } from 'antd-mobile'
 import { template } from 'lodash';
-/**
- * @en-US Add node
- * @zh-CN 添加节点
- * @param fields
- */
 
-
-
-const handleAGenerateReport= async (fields: any) => {
- /* const hide = message.loading(<FormattedMessage
-    id="pages.adding"
-    defaultMessage="Adding"
-  />);*/
+const handleAGenerateReport = async (fields: any) => {
+ 
   try {
 
-    var cc=null
+    var cc = null
     var obj = await addReport({ ...fields }).then((res) => {
       cc = res.data
 
     });
-   // hide();
-  /*  message.success(<FormattedMessage
-      id="pages.addedSuccessfully"
-      defaultMessage="Added successfully"
-    />);*/
     
     return cc;
   } catch (error) {
-   // hide();
+   
     message.error(<FormattedMessage
       id="pages.addingFailed"
       defaultMessage="Generate failed, please try again!"
@@ -168,15 +153,9 @@ const handleRemove = async (selectedRows: any[], callBack: any) => {
 
 }
 const TableList: React.FC = () => {
-  /**
-   * @en-US Pop-up window of new window
-   * @zh-CN 新建窗口的弹窗
-   *  */
+ 
   const [createModalOpen, handleModalOpen] = useState<boolean>(false);
-  /**
-   * @en-US The pop-up window of the distribution update window
-   * @zh-CN 分布更新窗口的弹窗
-   * */
+ 
   const [updateModalOpen, handleUpdateModalOpen] = useState<boolean>(false);
 
   const [showDetail, setShowDetail] = useState<boolean>(false);
@@ -196,13 +175,13 @@ const TableList: React.FC = () => {
   const [templateName, setTemplateName] = useState("");
   const [isMP, setIsMP] = useState<boolean>(!isPC());
 
- 
+
   const [selectedColumns, setSelectedColumns] = useState<any>([]);
   const [selectedFilterColumns, setSelectedFilterColumns] = useState<any>([]);
 
   const [availableColumns, setAvailableColumns] = useState<any>([]);
   const [availableFilterColumns, setAvailableFilterColumns] = useState<any>([]);
-  
+
 
 
   const [fields, setFields] = useState<any>([]);
@@ -214,7 +193,7 @@ const TableList: React.FC = () => {
     selectedRowKeys,
     onChange: (keys: ReactText[]) => setSelectedRowKeys(keys),
   };
-  
+
   const [selectedRowKeys1, setSelectedRowKeys1] = useState<ReactText[]>([]);
   const rowSelection1 = {
     selectedRowKeys1,
@@ -222,7 +201,6 @@ const TableList: React.FC = () => {
   };
   /**
    * @en-US International configuration
-   * @zh-CN 国际化配置
    * */
   const intl = useIntl();
   const [responsive, setResponsive] = useState(false);
@@ -274,7 +252,7 @@ const TableList: React.FC = () => {
   useEffect(() => {
 
 
-  
+
 
     var value = eval('(' + fd.value + ')');
     value.template_name = fd.template_name
@@ -308,7 +286,7 @@ const TableList: React.FC = () => {
 
     setFields(value.selected_fields)
 
-   
+
     getReportTemplate()
     jetty({ pageSize: 3000, current: 1, sorter: { name: 'ascend' } }).then((res) => {
       var b = {}
@@ -350,7 +328,7 @@ const TableList: React.FC = () => {
         })
       }
 
-     
+
       res.data.forEach((r) => {
         if (r.type == 0) {
 
@@ -362,8 +340,6 @@ const TableList: React.FC = () => {
       setProcesses(p)
 
 
-      //  var treeData = tree(res.data, "                                    ", 'pid')
-      // setFlowTree(treeData)
 
       alertrule({
         type: {
@@ -409,7 +385,7 @@ const TableList: React.FC = () => {
       ),
       dataIndex: 'eos_id',
       hideInSearch: true,
-     
+
       sorter: true,
       defaultSortOrder: 'descend',
       render: (dom, entity) => {
@@ -419,7 +395,7 @@ const TableList: React.FC = () => {
             onClick={() => {
 
               history.push(`/transaction/detail?transaction_id=` + entity.id);
-              // setShowDetail(true);
+             
             }}
           >
             {dom}
@@ -442,7 +418,7 @@ const TableList: React.FC = () => {
       valueType: 'date',
       hideInSearch: true,
     },
-   
+
     {
       title: <FormattedMessage id="pages.transaction.vesselName" defaultMessage="Vessel Name" />,
       dataIndex: 'vessel_name',
@@ -453,7 +429,7 @@ const TableList: React.FC = () => {
     {
       title: <FormattedMessage id="pages.transaction.productType" defaultMessage="Product Type" />,
       dataIndex: 'product_name',
-      // valueEnum: producttypeList,
+     
     },
     {
       title: <FormattedMessage id="pages.transaction.arrivalID" defaultMessage="Arrival ID" />,
@@ -473,7 +449,7 @@ const TableList: React.FC = () => {
       valueEnum: flowConf,
       hideInSearch: true,
     },
-  
+
     {
       title: <FormattedMessage id="pages.transaction.jettyName" defaultMessage="Jetty Name" />,
       dataIndex: 'jetty_id',
@@ -493,7 +469,7 @@ const TableList: React.FC = () => {
         }
       }
     },
-   
+
     {
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Activity (From)" />,
       dataIndex: 'flow_id',
@@ -535,23 +511,23 @@ const TableList: React.FC = () => {
       dataIndex: 'total_duration',
       valueType: 'text',
     },
-   
+
   ];
 
   const formRef = useRef<ProFormInstance>();
 
 
-  
+
 
 
 
   return (
     <PageContainer header={{
-    //  title: 'Report Template',
+     
       breadcrumb: {},
     }}>
-     
-      
+
+
       <ProForm formRef={formRef} submitter={{
 
         render: (_, dom) => <div style={{ padding: 20, backgroundColor: "#fff", position: 'relative', height: isMP ? 240 : 80 }}>
@@ -570,13 +546,13 @@ const TableList: React.FC = () => {
 
 
 
-         
-           
-        </div> </div>,
+
+
+          </div> </div>,
       }}>
-      <ProCard title="Saved Template" colSpan={24} headerBordered headStyle={{ backgroundColor: "#d4d4d4" }}>
+        <ProCard title="Saved Template" colSpan={24} headerBordered headStyle={{ backgroundColor: "#d4d4d4" }}>
           <ProForm.Group >
-            <ProFormText name="template_name" label="Template Name:"  width={250} rules={[
+            <ProFormText name="template_name" label="Template Name:" width={250} rules={[
               {
                 required: true,
                 message: (
@@ -606,16 +582,16 @@ const TableList: React.FC = () => {
 
             ]} />
 
-          
-
-        </ProForm.Group>
-
-      </ProCard>
-
-   
 
 
-      <ProCard title="Output Filter" colSpan={24} headerBordered collapsible={true} headStyle={{ backgroundColor: "#d4d4d4" }}>
+          </ProForm.Group>
+
+        </ProCard>
+
+
+
+
+        <ProCard title="Output Filter" colSpan={24} headerBordered collapsible={true} headStyle={{ backgroundColor: "#d4d4d4" }}>
 
           <ProForm.Group  >
 
@@ -644,61 +620,61 @@ const TableList: React.FC = () => {
                   label: 'Last week',
                   value: '7',
                 },
-               {
-                 label: 'Specific Date Range',
+                {
+                  label: 'Specific Date Range',
                   value: '0',
                 }
               ]}
             />
             <ProFormDependency name={['time_period']}>
               {({ time_period }) => {
-              
-                return time_period==0 ?< ProFormDateRangePicker name="dateRange" label=" " />:null
+
+                return time_period == 0 ? < ProFormDateRangePicker name="dateRange" label=" " /> : null
               }}
-              </ProFormDependency>
-        
-        </ProForm.Group>
-        <ProForm.Group >
-          <ProFormText
-            name="imo_number"
-            label="IMO Number"
+            </ProFormDependency>
 
-          />
-          <ProFormSelect
-
-            width="sm"
-            name="jetty_id"
-            label="Jetty"
-            valueEnum={jettyList}
-
-          />
-            <ProFormText
-              width="sm"
-            name="vessel_name"
-            label="Vessel Name"
-
-          />
           </ProForm.Group>
           <ProForm.Group >
-          <ProFormText
-            name="product_name"
-            label="Product Type"
+            <ProFormText
+              name="imo_number"
+              label="IMO Number"
 
-          />
-          <ProFormSelect
-            valueEnum={
-              {
-                0: {
-                  text: <FormattedMessage id="pages.transaction.active" defaultMessage="Open" />
-                },
-                1: { text: <FormattedMessage id="pages.transaction.closed" defaultMessage="Closed" /> },
-                2: { text: <FormattedMessage id="pages.transaction.cancelled" defaultMessage="Cancelled" /> }
-              }}
+            />
+            <ProFormSelect
+
               width="sm"
-            name="status"
-            label="Status"
+              name="jetty_id"
+              label="Jetty"
+              valueEnum={jettyList}
 
-          />
+            />
+            <ProFormText
+              width="sm"
+              name="vessel_name"
+              label="Vessel Name"
+
+            />
+          </ProForm.Group>
+          <ProForm.Group >
+            <ProFormText
+              name="product_name"
+              label="Product Type"
+
+            />
+            <ProFormSelect
+              valueEnum={
+                {
+                  0: {
+                    text: <FormattedMessage id="pages.transaction.active" defaultMessage="Open" />
+                  },
+                  1: { text: <FormattedMessage id="pages.transaction.closed" defaultMessage="Closed" /> },
+                  2: { text: <FormattedMessage id="pages.transaction.cancelled" defaultMessage="Cancelled" /> }
+                }}
+              width="sm"
+              name="status"
+              label="Status"
+
+            />
             <ProFormSelect
               valueEnum={organizationList}
 
@@ -707,102 +683,102 @@ const TableList: React.FC = () => {
               label={getOrganizationName()}
 
             />
-        </ProForm.Group>
-        <ProForm.Group label="Threshold Breached:">
-          <ProFormSelect
+          </ProForm.Group>
+          <ProForm.Group label="Threshold Breached:">
+            <ProFormSelect
 
-            name="flow_id"
-            width="lg"
-            label={intl.formatMessage({
-              id: 'pages.alertrule.entireTransactionAndProcesses',
-              defaultMessage: 'Entire Transaction And Processes',
-            })}
-            valueEnum={processes}
-            fieldProps={{
-              labelInValue: false,
-              dropdownMatchSelectWidth: isMP ? true : false,
-              mode: 'multiple',
-            }}
+              name="flow_id"
+              width="lg"
+              label={intl.formatMessage({
+                id: 'pages.alertrule.entireTransactionAndProcesses',
+                defaultMessage: 'Entire Transaction And Processes',
+              })}
+              valueEnum={processes}
+              fieldProps={{
+                labelInValue: false,
+                dropdownMatchSelectWidth: isMP ? true : false,
+                mode: 'multiple',
+              }}
 
-          />
+            />
 
-          <ProFormSelect
-            name="flow_id_to"
-            width="lg"
-            label={intl.formatMessage({
-              id: 'pages.alertrule.betweenTwoEvents',
-              defaultMessage: 'Between Two Events',
-            })}
-            valueEnum={events}
+            <ProFormSelect
+              name="flow_id_to"
+              width="lg"
+              label={intl.formatMessage({
+                id: 'pages.alertrule.betweenTwoEvents',
+                defaultMessage: 'Between Two Events',
+              })}
+              valueEnum={events}
               fieldProps={{
                 dropdownMatchSelectWidth: isMP ? true : false,
-              labelInValue: false,
-              mode: 'multiple',
-            }}
+                labelInValue: false,
+                mode: 'multiple',
+              }}
 
-          />
+            />
 
-        </ProForm.Group>
+          </ProForm.Group>
 
-      </ProCard>
+        </ProCard>
 
-      <RcResizeObserver
-        key="resize-observer"
-        onResize={(offset) => {
-          setResponsive(offset.width < 596);
-        }}
-      >
-        <ProCard
-          title="Report Fields"
-          headStyle={{ backgroundColor: "#d4d4d4" }}
-          collapsible={true}
-          extra=""
-          split={responsive ? 'horizontal' : 'vertical'}
-          bordered
-          headerBordered
+        <RcResizeObserver
+          key="resize-observer"
+          onResize={(offset) => {
+            setResponsive(offset.width < 596);
+          }}
         >
-            <ProCard title="Available Fields" colSpan={isMP?24:12 } >
-            <div style={{ height: 360, overflow: 'auto' }}>
+          <ProCard
+            title="Report Fields"
+            headStyle={{ backgroundColor: "#d4d4d4" }}
+            collapsible={true}
+            extra=""
+            split={responsive ? 'horizontal' : 'vertical'}
+            bordered
+            headerBordered
+          >
+            <ProCard title="Available Fields" colSpan={isMP ? 24 : 12} >
+              <div style={{ height: 360, overflow: 'auto' }}>
 
                 <ProList<any>
 
                   rowKey="dataIndex"
-                 
-                onItem={(record, index) => {
-                 
-                }}
 
-                 
-                onRow={(record: any) => {
-                  return {
-                    onMouseEnter: () => {
-                     
+                  onItem={(record, index) => {
+
+                  }}
+
+
+                  onRow={(record: any) => {
+                    return {
+                      onMouseEnter: () => {
+
+                      },
+                      onClick: () => {
+
+                      },
+                    };
+                  }}
+
+
+                  rowKey="name"
+                  headerTitle=""
+
+                  dataSource={availableFilterColumns}
+                  showActions="hover"
+                  showExtra="hover"
+                  metas={{
+                    title: {
+                      dataIndex: 'title',
                     },
-                    onClick: () => {
-                    
-                    },
-                  };
-                }}
 
-                
-                rowKey="name"
-                headerTitle=""
 
-                dataSource={availableFilterColumns}
-                showActions="hover"
-                showExtra="hover"
-                metas={{
-                  title: {
-                    dataIndex: 'title',
-                  },
 
-                    
-                 
-                
-                }}
-              />
 
-            </div>
+                  }}
+                />
+
+              </div>
             </ProCard>
             <ProCard title="Selected Fields" colSpan={isMP ? 24 : 12}>
               <div style={{ height: 360, overflow: 'auto' }}>
@@ -810,18 +786,18 @@ const TableList: React.FC = () => {
                 <ProList<any>
 
                   onItem={(record, index) => {
-                    
+
                   }}
-                 
-                  
-                 
+
+
+
                   onRow={(record: any) => {
                     return {
                       onMouseEnter: () => {
-                       
+
                       },
                       onClick: () => {
-                        
+
                       },
                     };
                   }}
@@ -838,18 +814,18 @@ const TableList: React.FC = () => {
                       dataIndex: 'title',
                     },
 
-                    
+
 
                   }}
                 />
 
               </div>
+            </ProCard>
           </ProCard>
-        </ProCard>
-      </RcResizeObserver>
-      
+        </RcResizeObserver>
 
-        </ProForm>
+
+      </ProForm>
 
     </PageContainer>
   );

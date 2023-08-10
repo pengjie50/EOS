@@ -39,6 +39,10 @@ module.exports = app => {
             type: TEXT
 
         },
+        json_string: {
+            type: TEXT
+
+        },
         description: {
           type: TEXT
         

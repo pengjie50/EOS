@@ -24,12 +24,12 @@ import React, { useRef, useState, useEffect } from 'react';
 import CreateForm from './components/CreateForm';
 import UpdateForm from './components/UpdateForm';
 import { isPC } from "@/utils/utils";
+import { ResizeObserverDo } from '@/components'
 const { confirm } = Modal;
 //MP
 import { InfiniteScroll, List, NavBar, Space, DotLoading } from 'antd-mobile'
 /**
  * @en-US Add node
- * @zh-CN 添加节点
  * @param fields
  */
 
@@ -59,16 +59,15 @@ const handleAdd = async (fields: ReportListItem) => {
 
 /**
  * @en-US Update node
- * @zh-CN 更新节点
  *
  * @param fields
  */
-const handleUpdate = async (fields: Partial<ReportListItem> ) => {
+const handleUpdate = async (fields: Partial<ReportListItem>) => {
   const hide = message.loading(<FormattedMessage
     id="pages.modifying"
     defaultMessage="Modifying"
   />);
- 
+
   try {
     await updateReport({
       ...fields
@@ -93,7 +92,6 @@ const handleUpdate = async (fields: Partial<ReportListItem> ) => {
 
 /**
  *  Delete node
- * @zh-CN 删除节点
  *
  * @param selectedRows
  */
@@ -146,12 +144,10 @@ const handleRemove = async (selectedRows: ReportListItem[], callBack: any) => {
 const TableList: React.FC = () => {
   /**
    * @en-US Pop-up window of new window
-   * @zh-CN 新建窗口的弹窗
    *  */
   const [createModalOpen, handleModalOpen] = useState<boolean>(false);
   /**
    * @en-US The pop-up window of the distribution update window
-   * @zh-CN 分布更新窗口的弹窗
    * */
   const [updateModalOpen, handleUpdateModalOpen] = useState<boolean>(false);
 
@@ -167,9 +163,11 @@ const TableList: React.FC = () => {
   const { initialState, setInitialState } = useModel('@@initialState');
   const { currentUser } = initialState || {};
   const [nameData, setNameData] = useState<any>({})
+  const [template_nameData, setTemplate_nameData] = useState<any>({})
+
+
   /**
    * @en-US International configuration
-   * @zh-CN 国际化配置
    * */
   const intl = useIntl();
   const access = useAccess();
@@ -180,11 +178,11 @@ const TableList: React.FC = () => {
   const [showMPSearch, setShowMPSearch] = useState<boolean>(false);
   const [isMP, setIsMP] = useState<boolean>(!isPC());
   useEffect(() => {
-   
+
 
 
     if (isMP) {
-      
+
       getData(1)
     }
   }, [true]);
@@ -228,6 +226,8 @@ const TableList: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [MPfilter, setMPfilter] = useState<any>({})
 
+  const [user_idData, setUser_idData] = useState<any>({})
+
   async function getData(page, filter__) {
 
     var sorter = {}
@@ -248,18 +248,18 @@ const TableList: React.FC = () => {
       }, ...filter, sorter
     })
 
-   
-    
+
+
     setMPPagination({ total: append.total })
     setData(append.data)
   }
- 
+
   //--MP end
   const columns: ProColumns<ReportListItem>[] = [
 
 
 
-   
+
     {
       title: (
         <FormattedMessage
@@ -314,7 +314,7 @@ const TableList: React.FC = () => {
               setCurrentRow(entity);
 
               history.push(`/Report/ReportSummary`, entity);
-             
+
             }}
           >
             {dom}
@@ -343,19 +343,19 @@ const TableList: React.FC = () => {
           defaultMessage="Report Generated Date"
         />
       ),
-     
-      fieldProps: {placeholder: ['From', 'To'] },
-     
+
+      fieldProps: { style: { width: '100%' }, placeholder: ['From', 'To'] },
+
       hideInTable: true,
-      hideInDescriptions:true,
+      hideInDescriptions: true,
       dataIndex: 'created_at',
       valueType: 'dateRange',
       search: {
         transform: (value) => {
           if (value && value.length > 0) {
-            value[0] = moment(new Date(value[0])).format('YYYY-MM-DD')+" 00:00:00"
+            value[0] = moment(new Date(value[0])).format('YYYY-MM-DD') + " 00:00:00"
             value[1] = moment(new Date(value[1])).format('YYYY-MM-DD') + " 23:59:59"
-           
+
             return {
               'created_at': {
                 'field': 'created_at',
@@ -384,7 +384,7 @@ const TableList: React.FC = () => {
       search: {
         transform: (value) => {
 
-          if (value && value.length>0) {
+          if (value && value.length > 0) {
             return {
 
               status: {
@@ -398,7 +398,7 @@ const TableList: React.FC = () => {
 
         }
       },
-      valueEnum: currentUser?.role_type == "Super"?{
+      valueEnum: currentUser?.role_type == "Super" ? {
         1: "Transaction Summary",
         2: "Transaction Details",
         3: "Alert Reports",
@@ -406,28 +406,63 @@ const TableList: React.FC = () => {
         5: "Login Log",
         6: "User Activity Log",
         7: "API Activity",
-       // 8: "API Activity"
-
+      
       } : {
         1: "Transaction Summary",
         2: "Transaction Details",
         3: "Alert Reports"
-       
-        // 8: "API Activity"
 
       },
     },
     {
       title: <FormattedMessage id="pages.report.xxx" defaultMessage="Template Used" />,
       dataIndex: 'template_name',
-      hideInSearch:true,
+      valueEnum: template_nameData,
+      fieldProps:
+      {
+        notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
+        showSearch: true,
+        mode: 'multiple',
+        maxTagCount: 0,
+        maxTagPlaceholder: (omittedValues) => {
+          return omittedValues.length + " Selected"
+        },
+        allowClear: true,
+        onFocus: () => {
+          fieldSelectData({ model: "Report", value: '', field: 'template_name' }).then((res) => {
+            setTemplate_nameData(res.data)
+          })
+        },
+        onSearch: (newValue: string) => {
+
+          fieldSelectData({ model: "Report", value: newValue, field: 'template_name' }).then((res) => {
+            setTemplate_nameData(res.data)
+          })
+
+        }
+      },
+      search: {
+        transform: (value) => {
+          if (value && value.length > 0) {
+            return {
+              'template_name': {
+                'field': 'template_name',
+                'op': 'in',
+                'data': value
+              }
+            }
+          }
+
+        }
+      },
+
       valueType: 'text',
       render: (dom, entity) => {
         return (
-          
-          
-            dom?<a
-            onClick = {
+
+
+          dom ? <a
+            onClick={
               () => {
 
                 var v = {}
@@ -447,21 +482,74 @@ const TableList: React.FC = () => {
 
                 handleUpdateModalOpen(true);
 
-          }}
+              }}
           >{dom} </a > : 'N.A.'
-         
+
         );
       },
-   
+
     },
     {
-      title:  'Generated By',
+      title: 'Generated By',
+      dataIndex: 'username',
+      valueEnum: user_idData,
+      fieldProps:
+      {
+        notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
+        showSearch: true,
+        mode: 'multiple',
+        maxTagCount: 0,
+        maxTagPlaceholder: (omittedValues) => {
+          return omittedValues.length + " Selected"
+        },
+        allowClear: true,
+        onFocus: () => {
+          fieldSelectData({ model: "Report", value: '', field: 'user_id' }).then((res) => {
+            setUser_idData(res.data)
+          })
+        },
+        onSearch: (newValue: string) => {
+
+          fieldSelectData({ model: "Report", value: newValue, field: 'user_id' }).then((res) => {
+            setUser_idData(res.data)
+          })
+
+        }
+      },
+      search: {
+        transform: (value) => {
+          if (value && value.length > 0) {
+            return {
+              'user_id': {
+                'field': 'user_id',
+                'op': 'in',
+                'data': value
+              }
+            }
+          }
+
+        }
+      },
+
+      hideInTable: true,
+      hideInDescriptions: true,
+      render: (dom, entity) => {
+
+        return dom?.split('@')[0] || '-'
+
+
+      },
+      valueType: 'text',
+    },
+
+    {
+      title: 'Generated By',
       dataIndex: 'username',
       hideInSearch: true,
       render: (dom, entity) => {
-       
-          return dom?.split('@')[0] || '-'
-        
+
+        return dom?.split('@')[0] || '-'
+
 
       },
       valueType: 'text',
@@ -469,20 +557,10 @@ const TableList: React.FC = () => {
     {
       title: <FormattedMessage id="pages.searchTable.titleOption" defaultMessage="Operating" />,
       dataIndex: 'option',
-      width:80,
+      width: 80,
       valueType: 'option',
       render: (_, record) => [
-       /* <a
-          key="config"
-          onClick={() => {
-
-
-            handleUpdateModalOpen(true);
-            setCurrentRow(record);
-          }}
-        >
-          <FormOutlined style={{ fontSize: '20px' }} />
-        </a>,*/
+      
         <Access accessible={access.canReportDel()} fallback={<div></div>}>
           <a
             title={formatMessage({ id: "pages.delete", defaultMessage: "Delete" })}
@@ -505,8 +583,8 @@ const TableList: React.FC = () => {
             <DeleteOutlined style={{ fontSize: '20px', color: 'red' }} />
 
           </a></Access>
-       
-       
+
+
       ],
     }
   ];
@@ -529,7 +607,7 @@ const TableList: React.FC = () => {
   }
   return (
 
-  
+
     <PageContainer className="myPage" header={{
       title: isMP ? null : < FormattedMessage id="pages.report.xxx" defaultMessage="Report History" />,
       breadcrumb: {},
@@ -539,8 +617,8 @@ const TableList: React.FC = () => {
           key="primary"
           onClick={() => {
 
-            //history.push(`/Report/add`);
-           handleModalOpen(true);
+           
+            handleModalOpen(true);
           }}
         >
           <PlusOutlined /> <FormattedMessage id="pages.searchTable.new" defaultMessage="New" />
@@ -550,42 +628,29 @@ const TableList: React.FC = () => {
       {!isMP && (<ConfigProvider renderEmpty={customizeRenderEmpty}><RcResizeObserver
         key="resize-observer"
         onResize={(offset) => {
-          const { innerWidth, innerHeight } = window;
+          ResizeObserverDo(offset, setResizeObj, resizeObj)
 
-          if (offset.width > 1280) {
-          
-            setResizeObj({ ...resizeObj, searchSpan: 8, tableScrollHeight: innerHeight - 420 });
-          }
-          if (offset.width < 1280 && offset.width > 900) {
-            
-            setResizeObj({ ...resizeObj, searchSpan: 12, tableScrollHeight: innerHeight - 420 });
-          }
-          if (offset.width < 900 && offset.width > 700) {
-            setResizeObj({ ...resizeObj, searchSpan: 24, tableScrollHeight: innerHeight - 420 });
-           
-          }
 
-          
 
         }}
       ><ProTable<ReportListItem, API.PageParams>
           formRef={formRef}
           bordered
           actionRef={actionRef}
-          scroll={{ x: columns.length*150, y: resizeObj.tableScrollHeight }}
+          scroll={{ x: columns.length * 150, y: resizeObj.tableScrollHeight }}
           pagination={{ size: "default" }}
-        rowKey="id"
-        search={{
-          labelWidth: 18 * 12,
-          layout: "vertical",
-          span: resizeObj.searchSpan,
-          searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
-        }}
-        options={false}
-        className="mytable"
-        request={(params, sorter) => report({ ...params, sorter })}
-        columns={columns}
-       
+          rowKey="id"
+          search={{
+            labelWidth: 18 * 12,
+            layout: "vertical",
+            span: resizeObj.searchSpan,
+            searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
+          }}
+          options={false}
+          className="mytable"
+          request={(params, sorter) => report({ ...params, sorter })}
+          columns={columns}
+
         /></RcResizeObserver></ConfigProvider >)}
 
       {isMP && (<>
@@ -647,7 +712,7 @@ const TableList: React.FC = () => {
             </List.Item>
           ))}
         </List>
-        {MPPagination.total>0? <div style={{ textAlign: 'center', padding: "20px 10px 90px 10px" }}>
+        {MPPagination.total > 0 ? <div style={{ textAlign: 'center', padding: "20px 10px 90px 10px" }}>
           <Pagination
 
             onChange={(page, pageSize) => {
@@ -665,8 +730,7 @@ const TableList: React.FC = () => {
       </>)}
       <CreateForm
         onSubmit={async (value) => {
-          //value.id = currentRow?.id
-          //const success = await handleAdd(value as any);
+          
           if (true) {
             handleModalOpen(false);
             setCurrentRow(undefined);
@@ -682,9 +746,9 @@ const TableList: React.FC = () => {
           }
         }}
         createModalOpen={createModalOpen}
-        
+
       />
-     
+
       <UpdateForm
         onSubmit={async (value) => {
           value.id = currentRow?.id
@@ -710,7 +774,7 @@ const TableList: React.FC = () => {
         updateModalOpen={updateModalOpen}
         values={currentRow || {}}
       />
-      
+
       <Drawer
         width={isMP ? '100%' : 600}
         open={showDetail}
@@ -723,7 +787,7 @@ const TableList: React.FC = () => {
         {currentRow?.name && (
           <ProDescriptions<ReportListItem>
             column={isMP ? 1 : 2}
-           
+
             title={currentRow?.name}
             request={async () => ({
               data: currentRow || {},
@@ -735,19 +799,9 @@ const TableList: React.FC = () => {
           />
         )}
       </Drawer>
-      {/*
-         <div style={{ marginTop: -45, paddingLeft: 10 }}>
-          <Button
-
-            type="primary"
-            onClick={async () => {
-              history.back()
-            }}
-          >Return to previous page</Button>
-        </div>
-
-        */ }
-      </PageContainer> 
+     
+        
+    </PageContainer>
   );
 };
 

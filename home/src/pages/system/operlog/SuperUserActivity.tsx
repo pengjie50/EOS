@@ -1,5 +1,5 @@
 import RcResizeObserver from 'rc-resize-observer';
-
+import { ResizeObserverDo } from '@/components'
 import { addOperlog, removeOperlog, operlog, updateOperlog } from './service';
 import { PlusOutlined, SearchOutlined, FormOutlined, DeleteOutlined, ExclamationCircleOutlined, PrinterOutlined, SortAscendingOutlined, SortDescendingOutlined, SwapOutlined, FileExcelOutlined, EllipsisOutlined } from '@ant-design/icons';
 import type { ActionType, ProColumns, ProDescriptionsItemProps } from '@ant-design/pro-components';
@@ -27,8 +27,8 @@ import {
 import { FormattedMessage, useIntl, formatMessage } from '@umijs/max';
 import { Button, Drawer, Input, message, Modal, Popover, Empty, Pagination, FloatButton, ConfigProvider } from 'antd';
 import React, { useRef, useState, useEffect } from 'react';
-import CreateForm from './components/CreateForm';
-import UpdateForm from './components/UpdateForm';
+
+
 
 const { confirm } = Modal;
 //MP
@@ -37,7 +37,6 @@ import { isPC } from "@/utils/utils";
 
 /**
  *  Delete node
- * @zh-CN 删除节点
  *
  * @param selectedRows
  */
@@ -87,48 +86,19 @@ const handleRemove = async (selectedRows: OperlogListItem[], callBack: any) => {
 
 
 };
-/**
- * @en-US Update node
- * @zh-CN 更新节点
- *
- * @param fields
- */
-const handleUpdate = async (fields: Partial<any>) => {
-  const hide = message.loading(<FormattedMessage
-    id="pages.modifying"
-    defaultMessage="Modifying"
-  />);
-  try {
 
-    await updateOperlog({ remarks: fields['remarks'], id: fields.id });
-    hide();
-
-    message.success(<FormattedMessage
-      id="pages.modifySuccessful"
-      defaultMessage="Modify is successful"
-    />);
-    return true;
-  } catch (error) {
-    hide();
-    message.error(<FormattedMessage
-      id="pages.modifyFailed"
-      defaultMessage="Modify failed, please try again!"
-    />);
-    return false;
-  }
-};
 
 
 
 
 //--MP end
-export  var columnsBase: ProColumns<OperlogListItem>[] = [
+export var columnsBase: ProColumns<OperlogListItem>[] = [
 
   {
     title: <FormattedMessage id="pages.user.username" defaultMessage="username" />,
     dataIndex: 'username',
-    // valueEnum: userList,
-
+  
+    sorter: true,
     search: {
       transform: (value) => {
 
@@ -153,7 +123,7 @@ export  var columnsBase: ProColumns<OperlogListItem>[] = [
   {
     title: <FormattedMessage id="pages.operlog.module" defaultMessage="module" />,
     dataIndex: 'module',
-   
+    sorter: true,
     valueEnum: {
       "user": "User Account",
       "company": "Organization",
@@ -170,7 +140,8 @@ export  var columnsBase: ProColumns<OperlogListItem>[] = [
       multiple: true, mode: 'multiple', maxTagCount: 0,
       maxTagPlaceholder: (omittedValues) => {
         return omittedValues.length + " Selected"
-      }, },
+      },
+    },
     search: {
       transform: (value) => {
         if (value && value.length > 0) {
@@ -190,6 +161,7 @@ export  var columnsBase: ProColumns<OperlogListItem>[] = [
   {
     title: <FormattedMessage id="pages.operlog.action" defaultMessage="Action Type" />,
     dataIndex: 'action',
+    sorter: true,
     valueEnum: {
       "add": "Create",
       "mod": "Update",
@@ -200,7 +172,8 @@ export  var columnsBase: ProColumns<OperlogListItem>[] = [
       multiple: true, mode: 'multiple', maxTagCount: 0,
       maxTagPlaceholder: (omittedValues) => {
         return omittedValues.length + " Selected"
-      }, },
+      },
+    },
     search: {
       transform: (value) => {
         if (value && value.length > 0) {
@@ -227,11 +200,12 @@ export  var columnsBase: ProColumns<OperlogListItem>[] = [
   {
     title: <FormattedMessage id="pages.operlog.url" defaultMessage="url" />,
     dataIndex: 'url',
+    sorter: true,
     valueType: 'text',
     search: {
       transform: (value) => {
         if (value.length > 0) {
-          
+
           return {
             'url': {
               'field': 'url',
@@ -247,6 +221,7 @@ export  var columnsBase: ProColumns<OperlogListItem>[] = [
   {
     title: <FormattedMessage id="pages.operlog.ip" defaultMessage="Ip" />,
     dataIndex: 'ip',
+    sorter: true,
     search: {
       transform: (value) => {
         if (value.length > 0) {
@@ -264,12 +239,14 @@ export  var columnsBase: ProColumns<OperlogListItem>[] = [
     },
     valueType: 'text',
   },
-  /* {
-     title: <FormattedMessage id="pages.operlog.param" defaultMessage="param" />,
-     dataIndex: 'param',
-     ellipsis:true,
-     valueType: 'text',
-   },
+  {
+    title: <FormattedMessage id="pages.operlog.xxx" defaultMessage="Parameter" />,
+    dataIndex: 'param',
+    sorter: true,
+    ellipsis: !isPC() ? false : true,
+    valueType: 'text',
+  },
+  /* 
    {
      title: <FormattedMessage id="pages.operlog.result" defaultMessage="result" />,
      dataIndex: 'result',
@@ -279,6 +256,7 @@ export  var columnsBase: ProColumns<OperlogListItem>[] = [
 
   {
     title: <FormattedMessage id="pages.loginlog.status" defaultMessage="Status" />,
+    sorter: true,
     dataIndex: 'status',
     search: {
       transform: (value) => {
@@ -301,7 +279,8 @@ export  var columnsBase: ProColumns<OperlogListItem>[] = [
       multiple: true, mode: 'multiple', maxTagCount: 0,
       maxTagPlaceholder: (omittedValues) => {
         return omittedValues.length + " Selected"
-      }, },
+      },
+    },
     valueEnum: {
       0: {
         text: (
@@ -346,7 +325,7 @@ export  var columnsBase: ProColumns<OperlogListItem>[] = [
     title: (
       <FormattedMessage
         id="pages.operlog.xxx"
-        defaultMessage="Operation Date"
+        defaultMessage="Operation Date and Time"
       />
     ),
 
@@ -358,8 +337,8 @@ export  var columnsBase: ProColumns<OperlogListItem>[] = [
   {
     title: (
       <FormattedMessage
-        id="pages.operlog.operTime"
-        defaultMessage="Operation Date"
+        id="pages.operlog.xxx"
+        defaultMessage="Operation Date and Time"
       />
     ),
     sorter: true,
@@ -372,7 +351,10 @@ export  var columnsBase: ProColumns<OperlogListItem>[] = [
     search: {
       transform: (value) => {
         if (value && value.length > 0) {
-          value[1] = new Date((new Date(value[1])).getTime() + 3600 * 24 * 1000-1)
+
+          value[0] = moment(new Date(value[0])).format('YYYY-MM-DD') + " 00:00:00"
+          value[1] = moment(new Date(value[1])).format('YYYY-MM-DD') + " 23:59:59"
+
           return {
             'oper_time': {
               'field': 'oper_time',
@@ -394,7 +376,7 @@ export  var columnsBase: ProColumns<OperlogListItem>[] = [
     fieldProps: { placeholder: ['From', 'To'] },
     valueType: "digitRange",
     sorter: true,
-   
+
     render: (dom, entity) => {
       return entity.activity_duration + "ms"
     },
@@ -427,16 +409,8 @@ export  var columnsBase: ProColumns<OperlogListItem>[] = [
 
 
 const TableList: React.FC = () => {
-  /**
-   * @en-US Pop-up window of new window
-   * @zh-CN 新建窗口的弹窗
-   *  */
-  const [createModalOpen, handleModalOpen] = useState<boolean>(false);
-  /**
-   * @en-US The pop-up window of the distribution update window
-   * @zh-CN 分布更新窗口的弹窗
-   * */
-  const [updateModalOpen, handleUpdateModalOpen] = useState<boolean>(false);
+  
+  
   const [paramsText, setParamsText] = useState<string>('');
   const [showDetail, setShowDetail] = useState<boolean>(false);
   const [printModalVisible, handlePrintModalVisible] = useState<boolean>(false);
@@ -446,12 +420,11 @@ const TableList: React.FC = () => {
   const [resizeObj, setResizeObj] = useState({ searchSpan: 12, tableScrollHeight: 300 });
   /**
    * @en-US International configuration
-   * @zh-CN 国际化配置
    * */
   const intl = useIntl();
   const [MPSorter, setMPSorter] = useState<any>({});
   const [organizationList, setOrganizationList] = useState<any>({});
- 
+
   const [userList, setUserList] = useState<any>({});
   //--MP start
   const MPSearchFormRef = useRef<ProFormInstance>();
@@ -470,7 +443,7 @@ const TableList: React.FC = () => {
 
     var b = { ...a }
 
-    if (b.dataIndex=="url") {
+    if (b.dataIndex == "url") {
       b.valueEnum = urlData
       b.fieldProps = {
         notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
@@ -484,14 +457,14 @@ const TableList: React.FC = () => {
         },
         onFocus: () => {
           fieldSelectData({ model: "Operlog", value: '', field: 'url', where: { type: 1 } }).then((res) => {
-            
+
             setUrlData(res.data)
           })
         },
         onSearch: (newValue: string) => {
 
           fieldSelectData({ model: "Operlog", value: newValue, field: 'url', where: { type: 1 } }).then((res) => {
-           
+
             setUrlData(res.data)
           })
 
@@ -513,14 +486,14 @@ const TableList: React.FC = () => {
         },
         onFocus: () => {
           fieldSelectData({ model: "Operlog", value: '', field: 'ip', where: { type: 1 } }).then((res) => {
-           
+
             setIpData(res.data)
           })
         },
         onSearch: (newValue: string) => {
 
           fieldSelectData({ model: "Operlog", value: newValue, field: 'ip', where: { type: 1 } }).then((res) => {
-            
+
             setIpData(res.data)
           })
 
@@ -551,13 +524,13 @@ const TableList: React.FC = () => {
 
 
 
-     })
+  })
 
-  
 
-  
-  
-  
+
+
+
+
 
   useEffect(() => {
 
@@ -568,7 +541,7 @@ const TableList: React.FC = () => {
         'data': "Super"
       }
     }
-).then((res) => {
+    ).then((res) => {
       var b = {}
       res.data.forEach((r) => {
         b[r.id] = r.username
@@ -592,11 +565,11 @@ const TableList: React.FC = () => {
     }
 
   }, [true]);
-  
 
-   
 
-  
+
+
+
 
 
 
@@ -616,7 +589,7 @@ const TableList: React.FC = () => {
           }}
         ><PrinterOutlined /> <FormattedMessage id="pages.Print" defaultMessage="Print" />
         </Button>, <Button style={{ width: "100%" }} type="primary" key="out"
-            onClick={() => exportCSV(data, columns, "Super User Activity Log")}
+          onClick={() => exportCSV(data, columns, "Super User Activity Log")}
         ><FileExcelOutlined /> <FormattedMessage id="pages.CSV" defaultMessage="CSV" />
           </Button>
 
@@ -676,22 +649,22 @@ const TableList: React.FC = () => {
     const append = await operlog({
       ...{
 
-         type: {
-        'field': 'type',
-        'op': 'eq',
-        'data': 1
-      },
+        type: {
+          'field': 'type',
+          'op': 'eq',
+          'data': 1
+        },
         "current": page,
         "pageSize": 3
 
       }, ...filter, sorter
     })
-   
+
 
     setMPPagination({ total: append.total })
     setData(append.data)
   }
-  
+
   const formRef = useRef<ProFormInstance>();
 
   const customizeRenderEmpty = () => {
@@ -716,22 +689,8 @@ const TableList: React.FC = () => {
     <RcResizeObserver
       key="resize-observer"
       onResize={(offset) => {
-        const { innerWidth, innerHeight } = window;
+        ResizeObserverDo(offset, setResizeObj, resizeObj)
 
-        if (offset.width > 1280) {
-         
-          setResizeObj({ ...resizeObj, searchSpan: 8, tableScrollHeight: innerHeight - 420 });
-        }
-        if (offset.width < 1280 && offset.width > 900) {
-        
-          setResizeObj({ ...resizeObj, searchSpan: 12, tableScrollHeight: innerHeight - 420 });
-        }
-        if (offset.width < 900 && offset.width > 700) {
-          setResizeObj({ ...resizeObj, searchSpan: 24, tableScrollHeight: innerHeight - 420 });
-         
-        }
-
-        
 
       }}
     >
@@ -757,96 +716,98 @@ const TableList: React.FC = () => {
           </Button>
 
         ]
-    }} >
+      }} >
         {!isMP && (<ConfigProvider renderEmpty={customizeRenderEmpty}><ProTable<OperlogListItem, API.PageParams>
-        //scroll={{ x: 2500, y: 300 }}
+          //scroll={{ x: 2500, y: 300 }}
           pagination={{ size: "default", showSizeChanger: true, pageSizeOptions: [10, 20, 50, 100, 500] }}
-        actionRef={actionRef}
+          actionRef={actionRef}
           rowKey="id"
           scroll={{ x: 1800, y: resizeObj.tableScrollHeight }}
-        search={{
-          labelWidth: 140,
-          span: resizeObj.searchSpan,
-          searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
-        }}
-        toolBarRender={() => [
-         
-        ]}
-        options={false}
-        className="mytable"
-          request={(params, sorter) => operlog({ ...params, sorter,type:{
-          'field': 'type',
-        'op': 'eq',
-        'data': 1
-          } })}
+          search={{
+            labelWidth: 140,
+            span: resizeObj.searchSpan,
+            searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
+          }}
+          toolBarRender={() => [
+
+          ]}
+          options={false}
+          className="mytable"
+          request={(params, sorter) => operlog({
+            ...params, sorter, type: {
+              'field': 'type',
+              'op': 'eq',
+              'data': 1
+            }
+          })}
           columns={columns}
           bordered
-        rowSelection={{
-          onChange: (_, selectedRows) => {
-            setSelectedRows(selectedRows);
-          },
-        }}
+          rowSelection={{
+            onChange: (_, selectedRows) => {
+              setSelectedRows(selectedRows);
+            },
+          }}
         /></ConfigProvider>)}
 
-      {isMP && (<>
+        {isMP && (<>
 
           <NavBar backArrow={false} left={
             <MPSort columns={columns} onSort={(k) => {
               setMPSorter(k)
               getData(1)
             }} />} right={right} onBack={back}>
-          {intl.formatMessage({
-            id: 'pages.operlog.xxx',
-            defaultMessage: 'Super User Activity Log',
-          })}
-        </NavBar>
+            {intl.formatMessage({
+              id: 'pages.operlog.xxx',
+              defaultMessage: 'Super User Activity Log',
+            })}
+          </NavBar>
 
-        <div style={{ padding: '20px', backgroundColor: "#5000B9", display: showMPSearch ? 'block' : 'none' }}>
-          <Search columns={columns.filter(a => !(a.hasOwnProperty('hideInSearch') && a['hideInSearch']))} action={actionRef} loading={false}
+          <div style={{ padding: '20px', backgroundColor: "#5000B9", display: showMPSearch ? 'block' : 'none' }}>
+            <Search columns={columns.filter(a => !(a.hasOwnProperty('hideInSearch') && a['hideInSearch']))} action={actionRef} loading={false}
 
-            onFormSearchSubmit={onFormSearchSubmit}
+              onFormSearchSubmit={onFormSearchSubmit}
 
-            dateFormatter={'string'}
-            formRef={MPSearchFormRef}
-            type={'form'}
-            cardBordered={true}
-            form={{
-              submitter: {
-                searchConfig: {
+              dateFormatter={'string'}
+              formRef={MPSearchFormRef}
+              type={'form'}
+              cardBordered={true}
+              form={{
+                submitter: {
+                  searchConfig: {
 
-                  submitText: < FormattedMessage id="pages.search" defaultMessage="Search" />,
+                    submitText: < FormattedMessage id="pages.search" defaultMessage="Search" />,
+                  }
+
                 }
+              }}
 
-              }
-            }}
+              search={{}}
+              manualRequest={true}
+            />
+          </div>
+          <List>
+            {data.map((item, index) => (
+              <List.Item key={index}>
 
-            search={{}}
-            manualRequest={true}
-          />
-        </div>
-        <List>
-          {data.map((item, index) => (
-            <List.Item key={index}>
+                <ProDescriptions<any>
+                  bordered={true}
+                  size="small"
+                  className="jetty-descriptions"
+                  layout="horizontal"
+                  column={1}
+                  title={""}
+                  request={async () => ({
+                    data: item || {},
+                  })}
+                  params={{
+                    id: item?.id,
+                  }}
+                  columns={columns as ProDescriptionsItemProps<any>[]}
+                />
 
-              <ProDescriptions<any>
-                bordered={true}
-                size="small"
-                className="jetty-descriptions"
-                layout="horizontal"
-                column={1}
-                title={""}
-                request={async () => ({
-                  data: item || {},
-                })}
-                params={{
-                  id: item?.id,
-                }}
-                columns={columns as ProDescriptionsItemProps<any>[]}
-              />
-
-            </List.Item>
-          ))}
-        </List>
+              </List.Item>
+            ))}
+          </List>
           {MPPagination.total > 0 ? <div style={{ textAlign: 'center', padding: "20px 10px 90px 10px" }}>
             <Pagination
 
@@ -863,94 +824,59 @@ const TableList: React.FC = () => {
             />
           </div> : customizeRenderEmpty()}
           <FloatButton.BackTop visibilityHeight={0} />
-      </>)}
-      {selectedRowsState?.length > 0 && (
-        <FooterToolbar
-          extra={
-            <div>
-              <FormattedMessage id="pages.searchTable.chosen" defaultMessage="Chosen" />{' '}
-              <a style={{ fontWeight: 600 }}>{selectedRowsState.length}</a>{' '}
-              <FormattedMessage id="pages.searchTable.item" defaultMessage="项" />
-              &nbsp;&nbsp;
-             
-            </div>
-          }
-        >
-         
-        </FooterToolbar>
-      )}
-        <UpdateForm
-          onSubmit={async (value) => {
-            value.id = currentRow?.id
-            const success = await handleUpdate(value);
-            if (success) {
-              handleUpdateModalOpen(false);
-              setCurrentRow(undefined);
-              if (isMP) {
-                setData([]);
-                getData(1)
-              }
-              if (actionRef.current) {
-                actionRef.current.reload();
-              }
-            }
-          }}
-          onCancel={() => {
-            handleUpdateModalOpen(false);
-            if (!showDetail) {
-              setCurrentRow(undefined);
-            }
-          }}
-          updateModalOpen={updateModalOpen}
-          values={currentRow || {}}
-        />
-      
+        </>)}
+        {selectedRowsState?.length > 0 && (
+          <FooterToolbar
+            extra={
+              <div>
+                <FormattedMessage id="pages.searchTable.chosen" defaultMessage="Chosen" />{' '}
+                <a style={{ fontWeight: 600 }}>{selectedRowsState.length}</a>{' '}
+                <FormattedMessage id="pages.searchTable.item" defaultMessage="项" />
+                &nbsp;&nbsp;
 
-      <Drawer
-        width={isMP ? '100%' : 600}
-        open={showDetail}
-        onClose={() => {
-          setCurrentRow(undefined);
-          setShowDetail(false);
-        }}
-        closable={isMP ? true : false}
-      >
-        {currentRow?.name && (
-          <ProDescriptions<OperlogListItem>
-            column={isMP ? 1 : 2}
-            title={currentRow?.name}
-            request={async () => ({
-              data: currentRow || {},
-            })}
-            params={{
-              id: currentRow?.name,
-            }}
-            columns={columns as ProDescriptionsItemProps<OperlogListItem>[]}
-          />
+              </div>
+            }
+          >
+
+          </FooterToolbar>
         )}
+       
+
+
+        <Drawer
+          width={isMP ? '100%' : 600}
+          open={showDetail}
+          onClose={() => {
+            setCurrentRow(undefined);
+            setShowDetail(false);
+          }}
+          closable={isMP ? true : false}
+        >
+          {currentRow?.name && (
+            <ProDescriptions<OperlogListItem>
+              column={isMP ? 1 : 2}
+              title={currentRow?.name}
+              request={async () => ({
+                data: currentRow || {},
+              })}
+              params={{
+                id: currentRow?.name,
+              }}
+              columns={columns as ProDescriptionsItemProps<OperlogListItem>[]}
+            />
+          )}
         </Drawer>
         <FrPrint
           title={""}
           subTitle={paramsText}
           columns={columns}
-          dataSource={[...(isMP ? data : selectedRowsState)/*, sumRow*/]}
+          dataSource={[...(isMP ? data : selectedRowsState)]}
           onCancel={() => {
             handlePrintModalVisible(false);
           }}
           printModalVisible={printModalVisible}
         />
-        {/*
-         <div style={{ marginTop: -45, paddingLeft: 10 }}>
-          <Button
-
-            type="primary"
-            onClick={async () => {
-              history.back()
-            }}
-          >Return to previous page</Button>
-        </div>
-
-        */ }
+       
       </PageContainer></RcResizeObserver>
   );
 };

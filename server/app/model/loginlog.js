@@ -6,7 +6,7 @@
 */
 'use strict'
 module.exports = app => {
-    const { DATE, STRING, INTEGER, UUID, TINYINT, DataTypes } = app.Sequelize;
+    const { DATE, STRING, INTEGER, UUID, TINYINT, TEXT, DataTypes } = app.Sequelize;
     const Model = app.model.define('login_log', {
         id: {
             type: UUID,
@@ -37,6 +37,15 @@ module.exports = app => {
         },
         os: {
             type: STRING(50)
+
+        },
+        param: {
+            type: TEXT
+
+        },
+      
+        result: {
+            type: TEXT
 
         },
         device_type: {

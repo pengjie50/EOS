@@ -1,19 +1,19 @@
-import React, { useRef, useState, useEffect,useCallback } from 'react';
+import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { PageContainer, ProCard, ProColumns, ProDescriptions, ProFormGroup, ProFormSelect, ProDescriptionsItemProps } from '@ant-design/pro-components';
-import { AlertOutlined, SafetyCertificateOutlined, FormOutlined, CheckOutlined, ReloadOutlined, HistoryOutlined, FieldTimeOutlined, CalendarOutlined,DownCircleOutlined,EyeOutlined, ExclamationCircleOutlined, AimOutlined } from '@ant-design/icons'; 
+import { AlertOutlined, SafetyCertificateOutlined, FormOutlined, CheckOutlined, ExclamationCircleFilled, ReloadOutlined, HistoryOutlined, FieldTimeOutlined, CalendarOutlined, DownCircleOutlined, EyeOutlined, ExclamationCircleOutlined, AimOutlined } from '@ant-design/icons';
 import ProTable from '@ant-design/pro-table';
 import { FormattedMessage, useIntl, useLocation, useModel, history, formatMessage } from '@umijs/max';
 import { TransactionList, TransactionListItem } from '../data.d';
 import { transaction, validateBC, transactionevent, transactioneventlog, addTransactionevent, updateTransactionevent } from '../service';
-import { Button, Space, Steps, Icon, Select, message, Spin, Empty, Modal, Tooltip, Drawer } from 'antd';
+import { Button, Space, Steps, Icon, Select, message, Spin, Empty, Modal, Tooltip, Drawer, Badge } from 'antd';
 import { flow } from '../../system/flow/service';
 import { filterOfTimestamps, addFilterOfTimestamps, updateFilterOfTimestamps, removeFilterOfTimestamps } from '../../account/filterOfTimestamps/service';
 import { getAlertBytransactionId } from '../../alert/service';
-import { SvgIcon } from '@/components' // 自定义组件
+import { SvgIcon, getDurationInfo, keyNameMap, getDiff } from '@/components' // 自定义组件
 
 import { Icon as Iconfy } from '@iconify/react';
 
-import { tree,isPC } from "@/utils/utils";
+import { tree, isPC } from "@/utils/utils";
 import FilterForm from '../../account/filterOfTimestamps/components/FilterForm';
 import { rearg } from 'lodash';
 import { useAccess, Access } from 'umi';
@@ -24,47 +24,8 @@ import numeral from 'numeral';
 
 
 
-function getDiff(a, b) {
-  var diff = (isArray(a) ? [] : {});
-  recursiveDiff(a, b, diff);
-  return diff;
-}
 
-function recursiveDiff(a, b, node) {
-  var checked = [];
 
-  for (var prop in a) {
-    if (typeof b[prop] == 'undefined') {
-      addNode(prop, '[[removed]]', node);
-    }
-    else if (JSON.stringify(a[prop]) != JSON.stringify(b[prop])) {
-      // if value
-      if (typeof b[prop] != 'object' || b[prop] == null) {
-        addNode(prop, b[prop], node);
-      }
-      else {
-        // if array
-        if (isArray(b[prop])) {
-          addNode(prop, [], node);
-          recursiveDiff(a[prop], b[prop], node[prop]);
-        }
-        // if object
-        else {
-          addNode(prop, {}, node);
-          recursiveDiff(a[prop], b[prop], node[prop]);
-        }
-      }
-    }
-  }
-}
-
-function addNode(prop, value, parent) {
-  parent[prop] = value;
-}
-
-function isArray(obj) {
-  return (Object.prototype.toString.call(obj) === '[object Array]');
-}
 var moment = require('moment');
 
 const { Step } = Steps;
@@ -72,9 +33,9 @@ const { confirm } = Modal;
 
 
 var handleget: () => void
-var handlegetFlow: (f: any) => void
+var handlegetFlow
 
-var handlegetFlowFilter: (f: any) => void
+var handlegetFlowFilter
 
 
 const handleAdd = async (fields: any) => {
@@ -182,7 +143,7 @@ const Threshold: React.FC<any> = (props) => {
   } = props;
 
 
-  return (hours || mins) ? <span style={{ textAlign: 'left', fontSize: size, opacity: opacity, display: "inline-block", width: 120 }}><SvgIcon style={{ color: type == "amber" ? "#DE7E39" : "red" }} type="icon-yuan" /> {(hours ? hours : 0) + "h " + (mins ? mins : 0) + "m"}</span> : <span style={{ display: 'inline-block', width:120 }}></span>
+  return (hours || mins) ? <span style={{ textAlign: 'left', fontSize: size, opacity: opacity, display: "inline-block", width: 120 }}><SvgIcon style={{ color: type == "amber" ? "#DE7E39" : "red" }} type="icon-yuan" /> {(hours ? hours : 0) + "h " + (mins ? mins : 0) + "m"}</span> : <span style={{ display: 'inline-block', width: 120 }}></span>
 }
 
 
@@ -205,24 +166,24 @@ const Detail: React.FC<any> = (props) => {
 
 
   const [flowList, setFlowList] = useState<any>([]);
- 
+
   const [transactionAlert, setTransactionAlert] = useState<any>([]);
   const [processes, setProcesses] = useState<any>([]);
   const [transactioneventMap, setTransactioneventMap] = useState<any>({});
   const [transactioneventList, setTransactioneventList] = useState<any>({});
   const [processMap, setProcessMap] = useState<any>({});
- // const [transaction_id, setTransaction_id] = useState<any>("");
+  // const [transaction_id, setTransaction_id] = useState<any>("");
   const [filterOfTimestampsList, setFilterOfTimestampsList] = useState<any>([{ value: 'add', label: 'Select/create new timestamp filter' }]);
   const [filterOfTimestampsMap, setFilterOfTimestampsMap] = useState<any>(new Map());
 
-  
-  
+
+
 
   const [alertruleProcessMap, setAlertruleProcessMap] = useState<any>({});
 
 
   const [logObjArr, seLogObjArr] = useState<any>([]);
-  
+
 
   const [alertruleEventList, setAlertruleEventList] = useState<any>([]);
   const [collapsed, setCollapsed] = useState(true);
@@ -235,71 +196,41 @@ const Detail: React.FC<any> = (props) => {
   const [showDetail, setShowDetail] = useState<boolean>(false);
 
   const [showLog, setShowLog] = useState<boolean>(false);
-  const [eventLogMap, setEventLogMap] = useState<boolean>(false);
+  const [eventLogMap, setEventLogMap] = useState<any>({});
   const [currentEventLogList, setCurrentEventLogList] = useState<any>([]);
   const [currentEvent, setCurrentEvent] = useState<any>(null);
 
   const [createModalOpen, handleModalOpen] = useState<boolean>(false);
   const [tooltipOpen, setTooltipOpen] = useState<boolean>(false);
 
-  
+
   const [isAdd, setIsAdd] = useState<boolean>(false);
 
   const [totalDuration, setTotalDuration] = useState<any>(0);
 
   const [flowConf, setFlowConf] = useState<any>({});
+  const [flowMap, setFlowMap] = useState<any>({});
   const [isMP, setIsMP] = useState<boolean>(!isPC());
 
   const [validateStatus, setValidateStatus] = useState<any>(0);
   const [validateData, setValidateData] = useState<any>([]);
   const [selectValue, setSelectValue] = useState<any>(null);
-  const [tab, setTab] = useState(useLocation()?.state?.tab || 'Terminal');
+  const [tab, setTab] = useState(useLocation()?.state?.tab || 'Self');
 
   const [thresholdExpand, setThresholdExpand] = useState<boolean>(false);
-  
+
   const getTimeStr = (time) => {
-    if (time<0) {
-      time=0
+    if (time < 0) {
+      time = 0
     }
-    return  parseInt((time / 3600) + "") + "h " + parseInt((time % 3600) / 60)+ "m"
+    return parseInt((time / 3600) + "") + "h " + parseInt((time % 3600) / 60) + "m"
   }
 
   const access = useAccess();
   const intl = useIntl();
 
 
-  var keyNameMap = {
-    terminal_id: "Terminal Name",
-    jetty_id: "Jetty Name",
-    agent: "Agent",
-    jetty_id: "Jetty Name",
-    event_time:"Event Time",
-    product_name: "Product Name",
-    product_quantity_in_bls_60_f: "Product Quantity (Bls-60-f)",
-    order_no: "Pilotage ID",
-    location_from: "Location From",
-    location_to: "Location To",
-    delay_reason: "Delay Reason",
-    delay_duration: "Delay Duration",
-    work_order_id: "Work Order ID",
-    tank_number: "Tank ID",
-    work_order_sequence_number: "Sequence No",
-    imo_number: "IMO Number",
-    vessel_name: "Vessel Name",
-    arrival_id: "Arrival ID",
-    vessel_size_dwt: "Vessel Size (dwt)",
-    arrival_id_status: "Arrival Status",
-    work_order_status: "Work order Status",
-    work_order_sequence_number_status: "Sequence Status",
-    work_order_operation_type: "Operation Type",
-    work_order_surveyor: "Surveyor Name",
-    work_order_surveyor: "Surveyor Name",
-    product_quantity_in_l_15_c: "Product Quantity (l-15-c)",
-    product_quantity_in_mt: "Product Quantity (mt)",
-    product_quantity_in_mtv: "Product Quantity (mtv)",
-    product_quantity_in_l_obs: "Product Quantity (l-obs)",
-
-  }
+  
   var sss = {}
 
   sss['1001'] = {
@@ -371,7 +302,7 @@ const Detail: React.FC<any> = (props) => {
 
 
   const columns1: ProColumns<TransactionListItem>[] = [
-   
+
     {
       title: <FormattedMessage id="pages.transaction.startOfTransaction" defaultMessage="Start of transaction" />,
       dataIndex: 'start_of_transaction',
@@ -405,7 +336,7 @@ const Detail: React.FC<any> = (props) => {
       },
     }
 
-    ]
+  ]
 
   const columns2: ProColumns<TransactionListItem>[] = [
     {
@@ -421,7 +352,7 @@ const Detail: React.FC<any> = (props) => {
       align: "center",
       valueType: 'text',
     }
-   
+
 
 
   ]
@@ -429,19 +360,19 @@ const Detail: React.FC<any> = (props) => {
     {
       title: <FormattedMessage id="pages.transaction.terminalName" defaultMessage="Terminal Name" />,
       dataIndex: 'terminal_name',
-      hideInDescriptions: access.transactions_list_tab() ? true : false,
-      
+
+
     },
     {
       title: <FormattedMessage id="pages.transaction.terminalName" defaultMessage="Trader Name" />,
       dataIndex: 'trader_name',
-      hideInDescriptions: !(access.transactions_list_tab() || access.canAdmin) ? true : false,
-     
+
+
     },
     {
       title: <FormattedMessage id="pages.transaction.jettyName" defaultMessage="Jetty Name" />,
       dataIndex: 'jetty_name',
-     
+
     }
 
 
@@ -491,7 +422,7 @@ const Detail: React.FC<any> = (props) => {
   ]
 
 
- 
+
   const columnsAlertrule: ProColumns<any>[] = [
 
 
@@ -657,7 +588,7 @@ const Detail: React.FC<any> = (props) => {
       }
 
     },
-   
+
     {
       title: (
         <FormattedMessage
@@ -717,44 +648,25 @@ const Detail: React.FC<any> = (props) => {
     },
     {
       title: <FormattedMessage id="pages.alertrule.throughputVolume1" defaultMessage="Total Nominated Quantity (MT)" />,
-      dataIndex: 'product_quantity_in_mt_from',
+      dataIndex: 'product_quantity_from',
       fieldProps: { placeholder: ['From', 'To'] },
       valueType: "digitRange",
       width: 200,
       sorter: true,
       render: (dom, entity) => {
-        if (entity.product_quantity_in_mt_from && entity.product_quantity_in_mt_to) {
-
-
-          return numeral(entity.product_quantity_in_mt_from).format('0,0') + " - " + numeral(entity.product_quantity_in_mt_to).format('0,0')
+        if (entity.uom == "mt" && entity.product_quantity_from) {
+          return numeral(entity.product_quantity_from).format('0,0') + " - " + numeral(entity.product_quantity_to).format('0,0')
         } else {
           return '-'
         }
 
-      },
-      search: {
-        transform: (value) => {
-          if (value.length > 0) {
-
-            var a = value[0] || 0
-            var b = value[1] || 1000000000
-
-            return {
-              'product_quantity_in_mt_from': {
-                'field': 'product_quantity_in_mt_from',
-                'op': 'between',
-                'data': [a, b]
-              }
-            }
-          }
-
-        }
       }
+
     },
 
     {
       title: "Total Nominated Quantity (Bls-60-F)",
-      dataIndex: 'product_quantity_in_bls_60_f_from',
+      dataIndex: 'product_quantityf_to',
       fieldProps: {
         placeholder: ['From', 'To']
       },
@@ -762,30 +674,14 @@ const Detail: React.FC<any> = (props) => {
       width: 200,
       sorter: true,
       render: (dom, entity) => {
-        if (entity.product_quantity_in_bls_60_f_from && entity.product_quantity_in_bls_60_f_to) {
-          return numeral(entity.product_quantity_in_bls_60_f_from).format('0,0') + " - " + numeral(entity.product_quantity_in_bls_60_f_to).format('0,0')
+        if (entity.uom == "bls_60_f" && entity.product_quantity_from) {
+          return numeral(entity.product_quantity_from).format('0,0') + " - " + numeral(entity.product_quantity_to).format('0,0')
         } else {
           return '-'
         }
 
-      },
-      search: {
-        transform: (value) => {
-          if (value.length > 0) {
-            var a = value[0] || 0
-            var b = value[1] || 1000000000
-            return {
-              'product_quantity_in_bls_60_f_from': {
-                'field': 'product_quantity_in_bls_60_f_from',
-                'op': 'between',
-                'data': [a, b]
-              }
-
-            }
-          }
-
-        }
       }
+
     },
 
     {
@@ -806,7 +702,7 @@ const Detail: React.FC<any> = (props) => {
       hideInDescriptions: true,
       valueType: 'text',
     },
-   
+
     {
       title: <FormattedMessage id="pages.alertrule.userName" defaultMessage="Date of Threshold Alert Creation" />,
       dataIndex: 'created_at',
@@ -816,7 +712,7 @@ const Detail: React.FC<any> = (props) => {
       valueType: 'dateTime',
     }
 
-    
+
 
 
 
@@ -826,8 +722,8 @@ const Detail: React.FC<any> = (props) => {
   ];
 
 
-  const twoEvenbox = (th,ta,type) => {
-  
+  const twoEvenbox = (th) => {
+
     return (
       <ProCard ghost={true} colSpan={24} bordered wrap={isMP ? true : false}
 
@@ -851,13 +747,13 @@ const Detail: React.FC<any> = (props) => {
             column={isMP ? 1 : 1} >
             <ProDescriptions.Item contentStyle={{ paddingBottom: "0px !important" }} label="Work Order ID" valueType="text" style={{ fontSize: '14px' }} >
 
-              {ta?.work_order_id}
+              {th?.work_order_id || '-'}
 
 
             </ProDescriptions.Item>
             <ProDescriptions.Item contentStyle={{ paddingBottom: "0px !important" }} label="Sequence No" valueType="text" style={{ fontSize: '14px' }} >
 
-              {ta?.work_order_sequence_number}
+              {th?.work_order_sequence_number || '-'}
 
 
             </ProDescriptions.Item>
@@ -871,7 +767,7 @@ const Detail: React.FC<any> = (props) => {
             width: '22px',
             height: '22px',
             fontSize: "16px",
-            backgroundColor: type==2 ? "#70AD47" : "#595959",
+            backgroundColor: th.red == 1 ? "red" : (th.amber == 1 ? "#70AD47" : (th.transaction_event_id_from && th.transaction_event_id_to ? "#70AD47" : "#595959")),
             borderRadius: '50%',
             textAlign: 'center',
             lineHeight: '22px'
@@ -879,8 +775,8 @@ const Detail: React.FC<any> = (props) => {
             <SvgIcon type={"icon-yundongguiji"} />
 
           </span>
-          {type == 2 && <span style={{ marginLeft: 5, fontWeight: 500 }}>{getTimeByTwoEvent(ta.transaction_event_id_from, ta.transaction_event_id_to, ta)}</span>}
-          {type == 0 && <span style={{ marginLeft: 5, fontWeight: 500 }}>{"-"}</span>}
+          <span style={{ marginLeft: 5, fontWeight: 500 }}>{getTimeByTwoEvent(th.transaction_event_id_from, th.transaction_event_id_to, th)}</span>
+
         </ProCard>
 
         <ProCard ghost={true} layout={isMP ? "default" : "center"} colSpan={isMP ? 24 : 7} onClick={(ev) => { ev.stopPropagation(); setCurrentAlertruleRow(th); setShowDetail(true) }} >
@@ -912,43 +808,307 @@ const Detail: React.FC<any> = (props) => {
 
 
 
-  const getTimeByTwoEvent = (from, to,a) => {
+  const getTimeByTwoEvent = (from, to, a) => {
     try {
       if (!currentRow) {
         return "-"
       }
-      
 
-      var fromEventTime=null
-      var toEventTime=null
-      if (transactioneventMap && transactioneventMap[from] ) {
+
+      var fromEventTime = null
+      var toEventTime = null
+      if (transactioneventMap && transactioneventMap[from]) {
         fromEventTime = transactioneventMap[from].event_time
       }
       if (transactioneventMap && transactioneventMap[to]) {
         toEventTime = transactioneventMap[to].event_time
       }
-      
+
 
       if (fromEventTime && !toEventTime) {
         if (currentRow.status == 0) {
           toEventTime = new Date()
         } else {
-          
+
           toEventTime = currentRow.end_of_transaction
         }
       }
-     
+
       return getTimeStr((new Date(toEventTime).getTime() - new Date(fromEventTime).getTime()) / 1000)
     } catch (e) {
 
-      
-      
+
+
       return "-"
     }
 
-    
+
   }
   useEffect(() => {
+
+
+
+
+    (async function anyNameFunction() {
+
+      var res = await transaction({
+        id: {
+          'field': 'id',
+          'op': 'eq',
+          'data': transaction_id
+        }
+      })
+
+      
+      var currentRow_ = res.data[0]
+
+
+
+      if (res.data[0]?.status == 1) {
+        // res.data[0].blockchain_hex_key = "sssss"
+        setValidateStatus(1)
+
+        validateBC({ id: res.data[0].id }).then((res) => {
+
+          if (res.data) {
+            
+
+
+            if (res.data.bc_head_data && res.data.bc_event_data) {
+              setValidateStatus(2)
+              setValidateData(res.data)
+
+              if (res.data.head_data.Verified == "False" || res.data.event_data.some((a) => {
+                return a.Verified == "False"
+              })) {
+
+                setValidateStatus(3)
+              }
+
+            } else {
+              setValidateStatus(0)
+              setValidateData(null)
+            }
+
+
+
+
+
+
+          } else {
+
+            setValidateStatus(0)
+            setValidateData(null)
+
+          }
+
+
+        })
+      }
+
+
+      setCurrentRow(currentRow_)
+      var res2 = await organization({ sorter: { name: 'ascend' } })
+        var b = {}
+        res2.data.forEach((r) => {
+
+          if (r.id == res.data[0]?.trader_id || r.id == res.data[0]?.terminal_id) {
+
+            b[r.id] = r.name
+          }
+
+        })
+      setOrganizationList(b)
+
+      var res = await flow({ sorter: { sort: 'ascend' } })
+
+      res.data.push({
+        name: currentRow_?.status == 1 ? 'Entire Duration' : 'Current Duration', icon: currentRow_?.status == 1 ? 'icon-daojishi' : 'icon-shalou', pid: '                                    ', id: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
+      })
+      var b = {}
+
+      var m = {}
+
+      var p = {
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": intl.formatMessage({
+          id: 'pages.alertrule.entireTransaction',
+          defaultMessage: 'Entire Transaction',
+        })
+      }
+      var s = {}
+      res.data.forEach((r) => {
+        if (r.type == 0) {
+
+          p[r.id] = r.name
+        }
+        b[r.id] = r.name
+        m[r.id] = r
+        s[r.id] = false
+      })
+
+
+      setProcesses(p)
+      setShow(s)
+      setFlowConf(b)
+      setFlowMap(m)
+      var ss = res.data.map((bb) => { return { ...bb } })
+      var all = tree(ss, "                                    ", 'pid')
+      setFlowTreeAll(all)
+
+
+
+
+
+      setFlowList(res.data)
+
+      var cc = res.data.map((cc) => { return { ...cc } })
+      var f = tree(cc, "                                    ", 'pid')
+      setFlowTreeFilter(f)
+
+
+
+      var res2 = await transactionevent({
+        transaction_id: {
+
+          'field': 'transaction_id',
+          'op': 'eq',
+          'data': transaction_id
+        }, sorter: { event_time: 'ascend' }
+      })
+
+
+
+
+      var res4 = await  flow({ isGetAll: true, sorter: { sort: 'ascend' } })
+        var mm = {}
+        res4.data.forEach((bb) => { mm[bb.id] = bb })
+
+
+       
+          var processMap = {}
+          var td = 0
+          var e, s
+          var info
+          try {
+            info = getDurationInfo(res2.data, mm)
+
+            e = new Date(info.ee.event_time).getTime()
+            s = new Date(info.se.event_time).getTime()
+
+
+
+            if (currentRow_?.status == 0) {
+
+              if (!info.isEnd) {
+                e = new Date().getTime()
+              }
+
+
+              td = (e - s) / 1000
+            } else {
+
+              e = new Date(currentRow_.end_of_transaction).getTime()
+              td = currentRow_.total_duration
+            }
+
+
+            setTotalDuration(td)
+
+          } catch (e) {
+
+          }
+
+
+          var eventTree_ = {}
+
+
+
+          var tmap = {}
+          res2.data.forEach((a, index) => {
+
+            var obj = processMap[a.flow_pid]
+            if (!obj) {
+              obj = { duration: 0, process_duration: 0, status: 0, event_count: 0, eventArr: [], start_date: null }
+            }
+            obj.eventArr.push(a)
+
+
+
+
+            tmap[a.id] = a
+
+
+
+            var next = res2.data[index + 1]
+            if (next) {
+
+              if (next.flow_pid != a.flow_pid) {
+
+                obj.process_duration = parseInt(((new Date(res2.data[index + 1].event_time)).getTime() - (new Date(a.event_time)).getTime()) / 1000 + "")
+              }
+            }
+
+            processMap[a.flow_pid] = obj
+
+
+
+
+
+            if (!eventTree_[a.flow_pid]) {
+              eventTree_[a.flow_pid] = []
+            }
+            eventTree_[a.flow_pid].push(a)
+
+
+
+
+
+          })
+          setTransactioneventMap(tmap)
+          setTransactioneventList(res2.data)
+
+
+          setEventTree(eventTree_)
+
+
+          for (var k in processMap) {
+            var ps = processMap[k].eventArr[0]
+            var es = processMap[k].eventArr[processMap[k].eventArr.length - 1]
+
+
+            processMap[k].duration = ((new Date(es.event_time)).getTime() - (new Date(ps.event_time)).getTime()) / 1000
+
+            if (currentRow_?.status == 0 && currentRow_?.flow_id == k && !info.isEnd) {
+              processMap[k].duration = ((new Date()).getTime() - (new Date(ps.event_time)).getTime()) / 1000
+            }
+
+
+            processMap[k].end_date = es.event_time     //moment(new Date(es.event_time)).format('DD/MMMM/YYYY HH:mm')
+
+            processMap[k].start_date = ps.event_time  //  moment(new Date(ps.event_time)).format('DD/MMMM/YYYY HH:mm')
+
+            processMap[k].event_count = processMap[k].eventArr.length
+          }
+
+
+          processMap["aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"] = { duration: td, start_date: new Date(s), end_date: new Date(e) }
+          setProcessMap(processMap)
+
+         
+
+
+
+
+
+       
+     
+
+
+
+     
+
+    })();
+
 
 
 
@@ -973,6 +1133,8 @@ const Detail: React.FC<any> = (props) => {
       var c = []
 
       var d = {}
+
+     
       res.data.forEach((r) => {
 
 
@@ -1014,10 +1176,10 @@ const Detail: React.FC<any> = (props) => {
 
       setAlertruleProcessMap(b)
 
-      c=c.sort(function (a, b) {
-        return a.flow_id - b.flow_id;
+      var cc = c.sort(function (a, b) {
+        return flowMap[a.flow_id]?.sort - flowMap[b.flow_id]?.sort
       })
-      setAlertruleEventList(c)
+      setAlertruleEventList(cc)
 
 
     });
@@ -1059,10 +1221,10 @@ const Detail: React.FC<any> = (props) => {
         } else {
           if (!map['b2e']) {
 
-            map['b2e'] =[]
+            map['b2e'] = []
           }
 
-          map['b2e'].push( a)
+          map['b2e'].push(a)
         }
 
 
@@ -1145,66 +1307,7 @@ const Detail: React.FC<any> = (props) => {
     }
 
 
-    handlegetFlow = (f: any) => {
-
-      // f.push("aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa")
-
-      setCurrentRow((currentRow) => {
-
-
-
-        flow({ sorter: { sort: 'ascend' } }).then((res) => {
-
-          res.data.push({
-            name: currentRow?.status == 1 ? 'Entire Duration' : 'Current Duration', icon: currentRow?.status == 1 ? 'icon-daojishi' : 'icon-shalou', pid: '                                    ', id: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa'
-          })
-          var b = {}
-
-
-
-          var p = {
-            "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": intl.formatMessage({
-              id: 'pages.alertrule.entireTransaction',
-              defaultMessage: 'Entire Transaction',
-            })
-          }
-          var s = {}
-          res.data.forEach((r) => {
-            if (r.type == 0) {
-
-              p[r.id] = r.name
-            }
-            b[r.id] = r.name
-            s[r.id] = false
-          })
-
-
-          setProcesses(p)
-          setShow(s)
-          setFlowConf(b)
-
-          var ss = res.data.map((bb) => { return { ...bb } })
-          var all = tree(ss, "                                    ", 'pid')
-          setFlowTreeAll(all)
-
-
-
-
-
-          setFlowList(res.data)
-
-          var cc = res.data.map((cc) => { return { ...cc } })
-          var f = tree(cc, "                                    ", 'pid')
-          setFlowTreeFilter(f)
-
-
-
-
-        });
-
-        return currentRow
-      })
-    }
+   
 
 
     transactioneventlog({
@@ -1269,186 +1372,11 @@ const Detail: React.FC<any> = (props) => {
     handleget = getFilterOfTimestamps
     getFilterOfTimestamps()
 
-    transaction({
-      id: {
-        'field': 'id',
-        'op': 'eq',
-        'data': transaction_id
-      }
-    }).then((res) => {
 
-      organization({ sorter: { name: 'ascend' } }).then((res2) => {
-        var b = {}
-        res2.data.forEach((r) => {
+    
 
-          if (r.id == res.data[0]?.trader_id || r.id == res.data[0]?.terminal_id) {
+    
 
-            b[r.id] = r.name
-          }
-
-        })
-        setOrganizationList(b)
-
-      })
-
-      var currentRow_ = res.data[0]
-      setCurrentRow(currentRow_)
-
-
-
-
-      transactionevent({
-        transaction_id: {
-
-          'field': 'transaction_id',
-          'op': 'eq',
-          'data': transaction_id
-        }, sorter: { event_time: 'ascend' }
-      }).then((res) => {
-
-
-
-
-        var processMap = {}
-        var td = 0
-        var e,s
-        try {
-
-
-
-           e = new Date(res.data[res.data.length - 1].event_time).getTime()
-           s = new Date(res.data[0].event_time).getTime()
-          if (currentRow_?.status == 0) {
-           
-            e = new Date().getTime()
-            td = (e - s) / 1000
-          } else {
-            e = new Date(currentRow_.end_of_transaction).getTime()
-            td = currentRow_.total_duration
-          }
-
-         
-          setTotalDuration(td)
-
-        } catch (e) {
-
-        }
-
-
-        var eventTree_ = {}
-
-
-
-        var tmap = {}
-        res.data.forEach((a, index) => {
-
-          var obj = processMap[a.flow_pid]
-          if (!obj) {
-            obj = { duration: 0, process_duration: 0, status: 0, event_count: 0, eventArr: [], start_date: null }
-          }
-          obj.eventArr.push(a)
-
-
-         
-
-          tmap[a.id]= a
-
-
-
-          var next = res.data[index + 1]
-          if (next) {
-
-            if (next.flow_pid != a.flow_pid) {
-
-              obj.process_duration = parseInt(((new Date(res.data[index + 1].event_time)).getTime() - (new Date(a.event_time)).getTime()) / 1000 + "")
-            }
-          }
-
-          processMap[a.flow_pid] = obj
-
-
-
-
-
-          if (!eventTree_[a.flow_pid]) {
-            eventTree_[a.flow_pid] = []
-          }
-          eventTree_[a.flow_pid].push(a)
-
-
-
-
-
-        })
-        setTransactioneventMap(tmap)
-        setTransactioneventList(res.data)
-
-
-        setEventTree(eventTree_)
-
-
-        for (var k in processMap) {
-          var ps = processMap[k].eventArr[0]
-          var es = processMap[k].eventArr[processMap[k].eventArr.length - 1]
-
-
-          processMap[k].duration = ((new Date(es.event_time)).getTime() - (new Date(ps.event_time)).getTime()) / 1000
-
-          if (currentRow_?.status == 0 && currentRow_?.flow_id == k) {
-            processMap[k].duration = ((new Date()).getTime() - (new Date(ps.event_time)).getTime()) / 1000
-          }
-
-
-          processMap[k].end_date = es.event_time     //moment(new Date(es.event_time)).format('DD/MMMM/YYYY HH:mm')
-
-          processMap[k].start_date = ps.event_time  //  moment(new Date(ps.event_time)).format('DD/MMMM/YYYY HH:mm')
-
-          processMap[k].event_count = processMap[k].eventArr.length
-        }
-
-
-        processMap["aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"] = { duration: td, start_date: new Date(s), end_date: new Date(e) }
-        setProcessMap(processMap)
-
-
-
-
-
-      });
-
-
-
-
-
-
-      handlegetFlow([])
-      if (res.data[0]?.status == 1) {
-       // res.data[0].blockchain_hex_key = "sssss"
-        setValidateStatus(1)
-        validateBC({ id: res.data[0].id }).then((res) => {
-          if (res.data) {
-           
-            setValidateStatus(2)
-            setValidateData(res.data)
-            if (res.data.head_data.Verified == "False" || res.data.event_data.some((a) => {
-              return a.Verified == "False"
-            })) {
-              setValidateStatus(3)
-            }
-            
-          } else {
-           
-            setValidateStatus(0)
-            setValidateData(null)
-            
-          }
-
-
-        })
-      }
-
-
-    });
     return () => {
 
     };
@@ -1464,13 +1392,13 @@ const Detail: React.FC<any> = (props) => {
     'icon-matou1': '#70AD47',
     'icon-daojishi': '#70AD47'
   }
- 
+
   return (<div
     style={{
       background: '#F5F7FA',
     }}
   >
-   
+
     <PageContainer
 
       header={{
@@ -1478,52 +1406,66 @@ const Detail: React.FC<any> = (props) => {
 
       }}
 
-     
+
 
     >
 
 
       {access.transactions_list_tab() && <ProCard
         className="my-tab"
-       // title={<div className="my-font-size" style={{ height: 14, lineHeight: '14px', fontSize: 12 }}>{tab == 'Terminal' ? 'This transaction is reflective of my own Terminal threshold alerts.' : 'This transaction is reflective of my customer threshold alerts'}</div>}
+        // title={<div className="my-font-size" style={{ height: 14, lineHeight: '14px', fontSize: 12 }}>{tab == 'Terminal' ? 'This transaction is reflective of my own Terminal threshold alerts.' : 'This transaction is reflective of my customer threshold alerts'}</div>}
         headStyle={{ height: 14, lineHeight: '14px', fontSize: 12 }}
-        
+
         tabs={{
           type: 'card',
           //tabPosition,
           activeKey: tab,
           items: [
             {
-              label: <div title="This transaction is reflective of my own Terminal threshold alerts">Terminal</div>,
-              key: 'Terminal',
+              label: <div title={"This transaction is reflective of " + currentUser?.company_name + " threshold alerts"}> {currentUser?.company_name}</div>,
+              key: 'Self',
               children: null,
             },
             {
-              label: <div title="This transaction is reflective of my customer threshold alerts">Customer</div> ,
-              key: 'Trader',
+              label: <div title="This transaction is reflective of Others’s threshold alerts">Others</div>,
+              key: 'Others',
               children: null,
             }
           ],
           onChange: (key) => {
             setTab(key);
-            if (key == "Trader") {
-              setOrganization_id([currentRow?.trader_id])
+            if (key == "Others") {
+
+
+
+             
+             
+              setOrganization_id(currentUser?.accessible_organization.filter((a) => {
+                return a != currentUser?.company_id
+
+              }))
+             
+
+            } else {
+
+              
+              setOrganization_id([currentUser?.company_id])
             }
+
             
-            //actionRef.current.reload();
           },
         }}
-      />}  
+      />}
       {currentUser?.role_type == "Super" && <ProFormSelect label="Organization" valueEnum={organizationList}
         width={isMP ? "lg" : 300}
         name="threshold_organization_id"
-        
+
         //placeholder="Option to filter by organisation to view threshold alerts raised by different organisation on the system"
         fieldProps={
           {
             notFoundContent: <Empty />,
             onChange: (a) => {
-             
+
               setOrganization_id(a)
             },
             dropdownMatchSelectWidth: isMP ? true : false,
@@ -1531,35 +1473,35 @@ const Detail: React.FC<any> = (props) => {
             showSearch: false,
             multiple: true
 
-          }} />}  
+          }} />}
 
       <FilterForm
         onSubmit={async (value) => {
           value.id = currentFilter?.id
           var success
           if (isAdd) {
-             success = await handleAdd(value);
+            success = await handleAdd(value);
           } else {
             success = await handleUpdate(value);
           }
-          
+
           if (success) {
             handleModalOpen(false);
-           
+
             handleget()
-          
+
             setCurrentFilter(undefined);
-           
+
           }
         }}
-      
+
         onApply={async (value) => {
           value.id = currentRow?.id
           handlegetFlowFilter(value.value)
-            handleModalOpen(false);
-            setCurrentFilter(value);
+          handleModalOpen(false);
+          setCurrentFilter(value);
 
-          
+
         }}
         onDelete={async (value) => {
           handleRemove([currentFilter], (success) => {
@@ -1569,306 +1511,308 @@ const Detail: React.FC<any> = (props) => {
               handleget()
               handlegetFlowFilter([])
             }
-            
+
           })
 
         }}
         onCancel={() => {
           handleModalOpen(false);
-         
+
         }}
         createModalOpen={createModalOpen}
         values={currentFilter || {}}
       />
-      
+
 
       <ProCard ghost={true} className="my-ant-descriptions-row" style={{ marginBlockStart: 8 }} wrap={isMP ? true : false} gutter={8}>
-          <ProCard
+        <ProCard
           colSpan={isMP ? 24 : 12}
-          style={{  backgroundColor: "#d2faf5" }}
-            layout="center"
-            title={"General Information"}
-            wrap={true }
-            bordered
-          >
+          style={{ backgroundColor: "#d2faf5" }}
+          layout="center"
+          title={"General Information"}
+          wrap={true}
+          bordered
+        >
 
           <ProCard ghost={true} >
-            <ProDescriptions colon={false} contentStyle={{ fontSize: 16 }} columns={columns1 as ProDescriptionsItemProps<any>[]} dataSource={currentRow} labelStyle={{ fontSize: '18px', color: "#333", fontWeight: 500, lineHeight: "18px", padding:0 }} layout="vertical" className="my-descriptions-item"
-                column={isMP ? 1 : 3} >
+            <ProDescriptions colon={false} contentStyle={{ fontSize: 16 }} columns={columns1 as ProDescriptionsItemProps<any>[]} dataSource={currentRow} labelStyle={{ fontSize: '18px', color: "#333", fontWeight: 500, lineHeight: "18px", padding: 0 }} layout="vertical" className="my-descriptions-item"
+              column={isMP ? 1 : 3} >
 
-              </ProDescriptions>
-            </ProCard>
-           
-            <ProCard ghost={true}>
+            </ProDescriptions>
+          </ProCard>
+
+          <ProCard ghost={true}>
 
 
-              <ProCard ghost={true} >
+            <ProCard ghost={true} >
               <SvgIcon className="my-font-size" style={{ fontSize: 40 }} type="icon-lunchuan" />
-              </ProCard>
+            </ProCard>
 
             <ProCard ghost={true} style={{ marginLeft: 20 }} colSpan={24} >
               <ProDescriptions colon={false} style={{ display: "inline-block" }} contentStyle={{ fontSize: 16, textAlign: 'center' }} columns={columns2 as ProDescriptionsItemProps<any>[]} dataSource={currentRow} labelStyle={{ fontSize: '18px', lineHeight: "18px", color: "#333", fontWeight: 500 }} layout="vertical" className="my-descriptions-item"
-                  column={isMP ? 2 : 2} >
-
-                </ProDescriptions>
-              </ProCard>
-
-              
-            </ProCard>
-
-          <ProCard ghost={true} >
-              <ProCard ghost={true} >
-              <SvgIcon className="my-font-size" style={{ fontSize:40 }} type="icon-terminal" />
-              </ProCard>
-
-            <ProCard ghost={true} style={{ marginLeft: 20 }} colSpan={24} >
-              <ProDescriptions colon={false} style={{ display: "inline-block" }} contentStyle={{ fontSize: 16 }} columns={columns3 as ProDescriptionsItemProps<any>[]} dataSource={currentRow} labelStyle={{ fontSize: '18px', color: "#333", lineHeight: "18px", fontWeight:500 }} layout="vertical" className="my-descriptions-item"
-                  column={isMP ? 2 : 2} >
-
-                </ProDescriptions>
-              </ProCard>
-              
-
-            </ProCard>
-           
-           
-          </ProCard>
-          <ProCard
-          colSpan={isMP ? 24 : 12}
-          style={{ height: '100%', backgroundColor:"#d2faf5",marginTop:isMP?10:0 }}
-            layout="center"
-            title={"Products"}
-            wrap={true}
-            bordered
-          >
-
-          <ProCard ghost={true}>
-            <ProDescriptions colon={false} contentStyle={{ marginTop: 0 }} columns={columns4 as ProDescriptionsItemProps<any>[]} dataSource={currentRow} labelStyle={{ fontSize: '12px', color: "#333", fontWeight:500, lineHeight: "18px" }} layout="vertical" className="my-descriptions-item"
-                column={isMP ? 1 : 2} >
+                column={isMP ? 2 : 2} >
 
               </ProDescriptions>
             </ProCard>
 
 
-          <ProCard ghost={true}  >
-              <ProCard ghost={true}  >
-              <SvgIcon className="my-font-size" style={{ fontSize: 40 }} type="icon-huowu1" />
-              </ProCard>
+          </ProCard>
 
-            <ProCard ghost={true} colSpan={24} style={{ marginLeft:20 }} >
-              <ProDescriptions colon={false} style={{ display: "inline-block" }} contentStyle={{ marginTop: 0 }} columns={columns5 as ProDescriptionsItemProps<any>[]} dataSource={currentRow} labelStyle={{ fontSize: '12px', color: "#333", fontWeight: 500, lineHeight: "18px" }} layout="vertical" className="my-descriptions-item"
-                  column={isMP ? 1 : 1} >
-
-                </ProDescriptions>
-              </ProCard>
-
-
+          <ProCard ghost={true} >
+            <ProCard ghost={true} >
+              <SvgIcon className="my-font-size" style={{ fontSize: 40 }} type="icon-terminal" />
             </ProCard>
+
+            <ProCard ghost={true} style={{ marginLeft: 20 }} colSpan={24} >
+              <ProDescriptions colon={false} style={{ display: "inline-block" }} contentStyle={{ fontSize: 16 }} columns={columns3 as ProDescriptionsItemProps<any>[]} dataSource={currentRow} labelStyle={{ fontSize: '18px', color: "#333", lineHeight: "18px", fontWeight: 500 }} layout="vertical" className="my-descriptions-item"
+                column={isMP ? 2 : 2} >
+
+              </ProDescriptions>
+            </ProCard>
+
+
           </ProCard>
 
 
-           
+        </ProCard>
+        <ProCard
+          colSpan={isMP ? 24 : 12}
+          style={{ height: '100%', backgroundColor: "#d2faf5", marginTop: isMP ? 10 : 0 }}
+          layout="center"
+          title={"Products"}
+          wrap={true}
+          bordered
+        >
 
-           
+          <ProCard ghost={true}>
+            <ProDescriptions colon={false} contentStyle={{ marginTop: 0 }} columns={columns4 as ProDescriptionsItemProps<any>[]} dataSource={currentRow} labelStyle={{ fontSize: '12px', color: "#333", fontWeight: 500, lineHeight: "18px" }} layout="vertical" className="my-descriptions-item"
+              column={isMP ? 1 : 2} >
+
+            </ProDescriptions>
+          </ProCard>
 
 
-           
-        
+          <ProCard ghost={true}  >
+            <ProCard ghost={true}  >
+              <SvgIcon className="my-font-size" style={{ fontSize: 40 }} type="icon-huowu1" />
+            </ProCard>
+
+            <ProCard ghost={true} colSpan={24} style={{ marginLeft: 20 }} >
+              <ProDescriptions colon={false} style={{ display: "inline-block" }} contentStyle={{ marginTop: 0 }} columns={columns5 as ProDescriptionsItemProps<any>[]} dataSource={currentRow} labelStyle={{ fontSize: '12px', color: "#333", fontWeight: 500, lineHeight: "18px" }} layout="vertical" className="my-descriptions-item"
+                column={isMP ? 1 : 1} >
+
+              </ProDescriptions>
+            </ProCard>
+
+
+          </ProCard>
+        </ProCard>
+
+
+
+
+
+
+
+
+
 
       </ProCard>
 
 
 
 
-     
 
 
-      {!isMP && (<ProCard ghost={true} style={{ marginBlockStart: 16 }} ><div style={{ paddingRight: 20,width: '100%', height: 'auto', overflow: 'auto', padding: "10px", backgroundColor: "#FFF" }}>
 
-        <div style={{ width:2300 }}>
+      {!isMP && (<ProCard ghost={true} style={{ marginBlockStart: 16 }} ><div style={{ paddingRight: 20, width: '100%', height: 'auto', overflow: 'auto', padding: "10px", backgroundColor: "#FFF" }}>
+
+        <div style={{ width: 2300 }}>
 
 
-        <div style={{ position: 'relative', float: 'left', zIndex: 1, textAlign: 'left', marginRight: 10 }}>
+          <div style={{ position: 'relative', float: 'left', zIndex: 1, textAlign: 'left', marginRight: 10 }}>
 
-          <div style={{ position: 'relative', zIndex: 1, fontSize: '14px', lineHeight:'14px', color: "#808080", height: 28, }}>Processes</div>
-          <div style={{ position: 'relative', zIndex: 1, height: '40px', }}>
+            <div style={{ position: 'relative', zIndex: 1, fontSize: '14px', lineHeight: '14px', color: "#808080", height: 28, }}>Processes</div>
+            <div style={{ position: 'relative', zIndex: 1, height: '40px', }}>
 
-          </div>
-          <div style={{ fontSize: '14px', height: 35, lineHeight: '35px', color: "#808080" }}>
-            Duration
-          </div>
-          <div style={{ fontSize: '14px', height: 35, lineHeight: '35px', color: "#808080" }}>
-            Start Time
-           </div>
-           <div style={{ fontSize: '14px', height: 35, lineHeight: '35px', color: "#808080" }}>
+            </div>
+            <div style={{ fontSize: '14px', height: 35, lineHeight: '35px', color: "#808080" }}>
+              Duration
+            </div>
+            <div style={{ fontSize: '14px', height: 35, lineHeight: '35px', color: "#808080" }}>
+              Start Time
+            </div>
+            <div style={{ fontSize: '14px', height: 35, lineHeight: '35px', color: "#808080" }}>
               End Time
             </div>
             <div style={{ fontSize: '14px', height: 35, lineHeight: '35px', color: "#808080" }} onClick={() => {
               setThresholdExpand(!thresholdExpand)
-            } }>
-              Threshold <DownCircleOutlined rotate={thresholdExpand?180:0} />
+            }}>
+              Threshold <DownCircleOutlined rotate={thresholdExpand ? 180 : 0} />
+            </div>
+
+
           </div>
+          {flowTreeAll.map((e, i) => {
 
-        
-        </div>
-        {flowTreeAll.map((e, i) => {
+            var p = processMap[e.id]
+            var arArr = alertruleProcessMap[e.id]
 
-          var p = processMap[e.id]
-          var arArr = alertruleProcessMap[e.id]
-         
-          return [
-            <div style={{ position: 'relative', float: 'left', zIndex: 1, textAlign: 'center', cursor: 'pointer', width: '10%' }} onClick={() => {
-             var a = {...show}
-              a[e.id] = true
-              setShow(a)
-             
-              window.scrollTo(0, document.getElementById(e.id + "_")?.getBoundingClientRect().top || 0)
+            return [
+              <div style={{ position: 'relative', float: 'left', zIndex: 1, textAlign: 'center', cursor: 'pointer', width: '10%' }} onClick={() => {
+                var a = { ...show }
+                a[e.id] = true
+                setShow(a)
 
-            } }>
+                window.scrollTo(0, document.getElementById(e.id + "_")?.getBoundingClientRect().top || 0)
+
+              }}>
 
 
-              <div style={{ position: 'absolute', zIndex: 0, top: 47, left: i == 0 ? '50%' : 0, width: (i == 0 || i == 4) ? '50%' : (i == 5 ? 0 : '100%'), height: 2, backgroundColor: '#d2d2d2', overflow: 'hidden', }}></div>
-              <div style={{ position: 'relative', zIndex: 1, fontSize: '14px', height:28,lineHeight:'14px', color: "#333", fontWeight: "bold" }}>{e.name}</div>
-              <div style={{ position: 'relative', zIndex: 1 }}>
-                {e.id != "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" && (<span className="my-font-size" style={{
-                  display: "inline-block",
-                  color: "#fff",
-                  width: '40px',
-                  height: '40px',
-                  fontSize: "30px",
-                  backgroundColor: p ? (p.event_count > 0 ? transactionAlert[e.id] ? (transactionAlert[e.id].red > 0 ? "red" : "#DE7E39") : color[e.icon] : "#595959") : "#595959",
-                  borderRadius: '50%',
-                  textAlign: 'center',
-                  lineHeight: '40px'
-                }}>
-
-                  <SvgIcon type={e.icon} />
-                </span>)
-                }
-
-
-                {e.id == "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" && (
-                  <div style={{ height:40 }}>
-                    <span className="my-font-size" style={{
-                   
+                <div style={{ position: 'absolute', zIndex: 0, top: 47, left: i == 0 ? '50%' : 0, width: (i == 0 || i == 4) ? '50%' : (i == 5 ? 0 : '100%'), height: 2, backgroundColor: '#d2d2d2', overflow: 'hidden', }}></div>
+                <div style={{ position: 'relative', zIndex: 1, fontSize: '14px', height: 28, lineHeight: '14px', color: "#333", fontWeight: "bold" }}>{e.name}</div>
+                <div style={{ position: 'relative', zIndex: 1 }}>
+                  {e.id != "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" && (<span className="my-font-size" style={{
                     display: "inline-block",
                     color: "#fff",
                     width: '40px',
                     height: '40px',
-                    fontSize: "28px",
-                    backgroundColor: transactionAlert[e.id] ? (transactionAlert[e.id].red > 0 ? "red" : "#DE7E39") :( currentRow?.status == 1 ?color[e.icon]:"#595959"),      
+                    fontSize: "30px",
+                    backgroundColor: p ? (p.event_count > 0 ? transactionAlert[e.id] ? (transactionAlert[e.id].red > 0 ? "red" : "#DE7E39") : color[e.icon] : "#595959") : "#595959",
                     borderRadius: '50%',
                     textAlign: 'center',
                     lineHeight: '40px'
                   }}>
-                      <SvgIcon type={e.icon} />
-                    
-                  </span>
+
+                    <SvgIcon type={e.icon} />
+                  </span>)
+                  }
+
+
+                  {e.id == "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" && (
+                    <div style={{ height: 40 }}>
+                      <span className="my-font-size" style={{
+
+                        display: "inline-block",
+                        color: "#fff",
+                        width: '40px',
+                        height: '40px',
+                        fontSize: "28px",
+                        backgroundColor: transactionAlert[e.id] ? (transactionAlert[e.id].red > 0 ? "red" : "#DE7E39") : (currentRow?.status == 1 ? color[e.icon] : "#595959"),
+                        borderRadius: '50%',
+                        textAlign: 'center',
+                        lineHeight: '40px'
+                      }}>
+                        <SvgIcon type={e.icon} />
+
+                      </span>
                     </div>
 
-                  )} 
+                  )}
 
-              </div>
-              <div style={{ fontSize: '14px', fontWeight:500, color: "#333",  height: 35, lineHeight: "35px" }}>
-                {p ? getTimeStr(p.duration) : ""}
-              </div>
-
-
-              <div className="my-font-size" style={{ fontSize: '18px',  color: "#333", height: 35, lineHeight: "35px" }}>
-                {p ? moment(p.start_date).format('DD/MMMM/YYYY HH:mm')  : ""}
-              </div>
-              <div className="my-font-size" style={{ fontSize: '18px',color: "#333", height: 35, lineHeight: "35px" }}>
-                {p ? moment(p.end_date).format('DD/MMMM/YYYY HH:mm') : ""}
-              </div>
-
-              <div style={{ fontSize: '12px', lineHeight: "35px", height: thresholdExpand ? 'auto' : 30, overflow: 'hidden' }}>
-
-                {arArr && arArr.map((ar) => {
-
-                  return (<div style={{ display: 'flex' }} onClick={(ev) => { ev.stopPropagation(); setCurrentAlertruleRow(ar); setShowDetail(true) }}>
+                </div>
+                <div style={{ fontSize: '14px', fontWeight: 500, color: "#333", height: 35, lineHeight: "35px" }}>
+                  {p ? getTimeStr(p.duration) : ""}
+                </div>
 
 
-                    <Threshold hours={ar.amber_hours} opacity={ar.amber ? 1 : 0.3} mins={ar.amber_mins} type="amber" size={10} /> &nbsp;
+                <div className="my-font-size" style={{ fontSize: '18px', color: "#333", height: 35, lineHeight: "35px" }}>
+                  {p ? moment(p.start_date).format('DD/MMMM/YYYY HH:mm') : ""}
+                </div>
+                <div className="my-font-size" style={{ fontSize: '18px', color: "#333", height: 35, lineHeight: "35px" }}>
+                  {p ? moment(p.end_date).format('DD/MMMM/YYYY HH:mm') : ""}
+                </div>
 
-                    <Threshold hours={ar.red_hours} mins={ar.red_mins} opacity={ar.red ? 1 : 0.3}  type="red" size={10} /></div>)
-                })
-                }
+                <div style={{ fontSize: '12px', lineHeight: "35px", height: thresholdExpand ? 'auto' : 30, overflow: 'hidden' }}>
 
-              </div>
+                  {arArr && arArr.map((ar) => {
 
-             
+                    return (<div style={{ display: 'flex' }} onClick={(ev) => { ev.stopPropagation(); setCurrentAlertruleRow(ar); setShowDetail(true) }}>
 
-            </div>,
 
-            
-              e.id != "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"?
-                (<div style={{ width: '4.5%', position: 'relative', float: 'left', textAlign: 'center', display: i >= flowTreeAll.length-2 ? "none" : "block" }}>
-              <div style={{ position: 'absolute', zIndex: 0, top: 47, width: '100%', height: 2, backgroundColor: '#d2d2d2', overflow: 'hidden', }}></div>
-              <div style={{ position: 'relative', marginTop: '41px', fontSize: "16px", zIndex: 1 }}>
+                      <Threshold hours={ar.amber_hours} opacity={ar.amber ? 1 : 0.3} mins={ar.amber_mins} type="amber" size={10} /> &nbsp;
+
+                      <Threshold hours={ar.red_hours} mins={ar.red_mins} opacity={ar.red ? 1 : 0.3} type="red" size={10} /></div>)
+                  })
+                  }
+
+                </div>
+
+
+
+              </div>,
+
+
+              e.id != "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" ?
+                (<div style={{ width: '4.5%', position: 'relative', float: 'left', textAlign: 'center', display: i >= flowTreeAll.length - 2 ? "none" : "block" }}>
+                  <div style={{ position: 'absolute', zIndex: 0, top: 47, width: '100%', height: 2, backgroundColor: '#d2d2d2', overflow: 'hidden', }}></div>
+                  <div style={{ position: 'relative', marginTop: '41px', fontSize: "16px", zIndex: 1 }}>
 
                     {p && p.process_duration > 0 && (<SvgIcon style={{ color: "#d2d2d2" }} type={'icon-map-link-full'} />)}
 
-              </div>
-              <div style={{ fontSize: '12px' }}>
-                {p && p.process_duration > 0 ? getTimeStr(p.process_duration):"" }
-              </div>
-            </div>):null
+                  </div>
+                  <div style={{ fontSize: '12px' }}>
+                    {p && p.process_duration > 0 ? getTimeStr(p.process_duration) : ""}
+                  </div>
+                </div>) : null
 
 
-          ]
+            ]
 
 
-        })
-        }
+          })
+          }
 
 
           <Tooltip open={tooltipOpen} onOpenChange={(open) => { setTooltipOpen(!access.canBlockchain() ? open : false) }} title="Blockchain details inaccessible based on the rights provided to this account. Please contact the administrator of the system for more details" color={"#FF4D00"} key={"#FF4D00"}>
-           
-         
 
-            <div style={{ position: 'relative', float: 'left', zIndex: 1, width: '250px', textAlign: 'center' }} onClick={() => {
+
+
+            <div style={{ position: 'relative', cursor: "pointer", float: 'left', zIndex: 1, width: '250px', textAlign: 'center' }} onClick={() => {
 
               if (!access.canBlockchain()) {
-             // message.error("Blockchain details inaccessible based on the rights provided to this account. Please contact the administrator of the system for more details");
-              return
-            }
-
-
-          history.push(`/transaction/blockchainIntegration?transaction_id=` + currentRow?.id, { validateData: validateData } );
-        
-        } }>
-         
-          <div style={{ position: 'relative', zIndex: 1, fontSize: '14px', height: 25, color: "#333" }}></div>
-          <div style={{ position: 'relative', zIndex: 1, height: '30px', }}>
-
-            {validateStatus == 1 ? (<Spin />) :
-
-              <span style={{
-                display: "inline-block",
-                  color:  "#fff" ,
-                width: '30px',
-                height: '30px',
-                fontSize: "20px",
-                  backgroundColor: currentRow?.blockchain_hex_key ?( validateStatus == 2 ? "rgb(130, 71, 229)" : "red") :"#666" ,
-                borderRadius: '50%',
-                textAlign: 'center',
-                lineHeight: '30px'
-              }}>
-
-                <SvgIcon type={"icon-a-outline-polygon-matic"} />
-
-              </span>
-
+                // message.error("Blockchain details inaccessible based on the rights provided to this account. Please contact the administrator of the system for more details");
+                return
               }
-            
-          </div>
-          <div style={{ fontSize: '10px', width: "100%" }}>
-              {currentRow?.blockchain_hex_key ? (validateStatus == 2 ? "Timestamps uploaded and validated on Polygon blockchain" : "Timestamps not validated on blockchain") : "Timestamps to be uploaded to Polygon blockchain"}
-          </div>
 
-        </div>
+
+              history.push(`/transaction/blockchainIntegration?transaction_id=` + currentRow?.id, { validateData: validateData });
+
+            }}>
+
+              <div style={{ position: 'relative', zIndex: 1, fontSize: '14px', height: 25, color: "#333" }}></div>
+              <div style={{ position: 'relative', zIndex: 1, height: '30px', }}>
+
+                {validateStatus == 1 ? (<Spin />) :
+                  <Badge count={validateStatus == 3 ? <ExclamationCircleFilled style={{ color: 'red' }} /> : 0}>
+
+
+                    <span style={{
+                      display: "inline-block",
+                      color: "#fff",
+                      width: '30px',
+                      height: '30px',
+                      fontSize: "20px",
+                      backgroundColor: validateStatus >= 2 ? "#5000B9" : "#666",
+                      borderRadius: '50%',
+                      textAlign: 'center',
+                      lineHeight: '30px'
+                    }}>
+
+                      <SvgIcon type={"icon-a-outline-polygon-matic"} />
+
+                    </span>
+                  </Badge>
+                }
+
+              </div>
+              <div style={{ fontSize: '10px', width: "100%" }}>
+                {validateStatus == 3 ? "Timestamps not validated on blockchain" : (validateStatus == 2 ? "Timestamps uploaded and validated on Polygon blockchain" : "Timestamps to be uploaded to Polygon blockchain")}
+              </div>
+
+            </div>
           </Tooltip>
-      </div></div></ProCard>)}
+        </div></div></ProCard>)}
 
 
 
@@ -1878,24 +1822,24 @@ const Detail: React.FC<any> = (props) => {
       {isMP && (<ProCard ghost={true} style={{ marginBlockStart: 16 }}><div style={{ width: '100%', height: 'auto', overflow: 'auto', padding: "10px", backgroundColor: "#FFF" }}>
         <div style={{ position: 'relative', float: 'left', zIndex: 1, textAlign: 'left', marginRight: 10, width: '100%' }}>
           <div style={{ float: 'left', width: 1, height: 40 }}>
-            
+
           </div>
           <div style={{ position: 'relative', zIndex: 1, marginLeft: 0, fontSize: '14px', color: "#808080", width: '250px', float: 'left' }}>
             Processes
           </div>
-         
+
           <div style={{ fontSize: '14px', color: "#808080", float: 'left' }}>
             Duration
           </div>
-          
+
         </div>
         {flowTreeAll.map((e, i) => {
 
           var p = processMap[e.id]
           var arArr = alertruleProcessMap[e.id]
           return <div style={{ position: 'relative' }} >
-            {i < 5 && <div style={{ position: 'absolute', zIndex: 0, left: 20, height: (i == 0 || i == 4) ? '50%' : '100%', top: (i == 0)?'50%':0 ,width: 1, backgroundColor: '#d2d2d2', overflow: 'hidden', }}></div>}
-           
+            {i < 5 && <div style={{ position: 'absolute', zIndex: 0, left: 20, height: (i == 0 || i == 4) ? '50%' : '100%', top: (i == 0) ? '50%' : 0, width: 1, backgroundColor: '#d2d2d2', overflow: 'hidden', }}></div>}
+
             <div style={{ position: 'relative', float: 'left', zIndex: 1, textAlign: 'left', width: '100%' }}>
 
 
@@ -1920,7 +1864,7 @@ const Detail: React.FC<any> = (props) => {
 
                 {e.id == "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" && (
                   <span className="my-font-size" style={{
-                    
+
                     display: "inline-block",
                     color: "#fff",
                     width: '40px',
@@ -1932,34 +1876,34 @@ const Detail: React.FC<any> = (props) => {
                     lineHeight: '40px'
                   }}>
                     <SvgIcon type={e.icon} />
-                   
+
                   </span>
 
-                  )}
+                )}
               </div>
               <div style={{ position: 'relative', marginLeft: 5, height: '40px', lineHeight: '40px', width: '200px', zIndex: 1, float: 'left', fontSize: '12px', color: "#333", fontWeight: "bold" }}>{e.name}</div>
 
 
               {e.id != "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" && (
                 <div style={{ position: 'relative', marginLeft: 5, height: '40px', lineHeight: '40px', zIndex: 1, float: 'left', fontSize: '12px', color: "#333", fontWeight: "bold" }}>{p ? getTimeStr(p.duration) : ""}</div>)}
-             
 
 
-              
 
-             
-            
+
+
+
+
             </div>
 
 
             <div style={{ fontSize: '10px', lineHeight: '20px', width: '80%', marginLeft: 40, display: "inline-block" }}>
 
-             
-              {p ? moment(p.start_date).format('DD/MMMM/YYYY HH:mm') : ""}<br/>
-             
+
+              {p ? moment(p.start_date).format('DD/MMMM/YYYY HH:mm') : ""}<br />
+
               {p ? moment(p.end_date).format('DD/MMMM/YYYY HH:mm') : ""}
-            
-              </div>
+
+            </div>
 
             {arArr && arArr.length > 0 && <div style={{ fontSize: '10px', lineHeight: '20px', width: '80%', marginLeft: 40, display: "inline-block" }}>
 
@@ -1970,11 +1914,11 @@ const Detail: React.FC<any> = (props) => {
                   <Threshold hours={ar.red_hours} opacity={ar.red ? 1 : 0.3} mins={ar.red_mins} type="red" size={10} /></div>)
               })
               }
-            </div>} 
+            </div>}
 
-            
-          
-            {p && p.process_duration > 0 &&  <div style={{ height: '30px', position: 'relative', float: 'left', width: '100%' }}>
+
+
+            {p && p.process_duration > 0 && <div style={{ height: '30px', position: 'relative', float: 'left', width: '100%' }}>
 
               <div style={{ position: 'relative', marginLeft: '19px', fontSize: "14px", height: 20, lineHeight: '20px', zIndex: 1 }}>
                 {p && p.process_duration > 0 && (<SvgIcon style={{ color: "#d2d2d2" }} type={'icon-map-connect-full'} />)}
@@ -1982,7 +1926,7 @@ const Detail: React.FC<any> = (props) => {
                 <span style={{ display: 'inline-block', height: 20, marginLeft: 5, lineHeight: '20px', fontSize: "14px" }}>  {p && p.process_duration > 0 ? getTimeStr(p.process_duration) : ""}</span>
               </div>
 
-            </div>} 
+            </div>}
 
 
           </div>
@@ -1991,334 +1935,83 @@ const Detail: React.FC<any> = (props) => {
         })
         }
 
-       
+
         <Tooltip open={tooltipOpen} onOpenChange={(open) => { setTooltipOpen(!access.canBlockchain() ? open : false) }} title="Blockchain details inaccessible based on the rights provided to this account. Please contact the administrator of the system for more details" color={"#FF4D00"} key={"#FF4D00"}>
 
-        <div style={{ position: 'relative', float: 'left', zIndex: 1, textAlign: 'center', width: '100%' }} onClick={() => {
+          <div style={{ position: 'relative', float: 'left', zIndex: 1, textAlign: 'center', width: '100%' }} onClick={() => {
 
             if (!access.canBlockchain()) {
-            //message.error("Blockchain details inaccessible based on the rights provided to this account. Please contact the administrator of the system for more details");
-            return
-          }
+              //message.error("Blockchain details inaccessible based on the rights provided to this account. Please contact the administrator of the system for more details");
+              return
+            }
 
-          history.push(`/transaction/blockchainIntegration?transaction_id=` + currentRow?.id, { validateData: validateData });
+            history.push(`/transaction/blockchainIntegration?transaction_id=` + currentRow?.id, { validateData: validateData });
 
-        }}>
+          }}>
 
 
-          <div style={{ position: 'relative', zIndex: 1, float: 'left', marginLeft: '5px' }}>
-            {validateStatus == 1 ? (<Spin size="large" />) :
-              <span style={{
-                display: "inline-block",
-                color:  "#fff" ,
-                width: '30px',
-                height: '30px',
-                fontSize: "20px",
-                backgroundColor: currentRow?.blockchain_hex_key ? (validateStatus == 2 ? "rgb(130, 71, 229)" : "red") : "#666",
-                borderRadius: '50%',
-                textAlign: 'center',
-                lineHeight: '30px'
-              }}>
+            <div style={{ position: 'relative', zIndex: 1, float: 'left', marginLeft: '5px' }}>
+              {validateStatus == 1 ? (<Spin size="large" />) :
+                <Badge count={validateStatus == 3 ? <ExclamationCircleFilled style={{ color: 'red' }} /> : 0}>
+                  <span style={{
+                    display: "inline-block",
+                    color: "#fff",
+                    width: '30px',
+                    height: '30px',
+                    fontSize: "20px",
+                    backgroundColor: validateStatus >= 2 ? "#5000B9" : "#666",
+                    borderRadius: '50%',
+                    textAlign: 'center',
+                    lineHeight: '30px'
+                  }}>
 
-                <SvgIcon type={"icon-a-outline-polygon-matic"} />
-              </span>}
+                    <SvgIcon type={"icon-a-outline-polygon-matic"} />
+                  </span></Badge>}
+            </div>
+            <div style={{ position: 'relative', height: '40px', lineHeight: '40px', zIndex: 1, float: 'left', fontSize: '14px', color: "#333", fontWeight: "bold" }}>{''}</div>
+            <div style={{ fontSize: '14px', float: 'left', height: '40px', lineHeight: '40px', color: "#333" }}>
+
+            </div>
+            <div style={{ fontSize: '10px', float: 'left', color: validateStatus == 2 ? "#67C23A" : "#808080", height: '40px', marginLeft: '5px', textAlign: "left", lineHeight: '20px', width: '80%' }}>
+              {validateStatus == 3 ? "Timestamps not validated on blockchain" : (validateStatus == 2 ? "Timestamps uploaded and validated on Polygon blockchain" : "Timestamps to be uploaded to Polygon blockchain")}
+            </div>
           </div>
-          <div style={{ position: 'relative', height: '40px', lineHeight: '40px', zIndex: 1, float: 'left', fontSize: '14px', color: "#333", fontWeight: "bold" }}>{''}</div>
-          <div style={{ fontSize: '14px', float: 'left', height: '40px', lineHeight: '40px', color: "#333" }}>
 
-          </div>
-          <div style={{ fontSize: '10px', float: 'left', color: validateStatus == 2 ? "#67C23A" : "#808080", height: '40px', marginLeft:'5px', textAlign: "left", lineHeight: '20px',width:'80%'}}>
-            {currentRow?.blockchain_hex_key ? (validateStatus == 2 ? "Timestamps uploaded and validated on Polygon blockchain" : "Timestamps not validated on blockchain") : "Timestamps to be uploaded to Polygon blockchain"}
-          </div>
-        </div>
-
-          </Tooltip>
+        </Tooltip>
 
       </div></ProCard>)}
 
-      <ProCard collapsed={collapsed}  colSpan={24} style={{ marginBlockStart: 16 }} bodyStyle={{ padding: '16px', overflow: isMP ? 'auto' : 'hidden' }} wrap title={<div style={{ fontWeight: '500', fontSize: 14 }}> Threshold Applied (Between 2 Events) </div>} extra={< EyeOutlined onClick={() => {
+      <ProCard collapsed={collapsed} colSpan={24} style={{ marginBlockStart: 16 }} bodyStyle={{ padding: '16px', overflow: isMP ? 'auto' : 'hidden' }} wrap title={<div style={{ fontWeight: '500', fontSize: 14 }}> Threshold Applied (Between 2 Events) </div>} extra={< EyeOutlined onClick={() => {
         setCollapsed(!collapsed);
       }} style={{ fontWeight: 'normal', fontSize: 14 }} />} bordered headerBordered>
 
         {alertruleEventList.length == 0 || !transactionAlert && (<Empty />)}
 
 
+        {transactionAlert && transactionAlert.b2e && alertruleEventList.map((th) => {
+          //return JSON.stringify(th)
 
-        {transactionAlert &&  transactionAlert.b2e && alertruleEventList.map((th) => {
 
-          var aa= transactionAlert.b2e.map((ta) => {
 
-            
-            if (th.id == ta.alert_rule_transaction_id && th.flow_id == ta.flow_id && th.flow_id_to == ta.flow_id_to) {
 
-              return ta
 
 
-             
+          return twoEvenbox(th)
 
 
-            } else {
-              return null
-            }
-           
+        })
 
-          })
-          aa=aa.filter((dd) => {
-           return dd !=null
-          })
-          
-          if (aa.length > 0) {
-            var vvmap = {}
-            var showArr=[]
-            aa.forEach((vv) => {
-              var vvkey = vv.alert_rule_transaction_id + "_" + vv.transaction_event_id_from + "_" + vv.transaction_event_id_to
-                + "_" + vv.work_order_id + "_" + vv.work_order_sequence_number
+        }
 
-             
-              if (!vvmap[vvkey]) {
-                vvmap[vvkey]=[]
-              }
-              if (vvmap[vvkey].length == 0 || (vvmap[vvkey].length == 1  && vv.type == 1)) {
 
-               
-                vvmap[vvkey][0]=vv
-                
-              } else {
-                //alert(1)
-              }
-             
-             
 
-            })
-            for (var i in vvmap) {
-              
-              showArr.push(vvmap[i][0])
-            }
 
 
-            return showArr.map((ta) => {
-              return (
-                <ProCard ghost={true} colSpan={24} bordered wrap={isMP ? true : false}
 
-                  style={{ marginBlockStart: 5, cursor: 'pointer' }}
-                  headStyle={{ padding: 0, fontWeight: 'normal', fontSize: '14px' }}
-                  bodyStyle={{ paddingLeft: 25 }}
-
-                  onClick={(e) => {
-                    handlegetFlowFilter([ta.flow_id, ta.flow_id_to])
-                  }}
-                >
-
-
-                  <ProCard ghost={true} colSpan={isMP ? 24 : 8}>
-                    {flowConf[ta.flow_id]}<span >{' -> '}</span>{flowConf[ta.flow_id_to]}
-                  </ProCard>
-                  <ProCard ghost={true} layout={isMP ? "default" : "center"} colSpan={isMP ? 24 : 5}>
-
-                    <ProDescriptions
-                      className="eventFromTo"
-                      column={isMP ? 1 : 1} >
-                      <ProDescriptions.Item contentStyle={{ paddingBottom: "0px !important" }} label="Work Order ID" valueType="text" style={{ fontSize: '14px' }} >
-
-                        {ta?.work_order_id}
-
-
-                      </ProDescriptions.Item>
-                      <ProDescriptions.Item contentStyle={{ paddingBottom: "0px !important" }} label="Sequence No" valueType="text" style={{ fontSize: '14px' }} >
-
-                        {ta?.work_order_sequence_number}
-
-
-                      </ProDescriptions.Item>
-
-                    </ProDescriptions>
-                  </ProCard>
-                  <ProCard ghost={true} layout={isMP ? "default" : "default"} colSpan={isMP ? 24 : 4}>
-                    <span style={{
-                      display: "inline-block",
-                      color: "#fff",
-                      width: '22px',
-                      height: '22px',
-                      fontSize: "16px",
-                      backgroundColor: ta.type == 0 ? "rgb(222, 126, 57)" : "red",
-                      borderRadius: '50%',
-                      textAlign: 'center',
-                      lineHeight: '22px'
-                    }}>
-                      <SvgIcon type={"icon-yundongguiji"} />
-
-                    </span>
-                    <span style={{ marginLeft: 5, fontWeight: 500 }}>{getTimeByTwoEvent(ta.transaction_event_id_from, ta.transaction_event_id_to, ta)}</span>
-                  </ProCard>
-
-                  <ProCard ghost={true} layout={isMP ? "default" : "default"} colSpan={isMP ? 24 : 7} onClick={(ev) => { ev.stopPropagation(); setCurrentAlertruleRow(th); setShowDetail(true) }} >
-
-                    <ProDescriptions
-                      column={isMP ? 1 : 2} >
-                      <ProDescriptions.Item label="Threshold" valueType="text" style={{ fontSize: '14px' }} >
-
-                        <div style={{ display: 'flex' }}>
-                          <Threshold hours={th.amber_hours} opacity={th.amber ? 1 : 0.3} mins={th.amber_mins} type="amber" size={14} />&nbsp;
-
-                          <Threshold hours={th.red_hours} opacity={th.red ? 1 : 0.3} mins={th.red_mins} type="red" size={14} />
-                        </div>
-                      </ProDescriptions.Item>
-
-                    </ProDescriptions>
-                  </ProCard>
-
-
-
-
-                </ProCard>
-              )
-
-            })
-          } else {
-            var ar_amber_time = 0
-            if (th.amber_hours || th.amber_mins) {
-
-              if (th.amber_hours) {
-                ar_amber_time += th.amber_hours * 3600
-              }
-              if (th.amber_mins) {
-                ar_amber_time += th.amber_mins * 60
-              }
-
-            }
-            var arr=[]
-            var fromEvent = transactioneventList.filter((tel) => {
-              return tel.flow_id == th.flow_id
-
-            })
-
-
-            var toEvent = transactioneventList.filter((tel) => {
-              return tel.flow_id == th.flow_id_to
-            })
-            var step2 = 0
-            function Do2() {
-              if (step2 >= fromEvent.length) {
-                return
-              }
-              var fromEventObj = fromEvent[step2]
-              if (fromEventObj) {
-
-
-                var toEventArr = toEvent.filter((te2) => {
-                  if (!fromEventObj.work_order_id && !fromEventObj.work_order_sequence_number) {
-                    return true
-                  } else if (fromEventObj.work_order_id && !fromEventObj.work_order_sequence_number) {
-                    if (!te2.work_order_id && !te2.work_order_sequence_number) {
-                      return true
-                    } else if (te2.work_order_id) {
-                      if (te2.work_order_id == fromEventObj.work_order_id) {
-                        return true
-                      }
-                    }
-                  } else if (fromEventObj.work_order_id && fromEventObj.work_order_sequence_number) {
-
-                    if (!te2.work_order_id && !te2.work_order_sequence_number) {
-
-
-                      return true
-                    } else if (te2.work_order_id && !te2.work_order_sequence_number) {
-                      if (te2.work_order_id == fromEventObj.work_order_id) {
-
-
-                        return true
-                      }
-                    } else if (te2.work_order_id && te2.work_order_sequence_number) {
-                      if (te2.work_order_id == fromEventObj.work_order_id && te2.work_order_sequence_number == fromEventObj.work_order_sequence_number) {
-
-
-                        return true
-                      }
-                    }
-
-                  }
-                  return false
-                })
-
-                if (toEventArr.length > 0) {
-
-                  var step3 = 0
-                   function Do3() {
-                    if (step3 >= toEventArr.length) {
-                      return
-                    }
-
-                    var toEventObj = toEventArr[step3]
-                    var trueTime = (new Date(toEventObj.event_time)).getTime() / 1000 - (new Date(fromEventObj.event_time)).getTime() / 1000
-
-
-                     var work_order_id = toEventObj?.work_order_id || fromEventObj?.work_order_id || null
-                     var work_order_sequence_number = toEventObj?.work_order_sequence_number || fromEventObj?.work_order_sequence_number || null
-
-                     if (trueTime <=ar_amber_time) {
-                       arr.push(twoEvenbox(th, { work_order_id, work_order_sequence_number, transaction_event_id_from: fromEventObj.id, transaction_event_id_to: toEventObj.id }, 2))
-
-                     }
-                    
-
-
-                    step3++
-                     Do3()
-                  }
-                   Do3()
-
-
-                } else {
-                  var trueTime = (new Date()).getTime() / 1000 - (new Date(fromEventObj.event_time)).getTime() / 1000
-                  var work_order_id = fromEventObj?.work_order_id || null
-                  var work_order_sequence_number =  fromEventObj?.work_order_sequence_number || null
-                  if (trueTime <= ar_amber_time) {
-                    arr.push(twoEvenbox(th, { work_order_id, work_order_sequence_number, transaction_event_id_from: fromEventObj.id, transaction_event_id_to: null }, 2))
-
-                  }
-
-                 
-
-                 
-
-                }
-
-              }
-              step2++
-              Do2()
-            }
-
-            Do2()
-
-
-            if (arr.length > 0) {
-              return arr
-            } else {
-              return twoEvenbox(th, null, 0)
-            }
-            
-
-
-           
-           
-            
-
-          }
-          
-           
-         
-
-
-
-        })}
-
-        
-
-       
 
 
       </ProCard>
-      
+
 
       <ProCard style={{ marginBlockStart: 16 }} title={<><span>Detailed Timestamps</span>&nbsp; {!isMP ? <>
         <Button onClick={() => {
@@ -2341,7 +2034,7 @@ const Detail: React.FC<any> = (props) => {
             a[i] = false
           }
           setShow(a)
-        }} style={{ cursor: 'pointer', marginTop: isMP ? 10 : 0 }}>Collapse All</Button>&nbsp;</>:null}</>}
+        }} style={{ cursor: 'pointer', marginTop: isMP ? 10 : 0 }}>Collapse All</Button>&nbsp;</> : null}</>}
         bordered headerBordered={isMP ? false : true}
         extra={<Select
           style={{ width: 200 }}
@@ -2363,143 +2056,143 @@ const Detail: React.FC<any> = (props) => {
             }
             else {
               setCurrentFilter(filterOfTimestampsMap.get(a));
-             handlegetFlowFilter(filterOfTimestampsMap.get(a).value)
+              handlegetFlowFilter(filterOfTimestampsMap.get(a).value)
               setIsAdd(false)
             }
-           
-            
-            
+
+
+
           }}
           placeholder={'Filter By: Timestamps'}
-          
+
           options={filterOfTimestampsList}
         />}
       >
-        {isMP && <div className="my-fond-size" style={{ height: 50,marginTop:-20 }}>
-          <ProCard ghost={true} bodyStyle={{ height: 50 }} gutter={10 }>
-          <ProCard ghost={true}>
-              <Button size="small" onClick={() => {
-              setSelectValue(null)
-              setCurrentFilter(null);
-              setIsAdd(false)
-              handlegetFlowFilter("")
-            }} style={{ cursor: 'pointer', marginTop: isMP ? 10 : 0 }}>Reset View </Button>
-
-
-          </ProCard>
+        {isMP && <div className="my-fond-size" style={{ height: 50, marginTop: -20 }}>
+          <ProCard ghost={true} bodyStyle={{ height: 50 }} gutter={10}>
             <ProCard ghost={true}>
               <Button size="small" onClick={() => {
-              var a = { ...show }
-              for (var i in a) {
-                a[i] = true
-              }
+                setSelectValue(null)
+                setCurrentFilter(null);
+                setIsAdd(false)
+                handlegetFlowFilter("")
+              }} style={{ cursor: 'pointer', marginTop: isMP ? 10 : 0 }}>Reset View </Button>
 
-              setShow(a)
-            }} style={{ cursor: 'pointer', marginTop: isMP ? 10 : 0 }}>Expand All</Button>
-          </ProCard>
-          <ProCard ghost={true}>
+
+            </ProCard>
+            <ProCard ghost={true}>
               <Button size="small" onClick={() => {
-              var a = { ...show }
-              for (var i in a) {
-                a[i] = false
-              }
-              setShow(a)
-            }} style={{ cursor: 'pointer', marginTop: isMP ? 10 : 0 }}>Collapse All</Button>
+                var a = { ...show }
+                for (var i in a) {
+                  a[i] = true
+                }
+
+                setShow(a)
+              }} style={{ cursor: 'pointer', marginTop: isMP ? 10 : 0 }}>Expand All</Button>
+            </ProCard>
+            <ProCard ghost={true}>
+              <Button size="small" onClick={() => {
+                var a = { ...show }
+                for (var i in a) {
+                  a[i] = false
+                }
+                setShow(a)
+              }} style={{ cursor: 'pointer', marginTop: isMP ? 10 : 0 }}>Collapse All</Button>
+            </ProCard>
           </ProCard>
-          </ProCard>
-        </div>} 
+        </div>}
 
-      <div style={{ backgroundColor: "#fff", position: 'relative', width: '100%', height: 'auto' }}>
-       
+        <div style={{ backgroundColor: "#fff", position: 'relative', width: '100%', height: 'auto' }}>
 
 
 
-        <Steps
+
+          <Steps
             direction={'vertical'}
-           
-          size="default"
-            style={{ float: 'left', width: isMP ? '100%' : '70%', marginLeft: isMP ? '0px' : '25%', marginTop: 0, maxWidth:'100%' }}
-        >
-            
-            {flowTreeFilter.map((e,index1) => {
-             
-            var p = processMap[e.id]
+
+            size="default"
+            style={{ float: 'left', width: isMP ? '100%' : '70%', marginLeft: isMP ? '0px' : '25%', marginTop: 0, maxWidth: '100%' }}
+          >
+
+            {flowTreeFilter.map((e, index1) => {
+
+              var p = processMap[e.id]
               var ar = alertruleProcessMap[e.id]
-             
+
               var filterEventTree = eventTree[e.id]?.filter((h) => {
 
                 return e.children.some((m) => {
-                   return m.id==h.flow_id
+                  return m.id == h.flow_id
                 })
 
               })
-             
 
-            flowTreeAll.forEach((nn) => {
-              if (nn.id == e.id) {
 
-                e.children_length = nn.children?.length
+              flowTreeAll.forEach((nn) => {
+                if (nn.id == e.id) {
 
-                
-              }
-            })
+                  e.children_length = nn.children?.length
+
+
+                }
+              })
               var arr = [
 
-                
+
 
                 <Step className={p ? "title-hover" : ""} style={{ cursor: p ? 'pointer' : 'initial' }} status="wait" icon={
 
 
-                  <span id={ e.id+"_"} onClick={() => {
-                 show[e.id] = !show[e.id]
-                 setShow({ ...show })
-                 
-                }} className="my-font-size"  style={{
-                  display: "inline-block",
-                  fontSize:"22px",
-                  color: "#fff",
-                  width: '33px',
-                  height: '33px',
-                  backgroundColor: e.id == 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' ? "#fff" : (p ? (p.event_count > 0 ? transactionAlert[e.id] ? (transactionAlert[e.id].red > 0 ? "red" : "#DE7E39") : color[e.icon] : "#595959") : "#595959"),
-                  borderRadius: '50%',
-                  textAlign: 'center',
-                  lineHeight: '33px'
-                }}>
-                  <SvgIcon style={{ color: '#fff' }} type={e.icon} />
-                </span>
+                  <span id={e.id + "_"} onClick={() => {
+                    show[e.id] = !show[e.id]
+                    setShow({ ...show })
+
+                  }} className="my-font-size" style={{
+                    display: "inline-block",
+                    fontSize: "22px",
+                    color: "#fff",
+                    width: '33px',
+                    height: '33px',
+                    backgroundColor: e.id == 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' ? "#fff" : (p ? (p.event_count > 0 ? transactionAlert[e.id] ? (transactionAlert[e.id].red > 0 ? "red" : "#DE7E39") : color[e.icon] : "#595959") : "#595959"),
+                    borderRadius: '50%',
+                    textAlign: 'center',
+                    lineHeight: '33px'
+                  }}>
+                    <SvgIcon style={{ color: '#fff' }} type={e.icon} />
+                  </span>
 
 
 
-                } title={<div style={{  color: e.id == 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' ? "#fff" : "#333" }} onClick={() => {
-                show[e.id] = !show[e.id]
-                setShow({ ...show })
+                } title={<div style={{ color: e.id == 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' ? "#fff" : "#333" }} onClick={() => {
+                  show[e.id] = !show[e.id]
+                  setShow({ ...show })
 
-                }}> <span className="my-title" style={{  fontWeight: 500, display: 'block', width: '100%', textAlign: "left", fontSize: "16px", lineHeight: "20px", height: 20 }}>{e.name}</span>
+                }}> <span className="my-title" style={{ fontWeight: 500, display: 'block', width: '100%', textAlign: "left", fontSize: "16px", lineHeight: "20px", height: 20 }}>{e.name}</span>
 
-                  {p && <span className="my-title" style={{  display: 'block', width: '100%', textAlign: "left", fontSize: "16px", lineHeight: "20px"  }}>
+                  {p && <span className="my-title" style={{ display: 'block', width: '100%', textAlign: "left", fontSize: "16px", lineHeight: "20px" }}>
                     <span style={{ display: 'inline-block', width: 50 }}>Start:</span>{isMP && <br />}{p ? <> <CalendarOutlined /> {moment(new Date(p?.start_date)).format('DD MMMM YYYY')} &nbsp;&nbsp;<FieldTimeOutlined /> {moment(new Date(p?.start_date)).format('h:mm a')}  </> : "-"} </span>}
-                  {p && <span className="my-title" style={{ display: 'block', width: '100%', textAlign: "left", fontSize: "16px", lineHeight: "20px"  }}>
+                  {p && <span className="my-title" style={{ display: 'block', width: '100%', textAlign: "left", fontSize: "16px", lineHeight: "20px" }}>
                     <span style={{ display: 'inline-block', width: 50 }}>End:</span>{isMP && <br />}{p ? <> <CalendarOutlined />  {moment(new Date(p?.end_date)).format('DD MMMM YYYY')} &nbsp;&nbsp;<FieldTimeOutlined /> {moment(new Date(p?.end_date)).format('h:mm a')}  </> : "-"} </span>}
 
 
                   {p && <span className="my-title" style={{ display: 'block', textAlign: "left", fontSize: "14px", lineHeight: "20px", height: 20 }}>Process Duration: {p ? getTimeStr(p.duration) : "0h 00m"}</span>}</div>} description={<div >{
 
-                    filterEventTree?.map((c,index2) => {
-                    if (!show[e.id]) {
+                    filterEventTree?.map((c, index2) => {
+                      if (!show[e.id]) {
 
-                      return
-                    }
-                    // c.name=flowConf[c.flow_id]
-                    var te = c
+                        return
+                      }
+                      // c.name=flowConf[c.flow_id]
+                      var te = c
 
-                     
+
                       var ne = filterEventTree[index2 + 1]
                       if (ne) {
 
                         c.event_duration = getTimeStr((new Date(ne.event_time).getTime() - new Date(c.event_time).getTime()) / 1000)
 
                       } else {
-                        
+
 
 
                         var filterEventTree2 = eventTree[flowTreeFilter[index1 + 1].id]?.filter((h) => {
@@ -2511,31 +2204,31 @@ const Detail: React.FC<any> = (props) => {
                         })
                         var pne = filterEventTree2?.[0]
 
-                       
+
                         if (pne) {
                           c.event_duration = getTimeStr((new Date(pne.event_time).getTime() - new Date(c.event_time).getTime()) / 1000)
                         }
-                        
+
 
                       }
-                       
 
-                      
 
-                    var event_duration=null
-                    
+
+
+                      var event_duration = null
+
                       if (c.event_duration) {
-                       
+
                         event_duration = c.event_duration
 
 
-                       
+
                       }
 
-                      
-                     
-                    
-                      
+
+
+
+
                       var greyShowMap = {}
 
                       var whiteShowMap = {}
@@ -2545,8 +2238,8 @@ const Detail: React.FC<any> = (props) => {
                       }
 
                       sss[c.code].grey.forEach((az) => {
-                       
-                        greyShowMap[az]=true
+
+                        greyShowMap[az] = true
 
                       })
 
@@ -2555,77 +2248,70 @@ const Detail: React.FC<any> = (props) => {
                         whiteShowMap[az] = true
 
                       })
-                      
+
                       var whiteCount = 0
 
                       for (var cc in whiteShowMap) {
                         whiteCount++
                       }
-                   
 
-                    return (
 
-                      (te || access.canAdmin) && <ProCard
+                      return (
 
-                        style={{ marginLeft: 10, marginBottom: 25, width: '100%' }}
-                        title={
-                         
+                        (te || access.canAdmin) && <ProCard
+
+                          style={{ marginLeft: 10, marginBottom: 25, width: '100%' }}
+                          title={
+
                             <div className="timestamp-hover" style={{ marginLeft: 22, fontSize: "12px", display: 'inline-block', width: '100%', border: "1px solid #d2d2d2", padding: "5px", borderRadius: '5px', fontWeight: 'normal' }}>
 
-                            <div> &nbsp;{c.name}     {eventLogMap[c.id] && <div style={{ position: "absolute", right: 0, top: 10 }}><HistoryOutlined onClick={(ev) => {
+                              <div> &nbsp;{c.name}     {eventLogMap[c.id] && <div style={{ position: "absolute", right: 0, top: 10 }}><HistoryOutlined onClick={(ev) => {
 
 
-                              ev.stopPropagation();
-                              setCurrentAlertruleRow(ar);
+                                ev.stopPropagation();
+                                setCurrentAlertruleRow(ar);
 
 
-                              setCurrentEvent(c)
+                                setCurrentEvent(c)
 
 
-                              setCurrentEventLogList(eventLogMap[c.id]);
-
-
-
+                                setCurrentEventLogList(eventLogMap[c.id]);
 
 
 
 
-                              var logObjArr = []
-                              var newList = [c, ...eventLogMap[c.id]]
-                             
 
-                              newList.forEach((aa, index) => {
-                                if (index < newList.length && aa && newList[index + 1]) {
-                                  var diff = getDiff(aa, newList[index + 1])
-                                  
-                                  if (diff) {
-                                    for (var m in diff) {
-                                      if (m != 'created_at' && m != 'updated_at' && m != 'id' && m != 'event_duration') {
-                                        var obj = {
-                                          TypeOfData: keyNameMap[m],
-                                          PreviousValue: newList[index + 1][m],
-                                          NewValue: aa[m],
-                                          UpdateTime: aa.created_at
+
+
+                                var logObjArr = []
+                                var newList = [c, ...eventLogMap[c.id]]
+
+
+                                newList.forEach((aa, index) => {
+                                  if (index < newList.length && aa && newList[index + 1]) {
+                                    var diff = getDiff(aa, newList[index + 1])
+
+                                    if (diff) {
+                                      for (var m in diff) {
+                                        if (m != 'created_at' && m != 'updated_at' && m != 'id' && m != 'event_duration') {
+                                          var obj = {
+                                            TypeOfData: keyNameMap[m],
+                                            PreviousValue: newList[index + 1][m],
+                                            NewValue: aa[m],
+                                            UpdateTime: aa.created_at
+                                          }
+                                          logObjArr.push(obj)
                                         }
-                                        logObjArr.push(obj)
-                                      }
 
+                                      }
                                     }
+
+
                                   }
 
-                                  
-                                }
+                                })
 
-                              })
-
-                              seLogObjArr(logObjArr)
-
-
-
-
-
-
-                             
+                                seLogObjArr(logObjArr)
 
 
 
@@ -2633,11 +2319,6 @@ const Detail: React.FC<any> = (props) => {
 
 
 
-                              setShowLog(true)
-                            }} /></div>}</div>
-                           <div> <div>
-                              &nbsp;<CalendarOutlined /> {moment(te?.event_time).format('DD MMMM YYYY')} &nbsp;&nbsp;&nbsp;&nbsp;<FieldTimeOutlined /> {moment(te?.event_time).format('h:mm a')}
-                              <ProDescriptions layout={isMP ? "vertical" : "horizontal"} labelStyle={{ fontSize: '12px', paddingLeft:2 }} className="my-descriptions-item-white" column={isMP ? 1 : 2} >
 
 
 
@@ -2645,215 +2326,227 @@ const Detail: React.FC<any> = (props) => {
 
 
 
-                                {whiteShowMap['terminal_id'] && <ProDescriptions.Item label={<div><Iconfy className="white-icon" icon="ic:round-factory" /> Terminal Name</div>}  valueType="text" >
-                                  {currentRow.terminal_name}
-                                </ProDescriptions.Item>}
-
-                                {whiteShowMap['jetty_id'] && <ProDescriptions.Item label={<div><Iconfy className="white-icon" icon="game-icons:mooring-bollard" /> Jetty Name</div>} valueType="text" >
-                                  {currentRow.jetty_name}
-                                </ProDescriptions.Item>}
-
-                                {whiteShowMap['agent'] && <ProDescriptions.Item label={<div><Iconfy className="white-icon" icon="material-symbols:support-agent" /> Agent</div>} valueType="text" >
-                                  {currentRow?.agent}
-                                </ProDescriptions.Item>}
-
-                                {whiteShowMap['product_name'] && <ProDescriptions.Item label={<div><SvgIcon className="white-icon" type="icon-huowu" /> Product Name</div>}  valueType="text" >
-                                  {te?.product_name}
-                                </ProDescriptions.Item>}
-                                {whiteShowMap['product_quantity_in_bls_60_f'] && <ProDescriptions.Item label={<div><Iconfy className="white-icon" icon="material-symbols:weight" /> Product Quantity (Bls-60-f)</div>}  valueType="text">
-                                  {te?.product_quantity_in_bls_60_f}
-                                </ProDescriptions.Item>}
-
-                                {whiteShowMap['order_no'] && <ProDescriptions.Item label={<div><Iconfy className="white-icon" icon="mdi:account-tie-hat" /> Pilotage ID</div>} valueType="text">
-                                  {te?.order_no}
-                                </ProDescriptions.Item>}
-                                {whiteShowMap['location_from'] && <ProDescriptions.Item labelStyle={{ paddingLeft:2 }} label={<div><Iconfy className="white-icon" icon="gis:route-start" /> Location From</div>} valueType="text">
-                                  {te?.location_from}
-                                </ProDescriptions.Item>}
-                                {whiteShowMap['location_to'] && <ProDescriptions.Item label={<div><Iconfy className="white-icon" icon="gis:route-start" hFlip={true} /> Location To</div>} valueType="text">
-                                  {te?.location_to}
-                                </ProDescriptions.Item>}
-
-                                {whiteShowMap['delay_reason'] && <ProDescriptions.Item label={<div><Iconfy className="white-icon" icon="game-icons:duration" />Delay Reason</div>} valueType="text">
-                                  {te?.delay_reason}
-                                </ProDescriptions.Item>}
-
-                                {whiteShowMap['delay_duration'] && <ProDescriptions.Item label={<div><Iconfy className="white-icon" icon="game-icons:duration" />Delay Duration</div>} valueType="text">
-                                  {te?.delay_duration}
-                                </ProDescriptions.Item>}
+                                setShowLog(true)
+                              }} /></div>}</div>
+                              <div> <div>
+                                &nbsp;<CalendarOutlined /> {moment(te?.event_time).format('DD MMMM YYYY')} &nbsp;&nbsp;&nbsp;&nbsp;<FieldTimeOutlined /> {moment(te?.event_time).format('h:mm a')}
+                                <ProDescriptions layout={isMP ? "vertical" : "horizontal"} labelStyle={{ fontSize: '12px', paddingLeft: 2 }} className="my-descriptions-item-white" column={isMP ? 1 : 2} >
 
 
-                                {whiteShowMap['work_order_id'] && <ProDescriptions.Item  label={<div><Iconfy className="white-icon" icon="carbon:service-id" />Work Order ID</div>}  valueType="text" >
-                                  {te?.work_order_id}
-                                </ProDescriptions.Item>}
 
-                                {whiteShowMap['tank_number'] && <ProDescriptions.Item label={<div><SvgIcon className="white-icon" type="icon-noun-storage-tank-1511795" />Tank ID</div>} valueType="text">
-                                  {te?.tank_number}
-                                </ProDescriptions.Item>}
 
-                                {whiteShowMap['work_order_sequence_number'] && <ProDescriptions.Item label={<div><Iconfy className="white-icon" icon="bx:list-ol" />Sequence No</div>} valueType="text">
-                                  {te?.work_order_sequence_number}
-                                </ProDescriptions.Item>}
-                              </ProDescriptions>
+
+
+
+                                  {whiteShowMap['terminal_id'] && <ProDescriptions.Item label={<div><Iconfy className="white-icon" icon="ic:round-factory" /> Terminal Name</div>} valueType="text" >
+                                    {currentRow.terminal_name}
+                                  </ProDescriptions.Item>}
+
+                                  {whiteShowMap['jetty_id'] && <ProDescriptions.Item label={<div><Iconfy className="white-icon" icon="game-icons:mooring-bollard" /> Jetty Name</div>} valueType="text" >
+                                    {currentRow.jetty_name}
+                                  </ProDescriptions.Item>}
+
+                                  {whiteShowMap['agent'] && <ProDescriptions.Item label={<div><Iconfy className="white-icon" icon="material-symbols:support-agent" /> Agent</div>} valueType="text" >
+                                    {currentRow?.agent}
+                                  </ProDescriptions.Item>}
+
+                                  {whiteShowMap['product_name'] && <ProDescriptions.Item label={<div><SvgIcon className="white-icon" type="icon-huowu" /> Product Name</div>} valueType="text" >
+                                    {te?.product_name}
+                                  </ProDescriptions.Item>}
+                                  {whiteShowMap['product_quantity_in_bls_60_f'] && <ProDescriptions.Item label={<div><Iconfy className="white-icon" icon="material-symbols:weight" /> Product Quantity (Bls-60-f)</div>} valueType="text">
+                                    {te?.product_quantity_in_bls_60_f}
+                                  </ProDescriptions.Item>}
+
+                                  {whiteShowMap['order_no'] && <ProDescriptions.Item label={<div><Iconfy className="white-icon" icon="mdi:account-tie-hat" /> Pilotage ID</div>} valueType="text">
+                                    {te?.order_no}
+                                  </ProDescriptions.Item>}
+                                  {whiteShowMap['location_from'] && <ProDescriptions.Item labelStyle={{ paddingLeft: 2 }} label={<div><Iconfy className="white-icon" icon="gis:route-start" /> Location From</div>} valueType="text">
+                                    {te?.location_from}
+                                  </ProDescriptions.Item>}
+                                  {whiteShowMap['location_to'] && <ProDescriptions.Item label={<div><Iconfy className="white-icon" icon="gis:route-start" hFlip={true} /> Location To</div>} valueType="text">
+                                    {te?.location_to}
+                                  </ProDescriptions.Item>}
+
+                                  {whiteShowMap['delay_reason'] && <ProDescriptions.Item label={<div><Iconfy className="white-icon" icon="game-icons:duration" />Delay Reason</div>} valueType="text">
+                                    {te?.delay_reason}
+                                  </ProDescriptions.Item>}
+
+                                  {whiteShowMap['delay_duration'] && <ProDescriptions.Item label={<div><Iconfy className="white-icon" icon="game-icons:duration" />Delay Duration</div>} valueType="text">
+                                    {te?.delay_duration}
+                                  </ProDescriptions.Item>}
+
+
+                                  {whiteShowMap['work_order_id'] && <ProDescriptions.Item label={<div><Iconfy className="white-icon" icon="carbon:service-id" />Work Order ID</div>} valueType="text" >
+                                    {te?.work_order_id}
+                                  </ProDescriptions.Item>}
+
+                                  {whiteShowMap['tank_number'] && <ProDescriptions.Item label={<div><SvgIcon className="white-icon" type="icon-noun-storage-tank-1511795" />Tank ID</div>} valueType="text">
+                                    {te?.tank_number}
+                                  </ProDescriptions.Item>}
+
+                                  {whiteShowMap['work_order_sequence_number'] && <ProDescriptions.Item label={<div><Iconfy className="white-icon" icon="bx:list-ol" />Sequence No</div>} valueType="text">
+                                    {te?.work_order_sequence_number}
+                                  </ProDescriptions.Item>}
+                                </ProDescriptions>
                               </div>
 
-                            
+
+                              </div>
+
+                              <div style={{ position: 'relative' }}>
+                                <div style={{ position: 'absolute', backgroundColor: '#fff', borderRadius: 5, left: -70, top: 5, fontWeight: 400 }}> {event_duration}</div>
+                              </div>
+
                             </div>
 
-                            <div style={{ position: 'relative' }}>
-                              <div style={{ position: 'absolute', backgroundColor: '#fff', borderRadius: 5, left: -70, top:5, fontWeight: 400 }}> {event_duration}</div>
-                            </div>
-                             
-                            </div>
+                          }
+                          collapsibleIconRender={({ collapsed: buildInCollapsed }: { collapsed: boolean }) =>
+                            <div style={{ display: 'inline-block', position: 'absolute', width: 20, color: "#d5d5d5", marginLeft: -22.5 }}>< AimOutlined style={{ background: "#fff", position: 'absolute', top: 25 }} /></div>
+                          }
+                          collapsible={true}
+                          defaultCollapsed
+                          bodyStyle={{ marginTop: 28, marginLeft: 20 }}
+                          onCollapse={(collapse) => { }}
+                          extra={
+                            (!te ? <Access accessible={access.canAdmin} fallback={<div></div>}><Button
+                              size="small"
+                              onClick={(e) => {
+                                addTransactionevent({ transaction_id: currentRow?.id, flow_id: c.id })
+                                message.success(<FormattedMessage
+                                  id="pages.modifySuccessful"
+                                  defaultMessage="Modify is successful"
+                                />);
+                              }}
+                            >
+                              Execution Event
+                            </Button></Access> : "")
+                          }
+                        >
 
-                            }
-                        collapsibleIconRender={({ collapsed: buildInCollapsed }: { collapsed: boolean }) =>
-                          <div style={{ display: 'inline-block', position: 'absolute', width: 20, color: "#d5d5d5", marginLeft: -22.5 }}>< AimOutlined style={{ background: "#fff", position: 'absolute',top:25 }} /></div>
-                        }
-                        collapsible={ true }
-                        defaultCollapsed
-                        bodyStyle={{ marginTop: 28, marginLeft:20 }}
-                        onCollapse={(collapse) => { } }
-                        extra={
-                          (!te ? <Access accessible={access.canAdmin} fallback={<div></div>}><Button
-                            size="small"
-                            onClick={(e) => {
-                              addTransactionevent({ transaction_id: currentRow?.id, flow_id: c.id })
+                          <ProDescriptions layout={isMP ? "vertical" : "horizontal"} labelStyle={{ fontSize: '12px' }} className="my-descriptions-item" editable={false ? {
+
+                            onSave: async (keypath, newInfo, oriInfo) => {
+                              var d = { id: te?.id, ...newInfo }
+
+                              updateTransactionevent(d)
                               message.success(<FormattedMessage
                                 id="pages.modifySuccessful"
                                 defaultMessage="Modify is successful"
                               />);
-                            }}
-                          >
-                            Execution Event
-                          </Button></Access> : "")
-                        }
-                      >
-                        
-                        <ProDescriptions layout={isMP ? "vertical" : "horizontal"} labelStyle={{ fontSize: '12px' }} className="my-descriptions-item" editable={false ? {
-                         
-                          onSave: async (keypath, newInfo, oriInfo) => {
-                            var d = { id: te?.id, ...newInfo }
-                            
-                            updateTransactionevent(d)
-                            message.success(<FormattedMessage
-                              id="pages.modifySuccessful"
-                              defaultMessage="Modify is successful"
-                            />);
-                            return true;
-                          },
-                        } : null}
-                          column={isMP ? 1 : 2} >
+                              return true;
+                            },
+                          } : null}
+                            column={isMP ? 1 : 2} >
 
 
 
-                          
 
 
 
-                          <ProDescriptions.Item label="IMO Number" dataIndex="imo_number" valueType="text" >
-                            {currentRow?.imo_number}
-                          </ProDescriptions.Item>
-                          <ProDescriptions.Item label="Vessel Name" dataIndex="vessel_name" valueType="text">
-                            {currentRow?.vessel_name}
-                          </ProDescriptions.Item>
-                          <ProDescriptions.Item label="Arrival ID" dataIndex="arrival_id" valueType="text">
-                            {currentRow?.arrival_id}
-                          </ProDescriptions.Item>
 
-                          {greyShowMap['vessel_size_dwt'] && <ProDescriptions.Item label="Vessel Size (dwt)" dataIndex="vessel_size_dwt" valueType="text" >
-                            {currentRow?.vessel_size_dwt}
-                          </ProDescriptions.Item>}
+                            <ProDescriptions.Item label="IMO Number" dataIndex="imo_number" valueType="text" >
+                              {currentRow?.imo_number}
+                            </ProDescriptions.Item>
+                            <ProDescriptions.Item label="Vessel Name" dataIndex="vessel_name" valueType="text">
+                              {currentRow?.vessel_name}
+                            </ProDescriptions.Item>
+                            <ProDescriptions.Item label="Arrival ID" dataIndex="arrival_id" valueType="text">
+                              {currentRow?.arrival_id}
+                            </ProDescriptions.Item>
 
-
-                          
-                          {greyShowMap['arrival_id_status'] && <ProDescriptions.Item label="Arrival Status" dataIndex="arrival_id_status" valueType="text">
-                            {te?.arrival_id_status}
-                          </ProDescriptions.Item>}
-                          {greyShowMap['work_order_status'] && <ProDescriptions.Item label="Work order Status" dataIndex="work_order_status" valueType="text">
-                            {te?.work_order_status}
-                          </ProDescriptions.Item>}
-
-                          {greyShowMap['work_order_sequence_number_status'] && <ProDescriptions.Item label="Sequence Status" dataIndex="work_order_sequence_number_status" valueType="text">
-                            {te?.work_order_sequence_number_status}
-                          </ProDescriptions.Item>}
-
-
-                          {greyShowMap['work_order_operation_type'] && <ProDescriptions.Item label="Operation Type " dataIndex="work_order_operation_type" valueType="text">
-                            {te?.work_order_operation_type}
-                          </ProDescriptions.Item>}
-
-                          {greyShowMap['work_order_surveyor'] && <ProDescriptions.Item label="Surveyor Name " dataIndex="work_order_surveyor" valueType="text">
-                            {te?.work_order_surveyor}
-                          </ProDescriptions.Item>}
+                            {greyShowMap['vessel_size_dwt'] && <ProDescriptions.Item label="Vessel Size (dwt)" dataIndex="vessel_size_dwt" valueType="text" >
+                              {currentRow?.vessel_size_dwt}
+                            </ProDescriptions.Item>}
 
 
 
-                          {greyShowMap['product_quantity_in_l_obs'] && <ProDescriptions.Item label="Product Quantity (l-obs)" dataIndex="product_quantity_in_l_obs" valueType="text">
-                            {te?.product_quantity_in_l_obs}
-                          </ProDescriptions.Item>}
-                          {greyShowMap['product_quantity_in_l_15_c'] && <ProDescriptions.Item label="Product Quantity (l-15-c)" dataIndex="product_quantity_in_l_15_c" valueType="text">
-                            {te?.product_quantity_in_l_15_c}
-                          </ProDescriptions.Item>}
-                          {greyShowMap['product_quantity_in_mt'] && <ProDescriptions.Item label="Product Quantity (mt)" dataIndex="product_quantity_in_mt" valueType="text">
-                            {te?.product_quantity_in_mt}
-                          </ProDescriptions.Item>}
-                          {greyShowMap['product_quantity_in_mtv'] && <ProDescriptions.Item label="Product Quantity (mtv)" dataIndex="product_quantity_in_mtv" valueType="text">
-                            {te?.product_quantity_in_mtv}
-                          </ProDescriptions.Item>}
-                          {greyShowMap['product_quantity_in_bls_60_f'] && <ProDescriptions.Item label="Product Quantity (Bls-60-f)" dataIndex="product_quantity_in_bls_60_f" valueType="text">
-                            {te?.product_quantity_in_bls_60_f}
-                          </ProDescriptions.Item>}
-                          
-                         
-                          
-                            
-                        </ProDescriptions>
-                      </ProCard>
+                            {greyShowMap['arrival_id_status'] && <ProDescriptions.Item label="Arrival Status" dataIndex="arrival_id_status" valueType="text">
+                              {te?.arrival_id_status}
+                            </ProDescriptions.Item>}
+                            {greyShowMap['work_order_status'] && <ProDescriptions.Item label="Work order Status" dataIndex="work_order_status" valueType="text">
+                              {te?.work_order_status}
+                            </ProDescriptions.Item>}
 
-                    )
-
-                  })
+                            {greyShowMap['work_order_sequence_number_status'] && <ProDescriptions.Item label="Sequence Status" dataIndex="work_order_sequence_number_status" valueType="text">
+                              {te?.work_order_sequence_number_status}
+                            </ProDescriptions.Item>}
 
 
-                }</div>} />
-            ]
+                            {greyShowMap['work_order_operation_type'] && <ProDescriptions.Item label="Operation Type " dataIndex="work_order_operation_type" valueType="text">
+                              {te?.work_order_operation_type}
+                            </ProDescriptions.Item>}
 
-            
-              if (e.id == "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" ) {
+                            {greyShowMap['work_order_surveyor'] && <ProDescriptions.Item label="Surveyor Name " dataIndex="work_order_surveyor" valueType="text">
+                              {te?.work_order_surveyor}
+                            </ProDescriptions.Item>}
+
+
+
+                            {greyShowMap['product_quantity_in_l_obs'] && <ProDescriptions.Item label="Product Quantity (l-obs)" dataIndex="product_quantity_in_l_obs" valueType="text">
+                              {te?.product_quantity_in_l_obs}
+                            </ProDescriptions.Item>}
+                            {greyShowMap['product_quantity_in_l_15_c'] && <ProDescriptions.Item label="Product Quantity (l-15-c)" dataIndex="product_quantity_in_l_15_c" valueType="text">
+                              {te?.product_quantity_in_l_15_c}
+                            </ProDescriptions.Item>}
+                            {greyShowMap['product_quantity_in_mt'] && <ProDescriptions.Item label="Product Quantity (mt)" dataIndex="product_quantity_in_mt" valueType="text">
+                              {te?.product_quantity_in_mt}
+                            </ProDescriptions.Item>}
+                            {greyShowMap['product_quantity_in_mtv'] && <ProDescriptions.Item label="Product Quantity (mtv)" dataIndex="product_quantity_in_mtv" valueType="text">
+                              {te?.product_quantity_in_mtv}
+                            </ProDescriptions.Item>}
+                            {greyShowMap['product_quantity_in_bls_60_f'] && <ProDescriptions.Item label="Product Quantity (Bls-60-f)" dataIndex="product_quantity_in_bls_60_f" valueType="text">
+                              {te?.product_quantity_in_bls_60_f}
+                            </ProDescriptions.Item>}
+
+
+
+
+                          </ProDescriptions>
+                        </ProCard>
+
+                      )
+
+                    })
+
+
+                  }</div>} />
+              ]
+
+
+              if (e.id == "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa") {
                 if (show["a7332eb0-d3c9-11ed-a0d9-55ccaa27cc37"]) {
-                
+
                   return arr
                 } else {
                   return null
                 }
-               
+
               } else {
                 return arr
               }
-            //return arr
+              //return arr
 
 
-            
-          })
-          }
+
+            })
+            }
 
 
-        </Steps>
-      </div>
-      
-        </ProCard>
+          </Steps>
+        </div>
 
-       
+      </ProCard>
 
 
-     
+
+
+
 
 
 
       <div style={{ marginTop: 15, paddingLeft: 0 }} className="re-back">
         <Button
-          style={isMP?{ width:'100%' }:null}
+          style={isMP ? { width: '100%' } : null}
           type="default"
           onClick={async () => {
             history.back()
@@ -2865,7 +2558,7 @@ const Detail: React.FC<any> = (props) => {
           onClick={async () => {
             history.push('/Dashboard')
           }}
-        >Return to dashboard</Button>*/ } 
+        >Return to dashboard</Button>*/ }
       </div>
 
 
@@ -2881,7 +2574,7 @@ const Detail: React.FC<any> = (props) => {
         {currentAlertruleRow?.id && (
           <ProDescriptions<TransactionListItem>
             column={isMP ? 1 : 1}
-            title={"Threhold Summary - "+currentAlertruleRow?.alertrule_id}
+            title={"Threhold Summary - " + currentAlertruleRow?.alertrule_id}
             request={async () => ({
               data: currentAlertruleRow || {},
             })}
@@ -2900,7 +2593,7 @@ const Detail: React.FC<any> = (props) => {
         style={{ overflow: 'auto' }}
         open={showLog}
         onClose={() => {
-         
+
           setShowLog(false);
         }}
         closable={isMP ? true : false}
@@ -2908,16 +2601,16 @@ const Detail: React.FC<any> = (props) => {
 
 
 
-      
-       
-        
+
+
+
 
         {[currentEvent].map((c) => {
           if (!c) {
             return
           }
 
-         
+
           var greyShowMap = {}
 
           var whiteShowMap = {}
@@ -2937,124 +2630,124 @@ const Detail: React.FC<any> = (props) => {
 
           })
           var te = c
-          return (<><div className="page_title" style={{ paddingBottom: "20px",  }}>{c.name}</div><div style={{ backgroundColor: '#fff', padding: '10px', marginBottom: "10px" }}>
+          return (<><div className="page_title" style={{ paddingBottom: "20px", }}>{c.name}</div><div style={{ backgroundColor: '#fff', padding: '10px', marginBottom: "10px" }}>
 
-            <div className="page_title" style={{ marginBottom:10 }}>Current Data Displayed</div>
+            <div className="page_title" style={{ marginBottom: 10 }}>Current Data Displayed</div>
 
             <ProDescriptions labelStyle={{ fontSize: '12px' }} size="small" bordered={true} className="my-descriptions-item" column={isMP ? 1 : 1} >
 
-            {whiteShowMap['event_time'] && <ProDescriptions.Item label="Event Time" dataIndex="event_time" valueType="text">
+              {whiteShowMap['event_time'] && <ProDescriptions.Item label="Event Time" dataIndex="event_time" valueType="text">
                 {moment(te?.event_time).format('YYYY-MM-DD HH:mm:ss')}
               </ProDescriptions.Item>
-            }
+              }
 
-            {whiteShowMap['terminal_id'] && <ProDescriptions.Item label="Terminal Name" valueType="text" >
-              {currentRow.terminal_name}
-            </ProDescriptions.Item>}
+              {whiteShowMap['terminal_id'] && <ProDescriptions.Item label="Terminal Name" valueType="text" >
+                {currentRow.terminal_name}
+              </ProDescriptions.Item>}
 
-            {whiteShowMap['jetty_id'] && <ProDescriptions.Item label="Jetty Name" valueType="text" >
-              {currentRow.jetty_name}
-            </ProDescriptions.Item>}
+              {whiteShowMap['jetty_id'] && <ProDescriptions.Item label="Jetty Name" valueType="text" >
+                {currentRow.jetty_name}
+              </ProDescriptions.Item>}
 
-            {whiteShowMap['agent'] && <ProDescriptions.Item label="Agent" valueType="text" >
-              {currentRow?.agent}
-            </ProDescriptions.Item>}
+              {whiteShowMap['agent'] && <ProDescriptions.Item label="Agent" valueType="text" >
+                {currentRow?.agent}
+              </ProDescriptions.Item>}
 
-            {whiteShowMap['product_name'] && <ProDescriptions.Item label="Product Name" valueType="text" >
-              {te?.product_name}
-            </ProDescriptions.Item>}
-            {whiteShowMap['product_quantity_in_bls_60_f'] && <ProDescriptions.Item label="Product Quantity (Bls-60-f)" valueType="text">
-              {te?.product_quantity_in_bls_60_f}
-            </ProDescriptions.Item>}
+              {whiteShowMap['product_name'] && <ProDescriptions.Item label="Product Name" valueType="text" >
+                {te?.product_name}
+              </ProDescriptions.Item>}
+              {whiteShowMap['product_quantity_in_bls_60_f'] && <ProDescriptions.Item label="Product Quantity (Bls-60-f)" valueType="text">
+                {te?.product_quantity_in_bls_60_f}
+              </ProDescriptions.Item>}
 
-            {whiteShowMap['order_no'] && <ProDescriptions.Item label="Pilotage ID" valueType="text">
-              {te?.order_no}
-            </ProDescriptions.Item>}
-            {whiteShowMap['location_from'] && <ProDescriptions.Item label="Location From" valueType="text">
-              {te?.location_from}
-            </ProDescriptions.Item>}
-            {whiteShowMap['location_to'] && <ProDescriptions.Item label="Location To" valueType="text">
-              {te?.location_to}
-            </ProDescriptions.Item>}
+              {whiteShowMap['order_no'] && <ProDescriptions.Item label="Pilotage ID" valueType="text">
+                {te?.order_no}
+              </ProDescriptions.Item>}
+              {whiteShowMap['location_from'] && <ProDescriptions.Item label="Location From" valueType="text">
+                {te?.location_from}
+              </ProDescriptions.Item>}
+              {whiteShowMap['location_to'] && <ProDescriptions.Item label="Location To" valueType="text">
+                {te?.location_to}
+              </ProDescriptions.Item>}
 
-            {whiteShowMap['delay_reason'] && <ProDescriptions.Item label="Delay Reason" valueType="text">
-              {te?.delay_reason}
-            </ProDescriptions.Item>}
+              {whiteShowMap['delay_reason'] && <ProDescriptions.Item label="Delay Reason" valueType="text">
+                {te?.delay_reason}
+              </ProDescriptions.Item>}
 
-            {whiteShowMap['delay_duration'] && <ProDescriptions.Item label="Delay Duration" valueType="text">
-              {te?.delay_duration}
-            </ProDescriptions.Item>}
+              {whiteShowMap['delay_duration'] && <ProDescriptions.Item label="Delay Duration" valueType="text">
+                {te?.delay_duration}
+              </ProDescriptions.Item>}
 
 
-            {whiteShowMap['work_order_id'] && <ProDescriptions.Item label="Work order ID" valueType="text" >
-              {te?.work_order_id}
-            </ProDescriptions.Item>}
+              {whiteShowMap['work_order_id'] && <ProDescriptions.Item label="Work order ID" valueType="text" >
+                {te?.work_order_id}
+              </ProDescriptions.Item>}
 
               {whiteShowMap['tank_number'] && <ProDescriptions.Item label="Tank ID" valueType="text">
                 {te?.tank_number}
-            </ProDescriptions.Item>}
+              </ProDescriptions.Item>}
 
-            {whiteShowMap['work_order_sequence_number'] && <ProDescriptions.Item label="Sequence No" valueType="text">
-              {te?.work_order_sequence_number}
-            </ProDescriptions.Item>}
+              {whiteShowMap['work_order_sequence_number'] && <ProDescriptions.Item label="Sequence No" valueType="text">
+                {te?.work_order_sequence_number}
+              </ProDescriptions.Item>}
 
-            <ProDescriptions.Item label="IMO Number" dataIndex="imo_number" valueType="text" >
-              {currentRow?.imo_number}
-            </ProDescriptions.Item>
-            <ProDescriptions.Item label="Vessel Name" dataIndex="vessel_name" valueType="text">
-              {currentRow?.vessel_name}
-            </ProDescriptions.Item>
-            <ProDescriptions.Item label="Arrival ID" dataIndex="arrival_id" valueType="text">
-              {currentRow?.arrival_id}
-            </ProDescriptions.Item>
+              <ProDescriptions.Item label="IMO Number" dataIndex="imo_number" valueType="text" >
+                {currentRow?.imo_number}
+              </ProDescriptions.Item>
+              <ProDescriptions.Item label="Vessel Name" dataIndex="vessel_name" valueType="text">
+                {currentRow?.vessel_name}
+              </ProDescriptions.Item>
+              <ProDescriptions.Item label="Arrival ID" dataIndex="arrival_id" valueType="text">
+                {currentRow?.arrival_id}
+              </ProDescriptions.Item>
 
-            {greyShowMap['vessel_size_dwt'] && <ProDescriptions.Item label="Vessel Size (dwt)" dataIndex="vessel_size_dwt" valueType="text" >
-              {currentRow?.vessel_size_dwt}
-            </ProDescriptions.Item>}
-
-
-
-            {greyShowMap['arrival_id_status'] && <ProDescriptions.Item label="Arrival Status" dataIndex="arrival_id_status" valueType="text">
-              {te?.arrival_id_status}
-            </ProDescriptions.Item>}
-            {greyShowMap['work_order_status'] && <ProDescriptions.Item label="Work order Status" dataIndex="work_order_status" valueType="text">
-              {te?.work_order_status}
-            </ProDescriptions.Item>}
-
-            {greyShowMap['work_order_sequence_number_status'] && <ProDescriptions.Item label="Sequence Status" dataIndex="work_order_sequence_number_status" valueType="text">
-              {te?.work_order_sequence_number_status}
-            </ProDescriptions.Item>}
-
-
-            {greyShowMap['work_order_operation_type'] && <ProDescriptions.Item label="Operation Type " dataIndex="work_order_operation_type" valueType="text">
-              {te?.work_order_operation_type}
-            </ProDescriptions.Item>}
-
-            {greyShowMap['work_order_surveyor'] && <ProDescriptions.Item label="Surveyor Name " dataIndex="work_order_surveyor" valueType="text">
-              {te?.work_order_surveyor}
-            </ProDescriptions.Item>}
+              {greyShowMap['vessel_size_dwt'] && <ProDescriptions.Item label="Vessel Size (dwt)" dataIndex="vessel_size_dwt" valueType="text" >
+                {currentRow?.vessel_size_dwt}
+              </ProDescriptions.Item>}
 
 
 
-            {greyShowMap['product_quantity_in_l_obs'] && <ProDescriptions.Item label="Product Quantity (l-obs)" dataIndex="product_quantity_in_l_obs" valueType="text">
-              {te?.product_quantity_in_l_obs}
-            </ProDescriptions.Item>}
-            {greyShowMap['product_quantity_in_l_15_c'] && <ProDescriptions.Item label="Product Quantity (l-15-c)" dataIndex="product_quantity_in_l_15_c" valueType="text">
-              {te?.product_quantity_in_l_15_c}
-            </ProDescriptions.Item>}
-            {greyShowMap['product_quantity_in_mt'] && <ProDescriptions.Item label="Product Quantity (mt)" dataIndex="product_quantity_in_mt" valueType="text">
-              {te?.product_quantity_in_mt}
-            </ProDescriptions.Item>}
-            {greyShowMap['product_quantity_in_mtv'] && <ProDescriptions.Item label="Product Quantity (mtv)" dataIndex="product_quantity_in_mtv" valueType="text">
-              {te?.product_quantity_in_mtv}
-            </ProDescriptions.Item>}
-            {greyShowMap['product_quantity_in_bls_60_f'] && <ProDescriptions.Item label="Product Quantity (Bls-60-f)" dataIndex="product_quantity_in_bls_60_f" valueType="text">
-              {te?.product_quantity_in_bls_60_f}
-            </ProDescriptions.Item>}
+              {greyShowMap['arrival_id_status'] && <ProDescriptions.Item label="Arrival Status" dataIndex="arrival_id_status" valueType="text">
+                {te?.arrival_id_status}
+              </ProDescriptions.Item>}
+              {greyShowMap['work_order_status'] && <ProDescriptions.Item label="Work order Status" dataIndex="work_order_status" valueType="text">
+                {te?.work_order_status}
+              </ProDescriptions.Item>}
+
+              {greyShowMap['work_order_sequence_number_status'] && <ProDescriptions.Item label="Sequence Status" dataIndex="work_order_sequence_number_status" valueType="text">
+                {te?.work_order_sequence_number_status}
+              </ProDescriptions.Item>}
+
+
+              {greyShowMap['work_order_operation_type'] && <ProDescriptions.Item label="Operation Type " dataIndex="work_order_operation_type" valueType="text">
+                {te?.work_order_operation_type}
+              </ProDescriptions.Item>}
+
+              {greyShowMap['work_order_surveyor'] && <ProDescriptions.Item label="Surveyor Name " dataIndex="work_order_surveyor" valueType="text">
+                {te?.work_order_surveyor}
+              </ProDescriptions.Item>}
+
+
+
+              {greyShowMap['product_quantity_in_l_obs'] && <ProDescriptions.Item label="Product Quantity (l-obs)" dataIndex="product_quantity_in_l_obs" valueType="text">
+                {te?.product_quantity_in_l_obs}
+              </ProDescriptions.Item>}
+              {greyShowMap['product_quantity_in_l_15_c'] && <ProDescriptions.Item label="Product Quantity (l-15-c)" dataIndex="product_quantity_in_l_15_c" valueType="text">
+                {te?.product_quantity_in_l_15_c}
+              </ProDescriptions.Item>}
+              {greyShowMap['product_quantity_in_mt'] && <ProDescriptions.Item label="Product Quantity (mt)" dataIndex="product_quantity_in_mt" valueType="text">
+                {te?.product_quantity_in_mt}
+              </ProDescriptions.Item>}
+              {greyShowMap['product_quantity_in_mtv'] && <ProDescriptions.Item label="Product Quantity (mtv)" dataIndex="product_quantity_in_mtv" valueType="text">
+                {te?.product_quantity_in_mtv}
+              </ProDescriptions.Item>}
+              {greyShowMap['product_quantity_in_bls_60_f'] && <ProDescriptions.Item label="Product Quantity (Bls-60-f)" dataIndex="product_quantity_in_bls_60_f" valueType="text">
+                {te?.product_quantity_in_bls_60_f}
+              </ProDescriptions.Item>}
             </ProDescriptions>
 
 
-            <div className="page_title" style={{ marginBottom: 10, marginTop:10 }}>Data Change History</div>
+            <div className="page_title" style={{ marginBottom: 10, marginTop: 10 }}>Data Change History</div>
 
             <div style={{ height: 500 }}>
               <ProTable
@@ -3062,43 +2755,43 @@ const Detail: React.FC<any> = (props) => {
                 search={false}
                 options={false}
                 dataSource={logObjArr} columns={[
-                {
-                  title: "Type Of Data",
-                  dataIndex:"TypeOfData"
-                },
-                {
-                  title: "Previous Value",
-                  dataIndex: "PreviousValue",
-                  render: (dom, entity) => {
-                    if (entity.TypeOfData == "Event Time") {
-                      return moment(dom).format('YYYY-MM-DD HH:mm:ss')
-                    } else {
-                      return dom
-                    }
-                    
-                  }
-                },
-                {
-                  title: "New Value",
-                  dataIndex: "NewValue",
-                  render: (dom, entity) => {
-                    if (entity.TypeOfData == "Event Time") {
-                      return moment(dom).format('YYYY-MM-DD HH:mm:ss')
-                    } else {
-                      return dom
-                    }
+                  {
+                    title: "Type Of Data",
+                    dataIndex: "TypeOfData"
+                  },
+                  {
+                    title: "Previous Value",
+                    dataIndex: "PreviousValue",
+                    render: (dom, entity) => {
+                      if (entity.TypeOfData == "Event Time") {
+                        return moment(dom).format('YYYY-MM-DD HH:mm:ss')
+                      } else {
+                        return dom
+                      }
 
-                  }
-                },
-                {
-                  title: "Update Time",
-                  dataIndex: "UpdateTime",
-                  render: (dom, entity) => {
-                    return moment(dom).format('YYYY-MM-DD HH:mm:ss')
-                  }
-                },
+                    }
+                  },
+                  {
+                    title: "New Value",
+                    dataIndex: "NewValue",
+                    render: (dom, entity) => {
+                      if (entity.TypeOfData == "Event Time") {
+                        return moment(dom).format('YYYY-MM-DD HH:mm:ss')
+                      } else {
+                        return dom
+                      }
 
-              ]} />
+                    }
+                  },
+                  {
+                    title: "Update Time",
+                    dataIndex: "UpdateTime",
+                    render: (dom, entity) => {
+                      return moment(dom).format('YYYY-MM-DD HH:mm:ss')
+                    }
+                  },
+
+                ]} />
             </div>
 
 
@@ -3106,12 +2799,12 @@ const Detail: React.FC<any> = (props) => {
           </div></>)
 
 
-        }) }
+        })}
       </Drawer>
 
-     
+
 
     </PageContainer>
   </div>)
 }
-  export default Detail;
+export default Detail;

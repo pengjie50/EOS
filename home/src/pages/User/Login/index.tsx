@@ -1,4 +1,4 @@
-import { Footer } from '@/components';
+import { Footer, getSearchObj } from '@/components';
 import { login, retrievePassword } from '@/services/ant-design-pro/api';
 import { getFakeCaptcha } from '@/services/ant-design-pro/login';
 import { fieldUniquenessCheck } from '@/services/ant-design-pro/api';
@@ -14,6 +14,7 @@ import {
   LoginForm,
   ProFormCaptcha,
   ProFormCheckbox,
+  ProFormDependency,
   ModalForm,
   ProFormText,
 } from '@ant-design/pro-components';
@@ -24,7 +25,7 @@ import Settings from '../../../../config/defaultSettings';
 import React, { useState, useEffect } from 'react';
 import { flushSync } from 'react-dom';
 import { isPC } from "@/utils/utils";
-
+import { modifyPassword } from '../../system/user/service';
 import { KeepAliveContext } from '@umijs/max';
 import { PublicClientApplication, EventType, EventMessage, AuthenticationResult } from "@azure/msal-browser";
 import { msalConfig, loginRequest } from "../../../authConfig";
@@ -95,16 +96,43 @@ const LoginMessage: React.FC<{
 
 
 
-
 const Login: React.FC = () => {
   const [userLoginState, setUserLoginState] = useState<API.LoginResult>({});
   const [type, setType] = useState<string>('account');
   const [isAdmin, setIsAdmin] = useState<boolean>(useLocation().pathname == "/user/adminlogin" ? true : false);
   const { initialState, setInitialState } = useModel('@@initialState');
   const [isMP, setIsMP] = useState<boolean>(!isPC());
-  const [redirect, setRedirect] = useState<string>(useLocation()?.search?.split("=")[1] || '/');
-  const { updateTab, dropByCacheKey,dropOtherTabs,refreshTab } = React.useContext(KeepAliveContext);
 
+  var searchObj = getSearchObj(useLocation()?.search)
+
+
+
+  if (searchObj.redirect == "/transactions?eos_id") {
+    searchObj.redirect = "/transactions"
+    var a = useLocation().search.split("=")
+    searchObj.eos_id = [a[a.length - 1]]
+
+  }
+
+  if (searchObj.redirect == "/threshold/alert?alert_id") {
+    searchObj.redirect = "/threshold/alert"
+    var a = useLocation().search.split("=")
+    searchObj.alert_id = [a[a.length - 1]]
+
+  }
+
+
+
+  const [redirect, setRedirect] = useState<string>(searchObj?.redirect || '/');
+
+
+  const [check, setCheck] = useState<string>(searchObj?.check?.replace("@", "&") || false);
+
+  const [resetcheck, setResetcheck] = useState<string>(searchObj?.resetcheck?.replace("@", "&") || false);
+
+
+  const { updateTab, dropByCacheKey, dropOtherTabs, refreshTab } = React.useContext(KeepAliveContext);
+  const [modalVisit, setModalVisit] = useState<boolean>(check || resetcheck);
   const onlyCheck = (rule: any, value: any, callback: (arg0: string | undefined) => void) => {
     if (!(/^[A-Za-z\d]+([-_.][A-Za-z\d]+)*@([A-Za-z\d]+[-.])+[A-Za-z\d]{2,4}$/.test(value))) {
       callback(undefined);
@@ -124,7 +152,20 @@ const Login: React.FC = () => {
     });
 
   }
+  const handleFinish = async (values: { [key: string]: any; } | undefined) => {
+    if (values) {
 
+      values.check = check
+      if (resetcheck) {
+        values.check = resetcheck
+      }
+    }
+
+    await modifyPassword({ ...values });
+    message.success(resetcheck ? "Your password has been reset successfully.Please log in using the new password" : "Your password has been set successfully. Please log in using the set password");
+    setModalVisit(false)
+   
+  };
 
   const containerClassName = useEmotionCss(({ token }) => {
 
@@ -167,7 +208,7 @@ const Login: React.FC = () => {
       [`@media screen and (min-width: ${token.screenMD}px)`]: {
         height: 42,
         fontSize: '24px !important',
-        fontFamily: "Alaska !important" ,
+        fontFamily: "Alaska !important",
         fontWeight: 'bold',
         lineHeight: '42px',
         color: '#FFF',
@@ -225,9 +266,10 @@ const Login: React.FC = () => {
         } else {
           localStorage.setItem('isAdmin', "false");
         }
-        
+
         var goto = "/"
         user.permissions.forEach((a) => {
+
           if (goto == "/") {
             if (a.indexOf("_") > -1) {
 
@@ -241,7 +283,9 @@ const Login: React.FC = () => {
               if (a == "alert") {
                 a = 'threshold/alert'
               }
+
               goto = "/" + a
+
             }
           }
 
@@ -250,11 +294,19 @@ const Login: React.FC = () => {
         dropByCacheKey("/dashboard")
         refreshTab("/dashboard")
         var gotourl = goto || redirect
-        if (gotourl=="/") {
-          gotourl="/dashboard"
+        if (gotourl == "/") {
+          gotourl = "/dashboard"
         }
-       
-        history.push("/dashboard");
+
+        if (redirect && redirect != "/") {
+
+
+          history.push(redirect, searchObj);
+        } else {
+          history.push(gotourl);
+        }
+
+
 
 
 
@@ -273,7 +325,7 @@ const Login: React.FC = () => {
 
 
   if (isAdmin) {
-   
+
     useEffect(() => {
       msalInstance.addEventCallback((event: EventMessage) => {
 
@@ -302,7 +354,7 @@ const Login: React.FC = () => {
         msalInstance.loginPopup(loginRequest);
       }
     }, [true])
-  } 
+  }
 
 
 
@@ -417,6 +469,118 @@ const Login: React.FC = () => {
                 { validator: onlyCheck }
                 ]}
                 />
+              </ModalForm>
+
+
+
+
+
+              <ModalForm< { name: string; company: string; }>
+                title="Create your password"
+                open={modalVisit}
+                onOpenChange={setModalVisit}
+                autoFocusFirstInput
+                modalProps={{
+                  destroyOnClose: true,
+
+                }}
+
+                submitTimeout={2000}
+                onFinish={
+                  handleFinish
+
+                }
+              >
+                <div>{resetcheck ? "Please reset your password." : "For your account security, please take a moment to set your password."}
+                </div>
+
+
+
+
+                <div>
+                  Your password should be at least eight characters and include at least the following:<br />
+                  a) At least letters in both upper- and lowercase<br />
+                  b) At least one number<br />
+                  c) At least one special character
+                </div>
+
+                <ProFormText.Password
+                  width="lg"
+                  name="newPassword"
+                  label={<FormattedMessage
+                    id="pages.userSet.newPassword"
+                    defaultMessage="New Password"
+                  />}
+                  rules={[
+                    {
+                      required: true, pattern: new RegExp(/(?=.*[A-Z])(?=.*[a-z])/g),
+                      message: "At least letters in both upper- and lowercase"
+
+                    },
+                    {
+                      required: true, pattern: new RegExp(/(?=.*[0-9])/g),
+                      message: "At least one number"
+                    },
+                    {
+                      required: true, pattern: new RegExp(/(?=.*[\W])(?=.*[\S])/g),
+                      message: "At least one special character"
+
+                    },
+                    {
+                      required: true, pattern: new RegExp(/^.{8,100}$/g),
+                      message: "Your password should be at least eight characters"
+
+                    }
+
+                  ]}
+                />
+                <ProFormDependency name={['newPassword']}>
+                  {({ newPassword }) => (
+                    <ProFormText.Password
+                      label={<FormattedMessage
+                        id="pages.userSet.repeatNewPassword"
+                        defaultMessage="Re-enter New Password"
+                      />}
+                      width="lg"
+                      name="repeatNewPassword"
+                      rules={[
+
+                        {
+                          required: true, pattern: new RegExp(/(?=.*[A-Z])(?=.*[a-z])/g),
+                          message: "At least letters in both upper- and lowercase"
+
+                        },
+                        {
+                          required: true, pattern: new RegExp(/(?=.*[0-9])/g),
+                          message: "At least one number"
+                        },
+                        {
+                          required: true, pattern: new RegExp(/(?=.*[\W])(?=.*[\S])/g),
+                          message: "At least one special character"
+
+                        },
+                        {
+                          required: true, pattern: new RegExp(/^.{8,100}$/g),
+                          message: "Your password should be at least eight characters"
+
+                        },
+                        {   
+                          validator: (rule, value) =>
+                            new Promise<void>((resolve, reject) => {
+                              if (newPassword === value) {
+                                resolve();
+                              } else {
+                                reject(new Error(`${intl.formatMessage({
+                                  id: 'pages.userSet.rules.twoPasswordsNotMatch',
+                                  defaultMessage: 'The two passwords do not match',
+                                })}`));
+                              }
+                            }),
+                        },
+                      ]}
+                    />
+                  )}
+                </ProFormDependency>
               </ModalForm>
 
             </div>

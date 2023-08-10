@@ -7,7 +7,7 @@ import { OperlogList, OperlogListItem } from './data.d';
 import FrPrint from "../../../components/FrPrint";
 import MPSort from "@/components/MPSort";
 import { exportCSV } from "../../../components/export";
-
+import { ResizeObserverDo } from '@/components'
 
 
 import FileSaver from "file-saver";
@@ -27,8 +27,7 @@ import {
 import { FormattedMessage, useIntl, formatMessage } from '@umijs/max';
 import { Button, Drawer, Input, message, Modal, Popover, Empty, Pagination, FloatButton, ConfigProvider } from 'antd';
 import React, { useRef, useState, useEffect } from 'react';
-import CreateForm from './components/CreateForm';
-import UpdateForm from './components/UpdateForm';
+
 
 const { confirm } = Modal;
 //MP
@@ -37,7 +36,6 @@ import { isPC } from "@/utils/utils";
 
 /**
  *  Delete node
- * @zh-CN 删除节点
  *
  * @param selectedRows
  */
@@ -87,36 +85,6 @@ const handleRemove = async (selectedRows: OperlogListItem[], callBack: any) => {
 
 
 };
-/**
- * @en-US Update node
- * @zh-CN 更新节点
- *
- * @param fields
- */
-const handleUpdate = async (fields: Partial<any>) => {
-  const hide = message.loading(<FormattedMessage
-    id="pages.modifying"
-    defaultMessage="Modifying"
-  />);
-  try {
-
-    await updateOperlog({ remarks: fields['remarks'], id: fields.id });
-    hide();
-
-    message.success(<FormattedMessage
-      id="pages.modifySuccessful"
-      defaultMessage="Modify is successful"
-    />);
-    return true;
-  } catch (error) {
-    hide();
-    message.error(<FormattedMessage
-      id="pages.modifyFailed"
-      defaultMessage="Modify failed, please try again!"
-    />);
-    return false;
-  }
-};
 
 
 
@@ -127,6 +95,7 @@ export const columnsBase: ProColumns<OperlogListItem>[] = [
   {
     title: <FormattedMessage id="pages.user.xxx" defaultMessage="API Method" />,
     dataIndex: 'request_method',
+    sorter: true,
     fieldProps: {
       multiple: true, mode: 'multiple', maxTagCount: 0,
       maxTagPlaceholder: (omittedValues) => {
@@ -134,7 +103,8 @@ export const columnsBase: ProColumns<OperlogListItem>[] = [
       }, maxTagCount: 0,
       maxTagPlaceholder: (omittedValues) => {
         return omittedValues.length + " Selected"
-      }, },
+      },
+    },
     search: {
       transform: (value) => {
         if (value.length > 0) {
@@ -163,6 +133,7 @@ export const columnsBase: ProColumns<OperlogListItem>[] = [
   {
     title: <FormattedMessage id="pages.operlog.xxx" defaultMessage="Interface Call" />,
     dataIndex: 'url',
+    sorter: true,
     search: {
       transform: (value) => {
         if (value.length > 0) {
@@ -186,11 +157,18 @@ export const columnsBase: ProColumns<OperlogListItem>[] = [
   {
     title: <FormattedMessage id="pages.operlog.xxx" defaultMessage="Parameter" />,
     dataIndex: 'param',
-    ellipsis: !isPC()?false:true,
+    sorter: true,
+    ellipsis: !isPC() ? false : true,
     valueType: 'text',
   },
 
-
+  {
+    title: <FormattedMessage id="pages.operlog.xxx" defaultMessage="Return data" />,
+    dataIndex: 'result',
+    sorter: true,
+    ellipsis: !isPC() ? false : true,
+    valueType: 'text',
+  },
   {
     title: (
       <FormattedMessage
@@ -201,8 +179,8 @@ export const columnsBase: ProColumns<OperlogListItem>[] = [
 
     hideInSearch: true,
     dataIndex: 'oper_time',
-    valueType: 'dateTime'
-
+    valueType: 'dateTime',
+    sorter: true
   },
   {
     title: (
@@ -211,7 +189,7 @@ export const columnsBase: ProColumns<OperlogListItem>[] = [
         defaultMessage="API Call Time"
       />
     ),
-    sorter: true,
+
 
     hideInForm: true,
     hideInTable: true,
@@ -242,6 +220,7 @@ export const columnsBase: ProColumns<OperlogListItem>[] = [
   {
     title: <FormattedMessage id="pages.loginlog.status" defaultMessage="Status" />,
     dataIndex: 'status',
+    sorter: true,
     search: {
       transform: (value) => {
 
@@ -263,7 +242,8 @@ export const columnsBase: ProColumns<OperlogListItem>[] = [
       multiple: true, mode: 'multiple', maxTagCount: 0,
       maxTagPlaceholder: (omittedValues) => {
         return omittedValues.length + " Selected"
-      }, },
+      },
+    },
     valueEnum: {
       0: {
         text: (
@@ -291,16 +271,8 @@ export const columnsBase: ProColumns<OperlogListItem>[] = [
 
 
 const TableList: React.FC = () => {
-  /**
-   * @en-US Pop-up window of new window
-   * @zh-CN 新建窗口的弹窗
-   *  */
-  const [createModalOpen, handleModalOpen] = useState<boolean>(false);
-  /**
-   * @en-US The pop-up window of the distribution update window
-   * @zh-CN 分布更新窗口的弹窗
-   * */
-  const [updateModalOpen, handleUpdateModalOpen] = useState<boolean>(false);
+ 
+ 
   const [paramsText, setParamsText] = useState<string>('');
   const [showDetail, setShowDetail] = useState<boolean>(false);
   const [printModalVisible, handlePrintModalVisible] = useState<boolean>(false);
@@ -310,7 +282,6 @@ const TableList: React.FC = () => {
   const [resizeObj, setResizeObj] = useState({ searchSpan: 12, tableScrollHeight: 300 });
   /**
    * @en-US International configuration
-   * @zh-CN 国际化配置
    * */
   const intl = useIntl();
   const [MPSorter, setMPSorter] = useState<any>({});
@@ -323,10 +294,10 @@ const TableList: React.FC = () => {
   const [ipData, setIpData] = useState<any>({});
   const [userList, setUserList] = useState<any>({});
 
- 
+
   useEffect(() => {
 
-  
+
     if (isMP) {
       getData(1)
     }
@@ -351,14 +322,14 @@ const TableList: React.FC = () => {
         },
         onFocus: () => {
           fieldSelectData({ model: "Operlog", value: '', field: 'url', where: { type: 3 } }).then((res) => {
-            
+
             setUrlData(res.data)
           })
         },
         onSearch: (newValue: string) => {
 
           fieldSelectData({ model: "Operlog", value: newValue, field: 'url', where: { type: 3 } }).then((res) => {
-            
+
             setUrlData(res.data)
           })
 
@@ -366,7 +337,7 @@ const TableList: React.FC = () => {
       }
     }
 
-   
+
     return b
 
 
@@ -386,7 +357,7 @@ const TableList: React.FC = () => {
           }}
         ><PrinterOutlined /> <FormattedMessage id="pages.Print" defaultMessage="Print" />
         </Button>, <Button style={{ width: "100%" }} type="primary" key="out"
-            onClick={() => exportCSV(data, columns,"API Activity Log")}
+          onClick={() => exportCSV(data, columns, "API Activity Log")}
         ><FileExcelOutlined /> <FormattedMessage id="pages.CSV" defaultMessage="CSV" />
           </Button>
 
@@ -431,7 +402,7 @@ const TableList: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [MPfilter, setMPfilter] = useState<any>({})
   const [MPPagination, setMPPagination] = useState<any>({})
-  async function getData(page, filter__,pageSize) {
+  async function getData(page, filter__, pageSize) {
 
     var sorter = {}
     await setMPSorter((sorter_) => {
@@ -461,7 +432,7 @@ const TableList: React.FC = () => {
   }
   //--MP end
   const formRef = useRef<ProFormInstance>();
-  
+
   const customizeRenderEmpty = () => {
     var o = formRef.current?.getFieldsValue()
     var isSearch = false
@@ -483,20 +454,7 @@ const TableList: React.FC = () => {
     <RcResizeObserver
       key="resize-observer"
       onResize={(offset) => {
-        const { innerWidth, innerHeight } = window;
-
-        if (offset.width > 1280) {
-
-          setResizeObj({ ...resizeObj, searchSpan: 8, tableScrollHeight: innerHeight - 420 });
-        }
-        if (offset.width < 1280 && offset.width > 900) {
-
-          setResizeObj({ ...resizeObj, searchSpan: 12, tableScrollHeight: innerHeight - 420 });
-        }
-        if (offset.width < 900 && offset.width > 700) {
-          setResizeObj({ ...resizeObj, searchSpan: 24, tableScrollHeight: innerHeight - 420 });
-
-        }
+        ResizeObserverDo(offset, setResizeObj, resizeObj)
 
 
 
@@ -519,7 +477,7 @@ const TableList: React.FC = () => {
             }}
           ><PrinterOutlined /> <FormattedMessage id="pages.Print" defaultMessage="Print" />
           </Button>, <Button type="primary" key="out"
-            onClick={() => exportCSV(selectedRowsState, columns,"API Activity Log")}
+            onClick={() => exportCSV(selectedRowsState, columns, "API Activity Log")}
           ><FileExcelOutlined /> <FormattedMessage id="pages.CSV" defaultMessage="CSV" />
           </Button>
 
@@ -530,7 +488,7 @@ const TableList: React.FC = () => {
           pagination={{ size: "default", showSizeChanger: true, pageSizeOptions: [10, 20, 50, 100, 500] }}
           actionRef={actionRef}
           rowKey="id"
-          formRef={formRef }
+          formRef={formRef}
           scroll={{ x: 1800, y: resizeObj.tableScrollHeight }}
           search={{
             labelWidth: 140,
@@ -542,11 +500,13 @@ const TableList: React.FC = () => {
           ]}
           options={false}
           className="mytable"
-          request={(params, sorter) => operlog({ ...params, sorter, type:{
-          'field': 'type',
-        'op': 'eq',
-        'data': 3
-          } })}
+          request={(params, sorter) => operlog({
+            ...params, sorter, type: {
+              'field': 'type',
+              'op': 'eq',
+              'data': 3
+            }
+          })}
           columns={columns}
           bordered
           rowSelection={{
@@ -647,32 +607,7 @@ const TableList: React.FC = () => {
 
           </FooterToolbar>
         )}
-        <UpdateForm
-          onSubmit={async (value) => {
-            value.id = currentRow?.id
-            const success = await handleUpdate(value);
-            if (success) {
-              handleUpdateModalOpen(false);
-              setCurrentRow(undefined);
-              if (isMP) {
-                setData([]);
-                getData(1)
-              }
-              if (actionRef.current) {
-                actionRef.current.reload();
-              }
-            }
-          }}
-          onCancel={() => {
-            handleUpdateModalOpen(false);
-            if (!showDetail) {
-              setCurrentRow(undefined);
-            }
-          }}
-          updateModalOpen={updateModalOpen}
-          values={currentRow || {}}
-        />
-
+       
 
         <Drawer
           width={isMP ? '100%' : 600}
@@ -701,24 +636,13 @@ const TableList: React.FC = () => {
           title={""}
           subTitle={paramsText}
           columns={columns}
-          dataSource={[...(isMP ? data : selectedRowsState)/*, sumRow*/]}
+          dataSource={[...(isMP ? data : selectedRowsState)]}
           onCancel={() => {
             handlePrintModalVisible(false);
           }}
           printModalVisible={printModalVisible}
         />
-        {/*
-         <div style={{ marginTop: -45, paddingLeft: 10 }}>
-          <Button
-
-            type="primary"
-            onClick={async () => {
-              history.back()
-            }}
-          >Return to previous page</Button>
-        </div>
-
-        */ }
+        
       </PageContainer></RcResizeObserver>
   );
 };

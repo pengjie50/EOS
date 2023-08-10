@@ -67,15 +67,25 @@ class UserController extends Controller {
     }
     async info() {
         const { ctx, service, app } = this;
-        const params = { id: ctx.user.user_id };
-        const res = await service.user.findOne(params);
+        const params = { id: ctx.user?.user_id };
+        if (ctx.user?.user_id) {
+            const res = await service.user.findOne(params);
+        } else {
+            ctx.body = {
+                success: true
+               
+
+            }; 
+
+        }
+        
 
     }
 
     async add() {
         const { ctx, service } = this;
         var params = ctx.request.body;
-        console.log(params)
+        
         const result = await service.user.add(params);
         this.addOperlog()
 

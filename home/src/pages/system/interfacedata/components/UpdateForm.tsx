@@ -7,7 +7,7 @@ import {
   ModalForm,
   ProFormTreeSelect,
   ProFormInstance
-  
+
 } from '@ant-design/pro-components';
 import { InterfacedataListItem } from '../data.d';
 import { FormattedMessage, useIntl, useModel } from '@umijs/max';
@@ -27,7 +27,7 @@ export type UpdateFormProps = {
 const UpdateForm: React.FC<UpdateFormProps> = (props) => {
   const restFormRef = useRef<ProFormInstance>();
   const intl = useIntl();
-  const [terminalList, setTerminalList] = useState<any>({});
+
   const {
     onSubmit,
     onCancel,
@@ -39,14 +39,6 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
   useEffect(() => {
 
 
-    organization({ type: "Terminal", sorter: { name: 'ascend' } }).then((res) => {
-      var b = {}
-      res.data.forEach((r) => {
-        b[r.id] = r.name
-      })
-      setTerminalList(b)
-
-    });
 
 
 
@@ -54,7 +46,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
   }, [true]);
   return (
-   
+
     <ModalForm
       modalProps={{ destroyOnClose: true }}
       initialValues={values}
@@ -62,36 +54,36 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         if (!vi) {
           props.onCancel();
         }
-          
+
       }}
       formRef={restFormRef}
-        onFinish={props.onSubmit}
-        open={props.updateModalOpen}
-        submitter={{
-          searchConfig: {
-            resetText: intl.formatMessage({
-              id: 'pages.reset',
-              defaultMessage: 'Reset',
-            }),
+      onFinish={props.onSubmit}
+      open={props.updateModalOpen}
+      submitter={{
+        searchConfig: {
+          resetText: intl.formatMessage({
+            id: 'pages.reset',
+            defaultMessage: 'Reset',
+          }),
+        },
+        resetButtonProps: {
+          onClick: () => {
+            restFormRef.current?.resetFields();
+
           },
-          resetButtonProps: {
-            onClick: () => {
-              restFormRef.current?.resetFields();
-              //   setModalVisible(false);
-            },
-          },
-        }}
-        title={intl.formatMessage({
-          id: 'pages.interfacedata.mod',
-          defaultMessage: 'Modify Interfacedata',
-        })}
-      >
+        },
+      }}
+      title={intl.formatMessage({
+        id: 'pages.interfacedata.mod',
+        defaultMessage: 'Modify Interfacedata',
+      })}
+    >
 
       <ProFormSelect
         name="type"
         label="DE Name"
         width="md"
-        
+
         valueEnum={{
           '1': "DE 1",
           '2': "DE 2",
@@ -104,7 +96,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         name="json_string"
         label="Json String"
         width="lg"
-       
+
         rules={[
           {
             required: true,
@@ -145,9 +137,9 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         ]}
       />
 
-      
+
     </ModalForm>
-     
+
   );
 };
 

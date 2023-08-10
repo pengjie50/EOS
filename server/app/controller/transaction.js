@@ -25,7 +25,7 @@ class TransactionController extends Controller {
     async add() {
         const { ctx, service } = this;
         var params = ctx.request.body;
-        console.log(params)
+       
         const result = await service.transaction.add(params);
         this.addOperlog()
     }

@@ -6,7 +6,7 @@ import {
   ProFormTextArea,
   ModalForm,
   ProFormInstance
-  
+
 } from '@ant-design/pro-components';
 import { SysconfigListItem } from '../data.d';
 import { FormattedMessage, useIntl } from '@umijs/max';
@@ -19,63 +19,63 @@ export type CreateFormProps = {
   onCancel: (flag?: boolean, formVals?: Partial<SysconfigListItem>) => void;
   onSubmit: (values: Partial<SysconfigListItem>) => Promise<void>;
   createModalOpen: boolean;
-  
+
 };
 
 const UpdateForm: React.FC<CreateFormProps> = (props) => {
   const restFormRef = useRef<ProFormInstance>();
   const intl = useIntl();
- 
+
   const {
     onSubmit,
     onCancel,
     createModalOpen,
-   
+
   } = props;
 
-  
+
   return (
-   
+
     <ModalForm
       modalProps={{ destroyOnClose: true }}
-      
+
       onOpenChange={(vi) => {
         if (!vi) {
           props.onCancel();
         }
-          
+
       }}
       formRef={restFormRef}
-        onFinish={props.onSubmit}
+      onFinish={props.onSubmit}
       open={props.createModalOpen}
-        submitter={{
-          searchConfig: {
-            resetText: 
-              intl.formatMessage({
-                id: 'pages.reset',
-                defaultMessage: '重置',
-              })
-            ,
+      submitter={{
+        searchConfig: {
+          resetText:
+            intl.formatMessage({
+              id: 'pages.reset',
+              defaultMessage: '',
+            })
+          ,
+        },
+        resetButtonProps: {
+          onClick: () => {
+            restFormRef.current?.resetFields();
+            //   setModalVisible(false);
           },
-          resetButtonProps: {
-            onClick: () => {
-              restFormRef.current?.resetFields();
-              //   setModalVisible(false);
-            },
-          },
-        }}
-        title={intl.formatMessage({
-          id: 'pages.sysconfig.add',
-          defaultMessage: 'New system config',
+        },
+      }}
+      title={intl.formatMessage({
+        id: 'pages.sysconfig.add',
+        defaultMessage: 'New system config',
+      })}
+    >
+      <ProFormText
+        name="name"
+        label={intl.formatMessage({
+          id: 'pages.sysconfig.name',
+          defaultMessage: 'Parameter Name',
         })}
-      >
-        <ProFormText
-          name="name"
-          label={intl.formatMessage({
-            id: 'pages.sysconfig.name',
-            defaultMessage: 'Parameter Name',
-          })}
-          width="md"
+        width="md"
         rules={[
           {
             required: true,
@@ -126,17 +126,17 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
           },
         ]}
       />
-        <ProFormTextArea
-          name="description"
-          width="md"
-          label={intl.formatMessage({
-            id: 'pages.sysconfig.description',
-            defaultMessage: 'Parameter Description',
-          })}
-          
-        />
+      <ProFormTextArea
+        name="description"
+        width="md"
+        label={intl.formatMessage({
+          id: 'pages.sysconfig.description',
+          defaultMessage: 'Parameter Description',
+        })}
+
+      />
     </ModalForm>
-     
+
   );
 };
 

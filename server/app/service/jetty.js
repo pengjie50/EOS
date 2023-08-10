@@ -6,7 +6,7 @@
 */
 'use strict'
 
-const Service = require('egg').Service;
+const Service = require('./base_service');
 const uuid = require('uuid');
 
 
@@ -35,26 +35,36 @@ class JettyService extends Service {
             obj.limit = parseInt(params.limit)
         }
         var Op = app.Sequelize.Op
-        if (obj.where.terminal_id) {
-            if (ctx.user.role_type == 'Super') {
-
-            } else if (ctx.user.role_type == 'Trader') {
 
 
+        if (ctx.user.role_type == 'Super') {
+            if (obj.where.terminal_id) {
+
+                obj.where.terminal_id = obj.where.terminal_id
             }
 
         } else {
-            if (ctx.user.role_type == 'Trader') {
 
+            if (obj.where.terminal_id) {
+               
 
-                obj.where.terminal_id = {
-                    [app.Sequelize.Op['in']]: ctx.user.accessible_organization
+            } else {
+                if (ctx.user.company_type == "Terminal") {
+                    
+                    obj.where.terminal_id = ctx.user.company_id
+                } else {
+
+                    obj.where.terminal_id = [...ctx.user.accessible_organization]
+
+                   
                 }
-            } else if (ctx.user.role_type == 'Terminal') {
-                obj.where.terminal_id = ctx.user.company_id
 
             }
+
+
         }
+
+
         const list = await ctx.model.Jetty.findAndCountAll(obj)
 
         ctx.status = 200;

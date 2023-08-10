@@ -20,6 +20,8 @@ class LoginlogService extends Service {
 
         if (params.where) {
             obj.where = params.where
+        } else {
+            obj.where = {}
         }
         if (params.order) {
             obj.order = params.order
@@ -40,8 +42,42 @@ class LoginlogService extends Service {
             attributes: [],
         }]
         obj.raw = true
+
+        var is_report = false
+      
+        if (obj.where.is_report) {
+            is_report = true
+        }
+        delete obj.where.is_report
+
+        var report
+        if (is_report) {
+
+            report = await ctx.model.Report.findOne({ where: { id: obj.where.report_id } })
+            if (report && report.json_string) {
+
+                var backData = eval('(' + report.json_string + ')')
+                ctx.body = backData
+
+                return
+
+
+            } else {
+                obj.offset = 0
+                obj.limit = 1000000000
+
+            }
+
+            delete obj.where.report_id
+
+
+           
+        }
+
+
+
         const list = await ctx.model.Loginlog.findAndCountAll(obj)
-        console.log(list.rows)
+      
         ctx.status = 200;
         ctx.body = {
             success: true,
@@ -49,7 +85,11 @@ class LoginlogService extends Service {
             data: list.rows
 
         };
+        if ( is_report) {
+            report.update({ json_string: JSON.stringify(ctx.body) })
 
+
+        }
     }
 
     async add(params) {
@@ -68,7 +108,7 @@ class LoginlogService extends Service {
     async checkPasswordErrorTimes(login_lock) {
         var count = 5
         var time_out = 60 * 1000
-        console.log(login_lock)
+        
         if (login_lock) {
             count = parseInt(login_lock.split("/")[0])
             time_out = parseInt(login_lock.split("/")[1]) * 1000

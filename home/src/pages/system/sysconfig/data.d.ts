@@ -7,7 +7,6 @@ export interface SysconfigListItem  {
 
 export interface SysconfigList  {
   data?: SysconfigListItem[];
-  /** 列表的内容总数 */
   total?: number;
   success?: boolean;
 };

@@ -5,8 +5,9 @@ import {
   ProFormText,
   ProFormTextArea,
   ModalForm,
+  ProFormDependency,
   ProFormInstance
-  
+
 } from '@ant-design/pro-components';
 import { SysconfigListItem } from '../data.d';
 import { FormattedMessage, useIntl } from '@umijs/max';
@@ -25,7 +26,7 @@ export type UpdateFormProps = {
 const UpdateForm: React.FC<UpdateFormProps> = (props) => {
   const restFormRef = useRef<ProFormInstance>();
   const intl = useIntl();
- 
+
   const {
     onSubmit,
     onCancel,
@@ -33,9 +34,9 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
     values,
   } = props;
 
-  
+
   return (
-   
+
     <ModalForm
       modalProps={{ destroyOnClose: true }}
       initialValues={values}
@@ -43,30 +44,30 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         if (!vi) {
           props.onCancel();
         }
-          
+
       }}
       formRef={restFormRef}
-        onFinish={props.onSubmit}
-        open={props.updateModalOpen}
-        submitter={{
-          searchConfig: {
-            resetText: intl.formatMessage({
-              id: 'pages.reset',
-              defaultMessage: '重置',
-            }),
+      onFinish={props.onSubmit}
+      open={props.updateModalOpen}
+      submitter={{
+        searchConfig: {
+          resetText: intl.formatMessage({
+            id: 'pages.reset',
+            defaultMessage: 'xx',
+          }),
+        },
+        resetButtonProps: {
+          onClick: () => {
+            restFormRef.current?.resetFields();
+           
           },
-          resetButtonProps: {
-            onClick: () => {
-              restFormRef.current?.resetFields();
-              //   setModalVisible(false);
-            },
-          },
-        }}
-        title={intl.formatMessage({
-          id: 'pages.sysconfig.mod',
-          defaultMessage: 'Modify system config',
-        })}
-      >
+        },
+      }}
+      title={intl.formatMessage({
+        id: 'pages.sysconfig.mod',
+        defaultMessage: 'Modify system config',
+      })}
+    >
       <ProFormText
         name="name"
         label={intl.formatMessage({
@@ -74,6 +75,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           defaultMessage: 'Parameter Name',
         })}
         width="md"
+        disabled
         rules={[
           {
             required: true,
@@ -93,6 +95,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           defaultMessage: 'Parameter Key',
         })}
         width="md"
+        disabled
         rules={[
           {
             required: true,
@@ -105,27 +108,71 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           },
         ]}
       />
-      <ProFormText
-        name="value"
-        label={intl.formatMessage({
-          id: 'pages.sysconfig.value',
-          defaultMessage: 'Parameter Value',
-        })}
-        width="md"
-        rules={[
-          {
-            required: true,
-            message: (
-              <FormattedMessage
-                id="pages.rules.required"
-                defaultMessage=""
-              />
-            ),
-          },
-        ]}
-      />
+
+
+      <ProFormDependency name={['config_key']}>
+        {({ config_key }) => {
+
+
+          if (config_key == 'token_timeout') {
+            return <ProFormText
+              name="value"
+              label={"Login timeout duration (in seconds)"}
+              width="md"
+              rules={[
+                {
+                  required: true,
+                  message: (
+                    <FormattedMessage
+                      id="pages.rules.required"
+                      defaultMessage=""
+                    />
+                  ),
+                },
+              ]} />
+          } else {
+            return [<ProFormText
+              name="value1"
+              label={"Number of incorrect passwords in a row before locking user"}
+              width="md"
+              rules={[
+                {
+                  required: true,
+                  message: (
+                    <FormattedMessage
+                      id="pages.rules.required"
+                      defaultMessage=""
+                    />
+                  ),
+                },
+              ]} />,
+            <ProFormText
+              name="value2"
+              label={"Period (in seconds) in which incorrect passwords are entered in a row before locking user"}
+              width="md"
+              rules={[
+                {
+                  required: true,
+                  message: (
+                    <FormattedMessage
+                      id="pages.rules.required"
+                      defaultMessage=""
+                    />
+                  ),
+                },
+              ]} />
+
+            ]
+          }
+
+
+
+        }}
+      </ProFormDependency>
+
       <ProFormTextArea
         name="description"
+        disabled
         width="md"
         label={intl.formatMessage({
           id: 'pages.sysconfig.description',
@@ -134,7 +181,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
       />
     </ModalForm>
-     
+
   );
 };
 

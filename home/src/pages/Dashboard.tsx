@@ -11,7 +11,7 @@ import { getAlertBytransactionId } from './alert/service';
 import { alertrule } from './alertrule/service';
 import { organization } from './system/company/service';
 import { transaction, transactionevent, statistics } from './transaction/service';
-import { SvgIcon } from '@/components' // 自定义组件
+import { SvgIcon, getDurationInfo } from '@/components' // 自定义组件
 import { isPC, tree } from "@/utils/utils";
 import { Calendar } from 'antd-mobile'
 import { history, FormattedMessage } from '@umijs/max';
@@ -98,8 +98,8 @@ const Welcome: React.FC = () => {
   
   const [flowTreeAll, setFlowTreeAll] = useState<any>([]);
 
-
-  const [producttypeMap, setProducttypeMap] = useState<any>({});
+  const [flowConf, setFlowConf] = useState<any>({});
+ 
 
   const [transactionAlert, setTransactionAlert] = useState<any>({});
   const [organizationMap, setOrganizationMap] = useState<any>({});
@@ -118,7 +118,7 @@ const Welcome: React.FC = () => {
  
   const formRef = useRef<ProFormInstance>();
  // const [terminal_id, setTerminal_id] = useState(false);
-  const [tab, setTab] = useState('Terminal');
+  const [tab, setTab] = useState('Self');
   const access = useAccess();
  
   const { currentUser } = initialState || {};
@@ -168,128 +168,30 @@ const Welcome: React.FC = () => {
 
     }
 
+    flow({ type: 0, sorter: { sort: 'ascend' } }).then((res) => {
+      res.data.push({ name: 'Entire Duration', icon: 'icon-daojishi', pid: '                                    ', id: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' })
+      res.data.push({ name: 'Between 2 Events', icon: 'icon-yundongguiji', pid: '                                    ', id: 'b2e' })
 
-    statistics({
-      ...p, tab: {
-        'field': 'tab',
-        'op': 'eq',
-        'data': tab
-      }
-    }).then((res) => {
+      var m = {}
+      var ss = res.data.map((bb) => { m[bb.id] = bb; return { ...bb } })
+      setFlowConf(m)
+      var all = tree(ss, "                                    ", 'pid')
 
-      setStatisticsObj(res.data)
-
-      transaction({
-        ...p, status: {
-          'field': 'status',
-          'op': 'in',
-          'data': status.length==0?[0]: status.filter((s) => {return s==0 })
-        }
-      }).then((res) => {
-
-        hide()
-        setTransactionList(res.data)
-
-        var ids = res.data.map((t) => {
-          return t.id
-        })
-
-        transactionevent({
-          transaction_id: {
-            'field': 'transaction_id',
-            'op': 'in',
-            'data': ids
-          }, sorter: { event_time: 'ascend' }
-        }).then((res) => {
-          var m = {}
-          res.data.forEach((a) => {
-            if (!m[a.transaction_id]) {
-              m[a.transaction_id] = {
-                eventList: [], processMap: {},
-              }
-            }
-            m[a.transaction_id].eventList.push(a)
-
-          })
-          for (var kk in m) {
-            var eventList = m[kk].eventList
-            var processMap = {}
+      setFlowTreeAll(all)
 
 
 
-            eventList.forEach((a, index) => {
+      setFlowList(res.data)
+      // getAlertrule(all)
+      flow({ isGetAll: true, sorter: { sort: 'ascend' } }).then((res2) => {
+        var mm = {}
+        res2.data.forEach((bb) => { mm[bb.id] = bb })
+        get(mm)
+      })
+     
 
-              var obj = processMap[a.flow_pid]
-              if (!obj) {
-                obj = { duration: 0, process_duration: 0, status: 0, event_count: 0, eventArr: [], isFinish: false }
-              }
-              obj.eventArr.push(a)
-              if (a.flow_id == "66ba5680-d912-11ed-a7e5-47842df0d9cc") {
-
-                obj.isFinish = true
-              }
-
-              var next = res.data[index + 1]
-              if (next) {
-
-                if (next.flow_pid != a.flow_pid) {
-
-                  obj.process_duration = parseInt(((new Date(res.data[index + 1].event_time)).getTime() - (new Date(a.event_time)).getTime()) / 1000 + "")
-                }
-              }
-
-              processMap[a.flow_pid] = obj
-
-            })
-            for (var k in processMap) {
-              var ps = processMap[k].eventArr[0]
-              var es = processMap[k].eventArr[processMap[k].eventArr.length - 1]
-              processMap[k].duration = ((new Date(es.event_time)).getTime() - (new Date(ps.event_time)).getTime()) / 1000
-
-              processMap[k].event_count = processMap[k].eventArr.length
-            }
-
-
-
-
-
-
-            m[kk].processMap = processMap
-
-          }
-
-          var num = 0
-          var to = {}
-          for (var k in m) {
-            var p = m[k].processMap
-
-            for (var j in p) {
-              if (!to[j]) {
-                to[j] = { count: 0, duration: 0, avg: 0 }
-              }
-              if (p[j].isFinish) {
-
-                to[j].duration += p[j].duration
-                to[j].count++
-                to[j].avg = to[j].duration / to[j].count
-
-              }
-
-
-            }
-          }
-
-
-          setAvg_duration(to)
-
-
-          setTransactionMap(m)
-        });
-
-      });
-
-
-    });
+    })
+   
 
 
     organization({ sorter: { name: 'ascend' } }).then((res) => {
@@ -342,23 +244,7 @@ const Welcome: React.FC = () => {
 
 
     });
-    flow({ type: 0, sorter: { sort: 'ascend' } }).then((res) => {
-      res.data.push({ name: 'Entire Duration', icon: 'icon-daojishi', pid: '                                    ', id: 'aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa' })
-      res.data.push({ name: 'Between 2 Events', icon: 'icon-yundongguiji', pid: '                                    ', id: 'b2e' })
-      var ss = res.data.map((bb) => { return { ...bb } })
-
-      var all = tree(ss, "                                    ", 'pid')
-
-      setFlowTreeAll(all)
-
-
-
-      setFlowList(res.data)
-      // getAlertrule(all)
-
-      get()
-
-    })
+   
     const getAlertrule = (flowTreeAll) => {
       alertrule({
         transaction_id: "", tab: {
@@ -382,7 +268,140 @@ const Welcome: React.FC = () => {
 
 
 
-    const get = () => {
+    const get = (flowConf_) => {
+     
+      statistics({
+        ...p, tab: {
+          'field': 'tab',
+          'op': 'eq',
+          'data': tab
+        }
+      }).then((res) => {
+
+        setStatisticsObj(res.data)
+
+        transaction({
+          ...p, tab: {
+            'field': 'tab',
+            'op': 'eq',
+            'data': tab
+          }, status: {
+            'field': 'status',
+            'op': 'in',
+            'data': status.length == 0 ? [0] : status.filter((s) => { return s == 0 })
+          }
+        }).then((res) => {
+
+          hide()
+          setTransactionList(res.data)
+
+          var tm = {}
+          var ids = res.data.map((t) => {
+            tm[t.id] = t
+            return t.id
+          })
+
+          transactionevent({
+            transaction_id: {
+              'field': 'transaction_id',
+              'op': 'in',
+              'data': ids
+            }, sorter: { event_time: 'ascend' }
+          }).then((res) => {
+            var m = {}
+            res.data.forEach((a) => {
+              if (!m[a.transaction_id]) {
+                m[a.transaction_id] = {
+                  eventList: [], processMap: {},
+                }
+              }
+              m[a.transaction_id].eventList.push(a)
+
+            })
+            for (var kk in m) {
+              var eventList = m[kk].eventList
+              var processMap = {}
+              var info = getDurationInfo(eventList, flowConf_)
+              var td = 0
+              var e, s
+              e = new Date(info.ee.event_time).getTime()
+              s = new Date(info.se.event_time).getTime()
+
+              var currentRow_ = tm[kk]
+              if (currentRow_?.status == 0  ) {
+                if (!info.isEnd) {
+                  
+                  e = new Date().getTime()
+                }
+               
+                td = (e - s) / 1000
+              } else {
+                e = new Date(currentRow_.end_of_transaction).getTime()
+                td = currentRow_.total_duration
+              }
+
+
+
+
+              eventList.forEach((a, index) => {
+
+                var obj = processMap[a.flow_pid]
+                if (!obj) {
+                  obj = { duration: 0, process_duration: 0, status: 0, event_count: 0, eventArr: [], isFinish: false }
+                }
+                obj.eventArr.push(a)
+
+
+                var next = res.data[index + 1]
+                if (next) {
+
+                  if (next.flow_pid != a.flow_pid) {
+
+                    obj.process_duration = parseInt(((new Date(res.data[index + 1].event_time)).getTime() - (new Date(a.event_time)).getTime()) / 1000 + "")
+                  }
+                }
+
+                processMap[a.flow_pid] = obj
+
+              })
+              for (var k in processMap) {
+                var ps = processMap[k].eventArr[0]
+                var es = processMap[k].eventArr[processMap[k].eventArr.length - 1]
+                processMap[k].duration = ((new Date(es.event_time)).getTime() - (new Date(ps.event_time)).getTime()) / 1000
+
+                if (currentRow_?.status == 0 && currentRow_?.flow_id == k && !info.isEnd) {
+                  processMap[k].duration = ((new Date()).getTime() - (new Date(ps.event_time)).getTime()) / 1000
+                }
+
+                processMap[k].event_count = processMap[k].eventArr.length
+              }
+
+
+
+              processMap["aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"] = { duration: td, start_date: new Date(s), end_date: new Date(e) }
+
+
+              m[kk].processMap = processMap
+
+            }
+
+
+
+
+
+
+            setTransactionMap(m)
+          });
+
+        });
+
+
+      });
+
+
+
+
+
       getAlertBytransactionId({
         tab: {
           'field': 'tab',
@@ -455,15 +474,18 @@ const Welcome: React.FC = () => {
     'icon-yundongguiji': '#70AD47'
   }
   const getOrganizationName = () => {
+   
     if (access.canAdmin) {
       return 'Organization'
     }
     if (!(access.canAdmin || access.dashboard_tab())) {
-      return 'Terminal'
+      return 'Customer'
     }
     if (access.dashboard_tab()) {
       return 'Customer'
     }
+    
+   
   }
 
   const customizeRenderEmpty = () => {
@@ -503,13 +525,13 @@ const Welcome: React.FC = () => {
             activeKey: tab,
             items: [
               {
-                label: <div title="Threshold set by terminal">Terminal</div>,
-                key: 'Terminal',
+                label: <div title={"Threshold set by " + currentUser?.company_name }>{currentUser?.company_name}</div>,
+                key: 'Self',
                 children: null,
               },
               {
-                label: <div title="Threshold set by customer">Customer</div>,
-                key: 'Trader',
+                label: <div title={"Threshold set by Others"}>Others</div>,
+                key: 'Others',
                 children: null,
               }
             ],
@@ -695,12 +717,12 @@ const Welcome: React.FC = () => {
                 },
 
                 {
-                  title: access.dashboard_tab() ? "Customer" :"Trader",
-                  dataIndex: 'organization_id',
+                  title: "Trader",
+                  dataIndex: 'trader_name',
                   width: 200,
                  
                   align: "center",
-                  hideInTable: !(access.dashboard_tab() || access.canAdmin) ?true:false,
+                 
                   render: (dom, entity) => {
 
                     return entity.trader_name
@@ -708,10 +730,10 @@ const Welcome: React.FC = () => {
                 },
                 {
                   title: "Terminal",
-                  dataIndex: 'organization_id',
+                  dataIndex: 'terminal_name',
                   width: 200,
                 
-                  hideInTable: access.dashboard_tab() ? true : false,
+               
                   align: "center",
                   render: (dom, entity) => {
                   
@@ -771,7 +793,8 @@ const Welcome: React.FC = () => {
                   render: (dom, entity) => {
                     var p = transactionMap[entity.id]?.processMap[e.id]
                     var val = p?.duration
-                    var eventArr=p?.eventArr
+                   var total_duration = val
+                  /*  var eventArr=p?.eventArr
                     if (entity.status == 0 && eventArr?.length > 0 && entity.flow_id==e.id) {
                       val = ((new Date()).getTime() - (new Date(eventArr[0].event_time)).getTime()) / 1000
                     }
@@ -781,7 +804,7 @@ const Welcome: React.FC = () => {
                     var total_duration = entity.total_duration
                     if (entity.status == 0 && eventList?.length>0 ) {
                       total_duration = ((new Date()).getTime() - (new Date(eventList[0].event_time)).getTime())/1000
-                    }
+                    }*/
 
                     
                     var ta = transactionAlert[entity.id]?.[e.id]
@@ -989,8 +1012,26 @@ const Welcome: React.FC = () => {
               flowList.map((e, i) => {
 
                 return <Step status="finish" onClick={() => {
-                  dropByCacheKey("/threshold/alert");
-                  history.push(`/threshold/alert`, { organization_id, dateArr, flow_id: e.id, status,tab })
+                  var is=false
+                  if (tab == "Self") {
+                    if (access.canAlertList() ) {
+                      is = true
+                    }
+                  } else if (tab == "Others") {
+                    if (access.alert_list_tab() ) {
+                      is = true
+                    }
+                  }
+                  if (access.canAdmin) {
+                    is = true
+                  }
+                  if (is) {
+                    dropByCacheKey("/threshold/alert");
+                    history.push(`/threshold/alert`, { organization_id, dateArr, flow_id: e.id, status, tab })
+
+                  }
+                 
+                  
 
                 }} icon={
 
@@ -1074,7 +1115,24 @@ const Welcome: React.FC = () => {
                         <div style={{ position: 'absolute', zIndex: 0, top: 20, left: i == 0 ? '50%' : 0, width: i == 0 || i == 4 ? '50%' : (i > 4 ? '0' : '100%'), height: 2, backgroundColor: '#8aabe5', overflow: 'hidden', }}></div>
 
                         <div style={{ position: 'relative', zIndex: 1, cursor: 'pointer' }} onClick={() => {
-                          history.push(`/threshold/alert`, { organization_id, dateArr, flow_id: e.id ,status,tab})
+                          var is = false
+                          if (tab == "Self") {
+                            if (access.canAlertList()) {
+                              is = true
+                            }
+                          } else if (tab == "Others") {
+                            if (access.alert_list_tab()) {
+                              is = true
+                            }
+                          }
+                          if (access.canAdmin) {
+                            is = true
+                          }
+                          if (is) {
+                            dropByCacheKey("/threshold/alert");
+                            history.push(`/threshold/alert`, { organization_id, dateArr, flow_id: e.id, status, tab })
+
+                          }
 
                         }}>
                           <span className="my-font-size" style={{

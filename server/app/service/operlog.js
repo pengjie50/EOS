@@ -36,6 +36,36 @@ class OperlogService extends Service {
 
         }]
         obj.raw = true
+        var is_report = false
+
+        if (obj.where.is_report) {
+            is_report = true
+        }
+        delete obj.where.is_report
+
+        var report
+        if (is_report) {
+
+            report = await ctx.model.Report.findOne({ where: { id: obj.where.report_id } })
+            if (report && report.json_string) {
+
+                var backData = eval('(' + report.json_string + ')')
+                ctx.body = backData
+
+                return
+
+
+            } else {
+                obj.offset = 0
+                obj.limit = 1000000000
+
+            }
+
+            delete obj.where.report_id
+
+
+
+        }
         const list = await ctx.model.Operlog.findAndCountAll(obj)
 
         ctx.status = 200;
@@ -45,6 +75,11 @@ class OperlogService extends Service {
             data: list.rows
 
         };
+        if (is_report) {
+            report.update({ json_string: JSON.stringify(ctx.body) })
+
+
+        }
 
     }
     async add(params) {

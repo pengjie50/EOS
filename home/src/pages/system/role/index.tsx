@@ -5,8 +5,10 @@ import { addRole, removeRole, role, updateRole, updateRoleMenu, queryMenuByRoleI
 import { PlusOutlined, SearchOutlined, FormOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import type { ActionType, ProColumns, ProDescriptionsItemProps } from '@ant-design/pro-components';
 import { RoleList, RoleListItem } from './data.d';
+import { ResizeObserverDo } from '@/components'
 import { fieldSelectData } from '@/services/ant-design-pro/api';
-import MenuForm from './components/MenuForm';
+
+import moment from 'moment'
 import {
   FooterToolbar,
   ModalForm,
@@ -29,7 +31,6 @@ const { confirm } = Modal;
 import { InfiniteScroll, List, NavBar, Space, DotLoading } from 'antd-mobile'
 /**
  * @en-US Add node
- * @zh-CN 添加节点
  * @param fields
  */
 const handleAdd = async (fields: RoleListItem) => {
@@ -38,6 +39,9 @@ const handleAdd = async (fields: RoleListItem) => {
     defaultMessage="Adding"
   />);
   try {
+
+
+
     await addRole({ ...fields });
     hide();
     message.success(<FormattedMessage
@@ -57,16 +61,15 @@ const handleAdd = async (fields: RoleListItem) => {
 
 /**
  * @en-US Update node
- * @zh-CN 更新节点
  *
  * @param fields
  */
-const handleUpdate = async (fields: Partial<RoleListItem> ) => {
+const handleUpdate = async (fields: Partial<RoleListItem>) => {
   const hide = message.loading(<FormattedMessage
     id="pages.modifying"
     defaultMessage="Modifying"
   />);
- 
+
   try {
     await updateRole({
       ...fields
@@ -91,7 +94,6 @@ const handleUpdate = async (fields: Partial<RoleListItem> ) => {
 
 /**
  *  Delete node
- * @zh-CN 删除节点
  *
  * @param selectedRows
  */
@@ -144,19 +146,16 @@ const handleRemove = async (selectedRows: RoleListItem[], callBack: any) => {
 const TableList: React.FC = () => {
   /**
    * @en-US Pop-up window of new window
-   * @zh-CN 新建窗口的弹窗
    *  */
   const [createModalOpen, handleModalOpen] = useState<boolean>(false);
   /**
    * @en-US The pop-up window of the distribution update window
-   * @zh-CN 分布更新窗口的弹窗
    * */
   const [updateModalOpen, handleUpdateModalOpen] = useState<boolean>(false);
 
   const [showDetail, setShowDetail] = useState<boolean>(false);
 
-  const [stepMenuFormValues, setMenuStepFormValues] = useState({});
-  const [updateMenuModalVisible, handleUpdateMenuModalVisible] = useState<boolean>(false);
+ 
   const [MPSorter, setMPSorter] = useState<any>({});
   const actionRef = useRef<ActionType>();
   const [currentRow, setCurrentRow] = useState<RoleListItem>();
@@ -165,7 +164,6 @@ const TableList: React.FC = () => {
   const [resizeObj, setResizeObj] = useState({ searchSpan: 12, tableScrollHeight: 300 });
   /**
    * @en-US International configuration
-   * @zh-CN 国际化配置
    * */
   const intl = useIntl();
   //--MP start
@@ -223,6 +221,9 @@ const TableList: React.FC = () => {
   const [hasMore, setHasMore] = useState(true)
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [MPfilter, setMPfilter] = useState<any>({})
+
+  const [role_idData, setRole_idData] = useState<any>({})
+
   const [nameData, setNameData] = useState<any>({})
   async function getData(page, filter__) {
     var sorter = {}
@@ -258,11 +259,50 @@ const TableList: React.FC = () => {
     {
       title: <FormattedMessage id="pages.role.xxx" defaultMessage="Role ID" />,
       dataIndex: 'role_id',
-      hideInSearch: true,
-      width:130,
+      valueEnum: role_idData,
+      width: 130,
       sorter: true,
-       render: (dom, entity) => {
-         return "R"+dom
+      defaultSortOrder: 'descend',
+      search: {
+        transform: (value) => {
+          if (value && value.length > 0) {
+            return {
+              'name': {
+                'field': 'role_id',
+                'op': 'in',
+                'data': value
+              }
+            }
+          }
+
+        }
+      },
+      fieldProps: {
+        multiple: true,
+        mode: 'multiple',
+        maxTagCount: 0,
+        maxTagPlaceholder: (omittedValues) => {
+          return omittedValues.length + " Selected"
+        },
+        notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
+        showSearch: true,
+        allowClear: true,
+        onFocus: () => {
+          fieldSelectData({ model: "Role", value: '', field: 'role_id' }).then((res) => {
+            setRole_idData(res.data)
+          })
+        },
+        onSearch: (newValue: string) => {
+
+          fieldSelectData({ model: 'Role', value: newValue, field: 'role_id' }).then((res) => {
+            setRole_idData(res.data)
+          })
+
+        }
+      },
+      render: (dom, entity) => {
+
+        return "R" + entity.role_id
       }
     },
     {
@@ -328,33 +368,19 @@ const TableList: React.FC = () => {
       },
     },
 
-    /*{
-      title: <FormattedMessage id="pages.xxx" defaultMessage="Role Type" />,
-      dataIndex: 'type',
-      sorter: true,
-      valueEnum: {
-        "Surveyor": "Surveyor",
-        "Trader": "Trader",
-        "Agent": "Agent",
-        "Terminal": "Oil Terminal",
-        "Pilot": "Pilot",
-        "Super": "Super",
-
-
-      }
-    },*/
+    
 
     {
       title: <FormattedMessage id="pages.role.description" defaultMessage="Description" />,
       dataIndex: 'description',
-      hideInSearch:true,
+      hideInSearch: true,
       valueType: 'textarea',
     },
     {
       title: (
         <FormattedMessage
           id="pages.createdAt"
-          defaultMessage="Created at"
+          defaultMessage="Created At"
         />
       ),
       sorter: true,
@@ -364,9 +390,41 @@ const TableList: React.FC = () => {
 
     },
     {
+      title: "Created At",
+
+
+      hideInDescriptions: true,
+      hideInTable: true,
+      fieldProps: { style: { width: '100%' }, placeholder: ['From ', 'To '] },
+
+      dataIndex: 'created_at',
+      valueType: 'dateRange',
+
+      search: {
+        transform: (value) => {
+          if (value.length > 0) {
+            value[0] = moment(new Date(value[0])).format('YYYY-MM-DD') + " 00:00:00"
+            value[1] = moment(new Date(value[1])).format('YYYY-MM-DD') + " 23:59:59"
+            return {
+              'created_at': {
+                'field': 'created_at',
+                'op': 'between',
+                'data': value
+              }
+
+            }
+          }
+
+        }
+      }
+
+
+
+    },
+    {
       title: <FormattedMessage id="pages.searchTable.titleOption" defaultMessage="Operating" />,
       dataIndex: 'option',
-      width:80,
+      width: 80,
       valueType: 'option',
       render: (_, record) => [
         <a
@@ -374,51 +432,45 @@ const TableList: React.FC = () => {
           onClick={async () => {
 
 
-           
+
 
             var r = await queryMenuByRoleId({ role_id: record.id })
-            record.accessible_permissions= r.data.map((p) => {
+
+
+            record.accessible_permissions = r.data.map((p) => {
               return p.permission_id
             })
-           
+
             setCurrentRow(record);
             handleUpdateModalOpen(true);
           }}
         >
           <FormOutlined style={{ fontSize: '20px' }} />
         </a>,
-        
-          <a
-            title={formatMessage({ id: "pages.delete", defaultMessage: "Delete" })}
-            key="config"
-            onClick={() => {
-              setCurrentRow(record);
-              handleRemove([record], (success) => {
-                if (success) {
-                  if (isMP) {
-                    setData([]);
-                    getData(1, MPfilter)
-                  }
-                  actionRef.current?.reloadAndRest?.();
-                }
-              });
 
-
-            }}
-          >
-            <DeleteOutlined style={{ fontSize: '20px', color: 'red' }} />
-
-          </a>,
-       /* <a
-          
+        <a
+          title={formatMessage({ id: "pages.delete", defaultMessage: "Delete" })}
+          key="config"
           onClick={() => {
-            handleUpdateMenuModalVisible(true);
-            setMenuStepFormValues(record);
+            setCurrentRow(record);
+            handleRemove([record], (success) => {
+              if (success) {
+                if (isMP) {
+                  setData([]);
+                  getData(1, MPfilter)
+                }
+                actionRef.current?.reloadAndRest?.();
+              }
+            });
+
+
           }}
         >
-          Assign permissions
-          </a>*/
-       
+          <DeleteOutlined style={{ fontSize: '20px', color: 'red' }} />
+
+        </a>,
+      
+
       ],
     },
   ];
@@ -444,117 +496,103 @@ const TableList: React.FC = () => {
     <RcResizeObserver
       key="resize-observer"
       onResize={(offset) => {
-        const { innerWidth, innerHeight } = window;
+        ResizeObserverDo(offset, setResizeObj, resizeObj)
 
-        if (offset.width > 1280) {
-          
-          setResizeObj({ ...resizeObj, searchSpan: 8, tableScrollHeight: innerHeight - 420 });
-        }
-        if (offset.width < 1280 && offset.width > 900) {
-          
-          setResizeObj({ ...resizeObj, searchSpan: 12, tableScrollHeight: innerHeight - 420 });
-        }
-        if (offset.width < 900 && offset.width > 700) {
-          setResizeObj({ ...resizeObj, searchSpan: 24, tableScrollHeight: innerHeight - 420 });
-         
-        }
-
-       
 
       }}
     >
       <PageContainer className="myPage" header={{
-      title: isMP ? null : < FormattedMessage id="pages.role.title" defaultMessage="Role" />,
-      breadcrumb: {},
-      extra: isMP ? null : [
-        <Button
-          type="primary"
-          key="primary"
-          onClick={() => {
-            handleModalOpen(true);
-          }}
-        >
-          <PlusOutlined /> <FormattedMessage id="pages.xxx" defaultMessage="Create New Role" />
-        </Button>,
-      ]
-    }}>
+        title: isMP ? null : < FormattedMessage id="pages.role.title" defaultMessage="Role" />,
+        breadcrumb: {},
+        extra: isMP ? null : [
+          <Button
+            type="primary"
+            key="primary"
+            onClick={() => {
+              handleModalOpen(true);
+            }}
+          >
+            <PlusOutlined /> <FormattedMessage id="pages.xxx" defaultMessage="Create New Role" />
+          </Button>,
+        ]
+      }}>
         {!isMP && (<ConfigProvider renderEmpty={customizeRenderEmpty}><ProTable<RoleListItem, API.PageParams>
           pagination={{ size: "default" }}
-        actionRef={actionRef}
+          actionRef={actionRef}
           rowKey="id"
           formRef={formRef}
           scroll={{ x: '100%', y: resizeObj.tableScrollHeight }}
-        search={{
-          labelWidth: 120,
-          span: resizeObj.searchSpan,
-          searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
-        }}
-        options={false}
-        className="mytable"
-        request={(params, sorter) => role({ ...params, sorter })}
+          search={{
+            labelWidth: 120,
+            span: resizeObj.searchSpan,
+            searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
+          }}
+          options={false}
+          className="mytable"
+          request={(params, sorter) => role({ ...params, sorter })}
           columns={columns}
           bordered
         /></ConfigProvider >)}
 
-      {isMP && (<>
+        {isMP && (<>
 
           <NavBar backArrow={false} left={
             <MPSort columns={columns} onSort={(k) => {
               setMPSorter(k)
               getData(1)
             }} />} right={right} onBack={back}>
-          {intl.formatMessage({
-            id: 'pages.role.title',
-            defaultMessage: 'Role',
-          })}
-        </NavBar>
+            {intl.formatMessage({
+              id: 'pages.role.title',
+              defaultMessage: 'Role',
+            })}
+          </NavBar>
 
-        <div style={{ padding: '20px', backgroundColor: "#5000B9", display: showMPSearch ? 'block' : 'none' }}>
-          <Search columns={columns.filter(a => !(a.hasOwnProperty('hideInSearch') && a['hideInSearch']))} action={actionRef} loading={false}
+          <div style={{ padding: '20px', backgroundColor: "#5000B9", display: showMPSearch ? 'block' : 'none' }}>
+            <Search columns={columns.filter(a => !(a.hasOwnProperty('hideInSearch') && a['hideInSearch']))} action={actionRef} loading={false}
 
-            onFormSearchSubmit={onFormSearchSubmit}
+              onFormSearchSubmit={onFormSearchSubmit}
 
-            dateFormatter={'string'}
+              dateFormatter={'string'}
               formRef={formRef}
-            type={'form'}
-            cardBordered={true}
-            form={{
-              submitter: {
-                searchConfig: {
+              type={'form'}
+              cardBordered={true}
+              form={{
+                submitter: {
+                  searchConfig: {
 
-                  submitText: < FormattedMessage id="pages.search" defaultMessage="Search" />,
+                    submitText: < FormattedMessage id="pages.search" defaultMessage="Search" />,
+                  }
+
                 }
+              }}
 
-              }
-            }}
+              search={{}}
+              manualRequest={true}
+            />
+          </div>
+          <List>
+            {data.map((item, index) => (
+              <List.Item key={index}>
 
-            search={{}}
-            manualRequest={true}
-          />
-        </div>
-        <List>
-          {data.map((item, index) => (
-            <List.Item key={index}>
+                <ProDescriptions<any>
+                  bordered={true}
+                  size="small"
+                  className="jetty-descriptions"
+                  layout="horizontal"
+                  column={1}
+                  title={""}
+                  request={async () => ({
+                    data: item || {},
+                  })}
+                  params={{
+                    id: item?.id,
+                  }}
+                  columns={columns as ProDescriptionsItemProps<any>[]}
+                />
 
-              <ProDescriptions<any>
-                bordered={true}
-                size="small"
-                className="jetty-descriptions"
-                layout="horizontal"
-                column={1}
-                title={""}
-                request={async () => ({
-                  data: item || {},
-                })}
-                params={{
-                  id: item?.id,
-                }}
-                columns={columns as ProDescriptionsItemProps<any>[]}
-              />
-
-            </List.Item>
-          ))}
-        </List>
+              </List.Item>
+            ))}
+          </List>
           {MPPagination.total > 0 ? <div style={{ textAlign: 'center', padding: "20px 10px 90px 10px" }}>
             <Pagination
 
@@ -570,114 +608,86 @@ const TableList: React.FC = () => {
             />
           </div> : customizeRenderEmpty()}
           <FloatButton.BackTop visibilityHeight={0} />
-      </>)}
-      
-      
-      <CreateForm
-        onSubmit={async (value) => {
-          value.id = currentRow?.id
-          const success = await handleAdd(value as RoleListItem);
-          if (success) {
-            handleModalOpen(false);
-            setCurrentRow(undefined);
-            if (isMP) {
-              setData([]);
-              getData(1, MPfilter)
-            }
-            if (actionRef.current) {
-              actionRef.current.reload();
-            }
-          }
-        }}
-        onCancel={() => {
-          handleModalOpen(false);
-          if (!showDetail) {
-            setCurrentRow(undefined);
-          }
-        }}
-        createModalOpen={createModalOpen}
-        
-      />
-      <UpdateForm
-        onSubmit={async (value) => {
+        </>)}
+
+
+        <CreateForm
+          onSubmit={async (value) => {
             value.id = currentRow?.id
-           
-          const success = await handleUpdate(value);
-          if (success) {
+            const success = await handleAdd(value as RoleListItem);
+            if (success) {
+              handleModalOpen(false);
+              setCurrentRow(undefined);
+              if (isMP) {
+                setData([]);
+                getData(1, MPfilter)
+              }
+              if (actionRef.current) {
+                actionRef.current.reload();
+              }
+            }
+          }}
+          onCancel={() => {
+            handleModalOpen(false);
+            if (!showDetail) {
+              setCurrentRow(undefined);
+            }
+          }}
+          createModalOpen={createModalOpen}
+
+        />
+        <UpdateForm
+          onSubmit={async (value) => {
+            value.id = currentRow?.id
+
+            const success = await handleUpdate(value);
+            if (success) {
+              handleUpdateModalOpen(false);
+              setCurrentRow(undefined);
+              if (isMP) {
+                setData([]);
+                getData(1, MPfilter)
+              }
+              if (actionRef.current) {
+                actionRef.current.reload();
+              }
+            }
+          }}
+          onCancel={() => {
             handleUpdateModalOpen(false);
-            setCurrentRow(undefined);
-            if (isMP) {
-              setData([]);
-              getData(1, MPfilter)
+            if (!showDetail) {
+              setCurrentRow(undefined);
             }
-            if (actionRef.current) {
-              actionRef.current.reload();
-            }
-          }
-        }}
-        onCancel={() => {
-          handleUpdateModalOpen(false);
-          if (!showDetail) {
-            setCurrentRow(undefined);
-          }
-        }}
-        updateModalOpen={updateModalOpen}
+          }}
+          updateModalOpen={updateModalOpen}
           values={{ ...currentRow, accessible_timestamp: currentRow?.accessible_timestamp?.split(","), accessible_organization: currentRow?.accessible_organization?.split(",") } || {}}
-      />
-      <MenuForm
-        onSubmit={async (value) => {
-          const success = await updateRoleMenu(value);
-          if (success) {
-            handleUpdateMenuModalVisible(false);
-            setMenuStepFormValues({});
-            if (actionRef.current) {
-              actionRef.current.reload();
-            }
-          }
-        }}
-        onCancel={() => {
-          handleUpdateMenuModalVisible(false);
-          setMenuStepFormValues({});
-        }}
-        updateMenuModalVisible={updateMenuModalVisible}
-        currentData={stepMenuFormValues}
-      />
-      <Drawer
-        width={isMP ? '100%' : 600}
-        open={showDetail}
-        onClose={() => {
-          setCurrentRow(undefined);
-          setShowDetail(false);
-        }}
-        closable={isMP ? true : false}
-      >
-        {currentRow?.name && (
-          <ProDescriptions<RoleListItem>
-            column={isMP ? 1 : 2}
-           
-            title={currentRow?.name}
-            request={async () => ({
-              data: currentRow || {},
-            })}
-            params={{
-              id: currentRow?.name,
-            }}
-            columns={columns as ProDescriptionsItemProps<RoleListItem>[]}
-          />
-        )}
-      </Drawer>
-        {/*
-         <div style={{ marginTop: -45, paddingLeft: 10 }}>
-          <Button
+        />
+        
+        <Drawer
+          width={isMP ? '100%' : 600}
+          open={showDetail}
+          onClose={() => {
+            setCurrentRow(undefined);
+            setShowDetail(false);
+          }}
+          closable={isMP ? true : false}
+        >
+          {currentRow?.name && (
+            <ProDescriptions<RoleListItem>
+              column={isMP ? 1 : 2}
 
-            type="primary"
-            onClick={async () => {
-              history.back()
-            }}
-          >Return to previous page</Button>
-        </div>
-
-        */ }
+              title={currentRow?.name}
+              request={async () => ({
+                data: currentRow || {},
+              })}
+              params={{
+                id: currentRow?.name,
+              }}
+              columns={columns as ProDescriptionsItemProps<RoleListItem>[]}
+            />
+          )}
+        </Drawer>
+      
       </PageContainer></RcResizeObserver>
   );
 };

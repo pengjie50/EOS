@@ -9,7 +9,7 @@ import { addReport } from '../report/service';
 import { organization } from '../system/company/service';
 import { alert as getAlert } from '../alert/service';
 import { reportSummary } from './service';
-import { SvgIcon } from '@/components'
+import { SvgIcon, ResizeObserverDo, keyNameMap, getDiff } from '@/components'
 import { columnsBase as columns4 } from '../system/operlog/SuperUserActivity';
 import { columnsBase as columns5 } from '../system/loginlog/index';
 import { columnsBase as columns6 } from '../system/operlog/index';
@@ -47,8 +47,8 @@ import CreateForm from './components/CreateForm';
 import UpdateForm from './components/UpdateForm';
 import { flow } from '../system/flow/service';
 import { alertrule } from '../alertrule/service';
-import { terminal } from '../system/terminal/service';
-import { producttype } from '../system/producttype/service';
+
+
 import { jetty } from '../system/jetty/service';
 import { isPC } from "@/utils/utils";
 const { confirm } = Modal;
@@ -56,9 +56,14 @@ const { confirm } = Modal;
 
 //MP
 import { InfiniteScroll, List, NavBar, Space, DotLoading } from 'antd-mobile'
+
+
+
+
+
+
 /**
  * @en-US Add node
- * @zh-CN 添加节点
  * @param fields
  */
 const handleAdd = async (fields: any) => {
@@ -86,7 +91,6 @@ const handleAdd = async (fields: any) => {
 
 /**
  * @en-US Update node
- * @zh-CN 更新节点
  *
  * @param fields
  */
@@ -170,21 +174,10 @@ const handleRemove = async (selectedRows: TransactionListItem[], callBack: any) 
 
 
 const TableList: React.FC = () => {
-  /**
-   * @en-US Pop-up window of new window
-   * @zh-CN 新建窗口的弹窗
-   *  */
-  const [createModalOpen, handleModalOpen] = useState<boolean>(false);
-  /**
-   * @en-US The pop-up window of the distribution update window
-   * @zh-CN 分布更新窗口的弹窗
-   * */
-  const [updateModalOpen, handleUpdateModalOpen] = useState<boolean>(false);
-
-  const [showDetail, setShowDetail] = useState<boolean>(false);
+ 
 
   const actionRef = useRef<ActionType>();
-  const [currentRow, setCurrentRow] = useState<TransactionListItem>();
+ 
   const [selectedRowsState, setSelectedRows] = useState<TransactionListItem[]>([]);
   const { initialState } = useModel('@@initialState');
   const { currentUser } = initialState || {};
@@ -192,16 +185,16 @@ const TableList: React.FC = () => {
   const [paramsText, setParamsText] = useState<string>('');
   const [flowConf, setFlowConf] = useState<any>({});
   const [organizationList, setOrganizationList] = useState<any>({});
-  const [terminalList, setTerminalList] = useState<any>({});
+
   const [jettyList, setJettyList] = useState<any>({});
-  const [producttypeList, setProducttypeList] = useState<any>({});
-  const [sumRow, setSumRow] = useState<TransactionListItem>();
+
+  
   const [processes, setProcesses] = useState<any>([]);
   const [events, setEvents] = useState<any>([]);
 
   const [resizeObj, setResizeObj] = useState({ searchSpan: 12, tableScrollHeight: 300 });
   //--MP start
-  const MPSearchFormRef = useRef<ProFormInstance>();
+  
 
   const [showMPSearch, setShowMPSearch] = useState<boolean>(false);
   const [isMP, setIsMP] = useState<boolean>(!isPC());
@@ -211,59 +204,71 @@ const TableList: React.FC = () => {
   const getTimeStr = (time) => {
     return (time ? parseInt((time / 3600) + "") : 0) + "h " + (time ? parseInt((time % 3600) / 60) : 0) + "m"
   }
+  var report_id = useLocation()?.state?.id
 
   var report_type = useLocation()?.state?.type
   var report_name = useLocation()?.state?.name
   var value = eval('(' + useLocation()?.state?.value + ')');
 
-  var Fields=[]
+  var Fields = []
   //var value = useLocation()?.state?.value;
-  if(value){
+  if (value) {
 
 
+    var filter = {}
+    if (value.total_nominated_quantity && value.total_nominated_quantity.length > 0) {
 
-  var filter = {}
-  if (value.imo_number) {
-    var a = {}
-    a.field = report_type == 3 ? 't.imo_number' :'imo_number'
-    a.op = 'in'
-    a.data = value.imo_number
-    filter.imo_number = a
-  }
-
-
-    if (value.eos_id) {
       var a = {}
-      a.field = report_type==3?"t.eos_id":'eos_id'
-      a.op = 'in'
-      a.data = value.eos_id
-      filter.eos_id = a
+
+      a.field = report_type == 3 ? 't.product_quantity_in_' + value.uom.toLowerCase() : 'product_quantity_in_' + value.uom.toLowerCase()
+      a.op = 'between'
+      a.data = value.total_nominated_quantity
+      filter[a.field] = a
     }
 
-  if (value.vessel_name) {
-    var a = {}
-    a.field = report_type == 3 ? "t.vessel_name" : 'vessel_name'
-    a.op = 'in'
-    a.data = value.vessel_name
-    filter.vessel_name = a
-  }
-  var product_name_str ="All Product"
-  if (value.product_name) {
-    var a = {}
-    a.field = report_type == 3 ? "t.product_name" : 'product_name'
-    a.op = 'in'
-    a.data = value.product_name
-    filter.product_name = a
-
-    product_name_str = value.product_name
-  }
 
 
-  
+    if (value.imo_number && value.imo_number.length > 0) {
+      var a = {}
+      a.field = report_type == 3 ? 't.imo_number' : 'imo_number'
+      a.op = 'in'
+      a.data = value.imo_number
+      filter[a.field] = a
+    }
+
+
+    if (value.eos_id && value.eos_id.length > 0) {
+      var a = {}
+      a.field = report_type == 3 ? "t.eos_id" : 'eos_id'
+      a.op = 'in'
+      a.data = value.eos_id
+      filter[a.field] = a
+    }
+
+    if (value.vessel_name && value.vessel_name.length > 0) {
+      var a = {}
+      a.field = report_type == 3 ? "t.vessel_name" : 'vessel_name'
+      a.op = 'in'
+      a.data = value.vessel_name
+      filter[a.field] = a
+    }
+    var product_name_str = "All Product"
+    if (value.product_name && value.product_name.length > 0) {
+      var a = {}
+      a.field = report_type == 3 ? "t.product_name" : 'product_name'
+      a.op = 'in'
+      a.data = value.product_name
+      filter[a.field] = a
+
+      product_name_str = value.product_name
+    }
 
 
 
-    if (value.vessel_size_dwt) {
+
+
+
+    if (value.vessel_size_dwt && value.vessel_size_dwt.length > 0) {
       var a = {}
 
       if (report_type == 1 || report_type == 2) {
@@ -272,15 +277,15 @@ const TableList: React.FC = () => {
         a.field = 't.vessel_size_dwt'
       }
 
-     
+
       a.op = 'between'
       a.data = value.vessel_size_dwt.split("-")
-      filter.vessel_size_dwt = a
+      filter[a.field] = a
     }
 
 
 
-    if (value.organization_id) {
+    if (value.organization_id && value.organization_id.length > 0) {
       var a = {}
       a.field = 'organization_id'
       a.op = 'in'
@@ -296,112 +301,109 @@ const TableList: React.FC = () => {
     }
 
 
-    if (value.jetty_name) {
+    if (value.jetty_name && value.jetty_name.length > 0) {
 
-      
-    var a = {}
-      a.field = report_type == 3 ? "t.jetty_name" : 'jetty_name' 
-    a.op = 'in'
+
+      var a = {}
+      a.field = report_type == 3 ? "t.jetty_name" : 'jetty_name'
+      a.op = 'in'
       a.data = value.jetty_name
-      filter.jetty_name = a
+      filter[a.field] = a
+    }
+    if (value.hasOwnProperty('status')) {
+      var a = {}
+      a.field = report_type == 3 ? "t.status" : 'status'
+      a.op = 'in'
+      a.data = value.status
+      filter[a.field] = a
+    }
+
+
+
+
+    if (value.flow_id && value.flow_id.length > 0) {
+
+
+      filter.flow_id = {
+        'field': 'flow_id',
+        'op': 'in',
+        'data': value.flow_id
+      }
+
+    }
+
+    if (value.flow_id_to && value.flow_id_to.length > 0) {
+
+
+      filter.flow_id = {
+        'field': 'flow_id',
+        'op': 'in',
+        'data': value.flow_id_to.map((a) => {
+          return a.split('_')[0]
+        })
+      }
+      filter.flow_id_to = {
+        'field': 'flow_id_to',
+        'op': 'in',
+        'data': value.flow_id_to.map((a) => {
+          return a.split('_')[1]
+        })
+      }
+    }
+
+
+    var dateStr = ""
+
+    if (value.dateArr && value.dateArr.length > 0) {
+      var field = "oper_time"
+      if (report_type == 1 || report_type == 2) {
+        field = "start_of_transaction"
+      } else if (report_type == 3) {
+        field = "t.start_of_transaction"
+      }
+
+      filter[field] = {
+        'field': field,
+        'op': 'between',
+        'data': value.dateArr
+      }
+
+      dateStr = moment(value.dateArr[0]).format('YYYY/MM/DD') + " - " + moment(value.dateArr[1]).format('YYYY/MM/DD')
+    }
+
+    if (value.dateRange && value.dateRange.length > 0) {
+      value.dateRange[0] = moment(new Date(value.dateRange[0])).format('YYYY-MM-DD') + " 00:00:00"
+      value.dateRange[1] = moment(new Date(value.dateRange[1])).format('YYYY-MM-DD') + " 23:59:59"
+      var field = "oper_time"
+      if (report_type == 1 || report_type == 2) {
+        field = "start_of_transaction"
+      } else if (report_type == 3) {
+        field = "t.start_of_transaction"
+      }
+      filter[field] = {
+        'field': field,
+        'op': 'between',
+        'data': value.dateRange
+      }
+
+      dateStr = moment(value.dateRange[0]).format('YYYY/MM/DD') + " To " + moment(value.dateRange[1]).format('YYYY/MM/DD')
+    }
+
+
+
+    Fields = value.selected_fields
+
+
   }
-  if (value.hasOwnProperty('status')) {
-    var a = {}
-    a.field = report_type == 3 ? "t.status" : 'status' 
-    a.op = 'in'
-    a.data = value.status
-    filter.status = a
-  }
+
+
+
  
 
 
 
-  if (value.flow_id && value.flow_id.length>0) {
-
-    
-    filter.flow_id =  {
-        'field': 'flow_id',
-          'op': 'in',
-          'data': value.flow_id
-      }
-    
-  }
-  
-  if (value.flow_id_to && value.flow_id_to.length > 0) {
-
-    
-    filter.flow_id={
-        'field': 'flow_id',
-          'op': 'in',
-      'data': value.flow_id_to.map((a) => {
-              return a.split('_')[0]
-            })
-      }
-    filter.flow_id_to={
-        'field': 'flow_id_to',
-          'op': 'in',
-      'data': value.flow_id_to.map((a) => {
-              return a.split('_')[1]
-            })
-      }
-  }
-
-
-  var dateStr=""
-
-  if (value.dateArr && value.dateArr.length>0) {
-    var field = "oper_time"
-    if (report_type == 1 || report_type == 2) {
-      field = "start_of_transaction"
-    } else if (report_type == 3) {
-      field = "t.start_of_transaction"
-    }
-   
-    filter.start_of_transaction={
-      'field': field,
-          'op': 'between',
-      'data': value.dateArr
-      }
-     
-    dateStr = moment(value.dateArr[0]).format('YYYY/MM/DD') + " - " + moment(value.dateArr[1]).format('YYYY/MM/DD')
-  }
-
-  if (value.dateRange && value.dateRange.length > 0) {
-    value.dateRange[0] = moment(new Date(value.dateRange[0])).format('YYYY-MM-DD') + " 00:00:00"
-    value.dateRange[1] = moment(new Date(value.dateRange[1])).format('YYYY-MM-DD') + " 23:59:59"
-    var field = "oper_time"
-    if (report_type == 1 || report_type == 2) {
-      field = "start_of_transaction"
-    } else if (report_type == 3) {
-      field = "t.start_of_transaction"
-    }
-    filter.start_of_transaction = {
-      'field': field,
-      'op': 'between',
-      'data': value.dateRange
-    }
-    
-    dateStr = moment(value.dateRange[0]).format('YYYY/MM/DD') + " To " + moment(value.dateRange[1]).format('YYYY/MM/DD')
-  }
-
-
-
-   Fields = value.selected_fields
-
-
-  }
-
-  
-
-  const [terminal_id, setTerminal_id] = useState<any>(useLocation()?.state?.terminal_id);
-  const [dateArr, setDateArr] = useState<any>(useLocation()?.state?.dateArr);
-  const [status, setStatus] = useState<any>(useLocation()?.state?.status);
-
-
-
-
-  const [transaction_total_num, setTransaction_total_num] = useState<any>(0);
-  const [transaction_filter_num, setTransaction_filter_num] = useState<any>(0);
+  const [start_time, setStart_time] = useState<any>(null);
+  const [end_time, setEnd_time] = useState<any>(null);
 
 
   const [moreOpen, setMoreOpen] = useState<boolean>(false);
@@ -411,7 +413,7 @@ const TableList: React.FC = () => {
   const right = (
     <div style={{ fontSize: 24 }}>
       <Space style={{ '--gap': '10px' }}>
-       <Button type="primary" style={{ width: "100%" }} key="print"
+        <Button type="primary" style={{ width: "100%" }} key="print"
           onClick={() => {
             setMoreOpen(false)
             handlePrintModalVisible(true)
@@ -420,9 +422,9 @@ const TableList: React.FC = () => {
         </Button>, <Button style={{ width: "100%" }} type="primary" key="out"
           onClick={() => exportCSV(data, columns, report_name)}
         ><FileExcelOutlined /> <FormattedMessage id="pages.CSV" defaultMessage="CSV" />
-          </Button>
+        </Button>
 
-       
+
       </Space>
     </div>
   )
@@ -463,15 +465,15 @@ const TableList: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [MPfilter, setMPfilter] = useState<any>({})
   const [MPPagination, setMPPagination] = useState<any>({})
-  async function getData(page, _filter,pageSize) {
-   
-    var params= {
+  async function getData(page, _filter, pageSize) {
+
+    var params = {
       "current": page,
       "pageSize": pageSize
-         
+
     }
 
-    var sorter=null
+    var sorter = null
     var ss = ""
     if (report_type == 1) {
 
@@ -487,58 +489,74 @@ const TableList: React.FC = () => {
 
     } else if (report_type == 4) {
       ss = await operlog({
-        ...params, sorter, type: {
+        ...params, sorter, is_report: true, type: {
           'field': 'type',
           'op': 'eq',
           'data': 1
+        }, report_id: {
+          'field': 'report_id',
+          'op': 'eq',
+          'data': report_id
         }
       })
     } else if (report_type == 5) {
       ss = await loginlog({
-        ...params, sorter
+        ...params, is_report: true, sorter, report_id: {
+          'field': 'report_id',
+          'op': 'eq',
+          'data': report_id
+        }
       })
     } else if (report_type == 6) {
 
       ss = await operlog({
-        ...params, sorter, type: {
+        ...params, sorter, is_report: true, type: {
           'field': 'type',
           'op': 'eq',
           'data': 2
+        }, report_id: {
+          'field': 'report_id',
+          'op': 'eq',
+          'data': report_id
         }
       })
     } else if (report_type == 7) {
 
       ss = await operlog({
-        ...params, sorter, type: {
+        ...params, sorter, is_report: true, type: {
           'field': 'type',
           'op': 'eq',
           'data': 3
+        }, report_id: {
+          'field': 'report_id',
+          'op': 'eq',
+          'data': report_id
         }
       })
     } else {
       ss = await reportSummary({ ...params, sorter, ...filter })
     }
 
+    setStart_time(ss.start_time)
+    setEnd_time(ss.end_time)
 
-    setTransaction_total_num(ss.top_all_total)
-    setTransaction_filter_num(ss.top_total)
-   
+
     setMPPagination({ total: ss.total })
     setData(ss.data)
   }
-  
+
   //--MP end
 
-  var fd=useLocation()?.state
+  var fd = useLocation()?.state
 
   useEffect(() => {
 
-   
+
     setFormData(fd)
-    
 
 
-    flow({ pageSize: 300, current: 1, sorter: { sort: 'ascend' } }).then((res) => {
+
+    flow({ sorter: { sort: 'ascend' } }).then((res) => {
       var b = {}
       var p = { "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": "Entire Duration" }
       res.data.forEach((r) => {
@@ -548,6 +566,8 @@ const TableList: React.FC = () => {
         }
         b[r.id] = r.name
       })
+
+
       setFlowConf(b)
       setProcesses(p)
 
@@ -558,7 +578,7 @@ const TableList: React.FC = () => {
 
         res2.data.forEach((r) => {
 
-          
+
           d[r.flow_id + "_" + r.flow_id_to] = b[r.flow_id] + " -> " + b[r.flow_id_to]
         })
 
@@ -576,14 +596,7 @@ const TableList: React.FC = () => {
 
     });
 
-    producttype({ pageSize: 3000, current: 1, sorter: { name: 'ascend' } }).then((res) => {
-      var b = {}
-      res.data.forEach((r) => {
-        b[r.id] = r.name
-      })
-      setProducttypeList(b)
 
-    });
 
     organization({ sorter: { name: 'ascend' } }).then((res) => {
       var b = {}
@@ -600,59 +613,9 @@ const TableList: React.FC = () => {
 
     });
 
-    terminal({ pageSize: 3000, current: 1, sorter: { name: 'ascend' } }).then((res) => {
-      var b = {}
-      res.data.forEach((r) => {
-        b[r.id] = r.name
-      })
-      setTerminalList(b)
 
 
 
-      if (status !== "" && status !== undefined) {
-
-        formRef.current?.setFieldValue('status', status + "")
-      }
-
-      if (terminal_id) {
-
-        formRef.current?.setFieldValue('terminal_id', terminal_id)
-      }
-      if (dateArr && dateArr[0] && dateArr[1]) {
-        formRef.current?.setFieldValue('start_of_transaction', dateArr)
-      }
-
-
-      formRef.current?.submit();
-
-
-
-
-    });
-
-    
-    if (report_type == 1) {
-    
-      columns = columns
-    } else if (report_type == 2) {
-      
-        columns = columns2
-    } else if (report_type == 3) {
-
-      columns = columns3
-    } else if (report_type == 4) {
-
-      columns = columns4
-    } else if (report_type == 5) {
-
-      columns = columns5
-    } else if (report_type == 6) {
-
-      columns = columns6
-    } else if (report_type == 7) {
-
-      columns = columns7
-    } 
 
     if (isMP) {
       getData(1)
@@ -661,118 +624,26 @@ const TableList: React.FC = () => {
   }, [true]);
   /**
    * @en-US International configuration
-   * @zh-CN 国际化配置
    * */
   const intl = useIntl();
   const access = useAccess();
-  
+
+
+
   var columns = [
-
-    {
-
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Total/ Current Duration" />,
-      dataIndex: 'total_duration',
-      render: (dom, entity) => {
-        if (dom > 0 && entity.status == 1) {
-          return parseInt((dom / 3600) + "") + "h " + parseInt((dom % 3600) / 60) + "m"
-        } else {
-          return '-'
-        }
-
-
-      },
-
-    },
-    {
-
-      title: <FormattedMessage id="pages.transaction.xxx" defaultMessage="Current Process" />,
-      dataIndex: 'flow_id',
-      render: (dom, entity) => {
-        if (entity.status == 0) {
-          return flowConf[dom]
-        } else {
-          return ""
-        }
-      }
-      
-    },
-    {
-      title: access.transactions_list_tab() ? "Customer" : "Trader",
-      dataIndex: 'trader_id',
-      render: (dom, entity) => {
-
-        return entity.trader_name
-
-      }
-
-    },
-    {
-      title: <FormattedMessage id="pages.transaction.jettyName" defaultMessage="Terminal" />,
-      dataIndex: 'terminal_id',
-      render: (dom, entity) => {
-
-        return entity.terminal_name
-
-      }
-    },
-    {
-      title: <FormattedMessage id="pages.transaction.jettyName" defaultMessage="Jetty Name" />,
-      dataIndex: 'jetty_id',
-      render: (dom, entity) => {
-       
-          return entity.jetty_name
-        
-      }
-
-    },
-    {
-      title: <FormattedMessage id="pages.transaction.arrivalID" defaultMessage="Arrival ID" />,
-      dataIndex: 'arrival_id',
-
-    },
-    {
-      title: <FormattedMessage id="pages.transaction.imoNumber" defaultMessage="IMO Number" />,
-      dataIndex: 'imo_number',
-
-    },
-    {
-      title: <FormattedMessage id="pages.transaction.vesselName" defaultMessage="Vessel Name" />,
-      dataIndex: 'vessel_name',
-
-    },
-    {
-      title: <FormattedMessage id="pages.transaction.vesselName" defaultMessage="Vessel Size" />,
-      dataIndex: 'vessel_size_dwt',
-
-    },
-    {
-      title: <FormattedMessage id="pages.transaction.productType" defaultMessage="Product Type" />,
-      dataIndex: 'product_name',
-
-    },
-    {
-      title: <FormattedMessage id="pages.transaction.xxx" defaultMessage="Total Nominated Quantity (Bls-60-F)" />,
-      dataIndex: 'product_quantity_in_bls_60_f',
-      render: (dom, entity) => {
-        if (dom) {
-          return numeral(dom).format('0,0')
-        }
-
-      },
-
-    },
     {
       title: (<FormattedMessage id="pages.transaction.transactionID" defaultMessage="EOS ID" />),
       dataIndex: 'eos_id',
       render: (dom, entity) => {
         return "E" + dom
       },
+      sorter: true,
       mustSelect: true
     },
     {
       title: <FormattedMessage id="pages.transaction.xxx" defaultMessage="Transaction Status" />,
       dataIndex: 'status',
-      mustSelect: true,
+      sorter: true,
       valueEnum: {
         0: {
           text: <FormattedMessage id="pages.transaction.active" defaultMessage="Open" />
@@ -783,57 +654,236 @@ const TableList: React.FC = () => {
     },
     {
       title: <FormattedMessage id="pages.transaction.startOfTransaction" defaultMessage="Start Of Transaction" />,
+      valueType: "dateTime",
+      sorter: true,
       dataIndex: 'start_of_transaction',
-      mustSelect: true,
-      valueType: 'date',
+
     },
     {
       title: <FormattedMessage id="pages.transaction.endOfTransaction" defaultMessage="End Of Transaction" />,
+      valueType: "dateTime",
+      sorter: true,
       dataIndex: 'end_of_transaction',
-      mustSelect: true,
-      valueType: 'date',
+
 
     },
-
     {
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Number of Amber Alert" />,
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Number of Amber Alert(s) Triggered " />,
       dataIndex: 'amber_alert_num',
-      mustSelect: true
+
 
     },
     {
 
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Number of Red Alert" />,
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Number of Red Alert(s) Triggered" />,
       dataIndex: 'red_alert_num',
-      mustSelect: true
+
 
     },
+
+
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Number of Amber Alert(s) Triggered (Threshold created by Others)" />,
+      dataIndex: 'amber_alert_num_customer',
+
+
+    },
+
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Number of Red Alert(s) Triggered (Threshold created by Others)" />,
+      dataIndex: 'red_alert_num_customer',
+
+
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Entire/Current Duration" />,
+      dataIndex: 'total_duration',
+      sorter: true,
+      render: (dom, entity) => {
+        if (dom > 0 && entity.status == 1) {
+          return parseInt((dom / 3600) + "") + "h " + parseInt((dom % 3600) / 60) + "m"
+        } else {
+          return '-'
+        }
+
+
+      },
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.xxx" defaultMessage="Current Process" />,
+      dataIndex: 'flow_id',
+      sorter: true,
+      render: (dom, entity) => {
+        if (entity.status == 0) {
+          return flowConf[dom]
+        } else {
+          return ""
+        }
+      }
+
+    },
+    {
+      title: "Trader",
+      dataIndex: 'trader_name',
+
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.jettyName" defaultMessage="Terminal" />,
+      dataIndex: 'terminal_name',
+
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.jettyName" defaultMessage="Jetty Name" />,
+      dataIndex: 'jetty_name',
+
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.arrivalID" defaultMessage="Arrival ID" />,
+      dataIndex: 'arrival_id',
+
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.imoNumber" defaultMessage="IMO Number" />,
+      dataIndex: 'imo_number',
+      sorter: true,
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.vesselName" defaultMessage="Vessel Name" />,
+      dataIndex: 'vessel_name',
+      sorter: true,
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.xxx" defaultMessage="Vessel Size" />,
+      dataIndex: 'vessel_size_dwt',
+      sorter: true,
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.xxx" defaultMessage="Total Nominated Quantity (Bls-60-F)" />,
+      dataIndex: 'product_quantity_in_bls_60_f',
+      sorter: true,
+      render: (dom, entity) => {
+        if (dom) {
+          return numeral(dom).format('0,0')
+        }
+
+      },
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.xxx" defaultMessage="Total nominated Qty (L-obs)" />,
+      dataIndex: 'product_quantity_in_l_obs',
+      sorter: true,
+      render: (dom, entity) => {
+        if (dom) {
+          return numeral(dom).format('0,0')
+        }
+
+      },
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.xxx" defaultMessage="Total nominated Qty (L-15-C)" />,
+      dataIndex: 'product_quantity_in_l_15_c',
+      sorter: true,
+      render: (dom, entity) => {
+        if (dom) {
+          return numeral(dom).format('0,0')
+        }
+
+      },
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.xxx" defaultMessage="Total nominated Qty (Mt)" />,
+      dataIndex: 'product_quantity_in_mt',
+      sorter: true,
+      render: (dom, entity) => {
+        if (dom) {
+          return numeral(dom).format('0,0')
+        }
+
+      },
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.xxx" defaultMessage="Total nominated Qty (MtV)" />,
+      dataIndex: 'product_quantity_in_mtv',
+      sorter: true,
+      render: (dom, entity) => {
+        if (dom) {
+          return numeral(dom).format('0,0')
+        }
+
+      },
+    },
+
+    {
+      title: "Product Type(S)",
+      sorter: true,
+      dataIndex: 'product_name',
+
+    }
 
 
   ];
 
 
+
+
+
+  const sharedOnCell = (_: DataType, index: number) => {
+
+    return { colSpan: 0 };
+
+
+
+  };
+
   const columns2 = [
-    
+
     {
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="EOS ID" />,
       dataIndex: 'eos_id',
       mustSelect: true,
       render: (dom, entity) => {
-        return "E"+dom
+        return "E" + dom
       }
+
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Vessel Name" />,
+      dataIndex: 't.vessel_name',
+
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Arrival ID" />,
+      dataIndex: 't.arrival_id',
+
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Arrival ID Status" />,
+      dataIndex: 't.arrival_id_status',
+
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="IMO Number" />,
+      dataIndex: 't.imo_number',
 
     },
     {
 
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Process" />,
       dataIndex: 'flow_pid',
-      valueEnum:flowConf,
+      valueEnum: flowConf,
       mustSelect: true
     },
     {
 
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Event" />,
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Event Name" />,
       dataIndex: 'flow_id',
       valueEnum: flowConf,
       mustSelect: true
@@ -842,20 +892,47 @@ const TableList: React.FC = () => {
 
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Event Time" />,
       dataIndex: 'event_time',
-      valueType:"dateTime",
+      valueType: "dateTime",
       mustSelect: true
     },
+
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Agent" />,
+      dataIndex: 'agent',
+
+    },
+
     {
 
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Work Order ID" />,
       dataIndex: 'work_order_id',
+      mustSelect: true
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Work order Status" />,
+      dataIndex: 'work_order_status',
+
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Operation Type" />,
+      dataIndex: 'work_order_operation_type',
+
+    },
+
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Surveyor Name" />,
+      dataIndex: 'work_order_surveyor',
 
     },
     {
 
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Sequence No." />,
       dataIndex: 'work_order_sequence_number',
-
+      mustSelect: true
     },
 
     {
@@ -930,71 +1007,289 @@ const TableList: React.FC = () => {
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Delay Duration" />,
       dataIndex: 'delay_duration',
 
-    }
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Threshold/Alert" />,
+      dataIndex: 'threshold_alert',
+      mustSelect: true
+    },
+
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Alert" />,
+      dataIndex: 'alertList',
+      mustSelect: true,
+      children: [
+        {
+
+          title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Alert ID" />,
+          dataIndex: 'alert_id',
+          mustSelect: true,
+          width: 120,
+          render: (dom, entity) => {
+
+
+            return entity.alertList.length > 0 ? <ProTable<TransactionListItem, API.PageParams>
+
+
+
+              pagination={false}
+              showHeader={false}
+              size="small"
+              dataSource={entity.alertList}
+              rowKey="id"
+              options={false}
+              search={false}
+              className="myspantable"
+              bordered={false}
+              columns={[
+
+                {
+                  title: <FormattedMessage id="pages.role.xxx" defaultMessage="Alert ID" />,
+                  dataIndex: 'alert_id',
+                  width: 120,
+                  render: (dom, entity) => {
+                    return (
+
+                      "A" + entity.alert_id
+
+                    );
+
+                  }
+                },
+                {
+                  title: "Alert Raised",
+                  dataIndex: 'type',
+                  width: 120,
+                  hideInSearch: true,
+                  valueType: 'text',
+
+                  render: (dom, entity) => {
+
+                    return (<div><div style={{ display: dom == 0 ? "block" : "none" }}> <SvgIcon style={{ color: "#DE7E39" }} type="icon-yuan" /> Amber</div>
+                      <div style={{ display: dom == 1 ? "block" : "none" }}><SvgIcon style={{ color: "red" }} type="icon-yuan" /> Red</div></div>)
+                  },
+                },
+                {
+                  title: <FormattedMessage id="pages.alertrule.xxx" defaultMessage="Threshold Triggered Time" />,
+                  dataIndex: 'created_at',
+                  width: 200,
+                  hideInSearch: true,
+
+                  sorter: true,
+                  valueType: 'dateTime',
+                },
+                {
+                  title: "Threshold ID",
+                  width: 120,
+                  dataIndex: 'ar.alertrule_id',
+                  render: (dom, entity) => {
+                    return (
+
+                      "T" + entity["ar.alertrule_id"]
+
+                    );
+
+                  }
+                },
+
+              ]}
+              rowSelection={false}
+            /> : "-"
+
+          },
+          onCell: (_, index) => ({
+            colSpan: 4,
+          }),
+        },
+        {
+
+          title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Alert Type" />,
+          width: 120,
+          dataIndex: 'alert_type',
+          onCell: sharedOnCell,
+        },
+        {
+
+          title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Alert Triggered Time" />,
+          width: 200,
+          dataIndex: 'alert_triggered_time',
+          onCell: sharedOnCell,
+        },
+        {
+
+          title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Threshold ID" />,
+          width: 120,
+          mustSelect: true,
+          dataIndex: 'threshold_id',
+          onCell: sharedOnCell,
+        },
+      ]
+    },
+
+
+
+    {
+      title: "Update Log",
+      dataIndex: "transactioneventlogList",
+      children: [
+        {
+          title: "Type Of Data",
+          width: 200,
+          dataIndex: "TypeOfData",
+          render: (dom, entity) => {
+
+
+
+            var c = entity
+
+
+
+
+
+
+
+            var logObjArr = []
+            var newList = [c, ...entity.transactioneventlogList]
+
+           
+            newList.forEach((aa, index) => {
+              if (index < newList.length && aa && newList[index + 1]) {
+                var diff = getDiff(aa, newList[index + 1])
+
+                if (diff) {
+                  for (var m in diff) {
+                    if (m != 'created_at' && m != 'updated_at' && m != 'id' && m != 'event_duration'
+                      && m != 'threshold_alert' && m != "blockchain_hex_key" && m != 'transactioneventlogList' && m != 'alertList' && m != "eos_id" && m.indexOf("t.") == -1) {
+                      var obj = {
+                        TypeOfData: keyNameMap[m],
+                        PreviousValue: newList[index + 1][m],
+                        NewValue: aa[m],
+                        UpdateTime: aa.created_at
+                      }
+                      logObjArr.push(obj)
+                    }
+
+                  }
+                }
+
+
+              }
+
+            })
+
+            return entity.transactioneventlogList?.length > 0 ? <ProTable<TransactionListItem, API.PageParams>
+
+
+              bordered={false}
+              pagination={false}
+              showHeader={false}
+              size="small"
+              dataSource={logObjArr}
+              rowKey="id"
+              options={false}
+              search={false}
+              className="myspantable"
+
+              columns={[{
+                title: "Type Of Data",
+                dataIndex: "TypeOfData",
+                width: 200,
+              },
+              {
+                title: "Previous Value",
+                dataIndex: "PreviousValue",
+                width: 200,
+                render: (dom, entity) => {
+                  if (entity.TypeOfData == "Event Time") {
+                    return moment(dom).format('YYYY-MM-DD HH:mm:ss')
+                  } else {
+                    return dom
+                  }
+
+                }
+              },
+              {
+                title: "New Value",
+                dataIndex: "NewValue",
+                width: 200,
+                render: (dom, entity) => {
+                  if (entity.TypeOfData == "Event Time") {
+                    return moment(dom).format('YYYY-MM-DD HH:mm:ss')
+                  } else {
+                    return dom
+                  }
+
+                }
+              },
+              {
+                title: "Update Time",
+                dataIndex: "UpdateTime",
+                width: 200,
+                render: (dom, entity) => {
+                  return moment(dom).format('YYYY-MM-DD HH:mm:ss')
+                }
+              }]}
+              rowSelection={false}
+            /> : "-"
+
+          },
+          onCell: (_, index) => ({
+            colSpan: 4,
+          }),
+        },
+        {
+          title: "Previous Value",
+          dataIndex: "PreviousValue",
+          width: 200,
+          onCell: sharedOnCell,
+          render: (dom, entity) => {
+            if (entity.TypeOfData == "Event Time") {
+              return moment(dom).format('YYYY-MM-DD HH:mm:ss')
+            } else {
+              return dom
+            }
+
+          }
+        },
+        {
+          title: "New Value",
+          dataIndex: "NewValue",
+          width: 200,
+          onCell: sharedOnCell,
+          render: (dom, entity) => {
+            if (entity.TypeOfData == "Event Time") {
+              return moment(dom).format('YYYY-MM-DD HH:mm:ss')
+            } else {
+              return dom
+            }
+
+          }
+        },
+        {
+          title: "Update Time",
+          dataIndex: "UpdateTime",
+          width: 200,
+          onCell: sharedOnCell,
+          render: (dom, entity) => {
+            return moment(dom).format('YYYY-MM-DD HH:mm:ss')
+          }
+        }
+      ]
+    },
+
+
   ]
   const columns3 = [
     {
 
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="IMO Number" />,
-      dataIndex: 'imo_number',
-
-
-    },
-    {
-
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Threshold Vessel Size" />,
-      dataIndex: 'ar.vessel_size_dwt_from',
-
-    },
-    {
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Threshold Nominated Quantity Range" />,
-      dataIndex: 'ar.product_quantity_in_mt_from',
-
-
-    },
-    {
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Transaction Vessel Size" />,
-      dataIndex: 't.vessel_size_dwt',
-
-
-    },
-
-    {
-
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Transaction Nominated Quantity Range" />,
-      dataIndex: 't.product_quantity_in_bls_60_f',
-
-
-    },
-
-    {
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Product Type" />,
-      dataIndex: 't.product_name',
-
-
-    },
-    {
-
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Terminal" />,
-      dataIndex: 't.terminal_id',
-
-
-    },
-    {
-
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Trader" />,
-      dataIndex: 't.trader_id',
-
-
-    },
-    {
-
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Alert ID" />,
       dataIndex: 'alert_id',
-      mustSelect: true,
       render: (dom, entity) => {
         return "A" + dom
-      }
+      },
+      mustSelect: true
 
     },
     {
@@ -1013,7 +1308,7 @@ const TableList: React.FC = () => {
         return (<div><div style={{ display: dom == 0 ? "block" : "none" }}> <SvgIcon style={{ color: "#DE7E39" }} type="icon-yuan" /> Amber</div>
           <div style={{ display: dom == 1 ? "block" : "none" }}><SvgIcon style={{ color: "red" }} type="icon-yuan" /> Red</div></div>)
       },
-      mustSelect: true
+
 
     },
 
@@ -1022,7 +1317,7 @@ const TableList: React.FC = () => {
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Alert Triggered Time" />,
       dataIndex: 'created_at',
       valueType: 'dateTime',
-      mustSelect: true
+
 
     },
 
@@ -1044,14 +1339,21 @@ const TableList: React.FC = () => {
         1: { text: <FormattedMessage id="pages.alertrule.betweenTwoEvents" defaultMessage="Between Two Events" /> },
         2: { text: <FormattedMessage id="pages.alertrule.entireTransaction" defaultMessage="Entire Transaction" /> },
       },
-      mustSelect: true
 
     },
     {
 
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Threshold Limit" />,
       dataIndex: 'ar.amber_hours',
-      mustSelect: true,
+      renderPrint: (dom, entity) => {
+        entity.amber_hours = entity['ar.amber_hours']
+        entity.amber_mins = entity['ar.amber_mins']
+        entity.red_hours = entity['ar.red_hours']
+        entity.red_mins = entity['ar.red_mins']
+        return (entity.amber_hours || entity.amber_mins ? ("Amber: " + (entity.amber_hours ? entity.amber_hours : '0') + "h " + (entity.amber_mins ? entity.amber_mins : '0') + "m") : "") +
+          (entity.red_hours || entity.red_mins ? (" Red: " + (entity.red_hours ? entity.red_hours : '0') + "h " + (entity.red_mins ? entity.red_mins : '0') + "m") : "")
+
+      },
       render: (dom, entity) => {
         entity.amber_hours = entity['ar.amber_hours']
         entity.amber_mins = entity['ar.amber_mins']
@@ -1060,20 +1362,36 @@ const TableList: React.FC = () => {
         return (<div><div style={{ display: entity.amber_hours || entity.amber_mins ? "block" : "none" }}> <SvgIcon style={{ color: "#DE7E39" }} type="icon-yuan" />{" " + (entity.amber_hours ? entity.amber_hours : '0') + "h " + (entity.amber_mins ? entity.amber_mins : '0') + "m"}</div>
           <div style={{ display: entity.red_hours || entity.red_mins ? "block" : "none" }}><SvgIcon style={{ color: "red" }} type="icon-yuan" />{" " + (entity.red_hours ? entity.red_hours : '0') + "h " + (entity.red_mins ? entity.red_mins : '0') + "m"}</div></div>)
       },
+
     },
     {
 
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="EOS ID" />,
       dataIndex: 't.eos_id',
-      mustSelect: true
+
 
     },
-
     {
 
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Total / Current Duration" />,
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Threshold Process/ Events" />,
+      dataIndex: 'flow_id',
+
+      valueEnum: flowConf,
+      render: (dom, entity) => {
+        if (entity.alertrule_type == 0) {
+          return flowConf[entity.flow_id]
+        } else if (entity.alertrule_type == 1) {
+          return flowConf[entity.flow_id] + " -> " + flowConf[entity.flow_id_to]
+        } else {
+          return '-'
+        }
+
+      }
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Transaction Total/ Current Duration" />,
       dataIndex: 'total_duration',
-      mustSelect: true,
       render: (dom, entity) => {
 
         return parseInt((dom / 3600) + "") + "h " + parseInt((dom % 3600) / 60) + "m"
@@ -1081,257 +1399,158 @@ const TableList: React.FC = () => {
 
 
       },
-    }
-  ]
 
-
-
- /* var columns: ProColumns<TransactionListItem>[] = [
+    },
     {
-      title: (
-        <FormattedMessage
-          id="pages.transaction.transactionID"
-          defaultMessage="EOS ID"
-        />
-      ),
-      dataIndex: 'eos_id',
-      hideInSearch: true,
-     // fixed: 'left',
 
-      sorter: true,
-      //defaultSortOrder: 'descend',
-      renderText: (dom, entity) => {
-        return entity.eos_id
-      },
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Vessel IMO Number" />,
+      dataIndex: 't.imo_number',
+
+
+    },
+
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Vessel Name" />,
+      dataIndex: 't.vessel_name',
+
+    },
+
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Threshold Condition: Vessel Size" />,
+      dataIndex: 'ar.vessel_size_dwt_from',
       render: (dom, entity) => {
-        return (
-          <a
+        if (entity["ar.vessel_size_dwt_from"] != null && entity["ar.vessel_size_dwt_to"]) {
 
-            onClick={() => {
-              setCurrentRow(entity);
-              history.push(`/transaction/detail`, { transaction_id: entity.id });
-             
-              // setShowDetail(true);
-            }}
-          >
-            {dom}
-          </a>
-        );
-      },
-    },
-
-
-
-    {
-      title: <FormattedMessage id="pages.transaction.startOfTransaction" defaultMessage="Start Of Transaction" />,
-      dataIndex: 'start_of_transaction',
-      sorter: true,
-      defaultSortOrder: 'descend',
-      valueType: 'date',
-      hideInSearch: true,
-    },
-    {
-      title: <FormattedMessage id="pages.transaction.endOfTransaction" defaultMessage="End Of Transaction" />,
-      dataIndex: 'end_of_transaction',
-      valueType: 'date',
-      hideInSearch: true,
-    },
-    
-    {
-      title: <FormattedMessage id="pages.transaction.arrivalID" defaultMessage="Arrival ID" />,
-      dataIndex: 'arrival_id',
-      hideInSearch: true
-    },
-
-    {
-
-      title: <FormattedMessage id="pages.transaction.currentProcess" defaultMessage="Current Process" />,
-      dataIndex: 'flow_pid',
-      valueEnum: flowConf,
-      fieldProps: {
-        notFoundContent: <Empty />,
-      },
-      hideInSearch: true,
-    },
-
-
-    {
-      title: <FormattedMessage id="pages.transaction.imoNumber" defaultMessage="IMO Number" />,
-      dataIndex: 'imo_number',
-      valueType: 'text',
-    },
-    {
-      title: <FormattedMessage id="pages.transaction.vesselName" defaultMessage="Vessel Name" />,
-      dataIndex: 'vessel_name',
-      valueType: 'text',
-    },
-
-    {
-      title: <FormattedMessage id="pages.transaction.terminalName" defaultMessage="Terminal Name" />,
-      dataIndex: 'terminal_id',
-      valueEnum: terminalList,
-      fieldProps: {
-        notFoundContent: <Empty />,
-      },
-      search: {
-        transform: (value) => {
-          if (value) {
-            return {
-              'terminal_id': {
-                'field': 'terminal_id',
-                'op': 'eq',
-                'data': value
-              }
-            }
+          var valueEnum = {
+            "0-25000": "GP",
+            "25000-45000": "MR",
+            "45000-80000": "LR1",
+            "80000-120000": "AFRA",
+            "120000-160000": "LR2",
+            "160000-320000": "VLCC",
+            "320000-1000000000": "ULCC",
           }
 
-        }
-      }
-    },
-    {
-      title: <FormattedMessage id="pages.transaction.jettyName" defaultMessage="Jetty Name" />,
-      dataIndex: 'jetty_id',
-      valueEnum: jettyList,
-      fieldProps: {
-        notFoundContent: <Empty />,
-      },
-      search: {
-        transform: (value) => {
-          if (value) {
-            return {
-              'jetty_id': {
-                'field': 'jetty_id',
-                'op': 'eq',
-                'data': value
-              }
-            }
-          }
-
-        }
-      }
-    },
-
-
-    {
-      title: <FormattedMessage id="pages.transaction.productType" defaultMessage="Product Type" />,
-      dataIndex: 'product_name',
-      // valueEnum: producttypeList,
-    },
-    
-
-   
-
-
-    {
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Activity (From)" />,
-      dataIndex: 'flow_id',
-      valueEnum: flowConf,
-    
-    },
-    {
-
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Activity (To)" />,
-      dataIndex: 'flow_id_to',
-      valueEnum: flowConf
-    
-    },
-
-    {
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Timestamp" />,
-      dataIndex: 'event_time',
-      valueType: 'dateTime',
-    },
-    {
-
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Total Duration By Process" />,
-      dataIndex: 'duration',
-      valueType: 'text',
-      render: (dom, entity) => {
-        
-          return getTimeStr(dom)
-      
-
-
-      },
-    },
-
-    {
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Number of Amber Alert Breached" />,
-      dataIndex: 'amber_alert_num',
-      valueType: 'text',
-    },
-    {
-
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Number of Red Alert Breached" />,
-      dataIndex: 'red_alert_num',
-      valueType: 'text',
-    },
-    {
-      title: <FormattedMessage id="pages.transaction.totalDuration" defaultMessage="Entire Duration (Till Date)" />,
-      dataIndex: 'total_duration',
-      hideInSearch: true,
-      render: (dom, entity) => {
-        if (dom > 0 && entity.status == 1) {
-          return getTimeStr(dom)
+          return valueEnum[entity["ar.vessel_size_dwt_from"] + "-" + entity["ar.vessel_size_dwt_to"]];
         } else {
           return '-'
         }
 
+      },
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Transaction Vessel Size" />,
+      dataIndex: 't.vessel_size_dwt',
+
+    },
+
+
+
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Threshold Condition: Nominated Quantity Range (from - to)" />,
+      dataIndex: 'ar.product_quantity_from',
+      render: (dom, entity) => {
+        if (entity["ar.product_quantity_from"]) {
+          return numeral(entity["ar.product_quantity_from"]).format('0,0') + " - " + numeral(entity["ar.product_quantity_from"]).format('0,0')
+        } else {
+          return '-'
+        }
 
       },
-      valueType: 'text',
+
     },
-   
+    {
 
-    /*{
-      title: <FormattedMessage id="pages.searchTable.titleOption" defaultMessage="Operating" />,
-      dataIndex: 'option',
-      valueType: 'option',
-      hideInTable: !access.canAdmin,
-      render: (_, record) => [
-        <Access accessible={access.canAdmin} fallback={<div></div>}>
-          <a
-            key="config"
-            onClick={() => {
-              handleUpdateModalOpen(true);
-              setCurrentRow(record);
-            }}
-          >
-            <FormattedMessage id="pages.update" defaultMessage="Modify" />
-          </a></Access>,
-        <Access accessible={access.canAdmin} fallback={<div></div>}>
-          <a
-            title={formatMessage({ id: "pages.delete", defaultMessage: "Delete" })}
-            key="config"
-            onClick={() => {
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Transaction Nominated Quantity" />,
+      dataIndex: 't.product_quantity',
+      render: (dom, entity) => {
+        return entity['t.product_quantity_in_' + entity["ar.uom"]]
 
-              handleRemove([record], (success) => {
-                if (success) {
-
-                  actionRef.current?.reloadAndRest?.();
-                }
-              });
+      },
 
 
-            }}
-          >
-            <DeleteOutlined style={{ fontSize: '20px', color: 'red' }} />
 
-          </a>
-        </Access>
 
-      ],
+
     },
-  ];*/
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="UOM" />,
+      dataIndex: 'ar.uom',
+      valueEnum: {
+        "l_obs": "L-obs",
+        "l_15_c": "L-15-C",
+        "mt": "Mt",
+        "mtv": "MtV",
+        "bls_60_f": "Bls-60-F",
+
+      }
+
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Product Type" />,
+      dataIndex: 't.product_name',
+
+
+    },
+    {
+      title: "Trader",
+      dataIndex: 't.trader_name',
+
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.jettyName" defaultMessage="Terminal" />,
+      dataIndex: 't.terminal_name',
+
+    },
+
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Threshold Set By" />,
+      dataIndex: 'ar.username',
+    },
+
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage=" Date of Threshold Alert Creation" />,
+      valueType: 'dateTime',
+      dataIndex: 'ar.created_at',
+    }
+
+  ]
+
+
+
 
 
   if (report_type == 1) {
-    if (currentUser?.role_type == "Trader") {
-      columns.splice(2, 1);
-    } else if (currentUser?.role_type == "Terminal"){
-      columns.splice(3, 1);
+
+    for (var k in processes) {
+      if (k != "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa") {
+        columns.push({
+          title: "Duration of " + processes[k] + " Processes",
+
+          render: (dom, entity) => {
+            if (dom > 0 && entity.status == 1) {
+              return parseInt((dom / 3600) + "") + "h " + parseInt((dom % 3600) / 60) + "m"
+            } else {
+              return '-'
+            }
+
+
+          },
+          dataIndex: k,
+
+        })
+      }
+
+
     }
-    
+
     columns = columns
   } else if (report_type == 2) {
 
@@ -1342,24 +1561,40 @@ const TableList: React.FC = () => {
   } else if (report_type == 5) {
 
     columns = columns5
+  } else if (report_type == 4) {
+
+    columns = columns4
   } else if (report_type == 6) {
 
     columns = columns6
   } else if (report_type == 7) {
 
     columns = columns7
-  } 
+  }
   if (Fields.length > 0) {
-
-    columns = Fields.map((a) => {
+    var arr = []
+    Fields.map((a) => {
       return columns.find((b) => {
-        return a == b.dataIndex
+
+
+        if (a == b.dataIndex) {
+          if (b.children) {
+            b.children.forEach((bb) => {
+              arr.push(bb)
+            })
+          } else {
+            arr.push(b)
+          }
+
+        }
       })
     })
-   
+
+    columns = arr
+
   }
 
- 
+
 
   const customizeRenderEmpty = () => {
     var o = filter
@@ -1380,23 +1615,10 @@ const TableList: React.FC = () => {
   }
   return (
     <PageContainer className="myPage" header={{
-      title:<>{value?.name} - {dateStr}<div>{"Total count of transactions filtered: " + transaction_filter_num + " out of " + transaction_total_num}</div></>,
+      title: <>{value?.name} {dateStr && "-"} {dateStr} {!dateStr ? moment(start_time).format('YYYY/MM/DD') + "-" + moment(end_time).format('YYYY/MM/DD') : ""}</>,
       breadcrumb: {},
       extra: isMP ? null : [
-       /* <Access accessible={!formData.id} fallback={<div></div>}>
-        <Button
-
-          type="primary"
-          key="primary"
-          onClick={() => {
-            var d = { ...formData }
-           d.value= JSON.stringify(d.value)
-            handleAdd(d);
-          }}
-        >
-          <PlusOutlined /> <FormattedMessage id="pages.searchTable.xxxx" defaultMessage="Save" />
-        </Button>
-      </Access>,*/
+        
         <Button type="primary" key="print"
           onClick={() => {
             if (selectedRowsState.length == 0) {
@@ -1420,112 +1642,126 @@ const TableList: React.FC = () => {
       {!isMP && (<ConfigProvider renderEmpty={customizeRenderEmpty}><RcResizeObserver
         key="resize-observer"
         onResize={(offset) => {
-          const { innerWidth, innerHeight } = window;
-          
-          var h=document.getElementsByClassName("ant-table-thead")?.[0]?.offsetHeight+230
-          
-
-          if (offset.width > 1280) {
-          
-            setResizeObj({ ...resizeObj, searchSpan: 8, tableScrollHeight: innerHeight - h });
-          }
-          if (offset.width < 1280 && offset.width > 900) {
-            
-            setResizeObj({ ...resizeObj, searchSpan: 12, tableScrollHeight: innerHeight - h });
-          }
-          if (offset.width < 900 && offset.width > 700) {
-            setResizeObj({ ...resizeObj, searchSpan: 24, tableScrollHeight: innerHeight - h });
-           
-          }
-
-          if (offset.width < 700) {
-            
-          }
+          ResizeObserverDo(offset, setResizeObj, resizeObj)
 
         }}
       ><ProTable<TransactionListItem, API.PageParams>
 
-          scroll={{ x: columns.length*140, y: resizeObj.tableScrollHeight }}
-        
+          scroll={{ x: columns.length * 140, y: resizeObj.tableScrollHeight }}
+
           pagination={{ size: "default", showSizeChanger: true, pageSizeOptions: [10, 20, 50, 100, 500] }}
-        formRef={formRef}
-        bordered size="small"
-        actionRef={actionRef}
-        rowKey="id"
-        options={false}
-        search={false}
-        className="mytable"
+          formRef={formRef}
+          bordered size="small"
+          actionRef={actionRef}
+          rowKey="id"
+          options={false}
+          search={false}
+          className="mytable"
           request={async (params, sorter) => {
             var ss = ""
             if (report_type == 1) {
-            
-              ss = await transaction({ ...params, sorter, ...filter, is_report:true })
-            
-          }else if (report_type == 2) {
 
-              ss = await transaction({ ...params, sorter, ...filter, is_detail_report:true })
+              ss = await transaction({
+                ...params, sorter, ...filter, is_report: true, report_id: {
+                  'field': 'report_id',
+                  'op': 'eq',
+                  'data': report_id
+                }
+              })
 
-        } else if (report_type == 3) {
+            } else if (report_type == 2) {
 
-              ss = await getAlert({ ...params, sorter, ...filter })
+              ss = await transaction({
+                ...params, sorter, ...filter, is_detail_report: true, report_id: {
+                  'field': 'report_id',
+                  'op': 'eq',
+                  'data': report_id
+                }
+              })
 
-            } else if (report_type==4) {
+            } else if (report_type == 3) {
+
+              ss = await getAlert({
+                ...params, sorter, ...filter, is_report: true, report_id: {
+                  'field': 'report_id',
+                  'op': 'eq',
+                  'data': report_id
+                }
+              })
+
+            } else if (report_type == 4) {
               ss = await operlog({
-                ...params, sorter, type: {
+                ...params, sorter, is_report: true, type: {
                   'field': 'type',
                   'op': 'eq',
                   'data': 1
+                }, report_id: {
+                  'field': 'report_id',
+                  'op': 'eq',
+                  'data': report_id
                 }
               })
             } else if (report_type == 5) {
               ss = await loginlog({
-                ...params, sorter
+                ...params, sorter, is_report: true, report_id: {
+                  'field': 'report_id',
+                  'op': 'eq',
+                  'data': report_id
+                }
               })
             } else if (report_type == 6) {
-             
+
               ss = await operlog({
-                ...params, sorter, type: {
+                ...params, sorter, is_report: true, type: {
                   'field': 'type',
                   'op': 'eq',
                   'data': 2
+                }, report_id: {
+                  'field': 'report_id',
+                  'op': 'eq',
+                  'data': report_id
                 }
               })
             } else if (report_type == 7) {
-             
+
               ss = await operlog({
-                ...params, sorter, type: {
+                ...params, sorter, is_report: true, type: {
                   'field': 'type',
                   'op': 'eq',
-                  'data':3
+                  'data': 3
+                }, report_id: {
+                  'field': 'report_id',
+                  'op': 'eq',
+                  'data': report_id
                 }
               })
             } else {
               ss = await reportSummary({ ...params, sorter, ...filter })
             }
 
-           
 
-            setTransaction_total_num(ss.top_all_total)
-            setTransaction_filter_num(ss.top_total)
-          return ss
-        }}
-        columns={columns}
-        rowSelection={{
-          onChange: (_, selectedRows) => {
-            setSelectedRows(selectedRows);
-          },
-        }}
+
+            setStart_time(ss.start_time)
+            setEnd_time(ss.end_time)
+            return ss
+          }}
+          columns={columns}
+          rowSelection={{
+            onChange: (_, selectedRows) => {
+              setSelectedRows(selectedRows);
+            },
+          }}
         /></RcResizeObserver></ConfigProvider >)}
 
       {isMP && (<>
 
-       
+
         <NavBar backArrow={false} right={right} onBack={back}>
-         
+
         </NavBar>
 
 
-       
+
         <List>
           {data.map((item, index) => (
             <List.Item key={index}>
@@ -1574,11 +1810,11 @@ const TableList: React.FC = () => {
               <a style={{ fontWeight: 600 }}>{selectedRowsState.length}</a>{' '}
               <FormattedMessage id="pages.searchTable.item" defaultMessage="项" />
               &nbsp;&nbsp;
-             
+
             </div>
           }
         >
-         
+
 
         </FooterToolbar>
       )}
@@ -1593,21 +1829,15 @@ const TableList: React.FC = () => {
             history.push('/report')
           }}
         >Return To Report History</Button>
-        {/*  <Button
-          style={isMP ? { width: '100%', marginTop: 15 } : { marginLeft: 10 }}
-          type="primary"
-          onClick={async () => {
-            history.push('/Report/add')
-          }}
-        >Return to create new report</Button>*/ }
+       
       </div>
 
-      {/* 调用打印模块 */}
+      {/* Calling the printing module */}
       <FrPrint
         title={""}
         subTitle={paramsText}
         columns={columns}
-        dataSource={[...(isMP ? data : selectedRowsState)/*, sumRow*/]}
+        dataSource={[...(isMP ? data : selectedRowsState)]}
         onCancel={() => {
           handlePrintModalVisible(false);
         }}

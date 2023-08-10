@@ -6,13 +6,13 @@ import {
   ProFormTreeSelect,
   ProFormSwitch,
   ModalForm,
- 
+
   ProFormCheckbox,
   ProFormInstance
-  
+
 } from '@ant-design/pro-components';
 import { UserListItem } from '../data.d';
-import {  fieldUniquenessCheck } from '@/services/ant-design-pro/api';
+import { fieldUniquenessCheck } from '@/services/ant-design-pro/api';
 import { role } from '../../role/service';
 import { company } from '../../company/service';
 import { FormattedMessage, useIntl } from '@umijs/max';
@@ -20,41 +20,41 @@ import { Modal, Form } from 'antd';
 import React, { useRef, useState, useEffect } from 'react';
 import { checkEmail, checkUsername } from '../service';
 import { tree } from "@/utils/utils";
- 
+
 export type CreateFormProps = {
   onCancel: (flag?: boolean, formVals?: Partial<UserListItem>) => void;
   onSubmit: (values: Partial<UserListItem>) => Promise<void>;
   createModalOpen: boolean;
-  
+
 };
 
 const UpdateForm: React.FC<CreateFormProps> = (props) => {
   const restFormRef = useRef<ProFormInstance>();
   const intl = useIntl();
   const [roleConf, setRoleConf] = useState<any>({});
-  
+
 
   const {
     onSubmit,
     onCancel,
     createModalOpen
-   
+
   } = props;
 
   useEffect(() => {
-    if ( !createModalOpen) {
-   
+    if (!createModalOpen) {
+
 
     } else {
       role({ pageSize: 100, current: 1 }).then((res) => {
         var b = {}
         res.data.forEach((r) => {
-          b[r.id]=r.name
+          b[r.id] = r.name
         })
         setRoleConf(b)
-       
+
       });
-     
+
     }
 
   }, [props.createModalOpen]);
@@ -62,8 +62,8 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
   const onlyCheck = (rule: any, value: any, callback: (arg0: string | undefined) => void) => {
 
 
-    fieldUniquenessCheck({ where: { username: value}, model: 'User' }).then((res) => {
-     
+    fieldUniquenessCheck({ where: { username: value }, model: 'User' }).then((res) => {
+
       if (res.data) {
 
         callback(intl.formatMessage({
@@ -71,13 +71,12 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
           defaultMessage: 'This user name is already in use',
         }))
       } else {
-        callback(undefined); // 必须返回一个callback
+        callback(undefined);
       }
     });
 
   }
 
- 
 
 
 
@@ -86,39 +85,40 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
 
 
 
- 
+
+
   return (
-   
+
     <ModalForm
       modalProps={{ destroyOnClose: true }}
-     
+      initialValues={{ email_notification: "send_email" }}
       onOpenChange={(vi) => {
         if (!vi) {
           props.onCancel();
         }
-          
+
       }}
       formRef={restFormRef}
-        onFinish={props.onSubmit}
+      onFinish={props.onSubmit}
       open={props.createModalOpen}
-        submitter={{
-          searchConfig: {
-            resetText: intl.formatMessage({
-              id: 'pages.reset',
-              defaultMessage: '重置',
-            }),
+      submitter={{
+        searchConfig: {
+          resetText: intl.formatMessage({
+            id: 'pages.reset',
+            defaultMessage: '',
+          }),
+        },
+        resetButtonProps: {
+          onClick: () => {
+            restFormRef.current?.resetFields();
+
           },
-          resetButtonProps: {
-            onClick: () => {
-              restFormRef.current?.resetFields();
-              //   setModalVisible(false);
-            },
-          },
-        }}
-        title={intl.formatMessage({
-          id: 'pages.user.xxx',
-          defaultMessage: 'Add New User',
-        })}
+        },
+      }}
+      title={intl.formatMessage({
+        id: 'pages.user.xxx',
+        defaultMessage: 'Add New User',
+      })}
     >
       <ProFormSelect
         name="company_id"
@@ -136,8 +136,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
               return r
             })
             return res.data
-            // setFlowList(tree(res.data, "                                    ", 'pid'))
-           // return tree(res.data, "                                    ", 'pid')
+
           });
 
         }}
@@ -146,7 +145,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
         name="username"
         label={intl.formatMessage({
           id: 'pages.user.xxx',
-          defaultMessage: 'User Name',
+          defaultMessage: 'User email address (to be used as User Name for log-in) ',
         })}
         width="md"
         rules={[
@@ -155,7 +154,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
             message: (
               <FormattedMessage
                 id="pages.user.rules.username"
-                defaultMessage="请输入用户名！"
+                defaultMessage=""
               />
             ),
           },
@@ -170,46 +169,29 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
           { validator: onlyCheck }
         ]}
       />
-      {/*<ProFormText.Password
-        name="password"
-        label={intl.formatMessage({
-          id: 'pages.user.password',
-          defaultMessage: '密码',
-        })}
-        width="md"
-        rules={[
-          {
-            required: true,
-            message: (
-              <FormattedMessage
-                id="pages.user.rules.password"
-                defaultMessage="请输入密码！"
-              />
-            ),
-          },
-        ]}
-      />*/ }
-      
+
       <ProFormSelect
         name="role_id"
         width="md"
         label={intl.formatMessage({
           id: 'pages.user.role',
-          defaultMessage: '角色',
+          defaultMessage: '',
         })}
-        valueEnum={roleConf }
+        valueEnum={roleConf}
       />
       <ProFormCheckbox.Group
         name="email_notification"
         layout="vertical"
+        disabled
         label=""
         options={[{
-          label: "Send email confirmation", value:"send_email"}]}
+          label: "Send email confirmation", value: "send_email"
+        }]}
       />
-     
-     
+
+
     </ModalForm>
-     
+
   );
 };
 

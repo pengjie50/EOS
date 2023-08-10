@@ -1,15 +1,26 @@
 /**
- * @name umi 的路由配置
- * @description 只支持 path,component,routes,redirect,wrappers,name,icon 的配置
- * @param path  path 只支持两种占位符配置，第一种是动态参数 :id 的形式，第二种是 * 通配符，通配符只能出现路由字符串的最后。
- * @param component 配置 location 和 path 匹配后用于渲染的 React 组件路径。可以是绝对路径，也可以是相对路径，如果是相对路径，会从 src/pages 开始找起。
- * @param routes 配置子路由，通常在需要为多个路径增加 layout 组件时使用。
- * @param redirect 配置路由跳转
- * @param wrappers 配置路由组件的包装组件，通过包装组件可以为当前的路由组件组合进更多的功能。 比如，可以用于路由级别的权限校验
- * @param name 配置路由的标题，默认读取国际化文件 menu.ts 中 menu.xxxx 的值，如配置 name 为 login，则读取 menu.ts 中 menu.login 的取值作为标题
- * @param icon 配置路由的图标，取值参考 https://ant.design/components/icon-cn， 注意去除风格后缀和大小写，如想要配置图标为 <StepBackwardOutlined /> 则取值应为 stepBackward 或 StepBackward，如想要配置图标为 <UserOutlined /> 则取值应为 user 或者 User
- * @doc https://umijs.org/docs/guides/routes
- */
+
+*Routing configuration for @ name umi
+
+*@ description only supports configuration of path, component, routes, redirect, wrappers, name, and icon
+
+*@ param path only supports two types of placeholder configurations. The first is in the form of a dynamic parameter: id, and the second is the * wildcard character, which can only appear at the end of the routing string.
+
+*The React component path used for rendering after matching the location and path of the @ param component configuration. It can be an absolute path or a relative path. If it is a relative path, it will start from src/pages.
+
+*Param routes configure sub routes, usually used when adding layout components to multiple paths.
+
+*@ param redirect Configure Route Jump
+
+*Param wrappers configure the packaging components of the routing component, which can combine more functions for the current routing component. For example, it can be used for routing level permission verification
+
+*@ param name: Configure the title of the route. By default, read the value of menu.xxxx in the internationalization file menu.ts. If the name is configured as login, read the value of menu.login in menu.ts as the title
+
+*The @ param icon is used to configure the routing icon, with reference to its values https://ant.design/components/icon-cn Please note to remove the style suffix and case. If you want to configure the icon as<StepBackwardOutlined/>, the value should be stepBackward or StepBackward. If you want to configure the icon as<UserOutlined/>, the value should be user or User
+
+*@ doc https://umijs.org/docs/guides/routes
+
+*/
 export default [
   {
     path: '/user',
@@ -20,7 +31,7 @@ export default [
         path: '/user/login',
         component: './User/Login',
       },
-      
+
       {
         name: 'adminlogin',
         path: '/user/adminlogin',
@@ -35,7 +46,7 @@ export default [
     icon: 'TableOutlined',
     component: './Dashboard',
   },
- 
+
   {
     path: '/transactions',
     name: 'Transactions',
@@ -45,11 +56,15 @@ export default [
   },
   {
     path: '/transaction/blockchainIntegration',
-    access:"canBlockchain",
+    access: "canBlockchain",
     component: './transaction/components/BlockchainIntegration',
     hideInMenu: true
   },
-  
+  {
+    path: '/EOSInstructionManualGuide',
+    component: './EOSInstructionManualGuide',
+    hideInMenu: true
+  },
   {
     path: '/transaction/detail',
     access: 'canTransactionsList',
@@ -61,22 +76,16 @@ export default [
     access: 'canEOSTools',
     name: 'Threshold',
     icon: 'FileExclamationOutlined',
-    //component: './EOSTools',
+
     routes: [
       {
         path: '/threshold',
         redirect: '/threshold/alert',
       },
-      /*{
-        name: 'Create New',
-        access: 'canAlertruleAdd',
-        icon: 'ControlOutlined',
-        path: '/threshold/createAlertRule',
-        component: './alertrule',
-      },*/
+
       {
         name: 'Summary',
-        key:'Summary',
+        key: 'Summary',
         access: 'canAlertruleList',
         icon: 'ControlOutlined',
         path: '/threshold/alertRule',
@@ -99,18 +108,15 @@ export default [
         path: '/threshold/alertNoread',
         component: './alert'
       }
-     
+
     ]
   },
   {
     path: '/InformationPage',
     name: 'Information Page',
     access: 'canJettyList',
-    // access: 'canAdmin',
     icon: 'InfoCircleOutlined',
     component: './system/jetty',
-    className: "dddddddd",
-    //component: './IdentityAccessManagement',
     routes: [
       {
         path: '/InformationPage',
@@ -130,30 +136,29 @@ export default [
     ]
   },
 
-      {
-        name: 'Summary of All Transactions',
-        hideInMenu: true,
-        key: 'Summary of All Transactions',
-        path: '/Report/ReportSummary',
-        component: './report/reportSummary',
-      },
-     
+  {
+    name: 'Summary of All Transactions',
+    hideInMenu: true,
+    key: 'Summary of All Transactions',
+    path: '/Report/ReportSummary',
+    component: './report/reportSummary',
+  },
+
   {
     path: '/report',
-    key:'Report',
+    key: 'Report',
     name: 'Report',
     icon: 'FileZipOutlined',
     component: './report',
     access: 'canReportList',
-   
+
   },
- 
-   {
-     path: '/UserAccessControl',
-     name: 'User Access Control',
-     access: 'canAdmin',
-     icon: 'SolutionOutlined',
-    //component: './IdentityAccessManagement',
+
+  {
+    path: '/UserAccessControl',
+    name: 'User Access Control',
+    access: 'canAdmin',
+    icon: 'SolutionOutlined',
     routes: [
       {
         path: '/UserAccessControl',
@@ -177,25 +182,24 @@ export default [
         path: '/UserAccessControl/Users',
         component: './system/user',
       },
-        {
+      {
         name: 'Permissions',
         icon: 'solution',
-          path: '/UserAccessControl/Permissions',
+        path: '/UserAccessControl/Permissions',
         component: './system/permission',
       },
 
-      
+
     ]
   },
-  
-  
+
+
 
   {
     path: '/AuditLog',
     name: 'Audit log',
     access: 'canAdmin',
     icon: 'SolutionOutlined',
-    //component: './IdentityAccessManagement',
     routes: [
       {
         path: '/AuditLog',
@@ -207,21 +211,7 @@ export default [
         icon: 'table',
         path: '/AuditLog/SuperUserActivityLog',
         component: './system/operlog/SuperUserActivity',
-      }
-     
-     /*,
-      {
-        name: 'Product Type',
-        icon: 'table',
-        path: '/IdentityAccessManagement/producttype',
-        component: './system/producttype',
       },
-      {
-        name: 'Terminal',
-        icon: 'solution',
-        path: '/SystemManagement/terminal',
-        component: './system/terminal',
-      }*/,
       {
         name: 'Login log',
         icon: 'bars',
@@ -241,23 +231,17 @@ export default [
         component: './system/operlog/APIActivity',
       }
 
-      /*,
-      {
-        name: 'Security Settings',
-        icon: 'safetyCertificate',
-        path: '/SystemManagement/sysconfig',
-        component: './system/sysconfig',
-      }*/
-      
+
+
     ]
   },
-  
+
   {
     path: '/SystemConfiguration',
     name: 'System Configuration',
     access: 'canAdmin',
     icon: 'SolutionOutlined',
-    //component: './IdentityAccessManagement',
+
     routes: [
       {
         path: '/SystemConfiguration',
@@ -288,8 +272,6 @@ export default [
     path: '/account',
     name: 'Profile & Setting',
     hideInMenu: true,
-    // icon: 'smile',
-    //component: './EOSTools',
     routes: [
       {
         name: 'Personal Center',
@@ -307,7 +289,7 @@ export default [
         name: 'Change Password',
         path: '/account/modPassword',
         component: './account/settings/components/modPassword'
-      
+
       },
       {
         name: 'Filter Of Timestamps',
@@ -318,35 +300,11 @@ export default [
 
     ]
   },
- /* {
-    path: '/admin',
-    name: 'admin',
-    icon: 'crown',
-    access: 'canAdmin',
-    routes: [
-      {
-        path: '/admin',
-        redirect: '/admin/sub-page',
-      },
-      {
-        path: '/admin/sub-page',
-        name: 'sub-page',
-        component: './Admin',
-      },
-    ],
-  },*/
-  
-  {
-    path: '/user/retrievePassword',
-    layout: false,
-    component: './account/settings/components/retrievePassword',
-  },
-  
   {
     path: '/',
     redirect: '/dashboard',
   },
-  
+
   {
     path: '*',
     layout: false,

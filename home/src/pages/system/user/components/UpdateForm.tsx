@@ -9,7 +9,7 @@ import {
   ProFormCheckbox,
   ProFormTreeSelect,
   ProFormInstance
-  
+
 } from '@ant-design/pro-components';
 import { UserListItem } from '../data.d';
 import { FormattedMessage, useIntl } from '@umijs/max';
@@ -30,7 +30,7 @@ export type UpdateFormProps = {
 const UpdateForm: React.FC<UpdateFormProps> = (props) => {
   const restFormRef = useRef<ProFormInstance>();
   const intl = useIntl();
- 
+
   const {
     onSubmit,
     onCancel,
@@ -38,17 +38,17 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
     values,
   } = props;
   useEffect(() => {
-    
-      role({ pageSize: 100, current: 1 }).then((res) => {
-        var b = {}
-        res.data.forEach((r) => {
-          b[r.id] = r.name
-        })
-        setRoleConf(b)
 
-      });
+    role({ pageSize: 100, current: 1 }).then((res) => {
+      var b = {}
+      res.data.forEach((r) => {
+        b[r.id] = r.name
+      })
+      setRoleConf(b)
 
-    
+    });
+
+
 
   }, [true]);
   const onlyCheck = (rule: any, value: any, callback: (arg0: string | undefined) => void) => {
@@ -68,14 +68,14 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           defaultMessage: 'This user name is already in use',
         }))
       } else {
-        callback(undefined); // 必须返回一个callback
+        callback(undefined); 
       }
     });
 
   }
-  const emailCheck =  (rule: any, value: any, callback: (arg0: string | undefined) => void) => {
-   
-    if (values.email==value) {
+  const emailCheck = (rule: any, value: any, callback: (arg0: string | undefined) => void) => {
+
+    if (values.email == value) {
       callback(undefined);
     }
     checkEmail({ email: value }).then((res) => {
@@ -86,17 +86,17 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           defaultMessage: 'This email is already in use',
         }))
       } else {
-        callback(undefined); // 必须返回一个callback
+        callback(undefined); 
       }
     });
-   
-    
-    
-   
+
+
+
+
   }
   const [roleConf, setRoleConf] = useState<any>({});
   return (
-   
+
     <ModalForm
       validateTrigger={['onBlur']}
       modalProps={{ destroyOnClose: true }}
@@ -105,31 +105,31 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         if (!vi) {
           props.onCancel();
         }
-          
+
       }}
       formRef={restFormRef}
-        onFinish={props.onSubmit}
-        open={props.updateModalOpen}
-        submitter={{
-          searchConfig: {
-            resetText: intl.formatMessage({
-              id: 'pages.reset',
-              defaultMessage: 'Reset',
-            }),
+      onFinish={props.onSubmit}
+      open={props.updateModalOpen}
+      submitter={{
+        searchConfig: {
+          resetText: intl.formatMessage({
+            id: 'pages.reset',
+            defaultMessage: 'Reset',
+          }),
+        },
+        resetButtonProps: {
+          onClick: () => {
+            restFormRef.current?.resetFields();
+           
           },
-          resetButtonProps: {
-            onClick: () => {
-              restFormRef.current?.resetFields();
-              //   setModalVisible(false);
-            },
-          },
-        }}
-        title={intl.formatMessage({
-          id: 'pages.user.mod',
-          defaultMessage: 'Modify user information',
-        })}
-      >
-        
+        },
+      }}
+      title={intl.formatMessage({
+        id: 'pages.user.mod',
+        defaultMessage: 'Modify user information',
+      })}
+    >
+
       <ProFormTreeSelect
         name="company_id"
         width="md"
@@ -146,50 +146,13 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
               return r
             })
 
-            // setFlowList(tree(res.data, "                                    ", 'pid'))
+          
             return tree(res.data, "                                    ", 'pid')
           });
 
         }}
       />
-      {/* <ProFormText
-        name="email"
-        label={intl.formatMessage({
-          id: 'pages.user.email',
-          defaultMessage: 'Email',
-        })}
-        width="md"
-       
-        rules={[
-          {
-            required: true, message: (
-              <FormattedMessage
-                id="pages.rules.required"
-                defaultMessage=""
-              />
-            ) },
-          {
-            pattern: /^[A-Za-z\d]+([-_.][A-Za-z\d]+)*@([A-Za-z\d]+[-.])+[A-Za-z\d]{2,4}$/, message: (
-              <FormattedMessage
-                id="pages.user.rules.incorrectEmailFormat"
-                defaultMessage="Incorrect email format"
-              />
-            )  },
-         { validator: emailCheck }
-        ]}
-      />
-      <ProFormText
-        name="nickname"
-        label={intl.formatMessage({
-          id: 'pages.user.nickname',
-          defaultMessage: 'Nick Name',
-        })}
-        width="md"
-        rules={[
-          
-        ]}
-      />*/ }
-
+    
       <ProFormText
         name="username"
         label={intl.formatMessage({
@@ -203,7 +166,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
             message: (
               <FormattedMessage
                 id="pages.user.rules.username"
-                defaultMessage="请输入用户名！"
+                defaultMessage=""
               />
             ),
           },
@@ -223,7 +186,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         width="md"
         label={intl.formatMessage({
           id: 'pages.user.role',
-          defaultMessage: '角色',
+          defaultMessage: '',
         })}
         valueEnum={roleConf}
       />
@@ -236,21 +199,21 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         options={[
           {
             value: 0,
-            label: 
+            label:
               intl.formatMessage({
                 id: 'pages.user.normal',
                 defaultMessage: 'Active',
               })
-            
+
           },
           {
             value: 1,
-            label: 
+            label:
               intl.formatMessage({
                 id: 'pages.user.disable',
                 defaultMessage: 'Disable',
               })
-            
+
           },
         ]}
       />
@@ -261,7 +224,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         options={[{ label: "Send email notification for Password Reset", value: "send_email" }]}
       />
     </ModalForm>
-     
+
   );
 };
 

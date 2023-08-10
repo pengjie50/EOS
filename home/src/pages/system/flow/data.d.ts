@@ -7,7 +7,6 @@ export interface FlowListItem  {
 
 export interface FlowList  {
   data?: FlowListItem[];
-  /** 列表的内容总数 */
   total?: number;
   success?: boolean;
 };

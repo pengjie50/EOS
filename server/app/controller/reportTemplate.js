@@ -28,7 +28,7 @@ class UserconfigController extends Controller {
         var params = ctx.request.body;
         params.user_id = ctx.user.user_id
         params.value = JSON.stringify(params.value);
-        console.log(params)
+       
         const result = await service.userconfig.add(params);
         this.addOperlog()
     }

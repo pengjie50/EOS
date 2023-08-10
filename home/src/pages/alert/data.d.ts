@@ -1,12 +1,11 @@
 export interface AlertListItem  {
   id: string;
-  name: string;
+  alert_id: string;
   description: string;
 };
 
 export interface AlertList  {
   data?: AlertListItem[];
-  /** 列表的内容总数 */
   total?: number;
   success?: boolean;
 };

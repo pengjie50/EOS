@@ -58,23 +58,19 @@ module.exports = app => {
             type: UUID
 
         },
-        product_quantity_in_mt_from: {
+       
+        product_quantity_from: {
             type: INTEGER,
 
         },
-        product_quantity_in_mt_to: {
+        product_quantity_to: {
             type: INTEGER,
 
         },
-        product_quantity_in_bls_60_f_from: {
-            type: INTEGER,
+        uom: {
+            type: STRING(20)
 
         },
-        product_quantity_in_bls_60_f_to: {
-            type: INTEGER,
-
-        },
-
         vessel_size_dwt_from: {
             type: INTEGER,
 
@@ -113,7 +109,22 @@ module.exports = app => {
 
 
         },
+        work_order_id: {
+            type: STRING(50)
 
+        },
+        work_order_sequence_number: {
+            type: STRING(50)
+
+        },
+        transaction_event_id_to: {
+            type: UUID
+
+        },
+        transaction_event_id_from: {
+            type: UUID
+
+        }
 
     }, {
         indexes: [
@@ -125,11 +136,9 @@ module.exports = app => {
                 fields: ['flow_id', 'type', 'user_id', 'vessel_size_dwt_from', 'vessel_size_dwt_to']
             },
             {
-                fields: ['product_quantity_in_mt_from', 'product_quantity_in_mt_to']
-            },
-            {
-                fields: ['product_quantity_in_bls_60_f_from', 'product_quantity_in_bls_60_f_to']
+                fields: ['product_quantity_from', 'product_quantity_to']
             }
+            
 
         ],
 
@@ -138,6 +147,11 @@ module.exports = app => {
         tableName: 'alert_rule_transaction'
 
     });
+    Model.associate = function () {
+        app.model.AlertruleTransaction.belongsTo(app.model.Transaction, { foreignKey: 'transaction_id', as: 't' });
 
+      
+
+    };
     return Model;
 };

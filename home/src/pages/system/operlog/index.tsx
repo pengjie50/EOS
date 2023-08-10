@@ -8,6 +8,7 @@ import FrPrint from "../../../components/FrPrint";
 import { exportCSV } from "../../../components/export";
 import FileSaver from "file-saver";
 import MPSort from "@/components/MPSort";
+import { ResizeObserverDo } from '@/components'
 import moment from 'moment'
 import { fieldSelectData } from '@/services/ant-design-pro/api';
 const Json2csvParser = require("json2csv").Parser;
@@ -27,8 +28,7 @@ import {
 import { FormattedMessage, useIntl, formatMessage } from '@umijs/max';
 import { Button, Drawer, Input, message, Modal, Popover, Empty, Pagination, FloatButton, ConfigProvider } from 'antd';
 import React, { useRef, useState, useEffect } from 'react';
-import CreateForm from './components/CreateForm';
-import UpdateForm from './components/UpdateForm';
+
 
 const { confirm } = Modal;
 //MP
@@ -37,7 +37,6 @@ import { isPC } from "@/utils/utils";
 
 /**
  *  Delete node
- * @zh-CN 删除节点
  *
  * @param selectedRows
  */
@@ -87,36 +86,6 @@ const handleRemove = async (selectedRows: OperlogListItem[], callBack: any) => {
 
 
 };
-/**
- * @en-US Update node
- * @zh-CN 更新节点
- *
- * @param fields
- */
-const handleUpdate = async (fields: Partial<any>) => {
-  const hide = message.loading(<FormattedMessage
-    id="pages.modifying"
-    defaultMessage="Modifying"
-  />);
-  try {
-
-    await updateOperlog({ remarks: fields['remarks'], id: fields.id });
-    hide();
-
-    message.success(<FormattedMessage
-      id="pages.modifySuccessful"
-      defaultMessage="Modify is successful"
-    />);
-    return true;
-  } catch (error) {
-    hide();
-    message.error(<FormattedMessage
-      id="pages.modifyFailed"
-      defaultMessage="Modify failed, please try again!"
-    />);
-    return false;
-  }
-};
 
 
 
@@ -126,8 +95,8 @@ export var columnsBase: ProColumns<OperlogListItem>[] = [
   {
     title: <FormattedMessage id="pages.user.username" defaultMessage="username" />,
     dataIndex: 'username',
-   // valueEnum: userList,
-   
+    // valueEnum: userList,
+    sorter: true,
     search: {
       transform: (value) => {
 
@@ -151,11 +120,13 @@ export var columnsBase: ProColumns<OperlogListItem>[] = [
   {
     title: <FormattedMessage id="pages.operlog.module" defaultMessage="module" />,
     dataIndex: 'module',
+    sorter: true,
     fieldProps: {
       multiple: true, mode: 'multiple', maxTagCount: 0,
       maxTagPlaceholder: (omittedValues) => {
         return omittedValues.length + " Selected"
-      }, },
+      },
+    },
     valueEnum: {
       //"user": "User Account",
       // "company": "Organization",
@@ -187,11 +158,13 @@ export var columnsBase: ProColumns<OperlogListItem>[] = [
   {
     title: <FormattedMessage id="pages.operlog.action" defaultMessage="Action Type" />,
     dataIndex: 'action',
+    sorter: true,
     fieldProps: {
       multiple: true, mode: 'multiple', maxTagCount: 0,
       maxTagPlaceholder: (omittedValues) => {
         return omittedValues.length + " Selected"
-      }, },
+      },
+    },
     valueEnum: {
       "add": "Create",
       "mod": "Update",
@@ -224,6 +197,7 @@ export var columnsBase: ProColumns<OperlogListItem>[] = [
   {
     title: <FormattedMessage id="pages.operlog.url" defaultMessage="url" />,
     dataIndex: 'url',
+    sorter: true,
     valueType: 'text',
     search: {
       transform: (value) => {
@@ -244,6 +218,7 @@ export var columnsBase: ProColumns<OperlogListItem>[] = [
   {
     title: <FormattedMessage id="pages.operlog.ip" defaultMessage="Ip" />,
     dataIndex: 'ip',
+    sorter: true,
     search: {
       transform: (value) => {
         if (value.length > 0) {
@@ -263,6 +238,7 @@ export var columnsBase: ProColumns<OperlogListItem>[] = [
   },
   {
     title: <FormattedMessage id="pages.loginlog.xxx" defaultMessage="Activity Duration (ms)" />,
+    sorter: true,
     dataIndex: 'activity_duration',
     fieldProps: { placeholder: ['From', 'To'] },
     valueType: "digitRange",
@@ -286,16 +262,17 @@ export var columnsBase: ProColumns<OperlogListItem>[] = [
       }
     }
   },
-  
+
   {
     title: <FormattedMessage id="pages.loginlog.xxx" defaultMessage="Organisation" />,
     dataIndex: 'company_id',
-    // valueEnum: organizationList,
+    sorter: true,
     fieldProps: {
       multiple: true, mode: 'multiple', maxTagCount: 0,
       maxTagPlaceholder: (omittedValues) => {
         return omittedValues.length + " Selected"
-      }, showSearch: true },
+      }, showSearch: true
+    },
 
     search: {
       transform: (value) => {
@@ -320,12 +297,14 @@ export var columnsBase: ProColumns<OperlogListItem>[] = [
   {
     title: <FormattedMessage id="pages.loginlog.xxx" defaultMessage="Device Type" />,
     dataIndex: 'device_type',
+    sorter: true,
     valueType: 'text',
     fieldProps: {
       multiple: true, mode: 'multiple', maxTagCount: 0,
       maxTagPlaceholder: (omittedValues) => {
         return omittedValues.length + " Selected"
-      }, },
+      },
+    },
     search: {
       transform: (value) => {
         if (value.length > 0) {
@@ -348,12 +327,16 @@ export var columnsBase: ProColumns<OperlogListItem>[] = [
 
     }
   },
-  /* {
-     title: <FormattedMessage id="pages.operlog.param" defaultMessage="param" />,
-     dataIndex: 'param',
-     ellipsis:true,
-     valueType: 'text',
-   },
+
+
+  {
+    title: <FormattedMessage id="pages.operlog.xxx" defaultMessage="Parameter" />,
+    dataIndex: 'param',
+    sorter: true,
+    ellipsis: !isPC() ? false : true,
+    valueType: 'text',
+  },
+  /* 
    {
      title: <FormattedMessage id="pages.operlog.result" defaultMessage="result" />,
      dataIndex: 'result',
@@ -364,6 +347,7 @@ export var columnsBase: ProColumns<OperlogListItem>[] = [
   {
     title: <FormattedMessage id="pages.loginlog.status" defaultMessage="Status" />,
     dataIndex: 'status',
+    sorter: true,
     search: {
       transform: (value) => {
 
@@ -385,7 +369,8 @@ export var columnsBase: ProColumns<OperlogListItem>[] = [
       multiple: true, mode: 'multiple', maxTagCount: 0,
       maxTagPlaceholder: (omittedValues) => {
         return omittedValues.length + " Selected"
-      }, },
+      },
+    },
     valueEnum: {
       0: {
         text: (
@@ -430,10 +415,11 @@ export var columnsBase: ProColumns<OperlogListItem>[] = [
     title: (
       <FormattedMessage
         id="pages.operlog.xxx"
-        defaultMessage="Operation Date"
+        defaultMessage="Operation Date and Time"
       />
     ),
-
+    sorter: true,
+    defaultSortOrder: 'descend',
     hideInSearch: true,
     dataIndex: 'oper_time',
     valueType: 'dateTime'
@@ -442,15 +428,14 @@ export var columnsBase: ProColumns<OperlogListItem>[] = [
   {
     title: (
       <FormattedMessage
-        id="pages.operlog.operTime"
-        defaultMessage="Operation Date"
+        id="pages.operlog.xxx"
+        defaultMessage="Operation Date and Time"
       />
     ),
-    sorter: true,
 
     hideInForm: true,
     hideInTable: true,
-    defaultSortOrder: 'descend',
+
     dataIndex: 'oper_time',
     valueType: 'dateRange',
     search: {
@@ -479,16 +464,8 @@ export var columnsBase: ProColumns<OperlogListItem>[] = [
 
 
 const TableList: React.FC = () => {
-  /**
-   * @en-US Pop-up window of new window
-   * @zh-CN 新建窗口的弹窗
-   *  */
-  const [createModalOpen, handleModalOpen] = useState<boolean>(false);
-  /**
-   * @en-US The pop-up window of the distribution update window
-   * @zh-CN 分布更新窗口的弹窗
-   * */
-  const [updateModalOpen, handleUpdateModalOpen] = useState<boolean>(false);
+ 
+  
   const [paramsText, setParamsText] = useState<string>('');
   const [showDetail, setShowDetail] = useState<boolean>(false);
   const [printModalVisible, handlePrintModalVisible] = useState<boolean>(false);
@@ -498,7 +475,6 @@ const TableList: React.FC = () => {
   const [resizeObj, setResizeObj] = useState({ searchSpan: 12, tableScrollHeight: 300 });
   /**
    * @en-US International configuration
-   * @zh-CN 国际化配置
    * */
   const intl = useIntl();
   const [MPSorter, setMPSorter] = useState<any>({});
@@ -538,14 +514,14 @@ const TableList: React.FC = () => {
         },
         onFocus: () => {
           fieldSelectData({ model: "Operlog", value: '', field: 'url', where: { type: 2 } }).then((res) => {
-           
+
             setUrlData(res.data)
           })
         },
         onSearch: (newValue: string) => {
 
           fieldSelectData({ model: "Operlog", value: newValue, field: 'url', where: { type: 2 } }).then((res) => {
-           
+
             setUrlData(res.data)
           })
 
@@ -567,14 +543,14 @@ const TableList: React.FC = () => {
         },
         onFocus: () => {
           fieldSelectData({ model: "Operlog", value: '', field: 'ip', where: { type: 2 } }).then((res) => {
-            
+
             setIpData(res.data)
           })
         },
         onSearch: (newValue: string) => {
 
           fieldSelectData({ model: "Operlog", value: newValue, field: 'ip', where: { type: 2 } }).then((res) => {
-            
+
             setIpData(res.data)
           })
 
@@ -595,7 +571,7 @@ const TableList: React.FC = () => {
         maxTagPlaceholder: (omittedValues) => {
           return omittedValues.length + " Selected"
         },
-        
+
       }
     }
     return b
@@ -609,7 +585,7 @@ const TableList: React.FC = () => {
 
 
 
-  
+
   useEffect(() => {
 
     user({
@@ -618,7 +594,7 @@ const TableList: React.FC = () => {
         'op': 'ne',
         'data': "Super"
       }
-} ).then((res) => {
+    }).then((res) => {
       var b = {}
       res.data.forEach((r) => {
         b[r.id] = r.username
@@ -639,7 +615,7 @@ const TableList: React.FC = () => {
     if (isMP) {
       getData(1)
     }
-    
+
 
   }, [true]);
   const right = (
@@ -653,7 +629,7 @@ const TableList: React.FC = () => {
           }}
         ><PrinterOutlined /> <FormattedMessage id="pages.Print" defaultMessage="Print" />
         </Button>, <Button style={{ width: "100%" }} type="primary" key="out"
-            onClick={() => exportCSV(data, columns,"User Activity Log")}
+          onClick={() => exportCSV(data, columns, "User Activity Log")}
         ><FileExcelOutlined /> <FormattedMessage id="pages.CSV" defaultMessage="CSV" />
           </Button>
 
@@ -712,11 +688,11 @@ const TableList: React.FC = () => {
     })
     const append = await operlog({
       ...{
-         type: {
-        'field': 'type',
-        'op': 'eq',
-        'data': 2
-      },
+        type: {
+          'field': 'type',
+          'op': 'eq',
+          'data': 2
+        },
         "current": page,
         "pageSize": 3
 
@@ -726,7 +702,7 @@ const TableList: React.FC = () => {
     setMPPagination({ total: append.total })
     setData(append.data)
   }
-  
+
   //--MP end
   const formRef = useRef<ProFormInstance>();
 
@@ -752,21 +728,7 @@ const TableList: React.FC = () => {
     <RcResizeObserver
       key="resize-observer"
       onResize={(offset) => {
-        const { innerWidth, innerHeight } = window;
-
-        if (offset.width > 1280) {
-
-          setResizeObj({ ...resizeObj, searchSpan: 8, tableScrollHeight: innerHeight - 420 });
-        }
-        if (offset.width < 1280 && offset.width > 900) {
-
-          setResizeObj({ ...resizeObj, searchSpan: 12, tableScrollHeight: innerHeight - 420 });
-        }
-        if (offset.width < 900 && offset.width > 700) {
-          setResizeObj({ ...resizeObj, searchSpan: 24, tableScrollHeight: innerHeight - 420 });
-
-        }
-
+        ResizeObserverDo(offset, setResizeObj, resizeObj)
 
 
       }}
@@ -788,7 +750,7 @@ const TableList: React.FC = () => {
             }}
           ><PrinterOutlined /> <FormattedMessage id="pages.Print" defaultMessage="Print" />
           </Button>, <Button type="primary" key="out"
-            onClick={() => exportCSV(selectedRowsState, columns,"User Activity Log")}
+            onClick={() => exportCSV(selectedRowsState, columns, "User Activity Log")}
           ><FileExcelOutlined /> <FormattedMessage id="pages.CSV" defaultMessage="CSV" />
           </Button>
 
@@ -811,11 +773,13 @@ const TableList: React.FC = () => {
           ]}
           options={false}
           className="mytable"
-          request={(params, sorter) => operlog({ ...params, sorter, type:{
-            'field': 'type',
-            'op': 'eq',
-            'data': 2
-          } })}
+          request={(params, sorter) => operlog({
+            ...params, sorter, type: {
+              'field': 'type',
+              'op': 'eq',
+              'data': 2
+            }
+          })}
           columns={columns}
           bordered
           rowSelection={{
@@ -916,31 +880,7 @@ const TableList: React.FC = () => {
 
           </FooterToolbar>
         )}
-        <UpdateForm
-          onSubmit={async (value) => {
-            value.id = currentRow?.id
-            const success = await handleUpdate(value);
-            if (success) {
-              handleUpdateModalOpen(false);
-              setCurrentRow(undefined);
-              if (isMP) {
-                setData([]);
-                getData(1)
-              }
-              if (actionRef.current) {
-                actionRef.current.reload();
-              }
-            }
-          }}
-          onCancel={() => {
-            handleUpdateModalOpen(false);
-            if (!showDetail) {
-              setCurrentRow(undefined);
-            }
-          }}
-          updateModalOpen={updateModalOpen}
-          values={currentRow || {}}
-        />
+       
 
 
         <Drawer
@@ -970,24 +910,13 @@ const TableList: React.FC = () => {
           title={""}
           subTitle={paramsText}
           columns={columns}
-          dataSource={[...(isMP ? data : selectedRowsState)/*, sumRow*/]}
+          dataSource={[...(isMP ? data : selectedRowsState)]}
           onCancel={() => {
             handlePrintModalVisible(false);
           }}
           printModalVisible={printModalVisible}
         />
-        {/*
-         <div style={{ marginTop: -45, paddingLeft: 10 }}>
-          <Button
-
-            type="primary"
-            onClick={async () => {
-              history.back()
-            }}
-          >Return to previous page</Button>
-        </div>
-
-        */ }
+       
       </PageContainer></RcResizeObserver>
   );
 };

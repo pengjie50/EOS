@@ -1,11 +1,13 @@
 import RcResizeObserver from 'rc-resize-observer';
 import { addUser, removeUser, user, updateUser } from './service';
-import { PlusOutlined, SearchOutlined, FormOutlined, DeleteOutlined, LogoutOutlined,CloseCircleOutlined,ExclamationCircleOutlined } from '@ant-design/icons';
+import { PlusOutlined, SearchOutlined, FormOutlined, DeleteOutlined, LogoutOutlined, CloseCircleOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import type { ActionType, ProColumns, ProDescriptionsItemProps } from '@ant-design/pro-components';
 import { UserList, UserListItem } from './data.d';
 import MPSort from "@/components/MPSort";
+import { ResizeObserverDo } from '@/components'
 import { outLogin } from '@/services/ant-design-pro/api';
 import { fieldSelectData } from '@/services/ant-design-pro/api';
+import moment from 'moment'
 import {
   FooterToolbar,
   ModalForm,
@@ -30,7 +32,6 @@ import { role } from '../../system/role/service';
 import { company } from '../../system/company/service';
 /**
  * @en-US Add node
- * @zh-CN 添加节点
  * @param fields
  */
 const handleAdd = async (fields: UserListItem) => {
@@ -48,21 +49,23 @@ const handleAdd = async (fields: UserListItem) => {
     return true;
   } catch (error) {
     hide();
-    message.error(<FormattedMessage
-      id="pages.addingFailed"
-      defaultMessage="Adding failed, please try again!"
-    />);
+    if (error.info.errorCode == 1000) {
+      message.error(<FormattedMessage
+        id="pages.addingFailed"
+        defaultMessage="Adding failed, please try again!"
+      />);
+    }
+
     return false;
   }
 };
 
 /**
  * @en-US Update node
- * @zh-CN 更新节点
  *
  * @param fields
  */
-const handleUpdate = async (fields: Partial<UserListItem> ) => {
+const handleUpdate = async (fields: Partial<UserListItem>) => {
   const hide = message.loading(<FormattedMessage
     id="pages.modifying"
     defaultMessage="Modifying"
@@ -88,7 +91,6 @@ const handleUpdate = async (fields: Partial<UserListItem> ) => {
 
 /**
  *  Delete node
- * @zh-CN 删除节点
  *
  * @param selectedRows
  */
@@ -97,21 +99,21 @@ const handleRemove = async (selectedRows: UserListItem[], callBack: any) => {
   var open = true
   confirm({
     title: 'Delete Account?',
-    closable:true,
+    closable: true,
     open: open,
     icon: <ExclamationCircleOutlined />,
-    content: <div style={{ marginLeft:-16 }}><div>You are about to delete this user account! This action cannot be undone and all the data related to this user account will be deleted from the system.
+    content: <div style={{ marginLeft: -16 }}><div>You are about to delete this user account! This action cannot be undone and all the data related to this user account will be deleted from the system.
 
-      </div>
+    </div>
 
-      <div style={{ marginTop: 10, marginBottom:10 }}>Deleting this user account will do the following:</div>
+      <div style={{ marginTop: 10, marginBottom: 10 }}>Deleting this user account will do the following:</div>
 
-      <div style={{ color: '#999' }} ><CloseCircleOutlined style={{ color:'red' }} /> Log user out on all devices</div>
+      <div style={{ color: '#999' }} ><CloseCircleOutlined style={{ color: 'red' }} /> Log user out on all devices</div>
       <div style={{ color: '#999' }} ><CloseCircleOutlined style={{ color: 'red' }} /> Delete all of user’s account information</div>
 
-      <div style={{ fontWeight: 500, marginTop: 10}}>Confirm if you would like to proceed</div>
+      <div style={{ fontWeight: 500, marginTop: 10 }}>Confirm if you would like to proceed</div>
     </div>,
-    okText:"Proceed",
+    okText: "Proceed",
     onOk() {
 
 
@@ -148,12 +150,10 @@ const handleRemove = async (selectedRows: UserListItem[], callBack: any) => {
 const TableList: React.FC = () => {
   /**
    * @en-US Pop-up window of new window
-   * @zh-CN 新建窗口的弹窗
    *  */
   const [createModalOpen, handleModalOpen] = useState<boolean>(false);
   /**
    * @en-US The pop-up window of the distribution update window
-   * @zh-CN 分布更新窗口的弹窗
    * */
   const [updateModalOpen, handleUpdateModalOpen] = useState<boolean>(false);
 
@@ -168,7 +168,6 @@ const TableList: React.FC = () => {
   const [resizeObj, setResizeObj] = useState({ searchSpan: 12, tableScrollHeight: 300 });
   /**
    * @en-US International configuration
-   * @zh-CN 国际化配置
    * */
   const intl = useIntl();
   //--MP start
@@ -181,7 +180,7 @@ const TableList: React.FC = () => {
 
   useEffect(() => {
 
-    role({  sorter: { name: 'ascend' } }).then((res) => {
+    role({ sorter: { name: 'ascend' } }).then((res) => {
       var b = {}
       res.data.forEach((r) => {
         b[r.id] = r.name
@@ -190,7 +189,7 @@ const TableList: React.FC = () => {
 
     });
 
-    company({  sorter: { name: 'ascend' } }).then((res) => {
+    company({ sorter: { name: 'ascend' } }).then((res) => {
       var b = {}
       res.data.forEach((r) => {
         b[r.id] = r.name
@@ -201,7 +200,7 @@ const TableList: React.FC = () => {
     if (isMP) {
       getData(1)
     }
-  },[true])
+  }, [true])
 
   const right = (
     <div style={{ fontSize: 24 }}>
@@ -265,7 +264,7 @@ const TableList: React.FC = () => {
     setMPPagination({ total: append.total })
     setData(append.data)
   }
- 
+
   //--MP end
   const columns: ProColumns<UserListItem>[] = [
 
@@ -313,23 +312,6 @@ const TableList: React.FC = () => {
         }
       }
     },
-
-   
-   /* {
-      title: <FormattedMessage id="pages.user.nickname" defaultMessage="Nickname" />,
-      dataIndex: 'nickname',
-      valueType: 'text',
-    },
-    {
-      title: <FormattedMessage id="pages.user.email" defaultMessage="Email" />,
-      dataIndex: 'email',
-      valueType: 'text',
-    },
-    {
-      title: <FormattedMessage id="pages.user.phone" defaultMessage="Phone" />,
-      dataIndex: 'phone',
-      valueType: 'text',
-    },*/
     {
       title: <FormattedMessage id="pages.user.xxx" defaultMessage="Organization" />,
       dataIndex: 'company_id',
@@ -395,7 +377,7 @@ const TableList: React.FC = () => {
       dataIndex: 'status',
       fieldProps: {
         multiple: true,
-       
+
         allowClear: true,
         mode: 'multiple',
         maxTagCount: 0,
@@ -405,14 +387,14 @@ const TableList: React.FC = () => {
       },
       search: {
         transform: (value) => {
-          
-          if (value !== null) {
+
+          if (value && value.length > 0) {
             return {
 
               status: {
                 'field': 'status',
                 'op': 'in',
-                'data':value
+                'data': value
               }
 
             }
@@ -428,16 +410,26 @@ const TableList: React.FC = () => {
     {
       title: <FormattedMessage id="pages.user.onlineStatus" defaultMessage="Online Status" />,
       dataIndex: 'online_status',
+      fieldProps: {
+        multiple: true,
+
+        allowClear: true,
+        mode: 'multiple',
+        maxTagCount: 0,
+        maxTagPlaceholder: (omittedValues) => {
+          return omittedValues.length + " Selected"
+        },
+      },
       search: {
         transform: (value) => {
-          alert(value)
-          if (value !== null) {
+
+          if (value && value.length > 0) {
             return {
 
               online_status: {
                 'field': 'online_status',
-                'op': 'eq',
-                'data': Number(value)
+                'op': 'in',
+                'data': value
               }
 
             }
@@ -445,17 +437,17 @@ const TableList: React.FC = () => {
 
         }
       },
-      hideInSearch:true,
+
       valueEnum: {
-        0: { text: <FormattedMessage id="pages.user.online" defaultMessage="Online" />, status: 'Success' },
-        1: { text: <FormattedMessage id="pages.user.offline" defaultMessage="Offline" />, status: 'Error' },
+        1: { text: <FormattedMessage id="pages.user.online" defaultMessage="Online" />, status: 'Success' },
+        0: { text: <FormattedMessage id="pages.user.offline" defaultMessage="Offline" />, status: 'Error' },
       },
     },
     {
       title: (
         <FormattedMessage
           id="pages.createdAt"
-          defaultMessage="Created at" 
+          defaultMessage="Created At"
         />
       ),
       sorter: true,
@@ -464,6 +456,42 @@ const TableList: React.FC = () => {
       hideInSearch: true
 
     },
+
+    {
+      title: "Created At",
+
+
+      hideInDescriptions: true,
+      hideInTable: true,
+      fieldProps: { style: { width: '100%' }, placeholder: ['From ', 'To '] },
+
+      dataIndex: 'created_at',
+      valueType: 'dateRange',
+
+      search: {
+        transform: (value) => {
+          if (value.length > 0) {
+            value[0] = moment(new Date(value[0])).format('YYYY-MM-DD') + " 00:00:00"
+            value[1] = moment(new Date(value[1])).format('YYYY-MM-DD') + " 23:59:59"
+            return {
+              'created_at': {
+                'field': 'created_at',
+                'op': 'between',
+                'data': value
+              }
+
+            }
+          }
+
+        }
+      }
+
+
+
+    },
+
+
+
     {
       title: <FormattedMessage id="pages.searchTable.titleOption" defaultMessage="Option" />,
       dataIndex: 'option',
@@ -501,10 +529,10 @@ const TableList: React.FC = () => {
 
         </a>,
 
-        
-        record.online_status ==0 ?  <a
+
+        record.online_status == 0 ? <a
           key="force_logout"
-          title={"Force logout" }
+          title={"Force logout"}
           onClick={() => {
             outLogin({ user_id: currentRow?.id })
             message.success("Force logout success");
@@ -512,8 +540,8 @@ const TableList: React.FC = () => {
         >
 
           <LogoutOutlined />
-          
-        </a>:null
+
+        </a> : null
       ],
     },
   ];
@@ -539,80 +567,67 @@ const TableList: React.FC = () => {
     <RcResizeObserver
       key="resize-observer"
       onResize={(offset) => {
-        const { innerWidth, innerHeight } = window;
+        ResizeObserverDo(offset, setResizeObj, resizeObj)
 
-        if (offset.width > 1280) {
-         
-          setResizeObj({ ...resizeObj, searchSpan: 8, tableScrollHeight: innerHeight - 420 });
-        }
-        if (offset.width < 1280 && offset.width > 900) {
-        
-          setResizeObj({ ...resizeObj, searchSpan: 12, tableScrollHeight: innerHeight - 420 });
-        }
-        if (offset.width < 900 && offset.width > 700) {
-          setResizeObj({ ...resizeObj, searchSpan: 24, tableScrollHeight: innerHeight - 420 });
-         
-        }
 
-        
 
       }}
     >
       <PageContainer className="myPage" header={{
-      title: isMP ? null : < FormattedMessage id="pages.user.title" defaultMessage="User" />,
-      breadcrumb: {},
-      extra: isMP ? null : [
-        <Button
-          type="primary"
-          key="primary"
-          onClick={() => {
-            handleModalOpen(true);
-          }}
-        >
-          <PlusOutlined /> <FormattedMessage id="pages.xxx" defaultMessage="Create New User" />
-        </Button>,
-      ]
-    }}>
+        title: isMP ? null : < FormattedMessage id="pages.user.title" defaultMessage="User" />,
+        breadcrumb: {},
+        extra: isMP ? null : [
+          <Button
+            type="primary"
+            key="primary"
+            onClick={() => {
+              handleModalOpen(true);
+            }}
+          >
+            <PlusOutlined /> <FormattedMessage id="pages.xxx" defaultMessage="Create New User" />
+          </Button>,
+        ]
+      }}>
         {!isMP && (<ConfigProvider renderEmpty={customizeRenderEmpty}><ProTable<UserListItem, API.PageParams>
-       
-        actionRef={actionRef}
+
+          actionRef={actionRef}
           rowKey="id"
           formRef={formRef}
           scroll={{ x: 1800, y: resizeObj.tableScrollHeight }}
-        search={{
-          labelWidth: 130,
-          span: resizeObj.searchSpan,
-          searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
-        }}
-        className="mytable"
-        options={false }
-        request={(params, sorter) => user({ ...params, sorter })}
-        columns={columns}
-       bordered
+          search={{
+            labelWidth: 130,
+            span: resizeObj.searchSpan,
+            searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
+          }}
+          className="mytable"
+          options={false}
+          request={(params, sorter) => user({ ...params, sorter })}
+          columns={columns}
+          bordered
         /></ConfigProvider>)}
 
-      {isMP && (<>
+        {isMP && (<>
 
           <NavBar backArrow={false} left={
             <MPSort columns={columns} onSort={(k) => {
               setMPSorter(k)
               getData(1)
             }} />} right={right} onBack={back}>
-          {intl.formatMessage({
-            id: 'pages.user.title',
-            defaultMessage: 'User',
-          })}
-        </NavBar>
+            {intl.formatMessage({
+              id: 'pages.user.title',
+              defaultMessage: 'User',
+            })}
+          </NavBar>
 
-        <div style={{ padding: '20px', backgroundColor: "#5000B9", display: showMPSearch ? 'block' : 'none' }}>
-          <Search columns={columns.filter(a => !(a.hasOwnProperty('hideInSearch') && a['hideInSearch']))} action={actionRef} loading={false}
+          <div style={{ padding: '20px', backgroundColor: "#5000B9", display: showMPSearch ? 'block' : 'none' }}>
+            <Search columns={columns.filter(a => !(a.hasOwnProperty('hideInSearch') && a['hideInSearch']))} action={actionRef} loading={false}
 
-            onFormSearchSubmit={onFormSearchSubmit}
+              onFormSearchSubmit={onFormSearchSubmit}
 
-            dateFormatter={'string'}
-                formRef={formRef}
-            type={'form'}
-            cardBordered={true}
+              dateFormatter={'string'}
+              formRef={formRef}
+              type={'form'}
+              cardBordered={true}
               form={{
                 submitter: {
                   searchConfig: {
@@ -622,34 +637,34 @@ const TableList: React.FC = () => {
 
                 }
               }}
-            search={{}}
-            manualRequest={true}
-          />
-        </div>
-        <List>
-          {data.map((item, index) => (
-            <List.Item key={index}>
+              search={{}}
+              manualRequest={true}
+            />
+          </div>
+          <List>
+            {data.map((item, index) => (
+              <List.Item key={index}>
 
-              <ProDescriptions<any>
-                bordered={true}
-                size="small"
-                className="jetty-descriptions"
-                layout="horizontal"
-                column={1}
-                title={""}
-                request={async () => ({
-                  data: item || {},
-                })}
-                params={{
-                  id: item?.id,
-                }}
-                columns={columns as ProDescriptionsItemProps<any>[]}
-              />
+                <ProDescriptions<any>
+                  bordered={true}
+                  size="small"
+                  className="jetty-descriptions"
+                  layout="horizontal"
+                  column={1}
+                  title={""}
+                  request={async () => ({
+                    data: item || {},
+                  })}
+                  params={{
+                    id: item?.id,
+                  }}
+                  columns={columns as ProDescriptionsItemProps<any>[]}
+                />
 
-            </List.Item>
-          ))}
-        </List>
-            {MPPagination.total > 0 ? <div style={{ textAlign: 'center', padding: "20px 10px 90px 10px" }}>
+              </List.Item>
+            ))}
+          </List>
+          {MPPagination.total > 0 ? <div style={{ textAlign: 'center', padding: "20px 10px 90px 10px" }}>
             <Pagination
 
               onChange={(page, pageSize) => {
@@ -662,98 +677,87 @@ const TableList: React.FC = () => {
               defaultPageSize={3}
               defaultCurrent={1}
             />
-            </div> : customizeRenderEmpty()}
+          </div> : customizeRenderEmpty()}
           <FloatButton.BackTop visibilityHeight={0} />
-      </>)}
-     
-      
-      <CreateForm
-        onSubmit={async (value) => {
-          value.id = currentRow?.id
-          const success = await handleAdd(value as UserListItem);
-          if (success) {
+        </>)}
+
+
+        <CreateForm
+          onSubmit={async (value) => {
+            value.id = currentRow?.id
+            const success = await handleAdd(value as UserListItem);
+            if (success) {
+              handleModalOpen(false);
+              setCurrentRow(undefined);
+              if (isMP) {
+                setData([]);
+                getData(1, MPfilter)
+              }
+              if (actionRef.current) {
+                actionRef.current.reload();
+              }
+            }
+          }}
+          onCancel={() => {
             handleModalOpen(false);
-            setCurrentRow(undefined);
-            if (isMP) {
-              setData([]);
-              getData(1, MPfilter)
+            if (!showDetail) {
+              setCurrentRow(undefined);
             }
-            if (actionRef.current) {
-              actionRef.current.reload();
+          }}
+          createModalOpen={createModalOpen}
+
+        />
+        <UpdateForm
+          onSubmit={async (value) => {
+            value.id = currentRow?.id
+            const success = await handleUpdate(value);
+            if (success) {
+              handleUpdateModalOpen(false);
+              setCurrentRow(undefined);
+              if (isMP) {
+                setData([]);
+                getData(1, MPfilter)
+              }
+              if (actionRef.current) {
+                actionRef.current.reload();
+              }
             }
-          }
-        }}
-        onCancel={() => {
-          handleModalOpen(false);
-          if (!showDetail) {
-            setCurrentRow(undefined);
-          }
-        }}
-        createModalOpen={createModalOpen}
-       
-      />
-      <UpdateForm
-        onSubmit={async (value) => {
-          value.id = currentRow?.id
-          const success = await handleUpdate(value);
-          if (success) {
+          }}
+          onCancel={() => {
             handleUpdateModalOpen(false);
-            setCurrentRow(undefined);
-            if (isMP) {
-              setData([]);
-              getData(1, MPfilter)
+            if (!showDetail) {
+              setCurrentRow(undefined);
             }
-            if (actionRef.current) {
-              actionRef.current.reload();
-            }
-          }
-        }}
-        onCancel={() => {
-          handleUpdateModalOpen(false);
-          if (!showDetail) {
+          }}
+          updateModalOpen={updateModalOpen}
+          values={currentRow || {}}
+        />
+
+        <Drawer
+          width={isMP ? '100%' : 600}
+          open={showDetail}
+          onClose={() => {
             setCurrentRow(undefined);
-          }
-        }}
-        updateModalOpen={updateModalOpen}
-        values={currentRow || {}}
-      />
+            setShowDetail(false);
+          }}
+          closable={isMP ? true : false}
+        >
+          {currentRow?.username && (
+            <ProDescriptions<UserListItem>
 
-      <Drawer
-        width={isMP ? '100%' : 600}
-        open={showDetail}
-        onClose={() => {
-          setCurrentRow(undefined);
-          setShowDetail(false);
-        }}
-        closable={isMP ? true : false}
-      >
-        {currentRow?.username && (
-          <ProDescriptions<UserListItem>
-            
-            column={isMP ? 1 : 2}
-            title={currentRow?.username}
-            request={async () => ({
-              data: currentRow || {},
-            })}
-            params={{
-              id: currentRow?.username,
-            }}
-            columns={columns as ProDescriptionsItemProps<UserListItem>[]}
-          />
-        )}
-      </Drawer>
-        {/*
-         <div style={{ marginTop: -45, paddingLeft: 10 }}>
-          <Button
-
-            type="primary"
-            onClick={async () => {
-              history.back()
-            }}
-          >Return to previous page</Button>
-        </div>
-
-        */ }
+              column={isMP ? 1 : 2}
+              title={currentRow?.username}
+              request={async () => ({
+                data: currentRow || {},
+              })}
+              params={{
+                id: currentRow?.username,
+              }}
+              columns={columns as ProDescriptionsItemProps<UserListItem>[]}
+            />
+          )}
+        </Drawer>
+       
       </PageContainer></RcResizeObserver>
   );
 };

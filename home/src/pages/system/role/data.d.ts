@@ -7,7 +7,6 @@ export interface RoleListItem  {
 
 export interface RoleList  {
   data?: RoleListItem[];
-  /** 列表的内容总数 */
   total?: number;
   success?: boolean;
 };

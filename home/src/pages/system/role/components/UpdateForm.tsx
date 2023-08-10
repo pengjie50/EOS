@@ -4,12 +4,13 @@ import {
   ProFormTreeSelect,
   ProFormSelect,
   ProFormText,
+  ProFormDependency,
   ProFormTextArea,
   ProFormCheckbox,
   ModalForm,
   ProCard,
   ProFormInstance
-  
+
 } from '@ant-design/pro-components';
 import { RoleListItem } from '../data.d';
 import { FormattedMessage, useIntl } from '@umijs/max';
@@ -20,6 +21,7 @@ import { tree, getparentlist, getChildNode, isPC } from "@/utils/utils";
 import { company } from '../../../system/company/service';
 import { queryMenuByRoleId } from '@/pages/system/role/service';
 import { permission } from '@/pages/system/permission/service';
+import { fieldUniquenessCheck } from '@/services/ant-design-pro/api';
 export type UpdateFormProps = {
   onCancel: (flag?: boolean, formVals?: Partial<RoleListItem>) => void;
   onSubmit: (values: Partial<RoleListItem>) => Promise<void>;
@@ -32,11 +34,14 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
   const intl = useIntl();
   const [flowConf, setFlowConf] = useState<any>([]);
   const [permissionConf, setPermissionConf] = useState<any>([]);
-  const [companyConf, setCompanyConf] = useState<any>([]);
+  const [companyConf1, setCompanyConf1] = useState<any>([]);
+  const [companyConf2, setCompanyConf2] = useState<any>([]);
   const [isMP, setIsMP] = useState<boolean>(!isPC());
 
+  const [dataTerminal, setDataTerminal] = useState<any>([]);
+  const [dataTrader, setDataTrader] = useState<any>([]);
 
-  const [accessiblePermissionsCheckedKeys, setAccessiblePermissionsCheckedKeys] = useState<any>(values?.accessible_permissions ||[]); 
+  const [accessiblePermissionsCheckedKeys, setAccessiblePermissionsCheckedKeys] = useState<any>(values?.accessible_permissions || []);
   const {
     onSubmit,
     onCancel,
@@ -62,13 +67,53 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
       res.data = res.data.map((r) => {
         r['key'] = r.id
         r['title'] = r.name
+        r.pid = null
         return r
       })
-      var d = tree(res.data, "                                    ", 'pid')
 
-      d[0].title = "All"
-      setCompanyConf(d)
-      return d
+
+
+      var dataTerminal = res.data.filter((a) => {
+        return a.type == "Terminal"
+      })
+      var c1 = values.accessible_organization?.filter((a) => {
+        return dataTerminal.some((b) => {
+          return a == b.id
+        })
+      })
+
+      restFormRef.current?.setFieldValue("accessible_organization1", c1)
+
+
+
+      setDataTerminal(dataTerminal)
+      var dataTrader = res.data.filter((a) => {
+        return a.type != "Terminal" && a.type != "Super"
+      })
+
+
+      var c2 = values.accessible_organization?.filter((a) => {
+        return dataTrader.some((b) => {
+          return a == b.id
+        })
+      })
+
+      restFormRef.current?.setFieldValue("accessible_organization2", c2)
+
+      setDataTrader(dataTrader)
+      var d1 = tree(dataTerminal, null, 'pid')
+
+
+      setCompanyConf1(d1)
+
+
+      var d2 = tree(dataTrader, null, 'pid')
+
+
+      setCompanyConf2(d2)
+
+
+      return d1
     });
 
 
@@ -90,13 +135,32 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
     if (values && values.accessible_permissions) {
       setAccessiblePermissionsCheckedKeys(['all', ...values?.accessible_permissions] || [])
     }
-    
-    
+
+
   }, [true, values]);
 
+  const onlyCheck = (rule: any, value: any, callback: (arg0: string | undefined) => void) => {
 
+
+    fieldUniquenessCheck({ where: { name: value }, model: 'Role' }).then((res) => {
+      if (values.name == value) {
+        callback(undefined);
+        return
+      }
+      if (res.data) {
+
+        callback(intl.formatMessage({
+          id: 'pages.xxx',
+          defaultMessage: 'This role name is already in use',
+        }))
+      } else {
+        callback(undefined); 
+      }
+    });
+
+  }
   return (
-   
+
     <ModalForm
       modalProps={{ destroyOnClose: true }}
       initialValues={values}
@@ -104,30 +168,30 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         if (!vi) {
           props.onCancel();
         }
-          
+
       }}
       formRef={restFormRef}
-        onFinish={props.onSubmit}
-        open={props.updateModalOpen}
-        submitter={{
-          searchConfig: {
-            resetText: intl.formatMessage({
-              id: 'pages.reset',
-              defaultMessage: 'Reset',
-            }),
+      onFinish={props.onSubmit}
+      open={props.updateModalOpen}
+      submitter={{
+        searchConfig: {
+          resetText: intl.formatMessage({
+            id: 'pages.reset',
+            defaultMessage: 'Reset',
+          }),
+        },
+        resetButtonProps: {
+          onClick: () => {
+            restFormRef.current?.resetFields();
+           
           },
-          resetButtonProps: {
-            onClick: () => {
-              restFormRef.current?.resetFields();
-              //   setModalVisible(false);
-            },
-          },
-        }}
-        title={intl.formatMessage({
-          id: 'pages.role.mod',
-          defaultMessage: 'Modify Role',
-        })}
-      >
+        },
+      }}
+      title={intl.formatMessage({
+        id: 'pages.role.mod',
+        defaultMessage: 'Modify Role',
+      })}
+    >
       <ProCard title="Basic Information" colSpan={24} headerBordered collapsible={true} headStyle={{ backgroundColor: "#d4d4d4" }}>
         <ProFormText
           name="name"
@@ -146,6 +210,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                 />
               ),
             },
+            { validator: onlyCheck }
           ]}
         />
         {/*<ProFormSelect
@@ -196,18 +261,18 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           checkable
           multiple={true}
           checkedKeys={accessiblePermissionsCheckedKeys}
-         // defaultCheckedKeys={values.accessible_permissions}
+          
           defaultExpandAll={true}
           checkStrictly={true}
           onSelect={(e) => {
 
-           
+
           }}
           onCheck={(e, a) => {
             var ishas = accessiblePermissionsCheckedKeys.some((b) => {
               return b == a.node.id
             })
-            var checks=[]
+            var checks = []
             if (!ishas) {
               var parent = getparentlist(a.node.id, permissionConf)
 
@@ -231,13 +296,13 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
             }
 
 
-            checks=checks?.filter((a) => {
+            checks = checks?.filter((a) => {
               return a != "all"
             })
-          
 
 
-            restFormRef.current?.setFieldValue("accessible_permissions", checks )
+
+            restFormRef.current?.setFieldValue("accessible_permissions", checks)
           }}
 
           treeData={permissionConf}
@@ -251,30 +316,100 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
       </ProCard>
 
 
-      <ProCard title="Data Available" colSpan={24} headerBordered collapsible={true} headStyle={{ backgroundColor: "#d4d4d4" }}>
+      <ProCard title="Accessible data for this role" colSpan={24} wrap={true} headerBordered collapsible={true} headStyle={{ backgroundColor: "#d4d4d4" }}>
         <ProFormCheckbox name="accessible_organization" hidden={true} />
-        <Tree
-          checkable
-          defaultCheckedKeys={values.accessible_organization}
-          defaultExpandAll={true}
-          onSelect={() => { }}
-          onCheck={(e) => { restFormRef.current?.setFieldValue("accessible_organization", e) }}
-          treeData={companyConf}
-        />
+        <ProFormCheckbox name="accessible_organization1" hidden={true} />
+        <ProFormCheckbox name="accessible_organization2" hidden={true} />
+        <ProCard colSpan={24} >
+          <div style={{ marginBottom: 10 }}>Note: In order for a transaction to be visible for this role, please select the relevant trader and the terminal.</div>
+          <ProFormDependency name={['accessible_organization']}>
+            {({ accessible_organization }) => {
+
+
+
+              if (accessible_organization?.length > 0) {
+
+                var isa = dataTerminal.some((a) => {
+                  return accessible_organization.some((b) => {
+                    return b == a.id
+                  })
+                })
+
+                var isb = dataTrader.some((a) => {
+                  return accessible_organization.some((b) => {
+                    return b == a.id
+                  })
+                })
+                if (isa && isb) {
+                  return ""
+                } else {
+                  return <div style={{ color: 'red' }}>Both Terminal and Trader must be selected</div>
+                }
+
+              }
+
+            }}
+          </ProFormDependency>
+        </ProCard>
+
+
+        <ProCard
+          wrap={isMP}
+          bordered
+          headerBordered
+        >
+          <ProCard title="Terminal" colSpan="50%">
+            <Tree
+              checkable
+              defaultCheckedKeys={values.accessible_organization}
+              defaultExpandAll={true}
+              onSelect={() => { }}
+              onCheck={(e) => {
+                restFormRef.current?.setFieldValue("accessible_organization1", e)
+                restFormRef.current?.setFieldValue("accessible_organization", e.concat(restFormRef.current?.getFieldValue("accessible_organization2")))
+              }}
+              treeData={companyConf1}
+            />
+          </ProCard>
+          <ProCard title="Trader / Others">
+            <Tree
+              checkable
+              defaultCheckedKeys={values.accessible_organization}
+              defaultExpandAll={true}
+              onSelect={() => { }}
+              onCheck={(e) => {
+
+                restFormRef.current?.setFieldValue("accessible_organization2", e)
+                restFormRef.current?.setFieldValue("accessible_organization", e.concat(restFormRef.current?.getFieldValue("accessible_organization1")))
+              }}
+              treeData={companyConf2}
+            />
+          </ProCard>
+        </ProCard>
+
+
+
+
 
 
       </ProCard>
 
       <ProCard title="Accessible Timestamp" colSpan={24} headerBordered collapsible={true} headStyle={{ backgroundColor: "#d4d4d4" }}>
         <ProFormCheckbox name="accessible_timestamp" hidden={true} />
-        {/*accessible_timestamp*/}
+        
 
         <Tree
           checkable
-          defaultCheckedKeys={values.accessible_timestamp}
+
+          defaultCheckedKeys={values.accessible_timestamp?.filter((a) => {
+            return !flowConf[0].children.some((b) => {
+
+              return b.id == a
+            })
+          })}
           defaultExpandAll={true}
           onSelect={() => { }}
-          onCheck={(e) => { restFormRef.current?.setFieldValue("accessible_timestamp", e) }}
+          onCheck={(e, h) => { restFormRef.current?.setFieldValue("accessible_timestamp", e.concat(h)) }}
           treeData={flowConf}
         />
 
@@ -285,7 +420,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
       </ProCard>
     </ModalForm>
-     
+
   );
 };
 

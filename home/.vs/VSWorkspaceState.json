@@ -1,16 +1,13 @@
 {
   "ExpandedNodes": [
-    "",
-    "\\src",
+    "\\public\\iconfont",
     "\\src\\pages",
     "\\src\\pages\\account",
     "\\src\\pages\\account\\filterOfTimestamps",
     "\\src\\pages\\account\\filterOfTimestamps\\components",
-    "\\src\\pages\\system\\terminal",
-    "\\src\\pages\\system\\user",
     "\\src\\pages\\transaction",
-    "\\src\\pages\\transaction\\components"
+    "\\src\\pages\\transaction\\components",
+    "\\src\\utils"
   ],
-  "SelectedNode": "\\src\\pages\\transaction\\index.tsx",
   "PreviewInSolutionExplorer": false
 }

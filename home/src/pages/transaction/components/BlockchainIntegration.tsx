@@ -1,11 +1,11 @@
 import React, { useRef, useState, useEffect, useCallback } from 'react';
 import { PageContainer, ProCard, ProColumns, ProDescriptions, ProFormGroup, ProFormSelect, ProDescriptionsItemProps } from '@ant-design/pro-components';
-import { AlertOutlined, SafetyCertificateOutlined, CheckOutlined, CloseOutlined } from '@ant-design/icons';
+import { AlertOutlined, SafetyCertificateOutlined, CheckOutlined, CloseOutlined, InfoCircleOutlined } from '@ant-design/icons';
 import ProTable from '@ant-design/pro-table';
 import { FormattedMessage, useIntl, useLocation, useModel, history } from '@umijs/max';
 import { TransactionList, TransactionListItem } from '../data.d';
 import { transaction, transactionevent, addTransactionevent, writetoBC, validateBC } from '../service';
-import { Button, Space, Steps, Icon, Select, message, Spin } from 'antd';
+import { Button, Space, Steps, Icon, Select, message, Spin, Drawer } from 'antd';
 import { flow } from '../../system/flow/service';
 import { filterOfTimestamps, addFilterOfTimestamps, updateFilterOfTimestamps } from '../../account/filterOfTimestamps/service';
 import { getAlertBytransactionId } from '../../alert/service';
@@ -14,13 +14,16 @@ import { tree, isPC } from "@/utils/utils";
 import { useAccess, Access } from 'umi';
 import FilterForm from '../../account/filterOfTimestamps/components/FilterForm';
 import { rearg } from 'lodash';
-import { terminal } from '../../system/terminal/service';
-import { producttype } from '../../system/producttype/service';
+
+
 import { jetty } from '../../system/jetty/service';
 import { alertrule } from '../../alertrule/service';
 import { InfiniteScroll, List, NavBar, DotLoading } from 'antd-mobile'
 import numeral from 'numeral';
 var moment = require('moment');
+
+
+
 const { Step } = Steps;
 
 
@@ -83,6 +86,7 @@ const Detail: React.FC<any> = (props) => {
   const [currentFilter, setCurrentFilter] = useState<any>();
   const [currentRow, setCurrentRow] = useState<TransactionListItem>();
   const [currentRow2, setCurrentRow2] = useState<TransactionListItem>();
+  const [currentRow3, setCurrentRow3] = useState<TransactionListItem>();
   const [blockchainRow, setBlockchainRowRow] = useState<any>([
 
   ]);
@@ -98,9 +102,9 @@ const Detail: React.FC<any> = (props) => {
   // const [transaction_id, setTransaction_id] = useState<any>("");
   const [filterOfTimestampsList, setFilterOfTimestampsList] = useState<any>([{ value: 'add', label: 'Add new template' }]);
   const [filterOfTimestampsMap, setFilterOfTimestampsMap] = useState<any>(new Map());
-  const [terminalList, setTerminalList] = useState<any>({});
+
   const [jettyList, setJettyList] = useState<any>({});
-  const [producttypeList, setProducttypeList] = useState<any>({});
+ 
 
   const [alertruleMap, setAlertruleMap] = useState<any>({});
 
@@ -108,14 +112,21 @@ const Detail: React.FC<any> = (props) => {
   const { currentUser } = initialState || {};
   const [show, setShow] = useState<any>({});
   const access = useAccess();
+
+  const [showDetail, setShowDetail] = useState<boolean>(false);
+
+  const [currentEventRow, setCurrentEventRow] = useState<any>(null);
   var transaction_id = useLocation().search.split("=")[1]
   var m = {}
 
   var yesCount = 0
-  var headValidated = false
-  if (useLocation().state.validateData?.head_data?.Verified == "true") {
-    headValidated=true
+  var headValidated_ = false
+  if (useLocation().state.validateData?.head_data?.Verified == "True") {
+    
+    headValidated_=true
   }
+
+  const [headValidated, setHeadValidated] = useState<any>(headValidated_);
   useLocation().state.validateData?.event_data?.forEach((v) => {
     m[v.EventSubStage] = v.Verified
     if (v.Verified == "True") {
@@ -124,8 +135,10 @@ const Detail: React.FC<any> = (props) => {
 
 
   })
-  console.log(useLocation().state.validateData)
+ 
   const [bc_header_data, setBc_header_data] = useState<any>(useLocation().state.validateData?.bc_head_data);
+  const [bc_event_data, setBc_event_data] = useState<any>(useLocation().state.validateData?.bc_event_data);
+  
 
   const [validateData, setValidateData] = useState<any>(m);
   const [createModalOpen, handleModalOpen] = useState<boolean>(false);
@@ -184,18 +197,85 @@ const Detail: React.FC<any> = (props) => {
       dataIndex: 'validation_status',
       render: (dom, entity) => {
 
-
-        if (dom=== 1) {
-          return <span><CheckOutlined style={{ color: 'green' }} /></span>
+        if (currentRow?.blockchain_hex_key) {
+          if (dom === 1) {
+            return <span><CheckOutlined style={{ color: 'green' }} /></span>
+          } else {
+            return <span><CloseOutlined style={{ color: 'red' }} /></span>
+          }
         } else {
-          return <span><CloseOutlined style={{ color: 'red' }} /></span>
+          return "-"
+        }
+        
+      }
+
+    },
+
+
+  ]
+  
+
+  const columns3: ProColumns<TransactionListItem>[] = [
+    {
+      title: (
+        <FormattedMessage
+          id="pages.xxx"
+          defaultMessage="Event Data"
+        />
+      ),
+      dataIndex: 'title'
+
+
+    },
+    {
+      title: (
+        <FormattedMessage
+          id="pages.xxx"
+          defaultMessage="Value On EOS System"
+        />
+      ),
+      dataIndex: 'value'
+
+
+    },
+    {
+      title: (
+        <FormattedMessage
+          id="pages.xxx"
+          defaultMessage="Value On Blockchain"
+        />
+      ),
+      dataIndex: 'bc_value'
+
+
+    },
+    {
+      title: (
+        <FormattedMessage
+          id="pages.xxx"
+          defaultMessage="Validation Status"
+        />
+      ),
+      align: 'center',
+      dataIndex: 'validation_status',
+      render: (dom, entity) => {
+
+        if (currentRow?.blockchain_hex_key) {
+          if (dom === 1) {
+            return <span><CheckOutlined style={{ color: 'green' }} /></span>
+          } else {
+            return <span><CloseOutlined style={{ color: 'red' }} /></span>
+          }
+
+        } else {
+          return "-"
         }
       }
 
     },
 
 
-    ]
+  ]
   const columns: ProColumns<TransactionListItem>[] = [
     {
       title: (
@@ -206,14 +286,9 @@ const Detail: React.FC<any> = (props) => {
       ),
       dataIndex: 'eos_id',
       render: (dom, entity) => {
-        if(!isMP){
+        
           return "E"+dom
-        }
-        if (entity.validated) {
-          return <div><div style={{ height: isMP ? 'auto' : '60px' }}>{"E" + dom}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
-        } else {
-          return <div><div style={{ height: isMP ? 'auto' : '60px' }}>{"E" + dom}</div><div><CloseOutlined style={{ color: 'red' }} /></div></div>
-        }
+       
 
       },
     },
@@ -225,14 +300,9 @@ const Detail: React.FC<any> = (props) => {
       valueType: 'dateTime',
       hideInSearch: true,
       render: (dom, entity) => {
-        if (!isMP) {
+      
           return moment(new Date(dom)).format('DD/MM/YYYY HH:mm') 
-        }
-        if (entity.validated) {
-          return <div><div style={{ height: isMP?'auto': '60px' }}>{dom}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
-        } else {
-          return <div><div style={{ height: isMP?'auto': '60px' }}>{dom}</div><div><CloseOutlined style={{ color: 'red' }} /></div></div>
-        }
+       
        
       },
     },
@@ -242,15 +312,10 @@ const Detail: React.FC<any> = (props) => {
       valueType: 'dateTime',
       hideInSearch: true,
       render: (dom, entity) => {
-        if (!isMP) {
+       
 
           return dom?moment(new Date(dom)).format('DD/MM/YYYY HH:mm') :"-"
-        }
-        if (entity.validated) {
-          return <div><div style={{ height: isMP?'auto': '60px' }}>{dom}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
-        } else {
-          return <div><div style={{ height: isMP?'auto': '60px' }}>{dom}</div><div><CloseOutlined style={{ color: 'red' }} /></div></div>
-        }
+       
 
       },
     },
@@ -269,14 +334,9 @@ const Detail: React.FC<any> = (props) => {
           1: "Closed",
           2: "Cancelled"
         }
-        if (!isMP) {
+       
           return obj[dom+""]
-        }
-        if (entity.validated) {
-          return <div><div style={{ height: isMP ? 'auto' : '60px' }}>{obj[dom+""]}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
-        } else {
-          return <div><div style={{ height: isMP ? 'auto' : '60px' }}>{obj[dom+""]}</div><div><CloseOutlined style={{ color: 'red' }} /></div></div>
-        }
+       
 
       },
     },
@@ -285,14 +345,9 @@ const Detail: React.FC<any> = (props) => {
       dataIndex: 'arrival_id',
       hideInSearch: true,
       render: (dom, entity) => {
-        if (!isMP) {
+       
           return dom
-        }
-        if (entity.validated) {
-          return <div><div style={{ height: isMP?'auto': '60px' }}>{dom}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
-        } else {
-          return <div><div style={{ height: isMP?'auto': '60px' }}>{dom}</div><div><CloseOutlined style={{ color: 'red' }} /></div></div>
-        }
+       
 
       },
     },
@@ -322,14 +377,9 @@ const Detail: React.FC<any> = (props) => {
       hideInSearch: true,
       valueType: 'text',
       render: (dom, entity) => {
-        if (!isMP) {
+        
           return dom
-        }
-        if (entity.validated) {
-          return <div><div style={{ height: isMP?'auto': '60px' }}>{dom}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
-        } else {
-          return <div><div style={{ height: isMP?'auto': '60px' }}>{dom}</div><div><CloseOutlined style={{ color: 'red' }} /></div></div>
-        }
+        
 
       },
     },
@@ -338,14 +388,9 @@ const Detail: React.FC<any> = (props) => {
       dataIndex: 'vessel_name',
       valueType: 'text',
       render: (dom, entity) => {
-        if (!isMP) {
+      
           return dom
-        }
-        if (entity.validated) {
-          return <div><div style={{ height: isMP?'auto': '60px' }}>{dom}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
-        } else {
-          return <div><div style={{ height: isMP?'auto': '60px' }}>{dom}</div><div><CloseOutlined style={{ color: 'red' }} /></div></div>
-        }
+      
 
       },
     },
@@ -354,14 +399,9 @@ const Detail: React.FC<any> = (props) => {
       dataIndex: 'terminal_id',
      // valueEnum: terminalList,
       render: (dom, entity) => {
-        if (!isMP) {
+        
           return entity.terminal_name
-        }
-        if (entity.validated) {
-          return <div><div style={{ height: isMP ? 'auto' : '60px' }}>{entity.terminal_name}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
-        } else {
-          return <div><div style={{ height: isMP ? 'auto' : '60px' }}>{entity.terminal_name}</div><div><CloseOutlined style={{ color: 'red' }} /></div></div>
-        }
+        
 
       },
     },
@@ -370,14 +410,9 @@ const Detail: React.FC<any> = (props) => {
       dataIndex: 'jetty_id',
       //valueEnum: jettyList,
       render: (dom, entity) => {
-        if (!isMP) {
+       
           return entity.jetty_name
-        }
-        if (entity.validated) {
-          return <div><div style={{ height: isMP ? 'auto' : '60px' }}>{entity.jetty_name}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
-        } else {
-          return <div><div style={{ height: isMP ? 'auto' : '60px' }}>{entity.jetty_name}</div><div><CloseOutlined style={{ color: 'red' }} /></div></div>
-        }
+       
 
       },
     },
@@ -388,14 +423,9 @@ const Detail: React.FC<any> = (props) => {
       dataIndex: 'product_name',
      // valueEnum: producttypeList,
       render: (dom, entity) => {
-        if (!isMP) {
+        
           return dom
-        }
-        if (entity.validated) {
-          return <div><div style={{ height: isMP?'auto': '60px' }}>{dom}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
-        } else {
-          return <div><div style={{ height: isMP?'auto': '60px' }}>{dom}</div><div><CloseOutlined style={{ color: 'red' }} /></div></div>
-        }
+       
 
       },
     },
@@ -412,14 +442,9 @@ const Detail: React.FC<any> = (props) => {
         } else {
           dom = ''
         }
-        if (!isMP) {
+       
           return dom
-        }
-        if (entity.validated) {
-          return <div><div style={{ height: isMP?'auto': '60px' }}>{dom}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
-        } else {
-          return <div><div style={{ height: isMP?'auto': '60px' }}>{dom}</div><div><CloseOutlined style={{ color: 'red' }} /></div></div>
-        }
+      
 
       },
 
@@ -436,14 +461,10 @@ const Detail: React.FC<any> = (props) => {
         } else {
           dom=''
         }
-        if (!isMP) {
+       
           return dom
-        }
-        if (entity.validated) {
-          return <div><div style={{ height: isMP?'auto': '60px' }}>{dom}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
-        } else {
-          return <div><div style={{ height: isMP?'auto': '60px' }}>{dom}</div><div><CloseOutlined style={{ color: 'red' }} /></div></div>
-        }
+       
+       
 
       }
       
@@ -462,14 +483,9 @@ const Detail: React.FC<any> = (props) => {
         } else {
           dom='-'
         }
-        if (!isMP) {
+       
           return dom
-        }
-        if (entity.validated) {
-          return <div><div style={{ height: isMP?'auto': '60px' }}>{dom}</div><div><CheckOutlined style={{ color: 'green' }} /></div></div>
-        } else {
-          return <div><div style={{ height: isMP?'auto': '60px' }}>{dom}</div><div><CloseOutlined style={{ color: 'red' }} /></div></div>
-        }
+       
 
       },
       
@@ -503,14 +519,32 @@ const Detail: React.FC<any> = (props) => {
       align:"center",
       
       render: (dom, entity) => {
+
+
+        if (currentRow?.blockchain_hex_key) {
+          if (validateData[entity.code] === 'True') {
+            return <span><CheckOutlined style={{ color: validateData[entity.code] === 'True' ? 'green' : 'red' }} />&nbsp;&nbsp;&nbsp;&nbsp;<InfoCircleOutlined style={{ color: validateData[entity.code] === 'True' ? 'green' : 'red' }} onClick={() => {
+              eventRowClick(entity)
+            }} /></span>
+
+          } else {
+            return <span><CloseOutlined style={{ color: validateData[entity.code] === 'True' ? 'green' : 'red' }} />&nbsp;&nbsp;&nbsp;&nbsp;<InfoCircleOutlined style={{ color: validateData[entity.code] === 'True' ? 'green' : 'red' }} onClick={() => {
+              eventRowClick(entity)
+            }} /></span>
+
+          }
+        } else {
+          return  "-"
+        }
+       
+       
+      
        
             
-        if (validateData[entity.code] === 'True') {
-          return <span><CheckOutlined style={{ color:'green' }} /></span>
-        } else {
+
+
           
-          return <span><CloseOutlined style={{ color: 'red' }} /></span>
-        }
+       
       }
     }
   ];
@@ -533,22 +567,8 @@ const Detail: React.FC<any> = (props) => {
 
     });
 
-    producttype({ pageSize: 3000, current: 1, sorter: { name: 'ascend' } }).then((res) => {
-      var b = {}
-      res.data.forEach((r) => {
-        b[r.id] = r.name
-      })
-      setProducttypeList(b)
-
-    });
-    terminal({ pageSize: 3000, current: 1, sorter: { name: 'ascend' } }).then((res) => {
-      var b = {}
-      res.data.forEach((r) => {
-        b[r.id] = r.name
-      })
-      setTerminalList(b)
-
-    });
+   
+   
     //setTransaction_id(transaction_id)
     handlegetFlow = (f: any) => {
       var fidMap = {}
@@ -611,7 +631,7 @@ const Detail: React.FC<any> = (props) => {
             var EventSubStage = flowMap_[a.flow_id]
 
 
-            console.log(EventSubStage)
+          
 
             if (!reMap[flowMap_[a.flow_id]]) {
 
@@ -623,9 +643,11 @@ const Detail: React.FC<any> = (props) => {
 
             EventSubStage = EventSubStage + (("00" + (reMap[flowMap_[a.flow_id]] - 1)).slice(-2))
 
-            console.log(EventSubStage)
+           
+
+           
             var b = {
-              stage: a.flow_pid, time_stamp: a.event_time, activity: a.flow_id, code: EventSubStage
+              stage: a.flow_pid, time_stamp: a.event_time, activity: a.flow_id, ...a, code: EventSubStage
             }
             return b
           })
@@ -712,7 +734,7 @@ const Detail: React.FC<any> = (props) => {
           r['bc_value'] = c.render ? c.render(obj[k], obj) : obj[k]
 
           
-          r['validation_status'] = 1
+          r['validation_status'] = headValidated?1:0
 
           arr.push(r)
         }
@@ -740,6 +762,209 @@ const Detail: React.FC<any> = (props) => {
     'icon-matou1': '#595959'
   }
 
+
+
+  var eventRowClick = (record) => {
+    var arr = []
+    var columns3_ = [
+      {
+        title: "EOS ID",
+        dataIndex: 'eos_id',
+
+      },
+      {
+        title: "Event Sub Stage",
+        dataIndex: 'code'
+
+      },
+      {
+        title: "Event Time",
+        dataIndex: 'event_time'
+
+
+      },
+      {
+        title: "Product Quantity (Bls-60-f)",
+        dataIndex: 'product_quantity_in_bls_60_f',
+
+      },
+      {
+        title: "Tank ID",
+        dataIndex: 'tank_number',
+
+      },
+      {
+        title: "Work Order ID",
+        dataIndex: 'work_order_id',
+
+      },
+      {
+        title: "Sequence No.",
+        dataIndex: 'work_order_sequence_number',
+
+      },
+     
+    
+      {
+        title: "Sequence Status",
+        dataIndex: 'work_order_sequence_number_status',
+
+      },
+    
+      {
+        title: "Surveyor Name",
+        dataIndex: 'work_order_surveyor',
+
+      },
+     
+
+
+    ]
+    var dMap = {
+      "EOSID": "eos_id",
+      "EventSubStage": "code",
+      "Timestamp": "event_time",
+      "Field1": "product_quantity_in_bls_60_f",
+      "Field2": "tank_number",
+      "Field3": "work_order_id",
+      "Field4": "work_order_sequence_number",
+      "Field5": "work_order_operation_type",
+      "Field6": "product_name",
+      "Field7": "work_order_status",
+      "Field8": "work_order_sequence_number_status",
+      "Field9": "work_order_surveyor"
+    }
+    if (record.delay_reason) {
+
+      dMap.Field5 = "delay_reason"
+      columns3_.push({
+        title: "Delay Reason",
+        dataIndex: 'delay_reason',
+
+      })
+    } else {
+
+      columns3_.push({
+        title: "Operation Type",
+        dataIndex: 'work_order_operation_type',
+
+      })
+       
+    }
+
+    if (record.location_from) {
+      dMap.Field6 = "location_from"
+      columns3_.push({
+        title: "Location From",
+        dataIndex: 'location_from',
+
+      })
+    } else {
+      columns3_.push({
+        title: "Product Name",
+        dataIndex: 'product_name',
+
+      })
+    }
+    if (record.location_to) {
+      dMap.Field7 = "location_to"
+      columns3_.push({
+        title: "Location To",
+        dataIndex: 'location_to',
+
+      })
+    } else {
+      columns3_.push({
+        title: "Work order Status",
+        dataIndex: 'work_order_status',
+
+      })
+    }
+
+   
+
+    
+   
+
+
+    for (var k in record) {
+
+      var c = columns3_.find((a) => { return a.dataIndex == k })
+      if (c) {
+        var r = {}
+
+        r['title'] = c.title
+        r['validated'] = false
+
+
+
+
+        r['value'] = c.render ? c.render(record[k], record) : record[k]
+
+
+        if (c.dataIndex == "event_time") {
+          r['value'] = moment(new Date(r['value'])).format('YYYY-MM-DD HH:mm:ss')
+        }
+        var obj = {}
+        var bc_event_data_one = bc_event_data.find((j) => {
+          return j.EventSubStage == record.code
+        })
+
+
+
+
+
+
+        for (var m in bc_event_data_one) {
+          obj[dMap[m]] = bc_event_data_one[m]
+
+        }
+        r['bc_value'] = c.render ? c.render(obj[k], obj) : obj[k]
+
+        if (c.dataIndex == "event_time") {
+          r['bc_value'] = moment(new Date(r['bc_value'])).format('YYYY-MM-DD HH:mm:ss')
+
+        }
+        if (r['bc_value'] == "") {
+          r['bc_value'] =null
+        }
+
+        if (r['bc_value'] == 0) {
+          r['bc_value'] = null
+        }
+
+        if (r['value'] == "") {
+          r['value'] = null
+        }
+
+        if (r['value'] == 0) {
+          r['value'] = null
+        }
+
+
+       
+      
+          r['validation_status'] = (r['value'] == r['bc_value'] ? 1 : 0)
+        
+
+       
+
+        arr.push(r)
+      }
+
+
+    }
+
+    setCurrentRow3(arr)
+
+
+    
+
+    setShowDetail(true);
+
+    setCurrentEventRow(record)
+  }
+
   return (<div
     style={{
       background: '#F5F7FA',
@@ -754,7 +979,7 @@ const Detail: React.FC<any> = (props) => {
 
     >
      
-      {!isMP && (<ProTable<any>
+      {true && (<ProTable<any>
         headerTitle="Transaction Information"
         columns={columns2}
         dataSource={currentRow2 ? currentRow2: []}
@@ -767,7 +992,7 @@ const Detail: React.FC<any> = (props) => {
 
       />)}
 
-      {isMP && (<><div style={{ height: 30, lineHeight: '30px', fontWeight: "bold" }}>Transaction</div> <ProDescriptions<any>
+      {false && (<><div style={{ height: 30, lineHeight: '30px', fontWeight: "bold" }}>Transaction</div> <ProDescriptions<any>
         bordered={true}
         size="small"
         layout="horizontal"
@@ -802,6 +1027,7 @@ const Detail: React.FC<any> = (props) => {
         columns={columnsBlockchain}
         dataSource={blockchainRow ? blockchainRow : []}
         rowKey="key"
+       
         pagination={false}
         search={false}
         options={false}
@@ -823,7 +1049,7 @@ const Detail: React.FC<any> = (props) => {
             <List.Item key={index}>
 
               <ProDescriptions<any>
-                
+                  className="jetty-descriptions"
                 bordered={true}
                 size="small"
                 layout="horizontal"
@@ -863,7 +1089,30 @@ const Detail: React.FC<any> = (props) => {
         >Return To Detailed Transaction</Button>
       </div>
 
+      <Drawer
+        width={isMP ? '100%' : 800}
+        open={showDetail}
+        onClose={() => {
+          setCurrentEventRow(undefined);
+          setShowDetail(false);
+        }}
+        closable={isMP ? true : false}
+      >
+        <ProTable<any>
+          headerTitle="Event Detail"
 
+          
+        columns={columns3}
+          dataSource={currentRow3 ? currentRow3 : []}
+          rowKey="key"
+          pagination={false}
+          search={false}
+          options={false}
+
+          bordered size="small"
+
+        />
+      </Drawer>
 
     </PageContainer>
   </div>)

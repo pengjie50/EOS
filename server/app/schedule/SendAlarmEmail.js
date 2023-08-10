@@ -2,57 +2,9 @@ const Subscription = require('egg').Subscription;
 const uuid = require('uuid');
 
 
-const createContent = (alert, alertrule, transaction, flowMap) => {
-    var pstr = ""
-    if (alertrule.type == 2) {
-        pstr = 'Entire Transaction Process'
-    } else if (alertrule.type == 0) {
-        pstr = 'Single Process ' + flowMap[alertrule.flow_id].name
-    } else if (alertrule.type == 1) {
-        pstr = 'Between Two Events ' + flowMap[alertrule.flow_id].name + " To " + flowMap[alertrule.flow_id_to].name
-    }
-    var str = '<div>'
-
-    str += '<div>Hi</div>'
-    str += '<div> ' + (alert.type == 0 ? 'Amber' : 'Red') + ' Alert for ' + pstr + ' is triggered for A' + alert.alert_id + '</div>'
-    str += '<table border="1" cellspacing="0">'
-    str += '<tr>'
-    str += '<td>IMO Number </td><td>' + transaction.imo_number + '</td>'
-    str += '</tr>'
-    str += '<tr>'
-    str += '<td>Vessel Name</td><td>' + transaction.vessel_name + '</td>'
-    str += '</tr>'
-    str += '<tr>'
-    str += '<td>Terminal Name</td><td>' + transaction.terminal_name + '</td>'
-    str += '</tr>'
-    str += '<tr>'
-    str += '<td>Jetty Number</td><td>' + transaction.jetty_name + '</td>'
-    str += '</tr>'
-    str += '</table>'
-    str += '<div><a href="http://eosuat.southeastasia.cloudapp.azure.com/#/user/login?redirect=/threshold/alert"> Please Login to EOS system for more details.</a></div>'
-    str += '<div>I am an auto-generated email alert from the EOS system. Please do not reply to me.</div>'
-    str += '</div>'
-    return str
-}
 
 
-const createTitle = (alert, alertrule, flowMap) => {
-    var pstr = ""
-    if (alertrule.type == 2) {
-        pstr = 'Entire Transaction Process'
-    } else if (alertrule.type == 0) {
-        pstr = 'Single Process ' + flowMap[alertrule.flow_id].name
-    } else if (alertrule.type == 1) {
-        pstr = 'Between Two Events ' + flowMap[alertrule.flow_id].name + " To " + flowMap[alertrule.flow_id_to].name
-    }
 
-    var str = '[EOS] ' + (alert.type == 0 ? 'Amber' : 'Red') + ' Alert for ' + pstr
-
-    return str
-}
-
-var AlertruleTransactionMap = {}
-var AlertMap = {}
 class SendAlarmEmail extends Subscription {
 
     static get schedule() {
@@ -62,36 +14,54 @@ class SendAlarmEmail extends Subscription {
         };
     }
 
+ 
+
+
+
+
 
 
 
 
 
     async subscribe() {
+        var AlertruleTransactionMap = {}
+        var AlertMap = {}
+
+        var subscribeStartTime = (new Date()).getTime()
         
         const { ctx, service, app } = this;
+
+        var createClearContent=service.tool.createClearContent
+        var createClearTitle =service.tool.createClearTitle
+        var createTitle =service.tool.createTitle
+        var createContent = service.tool.createContent
+
+        var createUpdateTitle = service.tool.createUpdateTitle
+        var createUpdateContent = service.tool.createUpdateContent
 
         var AlertruleTransaction = await ctx.model.AlertruleTransaction.findAll()
 
         AlertruleTransaction.forEach((t) => {
-            AlertruleTransactionMap[t.transaction_id + t.alert_rule_id] = t
+            AlertruleTransactionMap[t.transaction_id + t.alert_rule_id + "_" + (t.work_order_id || 'null') + "_" + (t.work_order_sequence_number || "null")] = t
         })
 
 
-        var Alert = await ctx.model.Alert.findAll()
-
+        var Alert = await ctx.model.Alert.findAll({ raw: true })
+      
         Alert.forEach((t) => {
-            AlertMap[t.transaction_id + t.alert_rule_transaction_id + t.type] = t
+            AlertMap[t.transaction_id + t.alert_rule_transaction_id + t.type + "_" + (t.work_order_id || 'null') + "_" + (t.work_order_sequence_number || "null")]=t
         })
+       
+        const SaveAlertruleTransaction = async (fromEventObj, toEventObj, a, t, amber, red) => {
 
-        const SaveAlertruleTransaction = async (a, t, amber, red) => {
-
-
-            var oh = AlertruleTransactionMap[t.id + a.id]
+            var work_order_id = toEventObj?.work_order_id || fromEventObj?.work_order_id || null
+            var work_order_sequence_number = toEventObj?.work_order_sequence_number || fromEventObj?.work_order_sequence_number || null
+            var oh = AlertruleTransactionMap[t.id + a.id + "_" + (work_order_id || 'null') + "_" + (work_order_sequence_number || "null")]
 
             if (!oh) {
-                oh = await ctx.model.AlertruleTransaction.findOne({ where: { transaction_id: t.id, alert_rule_id: a.id } })
-                AlertruleTransactionMap[t.id + a.id] = oh
+                oh = await ctx.model.AlertruleTransaction.findOne({ where: { transaction_id: t.id, alert_rule_id: a.id, work_order_id: work_order_id, work_order_sequence_number: work_order_sequence_number } })
+                AlertruleTransactionMap[t.id + a.id + "_" + (work_order_id || 'null') + "_" + (work_order_sequence_number || "null")] = oh
             }
 
             var h = oh
@@ -119,8 +89,9 @@ class SendAlarmEmail extends Subscription {
 
                 alert_rule_transaction_id = h.id
             } else {
-
-                var ta = { ...a, transaction_id: t.id, amber, red }
+               var transaction_event_id_from = fromEventObj?.id || null
+                var transaction_event_id_to = toEventObj?.id || null
+                var ta = { ...a, transaction_id: t.id, amber, red, work_order_id, work_order_sequence_number, transaction_event_id_from, transaction_event_id_to }
 
                 ta.alert_rule_id = a.id
                 delete ta.created_at
@@ -212,7 +183,7 @@ class SendAlarmEmail extends Subscription {
 
 
 
-                        service.tool.sendMail(sendEmail.join(","), createTitle(alert, a, flowMap), createContent(alert, a, t, flowMap))
+                       await service.tool.sendMail(sendEmail.join(","), createTitle(alert, a, t, flowMap), createContent(alert, a, t, flowMap))
                     }
 
 
@@ -229,14 +200,301 @@ class SendAlarmEmail extends Subscription {
 
         }
 
-        const compareDo = async (flowMap, ar, transaction, ar_amber_time, ar_red_time, trueTime, fromEventObj, toEventObj ) => {
+
+        const clearAlert = async (flowMap, ar, transaction, ar_amber_time, ar_red_time, trueTime, fromEventObj, toEventObj) => {
+           
+            var work_order_id = toEventObj?.work_order_id || fromEventObj?.work_order_id || null
+            var work_order_sequence_number = toEventObj?.work_order_sequence_number || fromEventObj?.work_order_sequence_number || null
+            var artk = transaction.id + ar.id + "_" + (work_order_id || 'null') + "_" + (work_order_sequence_number || "null")
+            var art = AlertruleTransactionMap[artk]
+            var alert_rule_transaction_id = art.id
+            var ak = transaction.id + alert_rule_transaction_id + 0 + "_" + (work_order_id || 'null') + "_" + (work_order_sequence_number || "null")
+            var oa = AlertMap[ak]
+
+           
+
+           
+
+            var modart = { ...ar }
+
+            var isUpdateAr = false
+            if (art.product_quantity_from != ar.product_quantity_from
+
+                || art.product_quantity_to != ar.product_quantity_to
+                || art.uom != ar.uom
+                || art.vessel_size_dwt_from != ar.vessel_size_dwt_from
+                || art.vessel_size_dwt_to != ar.vessel_size_dwt_to
+                || art.amber_hours != ar.amber_hours
+                || art.amber_mins != ar.amber_mins
+                || art.red_hours != ar.red_hours
+                || art.red_mins != ar.red_mins
+                || art.email != ar.email
+
+            ) {
+
+                
+                
+                isUpdateAr = true
+            }
+            if (oa) {
+
+               var isDeleteAlert = false
+                
+              
+                if (art.flow_id != ar.flow_id || art.flow_id_to != ar.flow_id_to) {
+                    isDeleteAlert = true
+                    isUpdateAr = true
+                }
+
+               
+                if (ar_amber_time > 0 && trueTime > ar_amber_time) {
+                   
+                    if (isUpdateAr) {
+                        if (ar.email) {
+                            
+                            try {
+                                var emailArr = ar.email.split(";")
+                                var sendEmail = []
+                                emailArr.forEach((c) => {
+                                    var v = c.split(',')
+                                    if (v.some((f) => {
+                                        return f == (oa.type == 0 ? 'a' : 'r')
+
+                                    })) {
+                                        sendEmail.push(v[0])
+                                    }
+
+
+                                })
+                               
+                                if (sendEmail.length > 0) {
+                                   
+                                    
+
+                                  
+                                    await service.tool.sendMail(sendEmail.join(","), createUpdateTitle(oa, ar, transaction, flowMap), createUpdateContent(oa, ar, transaction, flowMap))
+                                }
+
+
+                            } catch (e) {
+
+                            }
+
+                        }
+                       
+                        await ctx.model.Alert.update({ total_duration: trueTime }, { where: { id: oa.id } })
+                        
+                    }
+
+
+                    
+
+                } else {
+
+                    isDeleteAlert = true
+                    isUpdateAr = true
+
+
+                }
+               
+
+               
+                if (isDeleteAlert) {
+                   
+                    modart.amber = null
+                    if (ar.email) {
+                        try {
+                            var emailArr = ar.email.split(";")
+                            var sendEmail = []
+                            emailArr.forEach((c) => {
+                                var v = c.split(',')
+                                if (v.some((f) => {
+                                    return f == (oa.type == 0 ? 'a' : 'r')
+
+                                })) {
+                                    sendEmail.push(v[0])
+                                }
+
+
+                            })
+                            if (sendEmail.length > 0) {
+
+                               await service.tool.sendMail(sendEmail.join(","), createClearTitle(oa, ar, transaction, flowMap), createClearContent(oa, ar, transaction, flowMap))
+                            }
+
+
+                        } catch (e) {
+
+                        }
+
+                    }
+
+                  
+
+
+                    await ctx.model.Alert.destroy({
+                        where: {
+                            id: oa.id
+                        }
+                    })
+                }
+
+
+              
+
+
+            }
+
+
+
+            ak = transaction.id + alert_rule_transaction_id + 1 + "_" + (work_order_id || 'null') + "_" + (work_order_sequence_number || "null")
+            oa = AlertMap[ak]
+
+
+
+            if (oa) {
+
+
+                var isDeleteAlert = false
+
+              
+                if (art.flow_id != ar.flow_id || art.flow_id_to != ar.flow_id_to) {
+                    isDeleteAlert = true
+                    isUpdateAr = true
+                }
+
+
+                if (ar_red_time > 0 && trueTime > ar_red_time) {
+
+
+                   
+                        if (isUpdateAr) {
+                            if (ar.email) {
+                                try {
+                                    var emailArr = ar.email.split(";")
+                                    var sendEmail = []
+                                    emailArr.forEach((c) => {
+                                        var v = c.split(',')
+                                        if (v.some((f) => {
+                                            return f == (oa.type == 0 ? 'a' : 'r')
+
+                                        })) {
+                                            sendEmail.push(v[0])
+                                        }
+
+
+                                    })
+                                    if (sendEmail.length > 0) {
+                                        
+                                        await service.tool.sendMail(sendEmail.join(","), createUpdateTitle(oa, ar, transaction, flowMap), createUpdateContent(oa, ar, transaction, flowMap))
+                                    }
+
+
+                                } catch (e) {
+
+                                }
+
+                            }
+
+                            await ctx.model.Alert.update({ total_duration: trueTime }, { where: { id: oa.id}})
+
+
+                        }
+                    
+
+
+                } else {
+
+                    isDeleteAlert = true
+                    isUpdateAr = true
+
+
+                }
+               
+
+
+              
+
+
+                if (isDeleteAlert) {
+
+                    modart.red = null
+                    if (ar.email) {
+                        try {
+                            var emailArr = ar.email.split(";")
+                            var sendEmail = []
+                            emailArr.forEach((c) => {
+                                var v = c.split(',')
+                                if (v.some((f) => {
+                                    return f == (oa.type == 0 ? 'a' : 'r')
+
+                                })) {
+                                    sendEmail.push(v[0])
+                                }
+
+
+                            })
+                            if (sendEmail.length > 0) {
+                                
+                               await service.tool.sendMail(sendEmail.join(","), createClearTitle(oa, ar, transaction, flowMap), createClearContent(oa, ar, transaction, flowMap))
+                            }
+
+
+                        } catch (e) {
+
+                        }
+
+                    }
+
+
+                   
+
+                    await ctx.model.Alert.destroy({
+                        where: {
+                            id: oa.id
+                        }
+                    })
+                }
+
+
+                
+
+
+            }
+
+           
+            if (isUpdateAr) {
+               
+
+               
+               
+               
+                   AlertruleTransactionMap[artk] = await AlertruleTransactionMap[artk].update(modart)
+                   
+              
+                
+            }
+
+        }
+
+
+
+
+
+        const compareDo = async (flowMap, ar, transaction, ar_amber_time, ar_red_time, trueTime, fromEventObj, toEventObj) => {
+
+            try {
+                await clearAlert(flowMap, ar, transaction, ar_amber_time, ar_red_time, trueTime, fromEventObj, toEventObj)
+            } catch (e) {
+
+            }
             
-            await SaveAlertruleTransaction(ar, transaction)
-            var alert_rule_transaction_id = await SaveAlertruleTransaction(ar, transaction)
+            await SaveAlertruleTransaction(fromEventObj, toEventObj,ar, transaction)
+            var alert_rule_transaction_id = await SaveAlertruleTransaction(fromEventObj, toEventObj, ar, transaction)
            
             if (ar_amber_time > 0 && trueTime > ar_amber_time) {
                
-                var alert_rule_transaction_id = await SaveAlertruleTransaction(ar, transaction, 1, null)
+                var alert_rule_transaction_id = await SaveAlertruleTransaction(fromEventObj, toEventObj, ar, transaction, 1, null)
 
                 await alertDo(ar, transaction, flowMap, 0, alert_rule_transaction_id, trueTime, fromEventObj, toEventObj)
 
@@ -247,11 +505,11 @@ class SendAlarmEmail extends Subscription {
 
 
 
-                var alert_rule_transaction_id = await SaveAlertruleTransaction(ar, transaction, null, 1)
+                var alert_rule_transaction_id = await SaveAlertruleTransaction(fromEventObj, toEventObj, ar, transaction, null, 1)
                 await alertDo(ar, transaction, flowMap, 1, alert_rule_transaction_id, trueTime, fromEventObj, toEventObj)
             }
 
-            var alert_rule_transaction_id = await SaveAlertruleTransaction(ar, transaction, null, null)
+            var alert_rule_transaction_id = await SaveAlertruleTransaction(fromEventObj, toEventObj, ar, transaction, null, null)
         }
 
 
@@ -293,9 +551,9 @@ class SendAlarmEmail extends Subscription {
             return f
 
         })
-        //var transactionList = await ctx.model.Transaction.findAll({ where: { status: 1 }, raw: true })
+        var transactionList = await ctx.model.Transaction.findAll({ where: { status: 0 }, raw: true })
 
-        var transactionList = await ctx.model.Transaction.findAll({ raw: true, where: { status: 0  } })
+       // var transactionList = await ctx.model.Transaction.findAll({ raw: true })
 
         var transactionList = transactionList.map((t) => {
 
@@ -359,25 +617,45 @@ class SendAlarmEmail extends Subscription {
         var step1 = 0;
         async function oneDo() {
             
+            var nowTime = (new Date()).getTime()
 
+            if (nowTime - subscribeStartTime > 55000) {
+                return
+            }
 
 
             if (step1 == alertruleList.length) {
                 step1 = 0;
                 step++
-                if (step == transactionList.length) {
-                    return
-                }
+               
+            }
+           
+            if (step == transactionList.length) {
+                return
             }
 
 
             var transaction = transactionList[step]
 
-            var work_order_items=[]
 
-             work_order_items= transaction.work_order_items_check?.split(",") || []
+            
+
+           // var work_order_items=[]
+
+          //   work_order_items= transaction.work_order_items_check?.split(",") || []
 
             var ar = alertruleList[step1]
+
+
+
+
+           /* if (transaction && transaction.eos_id != 90) {
+                step1++
+                await oneDo()
+               
+                return
+
+            }*/
 
             if (ar.company_id != transaction.trader_id && ar.company_id != transaction.terminal_id) {
                 step1++
@@ -395,25 +673,16 @@ class SendAlarmEmail extends Subscription {
             }
 
             var t2 = false
-            if (ar.product_quantity_in_mt_from == null && ar.product_quantity_in_mt_to == null && ar.product_quantity_in_bls_60_f_from == null && ar.product_quantity_in_bls_60_f_to == null) {
+            if (ar.product_quantity_from == null && ar.product_quantity_to == null ) {
 
                 t2 = true
-            } else if (ar.product_quantity_in_bls_60_f_from == null && ar.product_quantity_in_bls_60_f_to == null) {
+            } else {
 
-                if (ar.product_quantity_in_mt_from <= transaction.product_quantity_in_mt && transaction.product_quantity_in_mt < ar.product_quantity_in_mt_to) {
+                if (ar.product_quantity_from <= transaction["product_quantity_in_" + ar.uom] && transaction["product_quantity_in_" + ar.uom] < ar.product_quantity_to) {
                     t2 = true
 
                 }
-            } else if (ar.product_quantity_in_mt_from == null && ar.product_quantity_in_mt_to == null) {
-
-                if (ar.product_quantity_in_bls_60_f_from <= transaction.product_quantity_in_bls_60_f && transaction.product_quantity_in_bls_60_f < ar.product_quantity_in_bls_60_f_to) {
-
-                  
-
-                    t2 = true
-
-                }
-            }
+            } 
            
             if (t1 && t2) {
 
@@ -439,9 +708,12 @@ class SendAlarmEmail extends Subscription {
               
 
                 var transactioneeventMap = m[transaction.id].eventMap
-                var lastEvent = transactioneventList[transactioneventList.length - 1]
 
-                var oneEvent = transactioneventList[0]
+
+                var info=service.tool.getDurationInfo(transactioneventList,flowMap)
+                var lastEvent = info.ee
+
+                var oneEvent = info.se
 
                 var ar_amber_time = 0
                 if (ar.amber_hours || ar.amber_mins) {
@@ -469,9 +741,10 @@ class SendAlarmEmail extends Subscription {
                 
                 if (ar.type == 0) {
                     //第一种情况，事件还不完整，用当前时间去减第一个时间
+                   
 
-
-                 
+                    var lastEvent = transactioneventList[transactioneventList.length - 1]
+                    var lastEventFlow = flowMap[lastEvent.flow_pid]
                    
                     var processEventList = transactioneventProcessMap[ar.flow_id]
                     if (!processEventList || processEventList.length == 0) {
@@ -483,60 +756,17 @@ class SendAlarmEmail extends Subscription {
                     var isEnd = false
                     var processCode = flowMap[ar.flow_id]
 
-                    if (processCode.code == 10) {
+                    if (processCode.sort < lastEventFlow.sort) {
                        
-                       var pearr= processEventList.filter((pe) => {
-
-                           return flowMap[pe.flow_id].code==1010
-                       })
-
-                        if (work_order_items.length == pearr.length) {
+                       
                             
-                            isEnd=true
-                        }
-
-                    }
-
-
-                    if (processCode.code == 20) {
-
-                        var pearr = processEventList.filter((pe) => {
-
-                            return flowMap[pe.flow_id]?.code == 2007
-                        })
-
-                        if (work_order_items.length == pearr.length) {
-
-                            isEnd = true
-                        }
-
-                    }
-
-
-                    if (processCode.code == 30) {
-
+                         isEnd=true
                         
 
-                        if (transaction.status==1) {
-
-                            isEnd = true
-                        }
-
                     }
 
-                    if (processCode.code == 40) {
 
-                        var pearr = processEventList.filter((pe) => {
-
-                            return flowMap[pe.flow_id].code == 4014
-                        })
-
-                        if ( pearr.length>0) {
-
-                            isEnd = true
-                        }
-
-                    }
+                   
 
                     var trueTime=0
                     
@@ -549,8 +779,8 @@ class SendAlarmEmail extends Subscription {
                     await compareDo(flowMap, ar, transaction, ar_amber_time, ar_red_time, trueTime)
 
 
-                } else if (ar.type == 1) {
-
+                }else if (ar.type == 1) {
+                   
                     if (!transactioneventList || transactioneventList.length == 0) {
                         step1++
                         await oneDo()
@@ -577,7 +807,13 @@ class SendAlarmEmail extends Subscription {
 
                             var toEventArr= toEvent.filter((te2) => {
                                 if (!fromEventObj.work_order_id && !fromEventObj.work_order_sequence_number) {
-                                   return true
+
+
+                                    
+
+
+
+                                    return true
                                 } else if (fromEventObj.work_order_id && !fromEventObj.work_order_sequence_number) {
                                     if (!te2.work_order_id && !te2.work_order_sequence_number) {
                                         return true
@@ -653,20 +889,18 @@ class SendAlarmEmail extends Subscription {
 
 
                 } else if (ar.type == 2) {
-
+                   
                     if (!transactioneventList || transactioneventList.length == 0) {
                         step1++
                         await oneDo()
                         return
                     }
                     var trueTime=0
-                    if (transactioneventList.find((tel) => {
-                        return tel.flow_id == flowList[flowList.length - 1].id
-
-                    })) {
-                        var trueTime = (new Date(lastEvent.event_time)).getTime() / 1000 - (new Date(oneEvent.event_time)).getTime() / 1000
-                    } else {
+                    if (transaction.status == 0) {
                         var trueTime = (new Date()).getTime() / 1000 - (new Date(oneEvent.event_time)).getTime() / 1000
+                        
+                    } else {
+                        var trueTime = (new Date(lastEvent.event_time)).getTime() / 1000 - (new Date(oneEvent.event_time)).getTime() / 1000
                     }
 
 

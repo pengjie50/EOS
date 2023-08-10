@@ -1,7 +1,7 @@
 import RcResizeObserver from 'rc-resize-observer';
-
+import { ResizeObserverDo } from '@/components'
 import { addTransaction, removeTransaction, transaction, updateTransaction } from './service';
-import { PlusOutlined, SearchOutlined, PrinterOutlined, FileExcelOutlined, ExclamationCircleOutlined, FormOutlined, DeleteOutlined, EllipsisOutlined,SwapOutlined,SortAscendingOutlined, SortDescendingOutlined } from '@ant-design/icons';
+import { PlusOutlined, SearchOutlined, PrinterOutlined, FileExcelOutlined, ExclamationCircleOutlined, FormOutlined, InfoCircleOutlined, DeleteOutlined, EllipsisOutlined,SwapOutlined,SortAscendingOutlined, SortDescendingOutlined } from '@ant-design/icons';
 import type { ActionType, ProColumns, ProDescriptionsItemProps } from '@ant-design/pro-components';
 import { TransactionList, TransactionListItem } from './data.d';
 import FrPrint from "../../components/FrPrint";
@@ -22,6 +22,7 @@ import {
   PageContainer,
   ProDescriptions,
   ProFormDatePicker,
+  ProFormDigitRange,
   ProFormDateRangePicker,
   ProFormText,
   ProCard,
@@ -36,13 +37,13 @@ import React, { useRef, useState, useEffect } from 'react';
 import CreateForm from './components/CreateForm';
 import UpdateForm from './components/UpdateForm';
 
-import InterfaceForm from './components/InterfaceForm';
+
 
 
 import { flow } from '../system/flow/service';
 import { alertrule } from '../alertrule/service';
 import { organization } from '../system/company/service';
-import { producttype } from '../system/producttype/service';
+
 import { jetty } from '../system/jetty/service';
 import { isPC } from "@/utils/utils";
 const { confirm } = Modal;
@@ -254,8 +255,8 @@ const TableList: React.FC = () => {
   const [sumRow, setSumRow] = useState<TransactionListItem>();
   const [processes, setProcesses] = useState<any>([]);
   const [events, setEvents] = useState<any>([]);
-
-
+  
+  const [flow_idData, setFlow_idData] = useState<any>({});
   const [resizeObj, setResizeObj] = useState({ searchSpan: 12, tableScrollHeight: 300 });
   //--MP start
   const MPSearchFormRef = useRef<ProFormInstance>();
@@ -266,10 +267,22 @@ const TableList: React.FC = () => {
   const [collapse, setCollapse] = useState<boolean>(isPC()?true:false);
 
   const [MPSorter, setMPSorter] = useState<any>({});
+
+  const [eos_idData, setEos_idData] = useState<any>({});
+  const [arrival_idData, setArrival_idData] = useState<any>({});
+  
   
   const [organization_id, setOrganization_id] = useState<any>(useLocation()?.state?.organization_id);
   const [dateArr, setDateArr] = useState<any>(useLocation()?.state?.dateArr);
   const [status, setStatus] = useState<any>(useLocation()?.state?.status);
+
+  const [eos_id, setEos_id] = useState<any>(useLocation()?.state?.eos_id);
+
+
+  const [processesData, setProcessesData] = useState<any>({});
+  const [eventsData, setEventsData] = useState<any>({});
+
+
   const [moreOpen, setMoreOpen] = useState<boolean>(false);
   const right = (
     <div style={{ fontSize: 24 }}>
@@ -307,7 +320,7 @@ const TableList: React.FC = () => {
 
   const onFormSearchSubmit = (a) => {
 
-    console.log(a)
+   
     setData([]);
     delete a._timestamp;
     setMPfilter(a)
@@ -378,15 +391,18 @@ const TableList: React.FC = () => {
   //--MP end
 
   const getOrganizationName = () => {
+   
     if (access.canAdmin) {
       return 'Organization'
     }
-    if (!(access.transactions_list_tab() || access.canAdmin)) {
-      return 'Terminal'
-    }
-    if (access.transactions_list_tab()) {
+    if (!(access.canAdmin || access.dashboard_tab())) {
       return 'Customer'
     }
+    if (access.dashboard_tab()) {
+      return 'Customer'
+    }
+    
+    
   }
 
 
@@ -463,7 +479,10 @@ const TableList: React.FC = () => {
        
         formRef.current?.setFieldValue('status', status)
       }
+      if (eos_id && eos_id.length > 0) {
 
+        formRef.current?.setFieldValue('eos_id', eos_id)
+      }
       if (organization_id) {
        
         formRef.current?.setFieldValue('organization_id', organization_id)
@@ -513,9 +532,22 @@ const TableList: React.FC = () => {
       hideInSearch: true,
       fixed: 'left',
       width:120,
- 
+      defaultSortOrder: 'descend',
       sorter: true,
-     
+      search: {
+        transform: (value) => {
+          if (value && value.length > 0) {
+            return {
+              'eos_id': {
+                'field': 'eos_id',
+                'op': 'in',
+                'data': value
+              }
+            }
+          }
+
+        }
+      },
       renderText: (dom, entity) => {
         return entity.eos_id
       },
@@ -548,7 +580,7 @@ const TableList: React.FC = () => {
       hideInTable: true,
       hideInSearch:true,
       fieldProps: { placeholder: ['From ', 'To '] },
-      defaultSortOrder: 'descend',
+     
       dataIndex: 'start_of_transaction',
       valueType: 'dateRange',
       
@@ -643,7 +675,48 @@ const TableList: React.FC = () => {
            
           />
 
-        </div>
+          </div>
+          <div style={{ width: '100%', marginBottom: 20 }}>
+
+            <ProFormDigitRange label="Entire Duration (in seconds)"
+              width="lg"
+              name="total_duration"
+             
+              fieldProps={
+                {
+                  
+                }}
+            />
+
+          </div>
+
+          <div style={{ width: '100%', marginBottom: 20 }}>
+
+            <ProFormDigitRange label="Total Nominated Quantity (MT)"
+              width="lg"
+              name="product_quantity_in_mt"
+
+              fieldProps={
+                {
+
+                }}
+            />
+
+          </div>
+
+          <div style={{ width: '100%', marginBottom: 20 }}>
+
+            <ProFormDigitRange label="Total Nominated Quantity (Bls-60-F)"
+              width="lg"
+              name="product_quantity_in_bls_60_f"
+
+              fieldProps={
+                {
+
+                }}
+            />
+
+          </div>
 
           {  <div style={{ width: '100%', marginBottom: isMP?0:0 }}>
 
@@ -776,6 +849,108 @@ const TableList: React.FC = () => {
 
           </div>
 
+
+          <div style={{ width: '100%', marginBottom: 20 }}>
+
+            <ProFormSelect label="EOS ID"
+              width="lg"
+              name="eos_id"
+              valueEnum={eos_idData}
+              fieldProps={
+                {
+                  notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
+                  showSearch: true,
+                  mode: 'multiple',
+                  maxTagCount: 0,
+                  maxTagPlaceholder: (omittedValues) => {
+                    return omittedValues.length + " Selected"
+                  },
+                  allowClear: true,
+                  onFocus: () => {
+                    fieldSelectData({ model: "Transaction", value: '', field: 'eos_id' }).then((res) => {
+                      setEos_idData(res.data)
+                    })
+                  },
+                  onSearch: (newValue: string) => {
+
+                    fieldSelectData({ model: "Transaction", value: newValue, field: 'eos_id' }).then((res) => {
+                      setEos_idData(res.data)
+                    })
+
+                  }
+                }}
+            />
+
+          </div>
+
+          <div style={{ width: '100%', marginBottom: 20 }}>
+
+            <ProFormSelect label="Arrival ID"
+              width="lg"
+              name="arrival_id"
+              valueEnum={arrival_idData}
+              fieldProps={
+                {
+                  notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
+                  showSearch: true,
+                  mode: 'multiple',
+                  maxTagCount: 0,
+                  maxTagPlaceholder: (omittedValues) => {
+                    return omittedValues.length + " Selected"
+                  },
+                  allowClear: true,
+                  onFocus: () => {
+                    fieldSelectData({ model: "Transaction", value: '', field: 'arrival_id' }).then((res) => {
+                      setArrival_idData(res.data)
+                    })
+                  },
+                  onSearch: (newValue: string) => {
+
+                    fieldSelectData({ model: "Transaction", value: newValue, field: 'arrival_id' }).then((res) => {
+                      setArrival_idData(res.data)
+                    })
+
+                  }
+                }}
+            />
+
+          </div>
+
+
+          <div style={{ width: '100%', marginBottom: 20 }}> <ProFormSelect label="Current Process" valueEnum={flow_idData}
+            width="lg"
+            name="flow_id"
+            fieldProps={
+              {
+                notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
+                showSearch: true,
+                mode: 'multiple',
+                maxTagCount: 0,
+                maxTagPlaceholder: (omittedValues) => {
+                  return omittedValues.length + " Selected"
+                },
+                allowClear: true,
+                onFocus: () => {
+                  fieldSelectData({ model: "Transaction", value: '', field: 'flow_id' }).then((res) => {
+
+                    for (var i in res.data) {
+                      res.data[i]=processes[i]
+                    }
+                    setFlow_idData(res.data)
+                  })
+                },
+                onSearch: (newValue: string) => {
+
+                  fieldSelectData({ model: "Transaction", value: newValue, field: 'flow_id' }).then((res) => {
+                    for (var i in res.data) {
+                      res.data[i] = processes[i]
+                    }
+                    setFlow_idData(res.data)
+                  })
+
+                }
+              }} />  </div>
+
         </div>
 
       </div>),
@@ -799,7 +974,7 @@ const TableList: React.FC = () => {
           fieldProps={
             {
               notFoundContent: <Empty />,
-              options: access.transactions_list_tab() ? [{ label: currentUser?.company_name, value: currentUser?.company_id }, ...organizationList] : organizationList,
+              options: organizationList,
               dropdownMatchSelectWidth: isMP ? true : false,
               mode: 'multiple',
               maxTagCount: 0,
@@ -811,9 +986,9 @@ const TableList: React.FC = () => {
 
             }} />  </div>
         <div style={{ height: !collapse ? 'auto' : 0, overflow: 'hidden' }}>
-          <div style={{ width: '100%', marginBottom: 20 } }> <ProFormSelect label="Entire Transaction And Processes" valueEnum={processes}
+          <div style={{ width: '100%', marginBottom: 20 } }> <ProFormSelect label="Entire Transaction And Processes" valueEnum={processesData}
             width="lg"
-            name="flow_id"
+            name="threshold_flow_id"
           fieldProps={
             {
               notFoundContent: <Empty />,
@@ -824,13 +999,35 @@ const TableList: React.FC = () => {
               maxTagPlaceholder: (omittedValues) => {
                 return omittedValues.length + " Selected"
               },
+
+              onFocus: () => {
+                fieldSelectData({ model: "Alert", value: '', field: 'flow_id' }).then((res) => {
+
+                  for (var i in res.data) {
+                    res.data[i] = processes[i]
+                  }
+
+
+                  setProcessesData(res.data)
+                })
+              },
+              onSearch: (newValue: string) => {
+
+                fieldSelectData({ model: 'Alert', value: newValue, field: 'flow_id' }).then((res) => {
+                  for (var i in res.data) {
+                    res.data[i] = processes[i]
+                  }
+                  setProcessesData(res.data)
+                })
+
+              },
               showSearch: false,
               multiple: true
 
             }} />  </div>
-          <div style={{ width: '100%', marginBottom:20 }}> <ProFormSelect label="Between Two Events" valueEnum={events}
+          <div style={{ width: '100%', marginBottom:20 }}> <ProFormSelect label="Between Two Events" valueEnum={eventsData}
           width="lg"
-          name="flow_id_to"
+            name="threshold_flow_id_to"
           fieldProps={
             {
               notFoundContent: <Empty />,
@@ -840,6 +1037,27 @@ const TableList: React.FC = () => {
               maxTagCount: 0,
               maxTagPlaceholder: (omittedValues) => {
                 return omittedValues.length + " Selected"
+              },
+              onFocus: () => {
+                fieldSelectData({ model: "Alert", value: '', field: 'flow_id_to' }).then((res) => {
+
+                  for (var i in res.data) {
+                    res.data[i] = events[i]
+                  }
+
+
+                  setEventsData(res.data)
+                })
+              },
+              onSearch: (newValue: string) => {
+
+                fieldSelectData({ model: 'Alert', value: newValue, field: 'flow_id_to' }).then((res) => {
+                  for (var i in res.data) {
+                    res.data[i] = events[i]
+                  }
+                  setEventsData(res.data)
+                })
+
               },
               showSearch: false,
               multiple: true
@@ -856,7 +1074,7 @@ const TableList: React.FC = () => {
       dataIndex: 'start_of_transaction',
       sorter: true,
       width: 150,
-      defaultSortOrder:'descend',
+    
       valueType: 'date',
       hideInSearch: true,
     },
@@ -884,7 +1102,7 @@ const TableList: React.FC = () => {
       sorter: isMP ? false : true,
       hideInSearch: true,
       width: 120,
-      defaultSortOrder: 'ascend',
+     
       search: {
         transform: (value) => {
 
@@ -912,6 +1130,23 @@ const TableList: React.FC = () => {
     {
       title: <FormattedMessage id="pages.transaction.arrivalID" defaultMessage="Arrival ID" />,
       dataIndex: 'arrival_id',
+      search: {
+        transform: (value) => {
+
+          if (value && value.length > 0) {
+            return {
+
+              arrival_id: {
+                'field': 'arrival_id',
+                'op': 'in',
+                'data': value
+              }
+
+            }
+          }
+
+        }
+      },
       width: 120,
       sorter: isMP ? false : true,
       hideInSearch: true
@@ -926,6 +1161,25 @@ const TableList: React.FC = () => {
       sorter: isMP ? false : true,
       fieldProps: {
         notFoundContent: <Empty />,
+      },
+      search: {
+        transform: (value) => {
+          if (value && value.length > 0) {
+            return {
+              'flow_id': {
+                'field': 'flow_id',
+                'op': 'in',
+                'data': value
+              },
+              'status': {
+                'field': 'status',
+                'op': 'eq',
+                'data': 0
+              }
+            }
+          }
+
+        }
       },
       render: (dom, entity) => {
         if (entity.status == 0) {
@@ -1016,26 +1270,59 @@ const TableList: React.FC = () => {
 
 
     {
-      title: access.transactions_list_tab() ? "Customer" : "Trader",
-      dataIndex: 'organization_id',
+      title: "Trader",
+      dataIndex: 'trader_name',
       width: 200,
       hideInSearch:true,
      
-    
-      hideInTable: !(access.transactions_list_tab() || access.canAdmin) ? true : false,
+      sorter: true,
+      renderPrint: (dom, entity) => {
+        if (!entity.trader_id && entity.trader_name) {
+          return "! " + entity.trader_name
+         
+        } else {
+          return entity.trader_name
+        }
+
+      },
       render: (dom, entity) => {
 
-        return entity.trader_name
+       
+        if (!entity.trader_id && entity.trader_name) {
+          return <span><InfoCircleOutlined style={{ color: "#ff4d4f" }} title="This company does not exist in EOS" />  {entity.trader_name}</span>
+
+        } else {
+          return entity.trader_name
+        }
+        
       }
     },
     {
       title: "Terminal",
-      dataIndex: 'organization_id',
+      dataIndex: 'terminal_name',
       width: 200,
       hideInSearch: true,
-      
-      hideInTable: access.transactions_list_tab() ? true : false,
-      
+      sorter: true,
+      renderPrint: (dom, entity) => {
+        if (!entity.terminal_id && entity.terminal_name) {
+          return "! " + entity.terminal_name
+
+        } else {
+          return entity.terminal_name
+        }
+
+      },
+      render: (dom, entity) => {
+
+        if (!entity.terminal_id && entity.terminal_name) {
+          return <span><InfoCircleOutlined style={{ color: "#ff4d4f" }} title="This company does not exist in EOS" />  {entity.terminal_name}</span>
+         
+        } else {
+          return entity.terminal_name
+        }
+
+
+      },
       render: (dom, entity) => {
 
         return entity.terminal_name 
@@ -1098,6 +1385,34 @@ const TableList: React.FC = () => {
       width:200,
       hideInSearch: true,
       valueType: "text",
+      search: {
+        transform: (value) => {
+          if (value && value.length > 0) {
+
+            var a = value[0] || 0
+            var b = value[1] || 1000000000
+
+            return {
+              'product_quantity_from': {
+                'field': 'product_quantity_from',
+                'op': 'gte',
+                'data': a
+              },
+              'product_quantity_to': {
+                'field': 'product_quantity_to',
+                'op': 'lte',
+                'data': b
+              },
+              'uom': {
+                'field': 'uom',
+                'op': 'eq',
+                'data': "mt"
+              }
+            }
+          }
+
+        }
+      },
       render: (dom, entity) => {
         if (dom ) {
 
@@ -1111,6 +1426,34 @@ const TableList: React.FC = () => {
       title: <FormattedMessage id="pages.alertrule.totalNominatedQuantityB" defaultMessage="Total Nominated Quantity (Bls-60-F)" />,
       dataIndex: 'product_quantity_in_bls_60_f',
       hideInSearch: true,
+      search: {
+        transform: (value) => {
+          if (value && value.length > 0) {
+            var a = value[0] || 0
+            var b = value[1] || 1000000000
+            return {
+              'product_quantity_from': {
+                'field': 'product_quantity_from',
+                'op': 'gte',
+                'data': a
+              },
+              'product_quantity_to': {
+                'field': 'product_quantity_to',
+                'op': 'lte',
+                'data': b
+              },
+              'uom': {
+                'field': 'uom',
+                'op': 'eq',
+                'data': "bls_60_f"
+              }
+
+            }
+          }
+
+        }
+      },
+    
       width: 200,
       sorter: isMP ? false : true,
       valueType: 'text',
@@ -1122,16 +1465,51 @@ const TableList: React.FC = () => {
 
       },
     },
+    {
+      title: "Entire Duration",
+      dataIndex: 'total_duration',
+      hideInDescriptions: true,
+      hideInSearch: true,
+      render: (dom, entity) => {
+        if (entity.total_duration > 0 && entity.status == 1) {
+          return parseInt((entity.total_duration / 3600) + "") + "h " + parseInt((entity.total_duration % 3600) / 60) + "m"
+        } else {
+          return '-'
+        }
 
+
+      },
+     hideInTable:true,
+      search: {
+        transform: (value) => {
+          if (value && value.length > 0) {
+            var a = value[0] || 0
+            var b = value[1] || 1000000000
+            return {
+              'total_duration': {
+                'field': 'total_duration',
+                'op': 'between',
+                'data': [a, b]
+              }
+
+
+            }
+          }
+
+        }
+      }
+
+    },
     {
       title: <FormattedMessage id="pages.transaction.totalDuration" defaultMessage="Entire Duration (Till Date)" />,
-      dataIndex: 'total_duration',
+      dataIndex: 'total_duration_',
       sorter: isMP ? false : true,
       width: 120,
       hideInSearch: true,
+     
       render: (dom, entity) => {
-        if (dom > 0 && entity.status == 1) {
-          return parseInt((dom / 3600) + "") + "h " + parseInt((dom % 3600) / 60) + "m"
+        if (entity.total_duration > 0 && entity.status == 1) {
+          return parseInt((entity.total_duration / 3600) + "") + "h " + parseInt((entity.total_duration % 3600) / 60) + "m"
         } else {
           return '-'
         }
@@ -1182,6 +1560,42 @@ const TableList: React.FC = () => {
       }
 
     },
+
+
+
+    {
+     
+      dataIndex: 'threshold_flow_id_to',
+      hideInTable: true,
+      hideInSearch: true,
+      width: 200,
+      hideInDescriptions: true,
+      search: {
+        transform: (value) => {
+          if (value && value.length > 0) {
+            return {
+              'threshold_flow_id': {
+                'field': 'threshold_flow_id',
+                'op': 'in',
+                'data': value.map((a) => {
+                  return a.split('_')[0]
+                })
+              },
+              'threshold_flow_id_to': {
+                'field': 'threshold_flow_id_to',
+                'op': 'in',
+                'data': value.map((a) => {
+                  return a.split('_')[1]
+                })
+              },
+            }
+          }
+        }
+      }
+
+
+    },
+
     {
       title: (
         <FormattedMessage
@@ -1364,21 +1778,8 @@ const TableList: React.FC = () => {
       {!isMP && (<ConfigProvider renderEmpty={customizeRenderEmpty}> <RcResizeObserver
         key="resize-observer"
         onResize={(offset) => {
-          const { innerWidth, innerHeight } = window;
-          
-          var h = document.getElementsByClassName("ant-table-thead")?.[0]?.offsetHeight +400
-          if (offset.width > 1280) {
-          
-            setResizeObj({ ...resizeObj, searchSpan: 8, tableScrollHeight: innerHeight - h });
-          }
-          if (offset.width < 1280 && offset.width > 900) {
-          
-            setResizeObj({ ...resizeObj, searchSpan: 12, tableScrollHeight: innerHeight - h });
-          }
-          if (offset.width < 900 && offset.width > 700) {
-            setResizeObj({ ...resizeObj, searchSpan: 24, tableScrollHeight: innerHeight - h });
-            
-          }
+          ResizeObserverDo(offset, setResizeObj, resizeObj)
+
 
           
 
@@ -1572,27 +1973,6 @@ const TableList: React.FC = () => {
 
      
 
-      <InterfaceForm
-        onSubmit={async (value) => {
-          value.id = currentRow?.id
-          const success = await handleAdd(value as TransactionListItem);
-          if (success) {
-            handleInterfaceModalOpen(false);
-            setCurrentRow(undefined);
-            if (actionRef.current) {
-              actionRef.current.reload();
-            }
-          }
-        }}
-        onCancel={() => {
-          handleInterfaceModalOpen(false);
-          if (!showDetail) {
-            setCurrentRow(undefined);
-          }
-        }}
-        createModalOpen={interfaceModalOpen}
-       
-      />
       
       <CreateForm
         onSubmit={async (value) => {
@@ -1660,7 +2040,7 @@ const TableList: React.FC = () => {
           />
         )}
       </Drawer>
-      {/* 调用打印模块 */}
+      {/* Calling the printing module */}
       <FrPrint
         title={""}
         subTitle={paramsText}

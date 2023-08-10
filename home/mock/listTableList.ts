@@ -17,8 +17,8 @@ const genList = (current: number, pageSize: number) => {
         'https://gw.alipayobjects.com/zos/rmsportal/udxAbMEhpwthVVcjLXik.png',
       ][i % 2],
       name: `TradeCode ${index}`,
-      owner: '曲丽丽',
-      desc: '这是一段描述',
+      owner: 'Qu Lili',
+      desc: 'This is a description',
       callNo: Math.floor(Math.random() * 1000),
       status: Math.floor(Math.random() * 10) % 4,
       updatedAt: moment().format('YYYY-MM-DD'),
@@ -115,7 +115,7 @@ function postRule(req: Request, res: Response, u: string, b: Request) {
   const { method, name, desc, key } = body;
 
   switch (method) {
-    /* eslint no-case-declarations:0 */
+    /* eslint no-case-declarations: 0 */
     case 'delete':
       tableListDataSource = tableListDataSource.filter((item) => key.indexOf(item.key) === -1);
       break;
@@ -130,7 +130,7 @@ function postRule(req: Request, res: Response, u: string, b: Request) {
             'https://gw.alipayobjects.com/zos/rmsportal/udxAbMEhpwthVVcjLXik.png',
           ][i % 2],
           name,
-          owner: '曲丽丽',
+          owner: 'Qu Lili',
           desc,
           callNo: Math.floor(Math.random() * 1000),
           status: Math.floor(Math.random() * 10) % 2,

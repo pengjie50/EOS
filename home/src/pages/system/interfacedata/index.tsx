@@ -1,10 +1,13 @@
 import RcResizeObserver from 'rc-resize-observer';
 import { history } from '@umijs/max';
+import { ResizeObserverDo } from '@/components'
+import { fieldSelectData } from '@/services/ant-design-pro/api';
 import { addInterfacedata, removeInterfacedata, interfacedata, updateInterfacedata } from './service';
 import { PlusOutlined, SearchOutlined, FormOutlined, DeleteOutlined, ExclamationCircleOutlined, SwapOutlined, SortAscendingOutlined, SortDescendingOutlined } from '@ant-design/icons';
 import type { ActionType, ProColumns, ProDescriptionsItemProps } from '@ant-design/pro-components';
 import { InterfacedataList, InterfacedataListItem } from './data.d';
 import * as XLSX from 'xlsx';
+import moment from 'moment'
 import {
   FooterToolbar,
   ModalForm,
@@ -22,7 +25,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import CreateForm from './components/CreateForm';
 import UpdateForm from './components/UpdateForm';
 import { useAccess, Access } from 'umi';
-import { terminal } from '../../system/terminal/service';
+
 import { isPC } from "@/utils/utils";
 import { organization } from '../../system/company/service';
 const { confirm } = Modal;
@@ -30,7 +33,6 @@ const { confirm } = Modal;
 import { InfiniteScroll, List, NavBar, Space, DotLoading } from 'antd-mobile'
 /**
  * @en-US Add node
- * @zh-CN 添加节点
  * @param fields
  */
 const handleAdd = async (fields: InterfacedataListItem) => {
@@ -61,11 +63,10 @@ const handleAdd = async (fields: InterfacedataListItem) => {
 
 /**
  * @en-US Update node
- * @zh-CN 更新节点
  *
  * @param fields
  */
-const handleUpdate = async (fields: Partial<InterfacedataListItem> ) => {
+const handleUpdate = async (fields: Partial<InterfacedataListItem>) => {
   const hide = message.loading(<FormattedMessage
     id="pages.modifying"
     defaultMessage="Modifying"
@@ -91,7 +92,6 @@ const handleUpdate = async (fields: Partial<InterfacedataListItem> ) => {
 
 /**
  *  Delete node
- * @zh-CN 删除节点
  *
  * @param selectedRows
  */
@@ -125,7 +125,7 @@ const handleRemove = async (selectedRows: InterfacedataListItem[], callBack: any
 
 
 
-          
+
 
       } catch (error) {
         hide();
@@ -149,12 +149,10 @@ const handleRemove = async (selectedRows: InterfacedataListItem[], callBack: any
 const TableList: React.FC = () => {
   /**
    * @en-US Pop-up window of new window
-   * @zh-CN 新建窗口的弹窗
    *  */
   const [createModalOpen, handleModalOpen] = useState<boolean>(false);
   /**
    * @en-US The pop-up window of the distribution update window
-   * @zh-CN 分布更新窗口的弹窗
    * */
   const [updateModalOpen, handleUpdateModalOpen] = useState<boolean>(false);
 
@@ -165,9 +163,15 @@ const TableList: React.FC = () => {
   const [selectedRowsState, setSelectedRows] = useState<InterfacedataListItem[]>([]);
   const [organizationList, setOrganizationList] = useState<any>({});
 
+  const [imo_numberData, setImo_numberData] = useState<any>({});
+
+
+  const [eos_idData, setEos_idData] = useState<any>({});
+  const [work_order_idData, setWork_order_idData] = useState<any>({});
+
+
   /**
    * @en-US International configuration
-   * @zh-CN 国际化配置
    * */
   const intl = useIntl();
   const access = useAccess();
@@ -182,7 +186,7 @@ const TableList: React.FC = () => {
   const [MPSorter, setMPSorter] = useState<any>({});
 
 
-  
+
   const [isMP, setIsMP] = useState<boolean>(!isPC());
 
   const right = (
@@ -190,8 +194,8 @@ const TableList: React.FC = () => {
       <Space style={{ '--gap': '16px' }}>
         {currentUser?.role_type != 'Terminal' && <SearchOutlined onClick={e => { setShowMPSearch(!showMPSearch) }} />}
         <Access accessible={access.canInterfacedataAdd()} fallback={<div></div>}>
-          {/*<PlusOutlined onClick={() => { handleModalOpen(true) }} />*/ } 
-          </Access>
+          {/*<PlusOutlined onClick={() => { handleModalOpen(true) }} />*/}
+        </Access>
       </Space>
     </div>
   )
@@ -239,31 +243,31 @@ const TableList: React.FC = () => {
       filter = filter_
       return filter_
     })
-   
 
 
-        const append = await interfacedata({
-          ...{
-            "current": page,
-            "pageSize": 3
 
-          }, ...filter, sorter: sorter
-        })
+    const append = await interfacedata({
+      ...{
+        "current": page,
+        "pageSize": 3
+
+      }, ...filter, sorter: sorter
+    })
 
 
     setMPPagination({ total: append.total })
     setData(append.data)
-        
-    
-    
+
+
+
   }
-  
+
   //--MP end
   const formRef = useRef<ProFormInstance>();
   useEffect(() => {
 
-   
-    organization({ type:'Terminal',sorter: { name: 'ascend' } }).then((res) => {
+
+    organization({ type: 'Terminal', sorter: { name: 'ascend' } }).then((res) => {
       var b = {}
       res.data.forEach((r) => {
         b[r.id] = r.name
@@ -280,16 +284,14 @@ const TableList: React.FC = () => {
 
   }, [true]);
   const uploadprops = {
-    // 这里我们只接受excel2007以后版本的文件，accept就是指定文件选择框的文件类型
+   
     accept: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     name: 'file',
     headers: {
       authorization: 'authorization-text',
     },
     showUploadList: false,
-    // 把excel的处理放在beforeUpload事件，否则要把文件上传到通过action指定的地址去后台处理
-    // 这里我们没有指定action地址，因为没有传到后台
-    beforeUpload:  (file, fileList) => {
+    beforeUpload: (file, fileList) => {
       let terminal_id = formRef.current?.getFieldValue('terminal_id')
       if (!terminal_id) {
         message.error(<FormattedMessage
@@ -302,22 +304,22 @@ const TableList: React.FC = () => {
       const rABS = true;
       const f = fileList[0];
       const reader = new FileReader();
-      reader.onload = async (e )=> {
+      reader.onload = async (e) => {
         let dataResult = e.target.result;
         if (!rABS) dataResult = new Uint8Array(dataResult);
         const workbook = XLSX.read(dataResult, {
           type: rABS ? 'binary' : 'array',
         });
-        // 假设我们的数据在第一个标签
+       
         const firstWorksheet = workbook.Sheets[workbook.SheetNames[0]];
-        // XLSX自带了一个工具把导入的数据转成json
+       
         let jsonArr = XLSX.utils.sheet_to_json(firstWorksheet, { header: 1 });
-        // 通过自定义的方法处理Json,得到Excel原始数据传给后端，后端统一处理
+       
         jsonArr.shift()
-        jsonArr=jsonArr.map(a => {
+        jsonArr = jsonArr.map(a => {
           let b = {}
           b.name = a[0]
-          b.depth_alongside = a[1]+""
+          b.depth_alongside = a[1] + ""
           b.depth_approaches = a[2] + ""
           b.max_loa = a[3] + ""
           b.min_loa = a[4] + ""
@@ -333,8 +335,8 @@ const TableList: React.FC = () => {
 
           }
         }
-        
-       
+
+
       };
       if (rABS) reader.readAsBinaryString(f);
       else reader.readAsArrayBuffer(f);
@@ -354,63 +356,209 @@ const TableList: React.FC = () => {
     }
   }
   const columns: ProColumns<InterfacedataListItem>[] = [
-   
+
     {
-      title:"Type",
+      title: "Type",
       dataIndex: 'type',
       valueType: 'text',
-      width:80,
+      width: 80,
       sorter: true,
-      valueEnum:{
+      fieldProps: {
+        multiple: true,
+        mode: 'multiple',
+        maxTagCount: 0,
+        maxTagPlaceholder: (omittedValues) => {
+          return omittedValues.length + " Selected"
+        },
+      },
+      valueEnum: {
         1: "DE 1",
         2: "DE 2",
         3: "DE 3",
         4: "DE 4",
         5: "DE 5",
       },
-     
+      search: {
+        transform: (value) => {
+
+          if (value && value.length > 0) {
+            return {
+
+              status: {
+                'field': 'type',
+                'op': 'in',
+                'data': value
+              }
+
+            }
+          }
+
+        }
+      },
+
     },
+
     {
       title: "IMO Number",
       dataIndex: 'imo_number',
-      valueType: 'text',
-      width:120,
+      valueEnum: imo_numberData,
+      search: {
+        transform: (value) => {
+
+          if (value && value.length > 0) {
+            return {
+
+              status: {
+                'field': 'imo_number',
+                'op': 'in',
+                'data': value
+              }
+
+            }
+          }
+
+        }
+      },
+      fieldProps: {
+        multiple: true,
+        mode: 'multiple',
+        maxTagCount: 0,
+        maxTagPlaceholder: (omittedValues) => {
+          return omittedValues.length + " Selected"
+        },
+        notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
+        showSearch: true,
+        allowClear: true,
+        onFocus: () => {
+          fieldSelectData({ model: "Interfacedata", value: '', field: 'imo_number' }).then((res) => {
+            setImo_numberData(res.data)
+          })
+        },
+        onSearch: (newValue: string) => {
+
+          fieldSelectData({ model: "Interfacedata", value: newValue, field: 'imo_number' }).then((res) => {
+            setImo_numberData(res.data)
+          })
+
+        }
+      },
+      width: 120,
       sorter: true
     },
     {
       title: "Work Order ID",
       dataIndex: 'work_order_id',
       width: 120,
-      valueType: 'text',
-      sorter: true
+      valueEnum: work_order_idData,
+      sorter: true,
+      search: {
+        transform: (value) => {
+
+          if (value && value.length > 0) {
+            return {
+
+              status: {
+                'field': 'work_order_id',
+                'op': 'in',
+                'data': value
+              }
+
+            }
+          }
+
+        }
+      },
+      fieldProps: {
+        multiple: true,
+        mode: 'multiple',
+        maxTagCount: 0,
+        maxTagPlaceholder: (omittedValues) => {
+          return omittedValues.length + " Selected"
+        },
+        notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
+        showSearch: true,
+        allowClear: true,
+        onFocus: () => {
+          fieldSelectData({ model: "Interfacedata", value: '', field: 'work_order_id' }).then((res) => {
+            setWork_order_idData(res.data)
+          })
+        },
+        onSearch: (newValue: string) => {
+
+          fieldSelectData({ model: "Interfacedata", value: newValue, field: 'work_order_id' }).then((res) => {
+            setWork_order_idData(res.data)
+          })
+
+        }
+      },
     },
-   
+
     {
-      title: "Json String",
+      title: "Json Data String",
       dataIndex: 'json_string',
       valueType: 'text',
-      ellipsis:isMP?false: true,
+      ellipsis: isMP ? false : true,
       sorter: true
     },
     {
-      title: "Already Used",
+      title: "Used Status",
       dataIndex: 'already_used',
       valueType: 'text',
-      width:120,
+      width: 120,
       sorter: true,
       valueEnum: {
-        1: "already_used",
-        0: "no",
-
+        1: "Already Used",
+        0: "Not Used",
+        2: "Expire",
       },
     },
     {
       title: "EOS ID",
       sorter: true,
-      hideInSearch: true,
+      width: 100,
+      valueEnum: eos_idData,
       defaultSortOrder: 'ascend',
       dataIndex: 'eos_id',
+      search: {
+        transform: (value) => {
 
+          if (value && value.length > 0) {
+            return {
+
+              status: {
+                'field': 'eos_id',
+                'op': 'in',
+                'data': value
+              }
+
+            }
+          }
+
+        }
+      },
+      fieldProps: {
+        multiple: true,
+        mode: 'multiple',
+        maxTagCount: 0,
+        maxTagPlaceholder: (omittedValues) => {
+          return omittedValues.length + " Selected"
+        },
+        notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
+        showSearch: true,
+        allowClear: true,
+        onFocus: () => {
+          fieldSelectData({ model: "Interfacedata", value: '', field: 'eos_id' }).then((res) => {
+            setEos_idData(res.data)
+          })
+        },
+        onSearch: (newValue: string) => {
+
+          fieldSelectData({ model: "Interfacedata", value: newValue, field: 'eos_id' }).then((res) => {
+            setEos_idData(res.data)
+          })
+
+        }
+      },
       render: (dom, entity) => {
         if (entity.already_used == 1) {
           return (
@@ -420,23 +568,61 @@ const TableList: React.FC = () => {
                 history.push(`/transaction/detail`, { transaction_id: entity.transaction_id });
               }}
             >
-              {"E" + dom}
+              {"E" + entity.eos_id}
             </a>
           );
         } else {
           return '-'
         }
-        
+
       },
     },
     {
       title: "Created At",
       sorter: true,
+      defaultSortOrder: 'descend',
       hideInSearch: true,
       dataIndex: 'created_at',
-      valueType: 'dateTime'
-
+      valueType: 'dateTime',
+      width: 200
     },
+
+    {
+      title: (
+        <FormattedMessage
+          id="pages.operlog.xxx"
+          defaultMessage="Created At"
+        />
+      ),
+
+
+      hideInForm: true,
+      hideInTable: true,
+
+      dataIndex: 'created_at',
+      valueType: 'dateRange',
+      search: {
+        transform: (value) => {
+          if (value && value.length > 0) {
+            value[0] = moment(new Date(value[0])).format('YYYY-MM-DD') + " 00:00:00"
+            value[1] = moment(new Date(value[1])).format('YYYY-MM-DD') + " 23:59:59"
+            return {
+              'oper_time': {
+                'field': 'created_at',
+                'op': 'between',
+                'data': value
+              }
+            }
+          }
+
+        }
+      }
+
+
+
+    }
+
+    /*,
     {
       title: <FormattedMessage id="pages.searchTable.titleOption" defaultMessage="Operating" />,
       dataIndex: 'option',
@@ -480,7 +666,7 @@ const TableList: React.FC = () => {
           </a>
         </Access>
       ],
-    },
+    },*/
   ];
   const customizeRenderEmpty = () => {
     var o = formRef.current?.getFieldsValue()
@@ -501,73 +687,60 @@ const TableList: React.FC = () => {
   }
 
 
-  
+
   return (
     <RcResizeObserver
       key="resize-observer"
       onResize={(offset) => {
-        const { innerWidth, innerHeight } = window;
+        ResizeObserverDo(offset, setResizeObj, resizeObj)
 
-        if (offset.width > 1280) {
-         
-          setResizeObj({ ...resizeObj, searchSpan: 8, tableScrollHeight: innerHeight - 420 });
-        }
-        if (offset.width < 1280 && offset.width > 900) {
-         
-          setResizeObj({ ...resizeObj, searchSpan: 12, tableScrollHeight: innerHeight - 420 });
-        }
-        if (offset.width < 900 && offset.width > 700) {
-          setResizeObj({ ...resizeObj, searchSpan: 24, tableScrollHeight: innerHeight - 420 });
-          
-        }
 
-      
 
       }}
     >
       <PageContainer className="myPage" header={{
-        title: isMP ? null : < FormattedMessage id="'pages.interfacedata.title" defaultMessage={"Interfacedata - "+  currentUser?.company_name} />,
-      breadcrumb: {},
-      extra: isMP ? null : [
-       /* <Access accessible={access.canInterfacedataAdd()} fallback={<div></div>}> <Button
-          type="primary"
-          key="primary"
-          onClick={() => {
-            handleModalOpen(true);
-          }}
-        >
-          <PlusOutlined /> <FormattedMessage id="pages.searchTable.new" defaultMessage="New" />
-        </Button></Access>, <Access accessible={access.canInterfacedataAdd()} fallback={<div></div>}> <Upload {...uploadprops}>
-          <Tooltip title="">
-            <Button type="primary">
-              Batch Add
-            </Button>
-          </Tooltip>
-        </Upload></Access>*/
-      ]
-    }}>
-      {!isMP && (<ConfigProvider renderEmpty={customizeRenderEmpty}><ProTable<InterfacedataListItem, API.PageParams>
-        formRef={formRef }
+        title: isMP ? null : < FormattedMessage id="'pages.interfacedata.xxx" defaultMessage={"Interface Data"} />,
+        breadcrumb: {},
+        extra: isMP ? null : [
+          /* <Access accessible={access.canInterfacedataAdd()} fallback={<div></div>}> <Button
+             type="primary"
+             key="primary"
+             onClick={() => {
+               handleModalOpen(true);
+             }}
+           >
+             <PlusOutlined /> <FormattedMessage id="pages.searchTable.new" defaultMessage="New" />
+           </Button></Access>, <Access accessible={access.canInterfacedataAdd()} fallback={<div></div>}> <Upload {...uploadprops}>
+             <Tooltip title="">
+               <Button type="primary">
+                 Batch Add
+               </Button>
+             </Tooltip>
+           </Upload></Access>*/
+        ]
+      }}>
+        {!isMP && (<ConfigProvider renderEmpty={customizeRenderEmpty}><ProTable<InterfacedataListItem, API.PageParams>
+          formRef={formRef}
           className="mytable"
           bordered
-        actionRef={actionRef}
+          actionRef={actionRef}
           rowKey="id"
           pagination={{ size: "default" }}
-          scroll={{ x: 1800, y: resizeObj.tableScrollHeight }}
-          search={currentUser?.role_type != 'Terminal'?{
-          labelWidth: 130,
-          span: resizeObj.searchSpan,
+          scroll={{ y: resizeObj.tableScrollHeight }}
+          search={currentUser?.role_type != 'Terminal' ? {
+            labelWidth: 150,
+            span: resizeObj.searchSpan,
             searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
           } : false}
-        options={false }
-        request={(params, sorter) => interfacedata({ ...params, sorter })}
-        columns={columns}
-        rowSelection={access.canInterfacedataDel() ?{ 
-          onChange: (_, selectedRows) => {
-            setSelectedRows(selectedRows);
-          },
-        }:false}
-      /></ConfigProvider >)}
+          options={false}
+          request={(params, sorter) => interfacedata({ ...params, sorter })}
+          columns={columns}
+          rowSelection={access.canInterfacedataDel() ? {
+            onChange: (_, selectedRows) => {
+              setSelectedRows(selectedRows);
+            },
+          } : false}
+        /></ConfigProvider >)}
 
         {isMP && (<>
 
@@ -575,76 +748,76 @@ const TableList: React.FC = () => {
 
             return (<div><Button onClick={() => {
               setMPSorter({ [a.dataIndex]: 'ascend' })
-            
-              
-               getData(1)
-               
-             
+
+
+              getData(1)
+
+
             }} icon={<SortAscendingOutlined />} />
               <Button style={{ margin: 5 }} onClick={() => {
                 setMPSorter({ [a.dataIndex]: 'descend' })
-                
-                  getData(1)
-                
+
+                getData(1)
+
               }} icon={<SortDescendingOutlined />} />
               <span>{a.title}</span>
             </div>)
 
           })}</div>} trigger="click">
             <SwapOutlined rotate={90} />
-          </Popover></div> } right={right} onBack={back}>
-          {intl.formatMessage({
-            id: 'pages.interfacedata.title',
-            defaultMessage: 'Interfacedata - ' + currentUser?.company_name,
-          })}
-        </NavBar>
+          </Popover></div>} right={right} onBack={back}>
+            {intl.formatMessage({
+              id: 'pages.interfacedata.title',
+              defaultMessage: 'Interface Data',
+            })}
+          </NavBar>
 
-        <div style={{ padding: '20px', backgroundColor: "#5000B9", display: showMPSearch ? 'block' : 'none' }}>
+          <div style={{ padding: '20px', backgroundColor: "#5000B9", display: showMPSearch ? 'block' : 'none' }}>
             <Search columns={columns.filter(a => !(a.hasOwnProperty('hideInSearch') && a['hideInSearch']))} action={actionRef} loading={false}
 
-            onFormSearchSubmit={onFormSearchSubmit}
+              onFormSearchSubmit={onFormSearchSubmit}
 
-            dateFormatter={'string'}
-            formRef={formRef}
-            type={'form'}
-            cardBordered={true}
-            form={{
-              submitter: {
-                searchConfig: {
+              dateFormatter={'string'}
+              formRef={formRef}
+              type={'form'}
+              cardBordered={true}
+              form={{
+                submitter: {
+                  searchConfig: {
 
-                  submitText: < FormattedMessage id="pages.search" defaultMessage="Search" />,
+                    submitText: < FormattedMessage id="pages.search" defaultMessage="Search" />,
+                  }
+
                 }
+              }}
 
-              }
-            }}
+              search={{}}
+              manualRequest={true}
+            />
+          </div>
+          <List>
+            {data.map((item, index) => (
+              <List.Item key={index}>
 
-            search={{}}
-            manualRequest={true}
-          />
-        </div>
-        <List>
-          {data.map((item, index) => (
-            <List.Item key={index}>
+                <ProDescriptions<any>
+                  className="interfacedata-descriptions"
+                  bordered={true}
+                  size="small"
+                  layout="vertical"
+                  column={1}
+                  title={""}
+                  request={async () => ({
+                    data: item || {},
+                  })}
+                  params={{
+                    id: item?.id,
+                  }}
+                  columns={columns as ProDescriptionsItemProps<any>[]}
+                />
 
-              <ProDescriptions<any>
-                className="interfacedata-descriptions"
-                bordered={true}
-                size="small"
-                layout="vertical"
-                column={1}
-                title={""}
-                request={async () => ({
-                  data: item || {},
-                })}
-                params={{
-                  id: item?.id,
-                }}
-                columns={columns as ProDescriptionsItemProps<any>[]}
-              />
-
-            </List.Item>
-          ))}
-        </List>
+              </List.Item>
+            ))}
+          </List>
           {MPPagination.total > 0 ? <div style={{ textAlign: 'center', padding: "20px 10px 90px 10px" }}>
             <Pagination
 
@@ -660,143 +833,132 @@ const TableList: React.FC = () => {
             />
           </div> : customizeRenderEmpty()}
           <FloatButton.BackTop visibilityHeight={0} />
-      </>)}
-      {selectedRowsState?.length > 0 && (
+        </>)}
+        {selectedRowsState?.length > 0 && (
 
-        <Access accessible={access.canInterfacedataDel()} fallback={<div></div>}>
-        <FooterToolbar
-          extra={
-            <div>
-              <FormattedMessage id="pages.searchTable.chosen" defaultMessage="Chosen" />{' '}
-              <a style={{ fontWeight: 600 }}>{selectedRowsState.length}</a>{' '}
-              <FormattedMessage id="pages.searchTable.item" defaultMessage="项" />
-              &nbsp;&nbsp;
-              
-            </div>
-          }
-        >
-          <Button
-            onClick={async () => {
-              await handleRemove(selectedRowsState, (success) => {
-                if (success) {
-                  setSelectedRows([]);
-                  if (isMP) {
-                    setData([]);
-                    getData(1)
-                  }
-                  actionRef.current?.reloadAndRest?.();
-                }
-               
-              });
-              
-            }}
-          >
-            <FormattedMessage
-              id="pages.searchTable.batchDeletion"
-              defaultMessage="Batch deletion"
-            />
-          </Button>
-          
-          </FooterToolbar>
+          <Access accessible={access.canInterfacedataDel()} fallback={<div></div>}>
+            <FooterToolbar
+              extra={
+                <div>
+                  <FormattedMessage id="pages.searchTable.chosen" defaultMessage="Chosen" />{' '}
+                  <a style={{ fontWeight: 600 }}>{selectedRowsState.length}</a>{' '}
+                  <FormattedMessage id="pages.searchTable.item" defaultMessage="项" />
+                  &nbsp;&nbsp;
+
+                </div>
+              }
+            >
+              <Button
+                onClick={async () => {
+                  await handleRemove(selectedRowsState, (success) => {
+                    if (success) {
+                      setSelectedRows([]);
+                      if (isMP) {
+                        setData([]);
+                        getData(1)
+                      }
+                      actionRef.current?.reloadAndRest?.();
+                    }
+
+                  });
+
+                }}
+              >
+                <FormattedMessage
+                  id="pages.searchTable.batchDeletion"
+                  defaultMessage="Batch deletion"
+                />
+              </Button>
+
+            </FooterToolbar>
           </Access>
-      )}
-      
-      <CreateForm
+        )}
+
+        <CreateForm
           onSubmit={async (value) => {
-            var data = eval("(" + value.json_string + ")"); 
-            
+            var data = eval("(" + value.json_string + ")");
+
             value.imo_number = data.toai_imo_number || null
-            value.work_order_id = data.towoi_work_order_id || data.tosi_work_order_id  || null
-           
+            value.work_order_id = data.towoi_work_order_id || data.tosi_work_order_id || null
+
             value.already_used = 0
 
 
 
-          
+
             const success = await handleAdd(value);
-          if (success) {
+            if (success) {
+              handleModalOpen(false);
+              setCurrentRow(undefined);
+              if (isMP) {
+                setData([]);
+                getData(1)
+              }
+              if (actionRef.current) {
+                actionRef.current.reload();
+              }
+            }
+          }}
+          onCancel={() => {
             handleModalOpen(false);
-            setCurrentRow(undefined);
-            if (isMP) {
-              setData([]);
-              getData(1)
+            if (!showDetail) {
+              setCurrentRow(undefined);
             }
-            if (actionRef.current) {
-              actionRef.current.reload();
-            }
-          }
-        }}
-        onCancel={() => {
-          handleModalOpen(false);
-          if (!showDetail) {
-            setCurrentRow(undefined);
-          }
-        }}
-        createModalOpen={createModalOpen}
-        
-      />
-      <UpdateForm
-        onSubmit={async (value) => {
+          }}
+          createModalOpen={createModalOpen}
+
+        />
+        <UpdateForm
+          onSubmit={async (value) => {
             value.id = currentRow?.id
-            
-          const success = await handleUpdate(value);
-          if (success) {
+
+            const success = await handleUpdate(value);
+            if (success) {
+              handleUpdateModalOpen(false);
+              setCurrentRow(undefined);
+              if (isMP) {
+                setData([]);
+                getData(1)
+              }
+              if (actionRef.current) {
+                actionRef.current.reload();
+              }
+            }
+          }}
+          onCancel={() => {
             handleUpdateModalOpen(false);
-            setCurrentRow(undefined);
-            if (isMP) {
-              setData([]);
-              getData(1)
+            if (!showDetail) {
+              setCurrentRow(undefined);
             }
-            if (actionRef.current) {
-              actionRef.current.reload();
-            }
-          }
-        }}
-        onCancel={() => {
-          handleUpdateModalOpen(false);
-          if (!showDetail) {
-            setCurrentRow(undefined);
-          }
-        }}
-        updateModalOpen={updateModalOpen}
-        values={currentRow || {}}
-      />
+          }}
+          updateModalOpen={updateModalOpen}
+          values={currentRow || {}}
+        />
 
-      <Drawer
-        width={isMP ? '100%' : 600}
-        open={showDetail}
-        onClose={() => {
-          setCurrentRow(undefined);
-          setShowDetail(false);
-        }}
-        closable={isMP ? true : false}
-      >
-        {currentRow?.name && (
-          <ProDescriptions<InterfacedataListItem>
-            column={isMP ? 1 : 2}
-            title={currentRow?.name}
-            request={async () => ({
-              data: currentRow || {},
-            })}
-            params={{
-              id: currentRow?.name,
-            }}
-            columns={columns as ProDescriptionsItemProps<InterfacedataListItem>[]}
-          />
-        )}
+        <Drawer
+          width={isMP ? '100%' : 600}
+          open={showDetail}
+          onClose={() => {
+            setCurrentRow(undefined);
+            setShowDetail(false);
+          }}
+          closable={isMP ? true : false}
+        >
+          {currentRow?.name && (
+            <ProDescriptions<InterfacedataListItem>
+              column={isMP ? 1 : 2}
+              title={currentRow?.name}
+              request={async () => ({
+                data: currentRow || {},
+              })}
+              params={{
+                id: currentRow?.name,
+              }}
+              columns={columns as ProDescriptionsItemProps<InterfacedataListItem>[]}
+            />
+          )}
         </Drawer>
-        {/*
-         <div style={{ marginTop: -45, paddingLeft: 10 }}>
-          <Button
-
-            type="primary"
-            onClick={async () => {
-              history.back()
-            }}
-          >Return to previous page</Button>
-        </div>
-
-        */ }
+       
       </PageContainer></RcResizeObserver>
   );
 };

@@ -7,7 +7,7 @@ import {
   ProFormTextArea,
   ModalForm,
   ProFormInstance
-  
+
 } from '@ant-design/pro-components';
 import { CompanyListItem } from '../data.d';
 import { FormattedMessage, useIntl } from '@umijs/max';
@@ -23,7 +23,7 @@ export type CreateFormProps = {
   onCancel: (flag?: boolean, formVals?: Partial<CompanyListItem>) => void;
   onSubmit: (values: Partial<CompanyListItem>) => Promise<void>;
   createModalOpen: boolean;
- 
+
 };
 
 const UpdateForm: React.FC<CreateFormProps> = (props) => {
@@ -34,10 +34,9 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
     onSubmit,
     onCancel,
     createModalOpen,
-   
+
   } = props;
   const onlyCheck = (rule: any, value: any, callback: (arg0: string | undefined) => void) => {
-
 
     fieldUniquenessCheck({ where: { name: value }, model: 'Company' }).then((res) => {
 
@@ -48,95 +47,86 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
           defaultMessage: 'This company name is already in use',
         }))
       } else {
-        callback(undefined); // 必须返回一个callback
+        callback(undefined);
+      }
+    });
+
+  }
+  const onlyCheck2 = (rule: any, value: any, callback: (arg0: string | undefined) => void) => {
+
+    fieldUniquenessCheck({ where: { alias: value }, model: 'Company' }).then((res) => {
+
+      if (res.data) {
+
+        callback(intl.formatMessage({
+          id: 'pages.xxx',
+          defaultMessage: 'This company Alias is already in use',
+        }))
+      } else {
+        callback(undefined);
       }
     });
 
   }
   useEffect(() => {
 
-    
-
-    
-
   }, [true])
- 
+
 
   return (
-   
+
     <ModalForm
       modalProps={{ destroyOnClose: true }}
-      
+
       onOpenChange={(vi) => {
         if (!vi) {
           props.onCancel();
         }
-          
+
       }}
       formRef={restFormRef}
-        onFinish={props.onSubmit}
+      onFinish={props.onSubmit}
       open={props.createModalOpen}
-        submitter={{
-          searchConfig: {
-            resetText: intl.formatMessage({
-              id: 'pages.reset',
-              defaultMessage: 'Reset',
-            }),
+      submitter={{
+        searchConfig: {
+          resetText: intl.formatMessage({
+            id: 'pages.reset',
+            defaultMessage: 'Reset',
+          }),
+        },
+        resetButtonProps: {
+          onClick: () => {
+            restFormRef.current?.resetFields();
+            
           },
-          resetButtonProps: {
-            onClick: () => {
-              restFormRef.current?.resetFields();
-              //   setModalVisible(false);
-            },
-          },
-        }}
-        title={intl.formatMessage({
-          id: 'pages.company.add',
-          defaultMessage: 'New Organization',
-        })}
-      >
-        <ProFormText
-          name="name"
-          label={intl.formatMessage({
-            id: 'pages.company.name',
-            defaultMessage: 'Organization Name',
-          })}
-          width="md"
-          rules={[
-            {
-              required: true,
-              message: (
-                <FormattedMessage
-                  id="pages.rules.required"
-                  defaultMessage="This field cannot be empty"
-                />
-              ),
-            },
-            { validator: onlyCheck }
-          ]}
-      />
-      {/*<ProFormTreeSelect
-        name="pid"
-        width="md"
+        },
+      }}
+      title={intl.formatMessage({
+        id: 'pages.company.add',
+        defaultMessage: 'New Organization',
+      })}
+    >
+      <ProFormText
+        name="name"
         label={intl.formatMessage({
-          id: 'pages.user.parentCompany',
-          defaultMessage: 'Parent Company',
+          id: 'pages.company.name',
+          defaultMessage: 'Organization Name',
         })}
-        request={async () => {
-          return company({}).then((res) => {
-
-            res.data = res.data.map((r) => {
-              r['value'] = r.id
-              r['title'] = r.name
-              return r
-            })
-
-            // setFlowList(tree(res.data, "                                    ", 'pid'))
-            return tree(res.data, "                                    ", 'pid')
-          });
-
-        }}
-      />*/ }
+        width="md"
+        rules={[
+          {
+            required: true,
+            message: (
+              <FormattedMessage
+                id="pages.rules.required"
+                defaultMessage="This field cannot be empty"
+              />
+            ),
+          },
+          { validator: onlyCheck }
+        ]}
+      />
+     
 
       <ProFormSelect
         name="type"
@@ -157,11 +147,11 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
           },
         ]}
         valueEnum={{
-          "Surveyor": "Surveyor",
+          // "Surveyor": "Surveyor",
           "Trader": "Trader",
-          "Agent": "Agent",
+          // "Agent": "Agent",
           "Terminal": "Oil Terminal",
-          "Pilot": "Pilot",
+          // "Pilot": "Pilot",
           "Super": "Super User",
 
 
@@ -171,24 +161,27 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
       <ProFormTextArea
         name="alias"
         width="md"
+        rules={[
+          { validator: onlyCheck2 }
+        ]}
         label={intl.formatMessage({
           id: 'pages.company.xxx',
           defaultMessage: 'Company Alias',
         })}
 
       />
-      
-        <ProFormTextArea
-          name="description"
-          width="md"
-          label={intl.formatMessage({
-            id: 'pages.company.description',
-            defaultMessage: 'Description',
-          })}
-          
-        />
+
+      <ProFormTextArea
+        name="description"
+        width="md"
+        label={intl.formatMessage({
+          id: 'pages.company.description',
+          defaultMessage: 'Description',
+        })}
+
+      />
     </ModalForm>
-     
+
   );
 };
 

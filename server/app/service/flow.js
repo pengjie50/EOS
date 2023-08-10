@@ -21,8 +21,18 @@ class FlowService extends Service {
 
         let obj = {}
 
+        var isGetAll = false
+        
+
         if (params.where) {
+            if (params.where.isGetAll) {
+                isGetAll = true
+                
+            }
+            delete params.where.isGetAll
             obj.where = params.where
+        } else {
+            obj.where = {}
         }
         if (params.order) {
             obj.order = params.order
@@ -36,12 +46,15 @@ class FlowService extends Service {
 
         var list = await ctx.model.Flow.findAndCountAll(obj)
         if (ctx.user.role_type != "Super") {
-            list.rows = list.rows.filter((a) => {
-                return ctx.user.accessible_timestamp.some((b) => {
-                    return b == a.id
-                })
+            if (!isGetAll) {
+                list.rows = list.rows.filter((a) => {
+                    return ctx.user.accessible_timestamp.some((b) => {
+                        return b == a.id
+                    })
 
-            })
+                })
+            }
+            
         }
         ctx.status = 200;
         ctx.body = {

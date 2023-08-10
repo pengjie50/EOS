@@ -29,7 +29,7 @@ class UserconfigController extends Controller {
         params.user_id = ctx.user.user_id
         params.type = 0
         params.value = params.value.join(",")
-        console.log(params)
+       
         const result = await service.userconfig.add(params);
         this.addOperlog()
     }

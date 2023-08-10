@@ -42,7 +42,7 @@ class CompanyService extends Service {
             if (obj.where.type) {
 
             } else {
-                //obj.where.type = { [app.Sequelize.Op['ne']]: 'Super' }
+                obj.where.type = { [app.Sequelize.Op['ne']]: 'Super' }
             }
         } else {
 
@@ -107,11 +107,78 @@ class CompanyService extends Service {
 
     async del(params) {
         const ctx = this.ctx;
+
+
+        await ctx.model.Operlog.destroy({
+            where: {
+                company_id: params.id
+            }
+        })
+        await ctx.model.Loginlog.destroy({
+            where: {
+                company_id: params.id
+            }
+        })
+       
+        await ctx.model.Alert.destroy({
+            where: {
+                company_id: params.id
+            }
+        })
+        await ctx.model.Alertrule.destroy({
+            where: {
+                company_id: params.id
+            }
+        })
+        await ctx.model.AlertruleTransaction.destroy({
+            where: {
+                company_id: params.id
+            }
+        })
+        await ctx.model.Report.destroy({
+            where: {
+                company_id: params.id
+            }
+        })
+        await ctx.model.Userconfig.destroy({
+            where: {
+                company_id: params.id
+            }
+        })
+
+        await ctx.model.Jetty.destroy({
+            where: {
+                company_id: params.id
+            }
+        })
+
+        await ctx.model.User.destroy({
+            where: {
+                company_id: params.id
+            }
+        })
+
+
+        await ctx.model.Transaction.update({ trader_id:null},{
+            where: {
+                trader_id: params.id
+            }
+        })
+        await ctx.model.Transaction.update({ terminal_id: null }, {
+            where: {
+                terminal_id: params.id
+            }
+        })
+
         let res = await ctx.model.Company.destroy({
             where: {
                 id: params.id
             }
         })
+
+
+      
+
         ctx.body = { success: true };
         ctx.status = 200;
 

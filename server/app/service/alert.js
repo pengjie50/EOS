@@ -30,8 +30,58 @@ class AlertService extends Service {
         } else {
             obj.where = {}
         }
+
+
+        var otherOrder = {}
         if (params.order) {
-            obj.order = params.order
+            
+
+            var order = []
+            var orderArr=[]
+            params.order.forEach((a) => {
+                var arr = a[0].split(".")
+
+                if (arr.length == 2) {
+                    var k = arr[0]
+
+                    if (!otherOrder[k]) {
+                        otherOrder[k] = []
+                    }
+                    if (k == "t") {
+                        otherOrder[k].push([{ model: ctx.model.Transaction, as: 't' }
+                            , arr[1], a[1]])
+                   
+                        orderArr.push([{ model: ctx.model.Transaction, as: 't' }
+                            , arr[1], a[1]])
+                    }
+
+                    if (k == "ar") {
+                        otherOrder[k].push([{ model: ctx.model.Alertrule, as: 'ar' }
+                            , arr[1], a[1]])
+
+                        orderArr.push([{ model: ctx.model.Alertrule, as: 'ar' }
+                            , arr[1], a[1]])
+                    }
+                    
+
+                } else {
+                  
+                    order.push(a)
+                }
+
+               
+
+
+
+            })
+
+            obj.order = order
+
+            obj.order = obj.order.concat(orderArr)
+
+          
+           
+
         }
         if (params.page && params.limit) {
             obj.offset = parseInt((params.page - 1)) * parseInt(params.limit)
@@ -107,17 +157,19 @@ class AlertService extends Service {
 
                 if (this.access("alert_list_tab")) {
                     if (obj.where.tab) {
-                        if (obj.where.tab[app.Sequelize.Op.eq] == 'Terminal') {
+                        if (obj.where.tab[app.Sequelize.Op.eq] == 'Self') {
 
 
 
 
-                        } if (obj.where.tab[app.Sequelize.Op.eq] == 'Trader') {
+                        } if (obj.where.tab[app.Sequelize.Op.eq] == 'Others') {
                             delete obj.where.user_id
                             if (!obj.where.organization_id) {
 
                                 obj.where.company_id = {
-                                    [app.Sequelize.Op['in']]: ctx.user.accessible_organization
+                                    [app.Sequelize.Op['in']]: ctx.user.accessible_organization.filter((a) => {
+                                        return a != ctx.user.company_id
+                                    })
                                 }
                             } else {
 
@@ -143,14 +195,30 @@ class AlertService extends Service {
         delete obj.where.tab
         delete obj.where.organization_id
 
-
+       
         obj.include = [{
             as: 't',
             model: ctx.model.Transaction,
+          
             where: t_where
         }, {
             as: 'ar',
-            model: ctx.model.AlertruleTransaction
+            model: ctx.model.AlertruleTransaction,
+
+
+            [Op.or]: [
+
+                {
+                    type: { [Op.ne]: 1 },
+                    flow_id: { [Op.in]: [ctx.user.accessible_timestamp, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"] },
+                    flow_id_to: { [Op.eq]: null }
+                },
+                {
+                    type: { [Op.eq]: 1 },
+                    flow_id: { [Op.in]: ctx.user.accessible_timestamp },
+                    flow_id_to: { [Op.in]: ctx.user.accessible_timestamp }
+                }
+            ]
 
         }]
         var showNoRead = false
@@ -173,7 +241,34 @@ class AlertService extends Service {
             obj.where.id = ids
         }
 
+        var start_time = null
+        var end_time = null
+        var report
+        if (is_report) {
+            report = await ctx.model.Report.findOne({ where: { id: obj.where.report_id } })
+            if (report && report.json_string) {
 
+                var backData = eval('(' + report.json_string + ')')
+                ctx.body = backData
+
+                return
+
+
+            } else {
+                obj.offset = 0
+                obj.limit = 1000000000
+
+            }
+
+            delete obj.where.report_id
+            var timelist = await ctx.model.Transaction.findAll({ ...t_where, offset: null, limit: null, order: [['start_of_transaction', "asc"]] })
+            if (timelist.length > 0) {
+                start_time = timelist[0].start_of_transaction
+                end_time = timelist[timelist.length - 1].start_of_transaction
+            }
+
+
+        }
 
         const list = await ctx.model.Alert.findAndCountAll(obj)
 
@@ -191,9 +286,10 @@ class AlertService extends Service {
 
        
         var jetty_id = []
+        var user_id=[]
         list.rows.forEach((a) => {
             jetty_id.push(a['t.jetty_id'])
-
+            user_id.push(a['ar.user_id'])
         })
 
         const jettyList = await ctx.model.Jetty.findAll({ raw: true, where: { id: jetty_id } })
@@ -202,21 +298,50 @@ class AlertService extends Service {
             jettyMap[j.id] = j
         })
 
-        list.rows = list.rows.map((a) => {
-            a.jetty_name = jettyMap[a["t.jetty_id"]]?.name || "-"
 
+        const userList = await ctx.model.User.findAll({ raw: true, where: { id: user_id } })
+        var userMap = {}
+        userList.forEach((j) => {
+            userMap[j.id] = j
+        })
+
+        const companyList = await ctx.model.Company.findAll({ raw: true })
+        var companyMap = {}
+        companyList.forEach((c) => {
+            companyMap[c.id] = c
+        })
+
+
+        list.rows = list.rows.map((a) => {
+            a.jetty_name = jettyMap[a["t.jetty_id"]]?.name || a.jetty_name
+            a["ar.username"] = userMap[a["ar.user_id"]]?.username || "-"
+
+
+            a["t.trader_name"] = companyMap[a["t.trader_id"]]?.name || a["t.trader_name"]
+            a["t.terminal_name"] = companyMap[a["t.terminal_id"]]?.name || a["t.terminal_name"]
             return a
         })
+
+      
+        
+
+
+       
+
         ctx.body = {
             success: true,
             total: list.count,
-            top_total: 0,
-            top_all_total: 0,
+            start_time: start_time,
+            end_time: end_time,
             data: list.rows
 
         };
 
+        if ( is_report) {
+            report.update({ json_string: JSON.stringify(ctx.body) })
 
+
+        }
 
     }
 

@@ -40,22 +40,22 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
     } else {
       flow({ pageSize: 1000, current: 1, sorter: { sort: 'ascend' } }).then((res) => {
-      
+
         res.data = res.data.map((r) => {
           r['value'] = r.id
           r['title'] = r.name
           return r
         })
-       
+
         setFlowConf(tree(res.data, "                                    ", 'pid'))
-       
+
       });
-     
+
     }
 
   }, [props.createModalOpen]);
   return (
-   
+
     <ModalForm
       modalProps={{ destroyOnClose: true }}
       initialValues={values}
@@ -63,48 +63,48 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         if (!vi) {
           props.onCancel();
         }
-          
+
       }}
       formRef={restFormRef}
-        onFinish={props.onSubmit}
+      onFinish={props.onSubmit}
       open={props.createModalOpen}
-        submitter={{
-          searchConfig: {
-            resetText: intl.formatMessage({
-              id: 'pages.reset',
-              defaultMessage: '',
-            }),
+      submitter={{
+        searchConfig: {
+          resetText: intl.formatMessage({
+            id: 'pages.reset',
+            defaultMessage: '',
+          }),
+        },
+        resetButtonProps: {
+          onClick: () => {
+            restFormRef.current?.resetFields();
+           
           },
-          resetButtonProps: {
-            onClick: () => {
-              restFormRef.current?.resetFields();
-              //   setModalVisible(false);
-            },
-          },
-        }}
-        title={intl.formatMessage({
+        },
+      }}
+      title={intl.formatMessage({
+        id: 'pages.flow.xxx',
+        defaultMessage: 'Create New Transaction flow',
+      })}
+    >
+      <ProFormText
+        name="name"
+        label={intl.formatMessage({
           id: 'pages.flow.xxx',
-          defaultMessage: 'Create New Transaction flow',
+          defaultMessage: 'Transaction Flow Name',
         })}
-      >
-        <ProFormText
-          name="name"
-          label={intl.formatMessage({
-            id: 'pages.flow.xxx',
-            defaultMessage: 'Transaction Flow Name',
-          })}
-          width="md"
-          rules={[
-            {
-              required: true,
-              message: (
-                <FormattedMessage
-                  id="pages.flow.rules.name"
-                  defaultMessage="Please enter a transaction flow name!"
-                />
-              ),
-            },
-          ]}
+        width="md"
+        rules={[
+          {
+            required: true,
+            message: (
+              <FormattedMessage
+                id="pages.flow.rules.name"
+                defaultMessage="Please enter a transaction flow name!"
+              />
+            ),
+          },
+        ]}
       />
 
 
@@ -112,38 +112,38 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         name="pid"
         label={intl.formatMessage({
           id: 'pages.flow.xxx',
-          defaultMessage: 'Process Name （Optional）',
+          defaultMessage: 'Process Name (Optional)',
         })}
         placeholder="Please select"
         allowClear
         width="md"
-        
+
         request={async () => {
-         return flow({  sorter: { sort: 'ascend' } }).then((res) => {
-           res.data = res.data.filter((f) => {
-             return f.type !=1
-           })
+          return flow({ sorter: { sort: 'ascend' } }).then((res) => {
+            res.data = res.data.filter((f) => {
+              return f.type != 1
+            })
             res.data = res.data.map((r) => {
               r['value'] = r.id
               r['title'] = r.name
               return r
             })
-           var tdata=tree(res.data, "                                    ", 'pid')
-           setFlowConf(tdata)
+            var tdata = tree(res.data, "                                    ", 'pid')
+            setFlowConf(tdata)
 
-           return tdata
+            return tdata
           });
-         
+
         }}
-       
+
         // tree-select args
         fieldProps={{
           showArrow: false,
-        
-      
+
+
           dropdownMatchSelectWidth: isMP ? true : false,
-       
-     
+
+
           treeNodeFilterProp: 'name',
           fieldNames: {
             label: 'name',
@@ -151,11 +151,11 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         }}
       />
 
-      
-     
 
-     
-      
+
+
+
+
 
 
       <ProFormRadio.Group
@@ -224,17 +224,17 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         })}
         width="md"
       />*/ }
-        <ProFormTextArea
-          name="description"
-          width="md"
-          label={intl.formatMessage({
-            id: 'pages.flow.xxx',
-            defaultMessage: 'Transaction Flow Description',
-          })}
-          
-        />
+      <ProFormTextArea
+        name="description"
+        width="md"
+        label={intl.formatMessage({
+          id: 'pages.flow.xxx',
+          defaultMessage: 'Transaction Flow Description',
+        })}
+
+      />
     </ModalForm>
-     
+
   );
 };
 

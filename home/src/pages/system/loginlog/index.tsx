@@ -1,4 +1,5 @@
 import RcResizeObserver from 'rc-resize-observer';
+import { ResizeObserverDo } from '@/components'
 import { fieldSelectData } from '@/services/ant-design-pro/api';
 import { addLoginlog, removeLoginlog, loginlog, updateLoginlog } from './service';
 import FrPrint from "../../../components/FrPrint";
@@ -26,15 +27,13 @@ import {
 import { FormattedMessage, useIntl, formatMessage } from '@umijs/max';
 import { Button, Drawer, Input, message, Modal, Popover, Empty, Pagination, FloatButton, ConfigProvider } from 'antd';
 import React, { useRef, useState, useEffect } from 'react';
-import CreateForm from './components/CreateForm';
-import UpdateForm from './components/UpdateForm';
+
 const { confirm } = Modal;
 //MP
 import { InfiniteScroll, List, NavBar, Space, DotLoading } from 'antd-mobile'
 import { isPC } from "@/utils/utils";
 /**
  *  Delete node
- * @zh-CN 删除节点
  *
  * @param selectedRows
  */
@@ -45,7 +44,7 @@ const getTimeStr = (time) => {
   } else {
     return "-"
   }
-  
+
 }
 const handleRemove = async (selectedRows: LoginlogListItem[], callBack: any) => {
   if (!selectedRows) return true;
@@ -93,16 +92,16 @@ const handleRemove = async (selectedRows: LoginlogListItem[], callBack: any) => 
 
 };
 
-export var  columnsBase: ProColumns<LoginlogListItem>[] = [
+export var columnsBase: ProColumns<LoginlogListItem>[] = [
   {
     title: (
       <FormattedMessage
-        id="pages.user.usename"
-        defaultMessage="Login Usename"
+        id="pages.user.xxx"
+        defaultMessage="Login Username"
       />
     ),
     dataIndex: 'username',
-  
+    sorter: true,
     search: {
       transform: (value) => {
 
@@ -122,31 +121,24 @@ export var  columnsBase: ProColumns<LoginlogListItem>[] = [
     },
     render: (dom, entity) => {
       return dom
-      /* return (
-         <a
-           onClick={() => {
-             setCurrentRow(entity);
-             setShowDetail(true);
-           }}
-         >
-           {dom}
-         </a>
-       );*/
+      
     },
   },
 
 
- 
+
   {
     title: <FormattedMessage id="pages.loginlog.xxx" defaultMessage="Organisation" />,
     dataIndex: 'company_name',
-   // valueEnum: organizationList,
+    sorter: true,
+   
     fieldProps: {
       multiple: true, mode: 'multiple', maxTagCount: 0,
       maxTagPlaceholder: (omittedValues) => {
         return omittedValues.length + " Selected"
-      }, showSearch: true },
-   
+      }, showSearch: true
+    },
+
     search: {
       transform: (value) => {
 
@@ -172,10 +164,11 @@ export var  columnsBase: ProColumns<LoginlogListItem>[] = [
     title: (
       <FormattedMessage
         id="pages.loginlog.xxx"
-        defaultMessage="Login Date"
+        defaultMessage="Login Date and Time"
       />
     ),
-   
+    sorter: true,
+    defaultSortOrder: 'descend',
     width: 200,
     dataIndex: 'login_time',
     valueType: 'dateTime',
@@ -183,20 +176,64 @@ export var  columnsBase: ProColumns<LoginlogListItem>[] = [
 
   },
   {
-    title: <FormattedMessage id="pages.loginlog.xxx" defaultMessage="Active duration" />,
+    title: <FormattedMessage id="pages.loginlog.xxx" defaultMessage="Active Duration" />,
     dataIndex: 'active_duration',
-    hideInSearch:true,
+    hideInSearch: true,
+    sorter: true,
+
     valueType: 'text',
     render: (dom) => {
-     return getTimeStr(dom)
+      return getTimeStr(dom)
     }
-    
+
   },
+
+  {
+    title: "Active Duration (in seconds)",
+    dataIndex: 'active_duration',
+    hideInDescriptions: true,
+    hideInTable: true,
+    fieldProps: {
+      placeholder: ['From', 'To']
+    },
+    valueType: "digitRange",
+    width: 200,
+    sorter: true,
+    render: (dom, entity) => {
+
+
+      return parseInt((entity.active_duration / 3600) + "") + "h " + parseInt((entity.active_duration % 3600) / 60) + "m"
+
+
+
+
+
+    },
+    search: {
+      transform: (value) => {
+        if (value && value.length > 0) {
+          var a = value[0] || 0
+          var b = value[1] || 1000000000
+          return {
+            'active_duration': {
+              'field': 'active_duration',
+              'op': 'between',
+              'data': [a, b]
+            }
+
+
+          }
+        }
+
+      }
+    }
+  },
+
   {
     title: (
       <FormattedMessage
         id="pages.loginlog.xxx"
-        defaultMessage="Logout Time"
+        defaultMessage="Logout Date and Time"
       />
     ),
     width: 200,
@@ -208,15 +245,48 @@ export var  columnsBase: ProColumns<LoginlogListItem>[] = [
   },
 
   {
-    title: <FormattedMessage id="pages.loginlog.xxx" defaultMessage="No of Invalid attempts" />,
+    title: <FormattedMessage id="pages.loginlog.xxx" defaultMessage="No Of Invalid Attempts" />,
     dataIndex: 'invalid_attempts',
+    sorter: true,
     hideInSearch: true,
     valueType: 'text',
+  },
+  {
+    title: "No Of Invalid Attempts",
+    dataIndex: 'invalid_attempts',
+    hideInDescriptions: true,
+    hideInTable: true,
+    fieldProps: {
+      placeholder: ['From', 'To']
+    },
+    valueType: "digitRange",
+    width: 200,
+    sorter: true,
+
+    search: {
+      transform: (value) => {
+        if (value && value.length > 0) {
+          var a = value[0] || 0
+          var b = value[1] || 1000000000
+          return {
+            'invalid_attempts': {
+              'field': 'invalid_attempts',
+              'op': 'between',
+              'data': [a, b]
+            }
+
+
+          }
+        }
+
+      }
+    }
   },
 
   {
     title: <FormattedMessage id="pages.operlog.url" defaultMessage="url" />,
     dataIndex: 'url',
+    sorter: true,
     valueType: 'text',
     search: {
       transform: (value) => {
@@ -237,6 +307,7 @@ export var  columnsBase: ProColumns<LoginlogListItem>[] = [
   {
     title: <FormattedMessage id="pages.operlog.ip" defaultMessage="Ip" />,
     dataIndex: 'ip',
+    sorter: true,
     search: {
       transform: (value) => {
         if (value.length > 0) {
@@ -258,12 +329,14 @@ export var  columnsBase: ProColumns<LoginlogListItem>[] = [
   {
     title: <FormattedMessage id="pages.loginlog.xxx" defaultMessage="Device Type" />,
     dataIndex: 'device_type',
+    sorter: true,
     valueType: 'text',
     fieldProps: {
       multiple: true, mode: 'multiple', maxTagCount: 0,
       maxTagPlaceholder: (omittedValues) => {
         return omittedValues.length + " Selected"
-      }, },
+      },
+    },
     search: {
       transform: (value) => {
         if (value.length > 0) {
@@ -286,12 +359,19 @@ export var  columnsBase: ProColumns<LoginlogListItem>[] = [
 
     }
   },
-
+  {
+    title: <FormattedMessage id="pages.operlog.xxx" defaultMessage="Parameter" />,
+    dataIndex: 'param',
+    sorter: true,
+    ellipsis: !isPC() ? false : true,
+    valueType: 'text',
+  },
 
 
   {
     title: <FormattedMessage id="pages.loginlog.status" defaultMessage="Status" />,
     dataIndex: 'status',
+    sorter: true,
     search: {
       transform: (value) => {
 
@@ -313,7 +393,8 @@ export var  columnsBase: ProColumns<LoginlogListItem>[] = [
       multiple: true, mode: 'multiple', maxTagCount: 0,
       maxTagPlaceholder: (omittedValues) => {
         return omittedValues.length + " Selected"
-      }, },
+      },
+    },
     valueEnum: {
       0: {
         text: (
@@ -333,37 +414,51 @@ export var  columnsBase: ProColumns<LoginlogListItem>[] = [
 
     },
   },
-  /* {
-     title: (
-       <FormattedMessage
-         id="pages.loginlog.information"
-         defaultMessage="Information"
-       />
-     ),
-     dataIndex: 'err_code',
-     sorter: true,
-     renderText: (val: Number) => {
-       if (val == 0) {
-         return ''
-       }
-       return `${intl.formatMessage({
-         id: 'pages.error.' + val,
-         defaultMessage: '',
-       })}`
-     }
-      
-   },*/
-
+  
   {
     title: (
       <FormattedMessage
-        id="pages.loginlog.loginTime"
-        defaultMessage="Login time"
+        id="pages.loginlog.xxx"
+        defaultMessage="Logout Date and Time"
       />
     ),
-    sorter: true,
+
     hideInTable: true,
-    defaultSortOrder: 'descend',
+    fieldProps: { style: { width: '100%' } },
+
+    dataIndex: 'logout_time',
+    valueType: 'dateRange',
+    search: {
+      transform: (value) => {
+        if (value && value.length > 0) {
+          value[0] = moment(new Date(value[0])).format('YYYY-MM-DD') + " 00:00:00"
+          value[1] = moment(new Date(value[1])).format('YYYY-MM-DD') + " 23:59:59"
+          return {
+            'logout_time': {
+              'field': 'logout_time',
+              'op': 'between',
+              'data': value
+            }
+          }
+        }
+
+      }
+    }
+
+
+
+  },
+  {
+    title: (
+      <FormattedMessage
+        id="pages.loginlog.xxx"
+        defaultMessage="Login Date and Time"
+      />
+    ),
+
+    hideInTable: true,
+    fieldProps: { style: { width: '100%' } },
+
     dataIndex: 'login_time',
     valueType: 'dateRange',
     search: {
@@ -393,18 +488,16 @@ export var  columnsBase: ProColumns<LoginlogListItem>[] = [
 const TableList: React.FC = () => {
   /**
    * @en-US Pop-up window of new window
-   * @zh-CN 新建窗口的弹窗
    *  */
   const [createModalOpen, handleModalOpen] = useState<boolean>(false);
   /**
    * @en-US The pop-up window of the distribution update window
-   * @zh-CN 分布更新窗口的弹窗
    * */
   const [updateModalOpen, handleUpdateModalOpen] = useState<boolean>(false);
   const [printModalVisible, handlePrintModalVisible] = useState<boolean>(false);
   const [showDetail, setShowDetail] = useState<boolean>(false);
   const [organizationList, setOrganizationList] = useState<any>({});
- 
+
   const [moreOpen, setMoreOpen] = useState<boolean>(false);
   const [paramsText, setParamsText] = useState<string>('');
   const actionRef = useRef<ActionType>();
@@ -427,7 +520,7 @@ const TableList: React.FC = () => {
 
 
     if (b.dataIndex == "company_name") {
-     
+
       b.valueEnum = organizationList
     }
 
@@ -445,14 +538,14 @@ const TableList: React.FC = () => {
         },
         onFocus: () => {
           fieldSelectData({ model: "Loginlog", value: '', field: 'url' }).then((res) => {
-            
+
             setUrlData(res.data)
           })
         },
         onSearch: (newValue: string) => {
 
           fieldSelectData({ model: "Loginlog", value: newValue, field: 'url' }).then((res) => {
-           
+
             setUrlData(res.data)
           })
 
@@ -474,14 +567,14 @@ const TableList: React.FC = () => {
         },
         onFocus: () => {
           fieldSelectData({ model: "Loginlog", value: '', field: 'ip' }).then((res) => {
-            
+
             setIpData(res.data)
           })
         },
         onSearch: (newValue: string) => {
 
           fieldSelectData({ model: "Loginlog", value: newValue, field: 'ip' }).then((res) => {
-            
+
             setIpData(res.data)
           })
 
@@ -517,7 +610,6 @@ const TableList: React.FC = () => {
 
   /**
    * @en-US International configuration
-   * @zh-CN 国际化配置
    * */
   const intl = useIntl();
 
@@ -527,7 +619,7 @@ const TableList: React.FC = () => {
 
   const [showMPSearch, setShowMPSearch] = useState<boolean>(false);
   const [isMP, setIsMP] = useState<boolean>(!isPC());
- 
+
 
   useEffect(() => {
 
@@ -539,7 +631,7 @@ const TableList: React.FC = () => {
       setUserList(b)
 
     });
-    
+
 
     company({ sorter: { name: 'ascend' } }).then((res) => {
       var b = {}
@@ -552,15 +644,15 @@ const TableList: React.FC = () => {
     if (isMP) {
       getData(1)
     }
-   
+
 
   }, [true]);
 
 
 
-  
 
-  
+
+
 
 
   const right = (
@@ -574,7 +666,7 @@ const TableList: React.FC = () => {
           }}
         ><PrinterOutlined /> <FormattedMessage id="pages.Print" defaultMessage="Print" />
         </Button>, <Button style={{ width: "100%" }} type="primary" key="out"
-            onClick={() => exportCSV(data, columns, "Login log")}
+          onClick={() => exportCSV(data, columns, "Login log")}
         ><FileExcelOutlined /> <FormattedMessage id="pages.CSV" defaultMessage="CSV" />
           </Button>
 
@@ -618,7 +710,7 @@ const TableList: React.FC = () => {
   const [currentPage, setCurrentPage] = useState<number>(1)
   const [MPfilter, setMPfilter] = useState<any>({})
   const [MPPagination, setMPPagination] = useState<any>({})
-  async function getData(page, filter__,pageSize) {
+  async function getData(page, filter__, pageSize) {
     var sorter = {}
     await setMPSorter((sorter_) => {
       sorter = sorter_
@@ -640,7 +732,7 @@ const TableList: React.FC = () => {
     setMPPagination({ total: append.total })
     setData(append.data)
   }
-  
+
   //--MP end
 
   const formRef = useRef<ProFormInstance>();
@@ -666,28 +758,14 @@ const TableList: React.FC = () => {
     <RcResizeObserver
       key="resize-observer"
       onResize={(offset) => {
-        const { innerWidth, innerHeight } = window;
+        ResizeObserverDo(offset, setResizeObj, resizeObj)
 
-        if (offset.width > 1280) {
-          
-          setResizeObj({ ...resizeObj, searchSpan: 8, tableScrollHeight: innerHeight - 420 });
-        }
-        if (offset.width < 1280 && offset.width > 900) {
-         
-          setResizeObj({ ...resizeObj, searchSpan: 12, tableScrollHeight: innerHeight - 420 });
-        }
-        if (offset.width < 900 && offset.width > 700) {
-          setResizeObj({ ...resizeObj, searchSpan: 24, tableScrollHeight: innerHeight - 420 });
-          
-        }
-
-        
 
       }}
     >
       <PageContainer className="myPage" header={{
-      title: isMP ? null : < FormattedMessage id="pages.loginlog.title" defaultMessage="Login log" />,
-      breadcrumb: {},
+        title: isMP ? null : < FormattedMessage id="pages.loginlog.title" defaultMessage="Login log" />,
+        breadcrumb: {},
         extra: isMP ? null : [
           <Button type="primary" key="print"
             onClick={() => {
@@ -702,97 +780,97 @@ const TableList: React.FC = () => {
             }}
           ><PrinterOutlined /> <FormattedMessage id="pages.Print" defaultMessage="Print" />
           </Button>, <Button type="primary" key="out"
-            onClick={() => exportCSV(selectedRowsState, columns,"Login log")}
+            onClick={() => exportCSV(selectedRowsState, columns, "Login log")}
           ><FileExcelOutlined /> <FormattedMessage id="pages.CSV" defaultMessage="CSV" />
           </Button>
 
         ]
-    }} >
+      }} >
         {!isMP && (<ConfigProvider renderEmpty={customizeRenderEmpty}><ProTable<LoginlogListItem, API.PageParams>
           pagination={{ size: "default", showSizeChanger: true, pageSizeOptions: [10, 20, 50, 100, 500] }}
-          formRef={formRef }
-        actionRef={actionRef}
+          formRef={formRef}
+          actionRef={actionRef}
           rowKey="id"
           scroll={{ x: 1800, y: resizeObj.tableScrollHeight }}
-        search={{
-          labelWidth: 170,
-          span: resizeObj.searchSpan,
-          searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
-        }}
-        toolBarRender={() => [
-         
-        ]}
-        options={false}
-        className="mytable"
-        request={(params, sorter) => loginlog({ ...params, sorter })}
+          search={{
+            labelWidth: 170,
+            span: resizeObj.searchSpan,
+            searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
+          }}
+          toolBarRender={() => [
+
+          ]}
+          options={false}
+          className="mytable"
+          request={(params, sorter) => loginlog({ ...params, sorter })}
           columns={columns}
           bordered
-        rowSelection={{
-          onChange: (_, selectedRows) => {
-            setSelectedRows(selectedRows);
-          },
-        }}
+          rowSelection={{
+            onChange: (_, selectedRows) => {
+              setSelectedRows(selectedRows);
+            },
+          }}
         /></ConfigProvider>)}
 
-      {isMP && (<>
+        {isMP && (<>
 
           <NavBar backArrow={false} left={
             <MPSort columns={columns} onSort={(k) => {
               setMPSorter(k)
               getData(1)
             }} />} right={right} onBack={back}>
-          {intl.formatMessage({
-            id: 'pages.loginlog.title',
-            defaultMessage: 'Login log',
-          })}
-        </NavBar>
+            {intl.formatMessage({
+              id: 'pages.loginlog.title',
+              defaultMessage: 'Login log',
+            })}
+          </NavBar>
 
-        <div style={{ padding: '20px', backgroundColor: "#5000B9", display: showMPSearch ? 'block' : 'none' }}>
-          <Search columns={columns.filter(a => !(a.hasOwnProperty('hideInSearch') && a['hideInSearch']))} action={actionRef} loading={false}
+          <div style={{ padding: '20px', backgroundColor: "#5000B9", display: showMPSearch ? 'block' : 'none' }}>
+            <Search columns={columns.filter(a => !(a.hasOwnProperty('hideInSearch') && a['hideInSearch']))} action={actionRef} loading={false}
 
-            onFormSearchSubmit={onFormSearchSubmit}
+              onFormSearchSubmit={onFormSearchSubmit}
 
-            dateFormatter={'string'}
+              dateFormatter={'string'}
               formRef={formRef}
-            type={'form'}
-            cardBordered={true}
-            form={{
-              submitter: {
-                searchConfig: {
+              type={'form'}
+              cardBordered={true}
+              form={{
+                submitter: {
+                  searchConfig: {
 
-                  submitText: < FormattedMessage id="pages.search" defaultMessage="Search" />,
+                    submitText: < FormattedMessage id="pages.search" defaultMessage="Search" />,
+                  }
+
                 }
+              }}
 
-              }
-            }}
+              search={{}}
+              manualRequest={true}
+            />
+          </div>
+          <List>
+            {data.map((item, index) => (
+              <List.Item key={index}>
 
-            search={{}}
-            manualRequest={true}
-          />
-        </div>
-        <List>
-          {data.map((item, index) => (
-            <List.Item key={index}>
+                <ProDescriptions<any>
+                  bordered={true}
+                  size="small"
+                  className="jetty-descriptions"
+                  layout="horizontal"
+                  column={1}
+                  title={""}
+                  request={async () => ({
+                    data: item || {},
+                  })}
+                  params={{
+                    id: item?.id,
+                  }}
+                  columns={columns as ProDescriptionsItemProps<any>[]}
+                />
 
-              <ProDescriptions<any>
-                bordered={true}
-                size="small"
-                className="jetty-descriptions"
-                layout="horizontal"
-                column={1}
-                title={""}
-                request={async () => ({
-                  data: item || {},
-                })}
-                params={{
-                  id: item?.id,
-                }}
-                columns={columns as ProDescriptionsItemProps<any>[]}
-              />
-
-            </List.Item>
-          ))}
-        </List>
+              </List.Item>
+            ))}
+          </List>
           {MPPagination.total > 0 ? <div style={{ textAlign: 'center', padding: "20px 10px 90px 10px" }}>
             <Pagination
 
@@ -809,79 +887,60 @@ const TableList: React.FC = () => {
             />
           </div> : customizeRenderEmpty()}
           <FloatButton.BackTop visibilityHeight={0} />
-      </>)}
-      {selectedRowsState?.length > 0 && (
-        <FooterToolbar
-          extra={
-            <div>
-              <FormattedMessage id="pages.searchTable.chosen" defaultMessage="Chosen" />{' '}
-              <a style={{ fontWeight: 600 }}>{selectedRowsState.length}</a>{' '}
-              <FormattedMessage id="pages.searchTable.item" defaultMessage="项" />
-              &nbsp;&nbsp;
-              <span>
-                <FormattedMessage
-                  id="pages.searchTable.totalServiceCalls"
-                  defaultMessage="Total number of service calls"
-                />{' '}
-                {selectedRowsState.reduce((pre, item) => pre , 0)}{' '}
-                <FormattedMessage id="pages.searchTable.tenThousand" defaultMessage="万" />
-              </span>
-            </div>
-          }
-        >
-         
-          
-        </FooterToolbar>
-      )}
-      
-     
-     
+        </>)}
+        {selectedRowsState?.length > 0 && (
+          <FooterToolbar
+            extra={
+              <div>
+                <FormattedMessage id="pages.searchTable.chosen" defaultMessage="Chosen" />{' '}
+                <a style={{ fontWeight: 600 }}>{selectedRowsState.length}</a>{' '}
+                <FormattedMessage id="pages.searchTable.item" defaultMessage="项" />
 
-      <Drawer
-        width={isMP ? '100%' : 600}
-        open={showDetail}
-        onClose={() => {
-          setCurrentRow(undefined);
-          setShowDetail(false);
-        }}
-        closable={isMP ? true : false}
-      >
-        {currentRow?.username && (
-          <ProDescriptions<LoginlogListItem>
-            column={isMP ? 1 : 2}
-            title={currentRow?.username}
-            request={async () => ({
-              data: currentRow || {},
-            })}
-            params={{
-              id: currentRow?.username,
-            }}
-            columns={columns as ProDescriptionsItemProps<LoginlogListItem>[]}
-          />
+              </div>
+            }
+          >
+
+
+          </FooterToolbar>
         )}
+
+
+
+
+        <Drawer
+          width={isMP ? '100%' : 600}
+          open={showDetail}
+          onClose={() => {
+            setCurrentRow(undefined);
+            setShowDetail(false);
+          }}
+          closable={isMP ? true : false}
+        >
+          {currentRow?.username && (
+            <ProDescriptions<LoginlogListItem>
+              column={isMP ? 1 : 2}
+              title={currentRow?.username}
+              request={async () => ({
+                data: currentRow || {},
+              })}
+              params={{
+                id: currentRow?.username,
+              }}
+              columns={columns as ProDescriptionsItemProps<LoginlogListItem>[]}
+            />
+          )}
         </Drawer>
         <FrPrint
           title={""}
           subTitle={paramsText}
           columns={columns}
-          dataSource={[...(isMP ? data : selectedRowsState)/*, sumRow*/]}
+          dataSource={[...(isMP ? data : selectedRowsState)]}
           onCancel={() => {
             handlePrintModalVisible(false);
           }}
           printModalVisible={printModalVisible}
         />
-        {/*
-         <div style={{ marginTop: -45, paddingLeft: 10 }}>
-          <Button
-
-            type="primary"
-            onClick={async () => {
-              history.back()
-            }}
-          >Return to previous page</Button>
-        </div>
-
-        */ }
+        
       </PageContainer></RcResizeObserver>
   );
 };

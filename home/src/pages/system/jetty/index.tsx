@@ -1,5 +1,5 @@
 import RcResizeObserver from 'rc-resize-observer';
-
+import { ResizeObserverDo } from '@/components'
 import { addJetty, removeJetty, jetty, updateJetty } from './service';
 import { PlusOutlined, SearchOutlined, FormOutlined, DeleteOutlined, ExclamationCircleOutlined, SwapOutlined, SortAscendingOutlined, SortDescendingOutlined } from '@ant-design/icons';
 import type { ActionType, ProColumns, ProDescriptionsItemProps } from '@ant-design/pro-components';
@@ -23,7 +23,7 @@ import React, { useRef, useState, useEffect } from 'react';
 import CreateForm from './components/CreateForm';
 import UpdateForm from './components/UpdateForm';
 import { useAccess, Access } from 'umi';
-import { terminal } from '../../system/terminal/service';
+
 import { isPC } from "@/utils/utils";
 import { organization } from '../../system/company/service';
 const { confirm } = Modal;
@@ -31,7 +31,6 @@ const { confirm } = Modal;
 import { InfiniteScroll, List, NavBar, Space, DotLoading } from 'antd-mobile'
 /**
  * @en-US Add node
- * @zh-CN 添加节点
  * @param fields
  */
 const handleAdd = async (fields: JettyListItem) => {
@@ -59,11 +58,10 @@ const handleAdd = async (fields: JettyListItem) => {
 
 /**
  * @en-US Update node
- * @zh-CN 更新节点
  *
  * @param fields
  */
-const handleUpdate = async (fields: Partial<JettyListItem> ) => {
+const handleUpdate = async (fields: Partial<JettyListItem>) => {
   const hide = message.loading(<FormattedMessage
     id="pages.modifying"
     defaultMessage="Modifying"
@@ -89,7 +87,6 @@ const handleUpdate = async (fields: Partial<JettyListItem> ) => {
 
 /**
  *  Delete node
- * @zh-CN 删除节点
  *
  * @param selectedRows
  */
@@ -123,7 +120,7 @@ const handleRemove = async (selectedRows: JettyListItem[], callBack: any) => {
 
 
 
-          
+
 
       } catch (error) {
         hide();
@@ -147,12 +144,10 @@ const handleRemove = async (selectedRows: JettyListItem[], callBack: any) => {
 const TableList: React.FC = () => {
   /**
    * @en-US Pop-up window of new window
-   * @zh-CN 新建窗口的弹窗
    *  */
   const [createModalOpen, handleModalOpen] = useState<boolean>(false);
   /**
    * @en-US The pop-up window of the distribution update window
-   * @zh-CN 分布更新窗口的弹窗
    * */
   const [updateModalOpen, handleUpdateModalOpen] = useState<boolean>(false);
 
@@ -165,7 +160,6 @@ const TableList: React.FC = () => {
 
   /**
    * @en-US International configuration
-   * @zh-CN 国际化配置
    * */
   const intl = useIntl();
   const access = useAccess();
@@ -180,7 +174,7 @@ const TableList: React.FC = () => {
   const [MPSorter, setMPSorter] = useState<any>({});
 
 
-  
+
   const [isMP, setIsMP] = useState<boolean>(!isPC());
 
   const right = (
@@ -189,7 +183,7 @@ const TableList: React.FC = () => {
         {!access.jetty_list_tab() && <SearchOutlined onClick={e => { setShowMPSearch(!showMPSearch) }} />}
         <Access accessible={access.canJettyAdd()} fallback={<div></div>}>
           <PlusOutlined onClick={() => { handleModalOpen(true) }} />
-          </Access>
+        </Access>
       </Space>
     </div>
   )
@@ -237,22 +231,22 @@ const TableList: React.FC = () => {
       filter = filter_
       return filter_
     })
-   
 
 
-        const append = await jetty({
-          ...{
-            "current": page,
-            "pageSize": 3
 
-          }, ...filter, sorter: sorter
-        })
+    const append = await jetty({
+      ...{
+        "current": page,
+        "pageSize": 3
+
+      }, ...filter, sorter: sorter
+    })
 
     setMPPagination({ total: append.total })
     setData(append.data)
-        
-    
-    
+
+
+
   }
   async function loadMore(isRetry: boolean) {
 
@@ -263,8 +257,8 @@ const TableList: React.FC = () => {
   const formRef = useRef<ProFormInstance>();
   useEffect(() => {
 
-   
-    organization({ type:'Terminal',sorter: { name: 'ascend' } }).then((res) => {
+
+    organization({ type: 'Terminal', sorter: { name: 'ascend' } }).then((res) => {
       var b = {}
       res.data.forEach((r) => {
         b[r.id] = r.name
@@ -281,16 +275,15 @@ const TableList: React.FC = () => {
 
   }, [true]);
   const uploadprops = {
-    // 这里我们只接受excel2007以后版本的文件，accept就是指定文件选择框的文件类型
+   
     accept: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet',
     name: 'file',
     headers: {
       authorization: 'authorization-text',
     },
     showUploadList: false,
-    // 把excel的处理放在beforeUpload事件，否则要把文件上传到通过action指定的地址去后台处理
-    // 这里我们没有指定action地址，因为没有传到后台
-    beforeUpload:  (file, fileList) => {
+  
+    beforeUpload: (file, fileList) => {
       let terminal_id = formRef.current?.getFieldValue('terminal_id')
       if (!terminal_id) {
         message.error(<FormattedMessage
@@ -303,22 +296,22 @@ const TableList: React.FC = () => {
       const rABS = true;
       const f = fileList[0];
       const reader = new FileReader();
-      reader.onload = async (e )=> {
+      reader.onload = async (e) => {
         let dataResult = e.target.result;
         if (!rABS) dataResult = new Uint8Array(dataResult);
         const workbook = XLSX.read(dataResult, {
           type: rABS ? 'binary' : 'array',
         });
-        // 假设我们的数据在第一个标签
+       
         const firstWorksheet = workbook.Sheets[workbook.SheetNames[0]];
-        // XLSX自带了一个工具把导入的数据转成json
+        
         let jsonArr = XLSX.utils.sheet_to_json(firstWorksheet, { header: 1 });
-        // 通过自定义的方法处理Json,得到Excel原始数据传给后端，后端统一处理
+       
         jsonArr.shift()
-        jsonArr=jsonArr.map(a => {
+        jsonArr = jsonArr.map(a => {
           let b = {}
           b.name = a[0]
-          b.depth_alongside = a[1]+""
+          b.depth_alongside = a[1] + ""
           b.depth_approaches = a[2] + ""
           b.max_loa = a[3] + ""
           b.min_loa = a[4] + ""
@@ -334,8 +327,8 @@ const TableList: React.FC = () => {
 
           }
         }
-        
-       
+
+
       };
       if (rABS) reader.readAsBinaryString(f);
       else reader.readAsArrayBuffer(f);
@@ -343,7 +336,7 @@ const TableList: React.FC = () => {
     },
   };
 
- 
+
   const columns: ProColumns<JettyListItem>[] = [
     {
       title: (
@@ -356,7 +349,7 @@ const TableList: React.FC = () => {
       hideInSearch: true,
       defaultSortOrder: 'ascend',
       dataIndex: 'name',
-     
+
       render: (dom, entity) => {
         return (
           <a
@@ -375,15 +368,15 @@ const TableList: React.FC = () => {
       title: "Terminal",
       dataIndex: 'terminal_id',
       sorter: true,
-      hideInTable: access.jetty_list_tab()  ? true : false,
+      hideInTable: access.jetty_list_tab() ? true : false,
       hideInSearch: access.jetty_list_tab() ? true : false,
-    
+
       valueEnum: organizationList,
       render: (dom, entity) => {
-       
-          return organizationList[entity.terminal_id] 
-        
-         
+
+        return organizationList[entity.terminal_id]
+
+
       },
       fieldProps: {
         multiple: true,
@@ -449,13 +442,13 @@ const TableList: React.FC = () => {
     {
       title: <FormattedMessage id="pages.jetty.mlaEnvelopAtMHWS3m" defaultMessage="MLA Envelop At MHWS 3.0m (Unless Otherwise Specified) (M)
 " />,
-      width:320,
+      width: 320,
       dataIndex: 'mla_envelop_at_mhws_3m',
       valueType: 'text',
       sorter: true,
       hideInSearch: true,
     },
-    
+
     {
       title: <FormattedMessage id="pages.searchTable.titleOption" defaultMessage="Operating" />,
       dataIndex: 'option',
@@ -463,16 +456,16 @@ const TableList: React.FC = () => {
       hideInTable: !access.canJettyMod() && !access.canJettyDel(),
       render: (_, record) => [
         <Access accessible={access.canJettyMod()} fallback={<div></div>}>
-        <a
-          key="config"
-          onClick={() => {
-            handleUpdateModalOpen(true);
-            setCurrentRow(record);
-          }}
-        >
+          <a
+            key="config"
+            onClick={() => {
+              handleUpdateModalOpen(true);
+              setCurrentRow(record);
+            }}
+          >
             <FormOutlined style={{ fontSize: '20px' }} />
 
-            
+
           </a>
         </Access>,
         <Access accessible={access.canJettyDel()} fallback={<div></div>}>
@@ -518,72 +511,64 @@ const TableList: React.FC = () => {
 
 
   }
+
+
+
   return (
     <RcResizeObserver
       key="resize-observer"
       onResize={(offset) => {
-        const { innerWidth, innerHeight } = window;
 
-        if (offset.width > 1280) {
-         
-          setResizeObj({ ...resizeObj, searchSpan: 8, tableScrollHeight: innerHeight - 420 });
-        }
-        if (offset.width < 1280 && offset.width > 900) {
-         
-          setResizeObj({ ...resizeObj, searchSpan: 12, tableScrollHeight: innerHeight - 420 });
-        }
-        if (offset.width < 900 && offset.width > 700) {
-          setResizeObj({ ...resizeObj, searchSpan: 24, tableScrollHeight: innerHeight - 420 });
-          
-        }
 
-      
+        ResizeObserverDo(offset, setResizeObj, resizeObj)
+
+
 
       }}
     >
       <PageContainer className="myPage" header={{
         title: isMP ? null : < FormattedMessage id="'pages.jetty.xxx" defaultMessage={"Jetty"} />,
-      breadcrumb: {},
-      extra: isMP ? null : [
-        <Access accessible={access.canJettyAdd()} fallback={<div></div>}> <Button
-          type="primary"
-          key="primary"
-          onClick={() => {
-            handleModalOpen(true);
-          }}
-        >
-          <PlusOutlined /> <FormattedMessage id="pages.searchTable.new" defaultMessage="New" />
-        </Button></Access>/*, <Access accessible={access.canJettyAdd()} fallback={<div></div>}> <Upload {...uploadprops}>
+        breadcrumb: {},
+        extra: isMP ? null : [
+          <Access accessible={access.canJettyAdd()} fallback={<div></div>}> <Button
+            type="primary"
+            key="primary"
+            onClick={() => {
+              handleModalOpen(true);
+            }}
+          >
+            <PlusOutlined /> <FormattedMessage id="pages.searchTable.new" defaultMessage="New" />
+          </Button></Access>/*, <Access accessible={access.canJettyAdd()} fallback={<div></div>}> <Upload {...uploadprops}>
           <Tooltip title="">
             <Button type="primary">
               Batch Add
             </Button>
           </Tooltip>
         </Upload></Access>*/
-      ]
-    }}>
-      {!isMP && (<ConfigProvider renderEmpty={customizeRenderEmpty}><ProTable<JettyListItem, API.PageParams>
-        formRef={formRef }
+        ]
+      }}>
+        {!isMP && (<ConfigProvider renderEmpty={customizeRenderEmpty}><ProTable<JettyListItem, API.PageParams>
+          formRef={formRef}
           className="mytable"
           bordered
-        actionRef={actionRef}
+          actionRef={actionRef}
           rowKey="id"
           pagination={{ size: "default" }}
-          scroll={{  y: resizeObj.tableScrollHeight }}
+          scroll={{ y: resizeObj.tableScrollHeight }}
           search={!access.jetty_list_tab() ? {
-          labelWidth: 130,
-          span: resizeObj.searchSpan,
+            labelWidth: 130,
+            span: resizeObj.searchSpan,
             searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
           } : false}
-        options={false }
-        request={(params, sorter) => jetty({ ...params, sorter })}
-        columns={columns}
-        rowSelection={access.canJettyDel() ?{ 
-          onChange: (_, selectedRows) => {
-            setSelectedRows(selectedRows);
-          },
-        }:false}
-      /></ConfigProvider >)}
+          options={false}
+          request={(params, sorter) => jetty({ ...params, sorter })}
+          columns={columns}
+          rowSelection={access.canJettyDel() ? {
+            onChange: (_, selectedRows) => {
+              setSelectedRows(selectedRows);
+            },
+          } : false}
+        /></ConfigProvider >)}
 
         {isMP && (<>
 
@@ -592,58 +577,58 @@ const TableList: React.FC = () => {
               setMPSorter(k)
               getData(1)
             }} />} right={right} onBack={back}>
-          {intl.formatMessage({
-            id: 'pages.jetty.title',
-            defaultMessage: 'Jetty',
-          })}
-        </NavBar>
+            {intl.formatMessage({
+              id: 'pages.jetty.title',
+              defaultMessage: 'Jetty',
+            })}
+          </NavBar>
 
-        <div style={{ padding: '20px', backgroundColor: "#5000B9", display: showMPSearch ? 'block' : 'none' }}>
+          <div style={{ padding: '20px', backgroundColor: "#5000B9", display: showMPSearch ? 'block' : 'none' }}>
             <Search columns={columns.filter(a => !(a.hasOwnProperty('hideInSearch') && a['hideInSearch']))} action={actionRef} loading={false}
 
-            onFormSearchSubmit={onFormSearchSubmit}
+              onFormSearchSubmit={onFormSearchSubmit}
 
-            dateFormatter={'string'}
-            formRef={formRef}
-            type={'form'}
-            cardBordered={true}
-            form={{
-              submitter: {
-                searchConfig: {
+              dateFormatter={'string'}
+              formRef={formRef}
+              type={'form'}
+              cardBordered={true}
+              form={{
+                submitter: {
+                  searchConfig: {
 
-                  submitText: < FormattedMessage id="pages.search" defaultMessage="Search" />,
+                    submitText: < FormattedMessage id="pages.search" defaultMessage="Search" />,
+                  }
+
                 }
+              }}
 
-              }
-            }}
+              search={{}}
+              manualRequest={true}
+            />
+          </div>
+          <List>
+            {data.map((item, index) => (
+              <List.Item key={index}>
 
-            search={{}}
-            manualRequest={true}
-          />
-        </div>
-        <List>
-          {data.map((item, index) => (
-            <List.Item key={index}>
+                <ProDescriptions<any>
+                  className="jetty-descriptions"
+                  bordered={true}
+                  size="small"
+                  layout="horizontal"
+                  column={1}
+                  title={""}
+                  request={async () => ({
+                    data: item || {},
+                  })}
+                  params={{
+                    id: item?.id,
+                  }}
+                  columns={columns as ProDescriptionsItemProps<any>[]}
+                />
 
-              <ProDescriptions<any>
-                className="jetty-descriptions"
-                bordered={true}
-                size="small"
-                layout="horizontal"
-                column={1}
-                title={""}
-                request={async () => ({
-                  data: item || {},
-                })}
-                params={{
-                  id: item?.id,
-                }}
-                columns={columns as ProDescriptionsItemProps<any>[]}
-              />
-
-            </List.Item>
-          ))}
-        </List>
+              </List.Item>
+            ))}
+          </List>
           {MPPagination.total > 0 ? <div style={{ textAlign: 'center', padding: "20px 10px 90px 10px" }}>
             <Pagination
 
@@ -659,133 +644,122 @@ const TableList: React.FC = () => {
             />
           </div> : customizeRenderEmpty()}
           <FloatButton.BackTop visibilityHeight={0} />
-      </>)}
-      {selectedRowsState?.length > 0 && (
+        </>)}
+        {selectedRowsState?.length > 0 && (
 
-        <Access accessible={access.canJettyDel()} fallback={<div></div>}>
-        <FooterToolbar
-          extra={
-            <div>
-              <FormattedMessage id="pages.searchTable.chosen" defaultMessage="Chosen" />{' '}
-              <a style={{ fontWeight: 600 }}>{selectedRowsState.length}</a>{' '}
-              <FormattedMessage id="pages.searchTable.item" defaultMessage="项" />
-              &nbsp;&nbsp;
-              
-            </div>
-          }
-        >
-          <Button
-            onClick={async () => {
-              await handleRemove(selectedRowsState, (success) => {
-                if (success) {
-                  setSelectedRows([]);
-                  if (isMP) {
-                    setData([]);
-                    getData(1)
-                  }
-                  actionRef.current?.reloadAndRest?.();
-                }
-               
-              });
-              
-            }}
-          >
-            <FormattedMessage
-              id="pages.searchTable.batchDeletion"
-              defaultMessage="Batch deletion"
-            />
-          </Button>
-          
-          </FooterToolbar>
+          <Access accessible={access.canJettyDel()} fallback={<div></div>}>
+            <FooterToolbar
+              extra={
+                <div>
+                  <FormattedMessage id="pages.searchTable.chosen" defaultMessage="Chosen" />{' '}
+                  <a style={{ fontWeight: 600 }}>{selectedRowsState.length}</a>{' '}
+                  <FormattedMessage id="pages.searchTable.item" defaultMessage="项" />
+                  &nbsp;&nbsp;
+
+                </div>
+              }
+            >
+              <Button
+                onClick={async () => {
+                  await handleRemove(selectedRowsState, (success) => {
+                    if (success) {
+                      setSelectedRows([]);
+                      if (isMP) {
+                        setData([]);
+                        getData(1)
+                      }
+                      actionRef.current?.reloadAndRest?.();
+                    }
+
+                  });
+
+                }}
+              >
+                <FormattedMessage
+                  id="pages.searchTable.batchDeletion"
+                  defaultMessage="Batch deletion"
+                />
+              </Button>
+
+            </FooterToolbar>
           </Access>
-      )}
-      
-      <CreateForm
-        onSubmit={async (value) => {
-          value.id = currentRow?.id
-          const success = await handleAdd(value as JettyListItem);
-          if (success) {
-            handleModalOpen(false);
-            setCurrentRow(undefined);
-            if (isMP) {
-              setData([]);
-              getData(1)
-            }
-            if (actionRef.current) {
-              actionRef.current.reload();
-            }
-          }
-        }}
-        onCancel={() => {
-          handleModalOpen(false);
-          if (!showDetail) {
-            setCurrentRow(undefined);
-          }
-        }}
-        createModalOpen={createModalOpen}
-        
-      />
-      <UpdateForm
-        onSubmit={async (value) => {
-          value.id = currentRow?.id
-          const success = await handleUpdate(value);
-          if (success) {
-            handleUpdateModalOpen(false);
-            setCurrentRow(undefined);
-            if (isMP) {
-              setData([]);
-              getData(1)
-            }
-            if (actionRef.current) {
-              actionRef.current.reload();
-            }
-          }
-        }}
-        onCancel={() => {
-          handleUpdateModalOpen(false);
-          if (!showDetail) {
-            setCurrentRow(undefined);
-          }
-        }}
-        updateModalOpen={updateModalOpen}
-        values={currentRow || {}}
-      />
-
-      <Drawer
-        width={isMP ? '100%' : 600}
-        open={showDetail}
-        onClose={() => {
-          setCurrentRow(undefined);
-          setShowDetail(false);
-        }}
-        closable={isMP ? true : false}
-      >
-        {currentRow?.name && (
-          <ProDescriptions<JettyListItem>
-            column={isMP ? 1 : 2}
-            title={currentRow?.name}
-            request={async () => ({
-              data: currentRow || {},
-            })}
-            params={{
-              id: currentRow?.name,
-            }}
-            columns={columns as ProDescriptionsItemProps<JettyListItem>[]}
-          />
         )}
+
+        <CreateForm
+          onSubmit={async (value) => {
+            value.id = currentRow?.id
+            const success = await handleAdd(value as JettyListItem);
+            if (success) {
+              handleModalOpen(false);
+              setCurrentRow(undefined);
+              if (isMP) {
+                setData([]);
+                getData(1)
+              }
+              if (actionRef.current) {
+                actionRef.current.reload();
+              }
+            }
+          }}
+          onCancel={() => {
+            handleModalOpen(false);
+            if (!showDetail) {
+              setCurrentRow(undefined);
+            }
+          }}
+          createModalOpen={createModalOpen}
+
+        />
+        <UpdateForm
+          onSubmit={async (value) => {
+            value.id = currentRow?.id
+            const success = await handleUpdate(value);
+            if (success) {
+              handleUpdateModalOpen(false);
+              setCurrentRow(undefined);
+              if (isMP) {
+                setData([]);
+                getData(1)
+              }
+              if (actionRef.current) {
+                actionRef.current.reload();
+              }
+            }
+          }}
+          onCancel={() => {
+            handleUpdateModalOpen(false);
+            if (!showDetail) {
+              setCurrentRow(undefined);
+            }
+          }}
+          updateModalOpen={updateModalOpen}
+          values={currentRow || {}}
+        />
+
+        <Drawer
+          width={isMP ? '100%' : 600}
+          open={showDetail}
+          onClose={() => {
+            setCurrentRow(undefined);
+            setShowDetail(false);
+          }}
+          closable={isMP ? true : false}
+        >
+          {currentRow?.name && (
+            <ProDescriptions<JettyListItem>
+              column={isMP ? 1 : 2}
+              title={currentRow?.name}
+              request={async () => ({
+                data: currentRow || {},
+              })}
+              params={{
+                id: currentRow?.name,
+              }}
+              columns={columns as ProDescriptionsItemProps<JettyListItem>[]}
+            />
+          )}
         </Drawer>
-        {/*
-         <div style={{ marginTop: -45, paddingLeft: 10 }}>
-          <Button
-
-            type="primary"
-            onClick={async () => {
-              history.back()
-            }}
-          >Return to previous page</Button>
-        </div>
-
-        */ }
+        
       </PageContainer></RcResizeObserver>
   );
 };

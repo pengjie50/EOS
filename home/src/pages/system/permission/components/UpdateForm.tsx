@@ -7,7 +7,7 @@ import {
   ProFormTreeSelect,
   ModalForm,
   ProFormInstance
-  
+
 } from '@ant-design/pro-components';
 import { PermissionListItem } from '../data.d';
 import { FormattedMessage, useIntl } from '@umijs/max';
@@ -36,9 +36,9 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
     values,
   } = props;
 
-  
+
   return (
-   
+
     <ModalForm
       modalProps={{ destroyOnClose: true }}
       initialValues={values}
@@ -46,30 +46,30 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         if (!vi) {
           props.onCancel();
         }
-          
+
       }}
       formRef={restFormRef}
-        onFinish={props.onSubmit}
-        open={props.updateModalOpen}
-        submitter={{
-          searchConfig: {
-            resetText: intl.formatMessage({
-              id: 'pages.reset',
-              defaultMessage: 'Reset',
-            }),
+      onFinish={props.onSubmit}
+      open={props.updateModalOpen}
+      submitter={{
+        searchConfig: {
+          resetText: intl.formatMessage({
+            id: 'pages.reset',
+            defaultMessage: 'Reset',
+          }),
+        },
+        resetButtonProps: {
+          onClick: () => {
+            restFormRef.current?.resetFields();
+            
           },
-          resetButtonProps: {
-            onClick: () => {
-              restFormRef.current?.resetFields();
-              //   setModalVisible(false);
-            },
-          },
-        }}
-        title={intl.formatMessage({
-          id: 'pages.permission.mod',
-          defaultMessage: 'Modify permission',
-        })}
-      >
+        },
+      }}
+      title={intl.formatMessage({
+        id: 'pages.permission.mod',
+        defaultMessage: 'Modify permission',
+      })}
+    >
       <ProFormText
         name="name"
         label={intl.formatMessage({
@@ -176,9 +176,9 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         })}
 
       />
-        
+
     </ModalForm>
-     
+
   );
 };
 

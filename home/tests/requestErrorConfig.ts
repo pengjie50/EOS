@@ -98,9 +98,11 @@ export const errorConfig: RequestConfig = {
           }
         }
       } else if (error.response) {
-        // Axios 
+        // Axios
         // he request was successfully issued and the server responded with a status code, but the status code exceeded the range of 2xx
-        message.error(`Response status:${error.response.status}`);
+
+        message.error(`We encountered an issue when attempting.Please try again!`);
+        //message.error(`Response status:${error.response.status}`);
       } else if (error.request) {
         // The request has been successfully initiated, but no response has been received
         // \`error.request\` In the browser, it is an instance of XMLHttpRequest,

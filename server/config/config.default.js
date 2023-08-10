@@ -18,7 +18,7 @@ module.exports = appInfo => {
             delegate: 'model', // Load all models into app. Model and ctx. Model
             baseDir: 'model', // Model directory to load `app/model/*.js`
             dialect: 'mssql', // support: mysql, mariadb, postgres, mssql
-            database: 'eos_development',
+            database: 'eos_development1',
             host: 'woke.qinqinwater.cn',
             port: 1433,
             timezone: '+08:00',// Save as local time zone
@@ -100,6 +100,9 @@ module.exports = appInfo => {
     };
     // add your user config here
     const userConfig = {
+
+        EOSURL: "https://eosuat.southeastasia.cloudapp.azure.com",
+
         WritetoBC: "http://165.22.55.213:3002/eos/WritetoBC",
         ValidateBC: "http://165.22.55.213:3002/eos/ValidateBC",
         QueryBC: "http://165.22.55.213:3002/eos/QueryBC",
@@ -131,7 +134,7 @@ module.exports = appInfo => {
         outputJSON: true,
 
         dir: 'c:/eoslog',
-        level: 'DEBUG',
+        
     };
     return {
         ...config,

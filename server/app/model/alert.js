@@ -96,7 +96,7 @@ module.exports = app => {
     });
     Model.associate = function () {
         app.model.Alert.belongsTo(app.model.Transaction, { foreignKey: 'transaction_id', as: 't' });
-
+       
         app.model.Alert.belongsTo(app.model.AlertruleTransaction, { foreignKey: 'alert_rule_transaction_id', as: 'ar' });
 
     };

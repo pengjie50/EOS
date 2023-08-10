@@ -59,15 +59,25 @@ module.exports = app => {
             type: TINYINT
 
         },
+        online_status: {
+            type: TINYINT
+
+        },
         profile: {
             type: STRING(500)
 
         },
 
         login_time: {
-            type: INTEGER
+            type: DATE
 
         },
+
+        logout_time: {
+            type: DATE
+
+        },
+
         login_token: {
             type: STRING(500)
 
@@ -82,6 +92,8 @@ module.exports = app => {
 
                 fields: ['username', 'email', 'phone']
             }],
+        timestamps: true,
+        paranoid: false,
         tableName: 'user'
     });
     Model.associate = function () {

@@ -6,7 +6,7 @@
 module.exports = app => {
     const { router, controller } = app;
     app.beforeStart(async () => {
-        //await app.model.Alert.sync({ alter: true });//force  If false does not overwrite true, it will be deleted and re created; Alter true can add or delete fields;
+       // await app.model.Report.sync({ alter: true });//force  If false does not overwrite true, it will be deleted and re created; Alter true can add or delete fields;
     });
     //truncate table alert; truncate table alertrule_transaction;
     router.get('/', controller.home.index);
@@ -57,15 +57,9 @@ module.exports = app => {
 
 
 
-    router.post('/api/terminal/list', controller.terminal.list);
-    router.post('/api/terminal/add', controller.terminal.add);
-    router.post('/api/terminal/mod', controller.terminal.mod);
-    router.post('/api/terminal/del', controller.terminal.del);
+    
 
-    router.post('/api/producttype/list', controller.producttype.list);
-    router.post('/api/producttype/add', controller.producttype.add);
-    router.post('/api/producttype/mod', controller.producttype.mod);
-    router.post('/api/producttype/del', controller.producttype.del);
+ 
 
     router.post('/api/jetty/list', controller.jetty.list);
     router.post('/api/jetty/add', controller.jetty.add);

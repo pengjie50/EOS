@@ -12,7 +12,7 @@ import {
   ProFormTreeSelect,
   ProFormInstance,
   ProFormCheckbox
-  
+
 } from '@ant-design/pro-components';
 import { AlertruleListItem } from '../data.d';
 import { FormattedMessage, useIntl } from '@umijs/max';
@@ -20,12 +20,12 @@ import { Modal, Form, Button, Divider } from 'antd';
 import { flow } from '../../system/flow/service';
 import { tree, isPC } from "@/utils/utils";
 import React, { useRef, useState, useEffect } from 'react';
-import { SvgIcon } from '@/components' // 自定义组件
+import { SvgIcon } from '@/components'
 import { PlusCircleOutlined, PlusOutlined, MinusOutlined, MinusCircleOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 
 export type UpdateFormProps = {
   onCancel: (flag?: boolean, formVals?: any) => void;
-  onSubmit: (values:any) => Promise<void>;
+  onSubmit: (values: any) => Promise<void>;
   updateModalOpen: boolean;
   values: any;
 };
@@ -52,7 +52,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
     } else {
       flow({ pageSize: 300, current: 1, type: 0, sorter: { sort: 'ascend' } }).then((res) => {
         var b = {
-         
+
         }
         res.data.forEach((r) => {
           b[r.id] = r.name
@@ -81,7 +81,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
 
   return (
-   
+
     <ModalForm
       modalProps={{ destroyOnClose: true }}
       initialValues={values}
@@ -89,219 +89,136 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         if (!vi) {
           props.onCancel();
         }
-          
+
       }}
       formRef={restFormRef}
-        onFinish={props.onSubmit}
-        open={props.updateModalOpen}
-        submitter={{
-          searchConfig: {
-            resetText: intl.formatMessage({
-              id: 'pages.reset',
-              defaultMessage: '重置',
-            }),
+      onFinish={props.onSubmit}
+      open={props.updateModalOpen}
+      submitter={{
+        searchConfig: {
+          resetText: intl.formatMessage({
+            id: 'pages.reset',
+            defaultMessage: '重置',
+          }),
+        },
+        resetButtonProps: {
+          onClick: () => {
+            restFormRef.current?.resetFields();
+           
           },
-          resetButtonProps: {
-            onClick: () => {
-              restFormRef.current?.resetFields();
-              //   setModalVisible(false);
-            },
-          },
-        }}
-        title={intl.formatMessage({
-          id: 'pages.alertrule.mod',
-          defaultMessage: '修改权限',
-        })}
-      >
-      { /*<ProFormSelect
-        name="flow_id"
-        width="md"
-        label={intl.formatMessage({
-          id: 'pages.alertrule.process',
-          defaultMessage: 'Process Name',
-        })}
-        valueEnum={flowConf}
-        rules={[
-          {
-            required: true,
-            message: (
-              <FormattedMessage
-                id="pages.role.rules.flow_id"
-                defaultMessage=""
-              />
-            ),
-          },
-        ]}
-      />*/}
+        },
+      }}
+      title={intl.formatMessage({
+        id: 'pages.alertrule.mod',
+        defaultMessage: '修改权限',
+      })}
+    >
+     
 
       <div style={{ float: 'left', width: '100%', display: "block", marginBottom: "10px" }}>
         <div style={{ fontWeight: 500, fontSize: "14px" }}>Input Applicable Condition(s) For Threshold To Be Applied</div>
         <span><ExclamationCircleOutlined /> If more than one condition is selected, threshold defined is only applicable to transactions that fulfill ALL of the specified conditions</span>
       </div>
 
-      
-        <ProFormDependency name={['vessel_size_dwt_from', 'vessel_size_dwt_to']}>
-          {({ vessel_size_dwt_to, vessel_size_dwt_from }) => {
 
-            return (<ProFormGroup>
+      <ProFormDependency name={['vessel_size_dwt_from', 'vessel_size_dwt_to']}>
+        {({ vessel_size_dwt_to, vessel_size_dwt_from }) => {
+
+          return (<ProFormGroup>
 
 
+            <ProFormSelect
+              name="from_to"
+              width="lg"
+              label={intl.formatMessage({
+                id: 'pages.alertrule.sizeOfVessel',
+                defaultMessage: 'Condition:  Size Of Vessel',
+              })}
+
+              initialValue={"0-25000"}
+              valueEnum={{
+                "0-25000": "1. GP (General Purpose): Less than 24,990 DWT",
+                "25000-45000": "2. MR (Medium Range): 25,000 to 44,990 DWT",
+                "45000-80000": "3. LR1 (Long Range 1): 45,000 to 79,990 DWT",
+                "80000-120000": "4. AFRA (AFRAMAX): 80,000 to 119,990 DWT",
+                "120000-160000": "5. LR2 (Long Range 2): 120,000 to 159,990 DWT",
+                "160000-320000": "6. VLCC (Very Large Crude Carrier): 160,000 to 319,990 DWT",
+                "320000-1000000000": "7. ULCC (Ultra-Large Crude Carrier): More than 320,000 DWT",
+              }} />
+
+
+          </ProFormGroup>)
+        }}
+      </ProFormDependency>
+      <div>Condition:  Total Nominated Quantity</div>
+
+      <ProFormDependency name={['product_quantity_to', 'product_quantity_from']}>
+        {({ product_quantity_to, product_quantity_from }) => {
+
+
+          return (
+            <ProFormGroup>
+              <ProFormDigit label={<FormattedMessage
+                id="pages.alertrule.from"
+                defaultMessage="From"
+
+              />}
+                name="product_quantity_from" width="xs" min={1} max={10000000}
+                rules={[
+
+                  {
+                    validator: (rule, value, callback) => {
+                      if (product_quantity_to && value >= product_quantity_to) {
+                        callback("Incorrect interval")
+                      } else {
+                        callback()
+                      }
+                    }
+
+                  }
+                ]}
+              />
+
+              <ProFormDigit width={100} label={<FormattedMessage
+                id="pages.alertrule.to"
+                defaultMessage="To"
+              />}
+                rules={[
+
+                  {
+                    validator: (rule, value, callback) => {
+                      if (product_quantity_from && value <= product_quantity_from) {
+                        callback("Incorrect interval")
+                      } else {
+                        callback()
+                      }
+                    }
+
+                  }
+                ]}
+                name="product_quantity_to" width="xs" min={1} max={10000000} />
               <ProFormSelect
-                name="from_to"
-                width="lg"
+                name="uom"
+                width={280}
+                allowClear={false}
                 label={intl.formatMessage({
-                  id: 'pages.alertrule.sizeOfVessel',
-                  defaultMessage: 'Condition:  Size Of Vessel',
+                  id: 'pages.alertrule.unitOfMeasurement',
+                  defaultMessage: 'Unit of Measurement (UOM)',
                 })}
 
-                initialValue={"0-25000"}
-                valueEnum={{
-                  "0-25000": "1. GP (General Purpose): Less than 24,990 DWT",
-                  "25000-45000": "2. MR (Medium Range): 25,000 to 44,990 DWT",
-                  "45000-80000": "3. LR1 (Long Range 1): 45,000 to 79,990 DWT",
-                  "80000-120000": "4. AFRA (AFRAMAX): 80,000 to 119,990 DWT",
-                  "120000-160000": "5. LR2 (Long Range 2): 120,000 to 159,990 DWT",
-                  "160000-320000": "6. VLCC (Very Large Crude Carrier): 160,000 to 319,990 DWT",
-                  "320000-1000000000": "7. ULCC (Ultra-Large Crude Carrier): More than 320,000 DWT",
-                }} />
+                initialValue={"m"}
+                valueEnum={{ mt: "Metric Tonnes (MT)", bls_60_f: "Barrels (Bls-60-F)" }}
 
+
+              />
 
             </ProFormGroup>)
-          }}
-        </ProFormDependency>
-      <div>Condition:  Total Nominated Quantity</div>
-     
-        <ProFormDependency name={[ 'product_quantity_in_mt_to', 'product_quantity_in_mt_from']}>
-          {({  product_quantity_in_mt_to, product_quantity_in_mt_from }) => {
-            
-        
-              return (
-                <ProFormGroup>
-                  <ProFormDigit  label={<FormattedMessage
-                    id="pages.alertrule.from"
-                    defaultMessage="From"
-                    
-                  />}
-                    name="product_quantity_in_mt_from" width="xs" min={1} max={10000000}
-                    rules={[
-                     
-                      {
-                        validator: (rule, value, callback) => {
-                          if (product_quantity_in_mt_to && value >= product_quantity_in_mt_to) {
-                            callback("Incorrect interval")
-                          } else {
-                            callback()
-                          }
-                        }
-
-                      }
-                    ]}
-                  />
-
-                  <ProFormDigit width={100} label={<FormattedMessage
-                    id="pages.alertrule.to"
-                    defaultMessage="To"
-                  />}
-                    rules={[
-                      
-                      {
-                        validator: (rule, value, callback) => {
-                          if (product_quantity_in_mt_from && value <= product_quantity_in_mt_from) {
-                            callback("Incorrect interval")
-                          } else {
-                            callback()
-                          }
-                        }
-
-                      }
-                    ]}
-                    name="product_quantity_in_mt_to" width="xs" min={1} max={10000000} />
-                  <ProFormSelect
-                    name="total_nominated_quantity_unit"
-                    width={280}
-                    allowClear={false}
-                    label={intl.formatMessage({
-                      id: 'pages.alertrule.unitOfMeasurement',
-                      defaultMessage: 'Unit of Measurement (UOM)',
-                    })}
-
-                    initialValue={"m"}
-                    valueEnum={{ m: "Metric Tonnes (MT)", b: "Barrels (Bls-60-F)" }}
+        }
+        }
+      </ProFormDependency>
 
 
-                  />
-                
-                </ProFormGroup>)
-            }
-          }
-        </ProFormDependency>
-      
 
-      {values.product_quantity_in_bls_60_f_from != null && values.product_quantity_in_bls_60_f_to != null && (
-        <ProFormDependency name={['product_quantity_in_bls_60_f_to', 'product_quantity_in_bls_60_f_from']}>
-          {({ product_quantity_in_bls_60_f_to, product_quantity_in_bls_60_f_from }) => {
-
-
-            return (
-              <ProFormGroup>
-                <ProFormDigit label={<FormattedMessage
-                  id="pages.alertrule.from"
-                  defaultMessage="Total Nominated Quantity From"
-                />}
-                  name="product_quantity_in_bls_60_f_from" width="sm" min={1} max={10000000}
-                  rules={[
-
-                    {
-                      validator: (rule, value, callback) => {
-                        if (product_quantity_in_bls_60_f_to && value >= product_quantity_in_bls_60_f_to) {
-                          callback("Incorrect interval")
-                        } else {
-                          callback()
-                        }
-                      }
-
-                    }
-                  ]}
-                />
-
-                <ProFormDigit label={<FormattedMessage
-                  id="pages.alertrule.to"
-                  defaultMessage="To"
-                />}
-                  rules={[
-
-                    {
-                      validator: (rule, value, callback) => {
-                        if (product_quantity_in_bls_60_f_from && value <= product_quantity_in_bls_60_f_from) {
-                          callback("Incorrect interval")
-                        } else {
-                          callback()
-                        }
-                      }
-
-                    }
-                  ]}
-                  name="product_quantity_in_bls_60_f_to" width="sm" min={1} max={10000000} />
-                <ProFormSelect
-                  name="total_nominated_quantity_unit"
-                  width={180}
-                  allowClear={false}
-                  label={intl.formatMessage({
-                    id: 'pages.alertrule.unitOfMeasurement',
-                    defaultMessage: 'Unit of Measurement (UOM)',
-                  })}
-
-                  initialValue={"b"}
-                  valueEnum={{ m: "Metric Tonnes (MT)", b: "Barrels (Bls-60-F)" }}
-
-
-                />
-
-              </ProFormGroup>)
-          }
-          }
-        </ProFormDependency>
-      )}
       <div>
         <ExclamationCircleOutlined /> Note: Total Nominated Quantity refers to the sum of all quantity of operations for the vessel arrival at one jetty (e.g., 100 MT of discharge + 100 MT of loading = 200 MT of Total Nominated Quantity
       </div>
@@ -314,7 +231,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           <div style={{ fontWeight: "500", fontSize: '14px' }}>Define Threshold Duration</div>
           <span style={{ fontSize: "12px", fontWeight: "normal" }}><ExclamationCircleOutlined /> Select threshold type</span>
         </div>}
-       
+
 
       />
       <ProFormGroup>
@@ -334,7 +251,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
             }
 
           ]}
-         
+
           valueEnum={{
             '0': "Single Process",
             '1': "Between Two Events",
@@ -345,8 +262,8 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
       </ProFormGroup>
       <ProFormDependency name={["type"]} >
         {({ type }) => {
-        
-          return (type == '0'?<ProFormGroup>
+
+          return (type == '0' ? <ProFormGroup>
             <ProFormSelect
               name="flow_id"
               width="md"
@@ -368,152 +285,152 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
               valueEnum={flowConf}
               fieldProps={{
                 showSearch: false,
-               // labelInValue: true,
-               // mode: 'multiple',
+               
               }}
 
             />
           </ProFormGroup>
-         :type == '1'?< ProFormDependency name={["flow_id",  "flow_id_to"]} >
-        {(aa) => {
+            : type == '1' ? < ProFormDependency name={["flow_id", "flow_id_to"]} >
+              {(aa) => {
 
-          return (<ProFormGroup>
-          <ProFormTreeSelect
-            name={"flow_id"}
-            label={intl.formatMessage({
-              id: 'pages.alertrule.from',
-              defaultMessage: 'From',
-            })}
+                return (<ProFormGroup>
+                  <ProFormTreeSelect
+                    name={"flow_id"}
+                    label={intl.formatMessage({
+                      id: 'pages.alertrule.from',
+                      defaultMessage: 'From',
+                    })}
 
-            placeholder="Please select"
-            allowClear
-            width="md"
-            rules={[
-              {
-                required: true,
-                message: (
-                  <FormattedMessage
-                    id="pages.rules.required"
-                    defaultMessage="This field cannot be empty！"
+                    placeholder="Please select"
+                    allowClear
+                    width="md"
+                    rules={[
+                      {
+                        required: true,
+                        message: (
+                          <FormattedMessage
+                            id="pages.rules.required"
+                            defaultMessage="This field cannot be empty！"
+                          />
+                        ),
+                      },
+                      {
+                        validator: (rule, value, callback) => {
+
+                          if (value && flowMap[value].pid == '                                    ') {
+                            callback("Please select Event")
+                          }
+
+                          if (aa["flow_id_to"] && value && (flowMap[aa["flow_id_to"]].sort <= flowMap[value].sort)) {
+                            callback((flowMap[dd[ta + "_to"]].sort == flowMap[value].sort) ? "Events cannot be the same" : 'Events in "From" field cannot be later than Events in "To" field')
+                          } else {
+                            callback()
+                          }
+                        }
+                      }
+                    ]}
+                    request={async () => {
+                      return flow({ pageSize: 1000, current: 1, sorter: { sort: 'ascend' } }).then((res) => {
+
+                        res.data = res.data.map((r) => {
+                          r['value'] = r.id
+                          r['title'] = r.name
+                          return r
+                        })
+
+                      
+                        return tree(res.data, "                                    ", 'pid')
+                      });
+
+                    }}
+
+                    // tree-select args
+                    fieldProps={{
+                      showArrow: false,
+
+
+                      dropdownMatchSelectWidth: isMP ? true : false,
+
+
+                      treeNodeFilterProp: 'name',
+                      fieldNames: {
+                        label: 'name',
+                      },
+                    }}
                   />
-                ),
-              },
-              {
-                validator: (rule, value, callback) => {
 
-                  if (value && flowMap[value].pid == '                                    ') {
-                    callback("Please select Event")
-                  }
+                  <ProFormTreeSelect
+                    name={"flow_id_to"}
+                    label={intl.formatMessage({
+                      id: 'pages.alertrule.to',
+                      defaultMessage: 'To',
+                    })}
+                    placeholder="Please select"
+                    allowClear
+                    width="md"
+                    rules={[
+                      {
+                        required: true,
+                        message: (
+                          <FormattedMessage
+                            id="pages.rules.required"
+                            defaultMessage="This field cannot be empty！"
+                          />
+                        ),
+                      },
+                      {
+                        validator: (rule, value, callback) => {
+                          if (value && flowMap[value].pid == '                                    ') {
+                            callback("Please select Event")
+                          }
+                          if (aa["flow_id_"] && value && (flowMap[aa["flow_id_"]].sort >= flowMap[value].sort)) {
+                            callback((flowMap[dd[ta + "_from"]].sort == flowMap[value].sort) ? "Events cannot be the same" : 'Events in "From" field cannot be later than Events in "To" field')
+                          } else {
+                            callback()
+                          }
+                        }
+                      }
+                    ]}
+                    request={async () => {
+                      return flow({ pageSize: 1000, current: 1, sorter: { sort: 'ascend' } }).then((res) => {
 
-                  if (aa["flow_id_to"] && value && (flowMap[aa[ "flow_id_to"]].sort <= flowMap[value].sort)) {
-                    callback((flowMap[dd[ta + "_to"]].sort == flowMap[value].sort) ? "Events cannot be the same" : 'Events in "From" field cannot be later than Events in "To" field')
-                  } else {
-                    callback()
-                  }
-                }
-              }
-            ]}
-            request={async () => {
-              return flow({ pageSize: 1000, current: 1, sorter: { sort: 'ascend' } }).then((res) => {
+                        res.data = res.data.map((r) => {
+                          r['value'] = r.id
+                          r['title'] = r.name
+                          return r
+                        })
 
-                res.data = res.data.map((r) => {
-                  r['value'] = r.id
-                  r['title'] = r.name
-                  return r
-                })
+                       
+                        return tree(res.data, "                                    ", 'pid')
+                      });
 
-                // setFlowList(tree(res.data, "                                    ", 'pid'))
-                return tree(res.data, "                                    ", 'pid')
-              });
+                    }}
 
-            }}
-
-            // tree-select args
-            fieldProps={{
-              showArrow: false,
+                    // tree-select args
+                    fieldProps={{
+                      showArrow: false,
 
 
-              dropdownMatchSelectWidth: isMP ? true : false,
+                      dropdownMatchSelectWidth: isMP ? true : false,
 
 
-              treeNodeFilterProp: 'name',
-              fieldNames: {
-                label: 'name',
-              },
-            }}
-          />
-
-          <ProFormTreeSelect
-            name={"flow_id_to"}
-            label={intl.formatMessage({
-              id: 'pages.alertrule.to',
-              defaultMessage: 'To',
-            })}
-            placeholder="Please select"
-            allowClear
-            width="md"
-            rules={[
-              {
-                required: true,
-                message: (
-                  <FormattedMessage
-                    id="pages.rules.required"
-                    defaultMessage="This field cannot be empty！"
+                      treeNodeFilterProp: 'name',
+                      fieldNames: {
+                        label: 'name',
+                      },
+                    }}
                   />
-                ),
-              },
-              {
-                validator: (rule, value, callback) => {
-                  if (value && flowMap[value].pid == '                                    ') {
-                    callback("Please select Event")
-                  }
-                  if (aa["flow_id_"] && value && (flowMap[aa[ "flow_id_"]].sort >= flowMap[value].sort)) {
-                    callback((flowMap[dd[ta + "_from"]].sort == flowMap[value].sort) ? "Events cannot be the same" : 'Events in "From" field cannot be later than Events in "To" field')
-                  } else {
-                    callback()
-                  }
-                }
-              }
-            ]}
-            request={async () => {
-              return flow({ pageSize: 1000, current: 1, sorter: { sort: 'ascend' } }).then((res) => {
-
-                res.data = res.data.map((r) => {
-                  r['value'] = r.id
-                  r['title'] = r.name
-                  return r
-                })
-
-                // setFlowList(tree(res.data, "                                    ", 'pid'))
-                return tree(res.data, "                                    ", 'pid')
-              });
-
-            }}
-
-            // tree-select args
-            fieldProps={{
-              showArrow: false,
+                </ProFormGroup>)
 
 
-              dropdownMatchSelectWidth: isMP ? true : false,
+              }}</ProFormDependency> : null
 
 
-              treeNodeFilterProp: 'name',
-              fieldNames: {
-                label: 'name',
-              },
-            }}
-          />
-        </ProFormGroup>)
+          )
+        }}</ProFormDependency>
 
-
-          }}</ProFormDependency>:null
-
-
-        ) }}</ProFormDependency>
-     
       <div style={{ width: '100%' }}>
-        
+
         <div style={{ float: 'left', width: '265px', fontWeight: "bold", color: "#DE7E39" }}>
           <SvgIcon style={{ color: "#DE7E39" }} type="icon-yuan" /> Amber
         </div>
@@ -525,7 +442,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
 
 
-      <ProFormDependency name={["amber_" + 'hours', "amber_" + 'mins',  "red_" + 'hours',  "red_" + 'mins']} >
+      <ProFormDependency name={["amber_" + 'hours', "amber_" + 'mins', "red_" + 'hours', "red_" + 'mins']} >
         {(aa) => {
 
 
@@ -555,7 +472,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
           }
           return ([<ProFormGroup>
-       
+
             <ProFormDigit label={<FormattedMessage
               id="pages.alertrule.hours"
               defaultMessage="Hours"
@@ -580,10 +497,10 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                 }
 
               }
-              ]} width={ 100} min={0} max={1000} />
+            ]} width={100} min={0} max={1000} />
 
-        <ProFormDigit label={<FormattedMessage
-          id="pages.alertrule.mins"
+            <ProFormDigit label={<FormattedMessage
+              id="pages.alertrule.mins"
               defaultMessage="Mins"
             />} name={"amber_" + 'mins'} rules={[
               {
@@ -606,11 +523,11 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                 }
 
               }
-              ]} width={100} min={0} max={60}/>
+            ]} width={100} min={0} max={60} />
 
 
-        <ProFormDigit label={<FormattedMessage
-          id="pages.alertrule.hours"
+            <ProFormDigit label={<FormattedMessage
+              id="pages.alertrule.hours"
               defaultMessage="Hours"
             />} name={"red_" + 'hours'} rules={[
               {
@@ -623,10 +540,10 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                 }
 
               }
-              ]} width={100} min={0} max={1000} />
+            ]} width={100} min={0} max={1000} />
 
-        <ProFormDigit label={<FormattedMessage
-          id="pages.alertrule.mins"
+            <ProFormDigit label={<FormattedMessage
+              id="pages.alertrule.mins"
               defaultMessage="Mins"
             />} name={"red_" + 'mins'} rules={[
               {
@@ -639,10 +556,10 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                 }
 
               }
-              ]} width={100} min={0} max={60}  />
+            ]} width={100} min={0} max={60} />
           </ProFormGroup>, <div style={{ marginTop: '-20px', color: 'red', display: aa["amber_" + 'hours'] > 0 || aa["amber_" + 'mins'] > 0 || aa["red_" + 'hours'] > 0 || aa["red_" + 'mins'] > 0 ? 'none' : "block" }}>Duration for at least Amber" or "Red" threshold must be entered</div>,
 
-            <div style={{ marginLeft: '0px', marginTop: '-10px', color: 'red', display: isShowRed ? 'block' : "none" }}>Duration for "Red" should not be shorter than "Amber" status</div>
+          <div style={{ marginLeft: '0px', marginTop: '-10px', color: 'red', display: isShowRed ? 'block' : "none" }}>Duration for "Red" should not be shorter than "Amber" status</div>
           ])
         }}
       </ProFormDependency>
@@ -660,7 +577,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
           title={<span style={{ fontWeight: 'initial' }}>Email Address</span>}
           extra={
-           <PlusCircleOutlined onClick={() => {
+            <PlusCircleOutlined onClick={() => {
               var arr = restFormRef?.current?.getFieldValue('emailArr')
               if (!arr) {
                 arr = []
@@ -681,8 +598,9 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
             {
               (aa) => {
                 var arr = []
+                var v = []
                 aa?.emailArr?.map((a, index) => {
-
+                  v.push(a + "_email")
                   arr.push(<ProFormGroup><ProFormText
 
                     fieldProps={{
@@ -726,13 +644,13 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                     <ProFormDependency name={['typeArr']} >
 
                       {(cc) => {
-                        var v = []
+
                         cc.typeArr?.forEach((f) => {
 
                           v.push("amber_" + 'hours')
-                          v.push( "amber_" + 'mins')
-                          v.push( "red_" + 'hours')
-                          v.push( "red_" + 'mins')
+                          v.push("amber_" + 'mins')
+                          v.push("red_" + 'hours')
+                          v.push("red_" + 'mins')
                         })
 
 
@@ -768,8 +686,22 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
                               })
                             }
-                            return <ProFormCheckbox.Group
 
+                            var emailReg = /^\w{3,}(\.\w+)*@[A-z0-9]+(\.[A-z]{2,5}){1,2}$/;
+
+                            var r = [
+
+                            ]
+
+                            if (emailReg.test(cc[a + "_email"])) {
+                              r.push({
+                                required: true,
+                                message: "Please select an alert to proceed.",
+                              })
+                            }
+
+                            return <ProFormCheckbox.Group
+                              rules={r}
                               name={a + "_send_type_select"}
                               label=""
                               options={arr1}
@@ -794,7 +726,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         </ProCard>
       </ProCard>
     </ModalForm>
-     
+
   );
 };
 

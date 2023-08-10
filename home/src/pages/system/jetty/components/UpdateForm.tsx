@@ -7,7 +7,7 @@ import {
   ModalForm,
   ProFormTreeSelect,
   ProFormInstance
-  
+
 } from '@ant-design/pro-components';
 import { JettyListItem } from '../data.d';
 import { FormattedMessage, useIntl, useModel } from '@umijs/max';
@@ -54,7 +54,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
   }, [true]);
   return (
-   
+
     <ModalForm
       modalProps={{ destroyOnClose: true }}
       initialValues={values}
@@ -62,30 +62,30 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         if (!vi) {
           props.onCancel();
         }
-          
+
       }}
       formRef={restFormRef}
-        onFinish={props.onSubmit}
-        open={props.updateModalOpen}
-        submitter={{
-          searchConfig: {
-            resetText: intl.formatMessage({
-              id: 'pages.reset',
-              defaultMessage: 'Reset',
-            }),
+      onFinish={props.onSubmit}
+      open={props.updateModalOpen}
+      submitter={{
+        searchConfig: {
+          resetText: intl.formatMessage({
+            id: 'pages.reset',
+            defaultMessage: 'Reset',
+          }),
+        },
+        resetButtonProps: {
+          onClick: () => {
+            restFormRef.current?.resetFields();
+           
           },
-          resetButtonProps: {
-            onClick: () => {
-              restFormRef.current?.resetFields();
-              //   setModalVisible(false);
-            },
-          },
-        }}
-        title={intl.formatMessage({
-          id: 'pages.jetty.mod',
-          defaultMessage: 'Modify Jetty',
-        })}
-      >
+        },
+      }}
+      title={intl.formatMessage({
+        id: 'pages.jetty.mod',
+        defaultMessage: 'Modify Jetty',
+      })}
+    >
       <ProFormText
         name="name"
         label={intl.formatMessage({
@@ -163,33 +163,12 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         })}
         width="md"
         valueEnum={terminalList}
-      />} 
+      />}
 
-      {/*<ProFormTreeSelect
-        name="company_id"
-        width="md"
-        label={intl.formatMessage({
-          id: 'pages.user.company',
-          defaultMessage: 'Company',
-        })}
-        request={async () => {
-          return company({}).then((res) => {
-
-            res.data = res.data.map((r) => {
-              r['value'] = r.id
-              r['title'] = r.name
-              return r
-            })
-
-            // setFlowList(tree(res.data, "                                    ", 'pid'))
-            return tree(res.data, "                                    ", 'pid')
-          });
-
-        }}
-      />*/}
-        
-    </ModalForm>
      
+
+    </ModalForm>
+
   );
 };
 

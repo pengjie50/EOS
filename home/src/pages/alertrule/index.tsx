@@ -1,7 +1,7 @@
 
 import RcResizeObserver from 'rc-resize-observer';
 import { addAlertrule, removeAlertrule, alertrule, updateAlertrule } from './service';
-import { PlusOutlined, SearchOutlined, MoreOutlined, FormOutlined, DeleteOutlined, InfoCircleOutlined, ExclamationCircleOutlined, PrinterOutlined, EllipsisOutlined, SwapOutlined, SortAscendingOutlined, SortDescendingOutlined } from '@ant-design/icons';
+import { PlusOutlined, SearchOutlined, MoreOutlined, FormOutlined, DeleteOutlined, FileExcelOutlined, InfoCircleOutlined, ExclamationCircleOutlined, PrinterOutlined, EllipsisOutlined, SwapOutlined, SortAscendingOutlined, SortDescendingOutlined } from '@ant-design/icons';
 import type { ActionType, ProColumns, ProDescriptionsItemProps, ProTableProps } from '@ant-design/pro-components';
 import { AlertruleList, AlertruleListItem } from './data.d';
 import { GridContent } from '@ant-design/pro-layout';
@@ -10,12 +10,12 @@ import { organization } from '../system/company/service';
 import MPSort from "@/components/MPSort";
 import { fieldSelectData } from '@/services/ant-design-pro/api';
 import FrPrint from "../../components/FrPrint";
-
+import moment from 'moment'
 
 //MP
 import { InfiniteScroll, List, NavBar, Space, DotLoading } from 'antd-mobile'
 
-import { SvgIcon } from '@/components' // 自定义组件
+import { SvgIcon, ResizeObserverDo } from '@/components' 
 import {
   FooterToolbar,
   ModalForm,
@@ -28,33 +28,33 @@ import {
   ProCard,
   ProFormTreeSelect,
   ProTable,
- 
+
   ProFormInstance,
   Search
 } from '@ant-design/pro-components';
-
+import { exportCSV } from "../../components/export";
+import FileSaver from "file-saver";
 import { FormattedMessage, useIntl, useLocation, formatMessage, useModel } from '@umijs/max';
 import { Button, Drawer, Input, message, TreeSelect, Modal, Space as SpaceA, Empty, ConfigProvider, FloatButton, Popover, Pagination } from 'antd';
 import React, { useRef, useState, useEffect } from 'react';
 import CreateForm from './components/CreateForm';
 import UpdateForm from './components/UpdateForm';
 import { useAccess, Access } from 'umi';
-import { tree,isPC } from "@/utils/utils";
+import { tree, isPC } from "@/utils/utils";
 import numeral from 'numeral';
 import { event } from '../../.umi/plugin-locale/localeExports';
 const { confirm } = Modal;
 /**
  * @en-US Add node
- * @zh-CN 添加节点
  * @param fields
  */
 const handleAdd = async (fields: any) => {
- 
+
   var d = { ...fields }
-  
-  if ((d.hasOwnProperty('typeArr') && d.typeArr.length > 0) ) {
-    
-   
+
+  if ((d.hasOwnProperty('typeArr') && d.typeArr.length > 0)) {
+
+
 
   } else {
     message.error(<FormattedMessage
@@ -63,33 +63,27 @@ const handleAdd = async (fields: any) => {
     />);
     return
   }
-  
-  
+
+
 
   const hide = message.loading(<FormattedMessage
     id="pages.adding"
     defaultMessage="Adding"
   />);
-  if (d.total_nominated_quantity_unit=='b') {
-    d.product_quantity_in_bls_60_f_from = d.product_quantity_in_mt_from
-    d.product_quantity_in_bls_60_f_to = d.product_quantity_in_mt_to
 
-    delete d.product_quantity_in_mt_from
-    delete d.product_quantity_in_mt_to
-  }
 
   if (d.from_to) {
     d.vessel_size_dwt_from = Number(d.from_to.split("-")[0])
     d.vessel_size_dwt_to = Number(d.from_to.split("-")[1])
   }
- 
-  
- 
-  delete d.total_nominated_quantity_unit
+
+
+
+
   delete d.from_to
   try {
 
-    
+
     await addAlertrule(d);
     hide();
     message.success(<FormattedMessage
@@ -109,15 +103,14 @@ const handleAdd = async (fields: any) => {
 
 /**
  * @en-US Update node
- * @zh-CN 更新节点
  *
  * @param fields
  */
 const handleUpdate = async (fields: Partial<AlertruleListItem>) => {
 
 
-  
-  var d = { amber_hours: null, amber_mins: null, red_hours: null, red_mins: null ,...fields }
+
+  var d = { amber_hours: null, amber_mins: null, red_hours: null, red_mins: null, ...fields }
 
 
 
@@ -126,60 +119,46 @@ const handleUpdate = async (fields: Partial<AlertruleListItem>) => {
     d.vessel_size_dwt_from = Number(d.from_to.split("-")[0])
     d.vessel_size_dwt_to = Number(d.from_to.split("-")[1])
   } else {
-    d.vessel_size_dwt_from =null
+    d.vessel_size_dwt_from = null
     d.vessel_size_dwt_to = null
   }
-  if (d.product_quantity_in_mt_from ) {
+  if (!d.product_quantity_from) {
 
-    d['total_nominated_quantity_from_' + d.total_nominated_quantity_unit] = d.product_quantity_in_mt_from
-    d['total_nominated_quantity_to_' + d.total_nominated_quantity_unit] = d.product_quantity_in_mt_to
+    d.product_quantity_from = null
+    d.product_quantity_to = null
 
-    
-  }
-  if (d.product_quantity_in_bls_60_f_from) {
-    d['total_nominated_quantity_from_' + d.total_nominated_quantity_unit] = d.product_quantity_in_bls_60_f_from
-    d['total_nominated_quantity_to_' + d.total_nominated_quantity_unit] = d.product_quantity_in_bls_60_f_to
-    
+
   }
 
-  if (d.total_nominated_quantity_unit=='m') {
-    d.product_quantity_in_bls_60_f_from = null
-    d.product_quantity_in_bls_60_f_to = null
+  var is = false
+
+
+
+
+
+
+
+  if (d.hasOwnProperty("amber_hours") || d.hasOwnProperty("amber_mins") || d.hasOwnProperty("red_hours") || d.hasOwnProperty("red_mins")) {
+
+    is = true
   }
-  
-  if (d.total_nominated_quantity_unit == 'b') {
-    d.product_quantity_in_mt_from = null
-    d.product_quantity_in_mt_to = null
+
+
+
+
+
+
+
+  if (!is) {
+    message.error(<FormattedMessage
+      id="pages.aaa"
+      defaultMessage="Please enter compulsory threshold alert field for either Amber or Red!"
+    />);
+    return
   }
-    var is = false
-    
-     
 
 
 
-     
-      
-          if (d.hasOwnProperty( "amber_hours") || d.hasOwnProperty( "amber_mins") || d.hasOwnProperty("red_hours") || d.hasOwnProperty("red_mins")) {
-
-            is = true
-          }
-
-        
-
-      
-
-
-    
-    if (!is) {
-      message.error(<FormattedMessage
-        id="pages.aaa"
-        defaultMessage="Please enter compulsory threshold alert field for either Amber or Red!"
-      />);
-      return
-    }
-
-
-  
   const hide = message.loading(<FormattedMessage
     id="pages.modifying"
     defaultMessage="Modifying"
@@ -203,9 +182,9 @@ const handleUpdate = async (fields: Partial<AlertruleListItem>) => {
   }
 };
 
-const handleRemove = async (selectedRows: AlertruleListItem[],callBack:any) => {
+const handleRemove = async (selectedRows: AlertruleListItem[], callBack: any) => {
   if (!selectedRows) return true;
-  var open=true
+  var open = true
   confirm({
     title: 'Delete threshold? ',
     open: open,
@@ -230,8 +209,8 @@ const handleRemove = async (selectedRows: AlertruleListItem[],callBack:any) => {
           open = false
           callBack(true)
         });
-       
-       
+
+
       } catch (error) {
         hide();
         message.error(<FormattedMessage
@@ -240,13 +219,13 @@ const handleRemove = async (selectedRows: AlertruleListItem[],callBack:any) => {
         />);
         callBack(false)
       }
-      
+
     },
     onCancel() { },
   });
- 
-  
-    
+
+
+
 
 
 };
@@ -254,12 +233,10 @@ const handleRemove = async (selectedRows: AlertruleListItem[],callBack:any) => {
 const TableList: React.FC = () => {
   /**
    * @en-US Pop-up window of new window
-   * @zh-CN 新建窗口的弹窗
    *  */
   const [createModalOpen, handleModalOpen] = useState<boolean>(false);
   /**
    * @en-US The pop-up window of the distribution update window
-   * @zh-CN 分布更新窗口的弹窗
    * */
   const [updateModalOpen, handleUpdateModalOpen] = useState<boolean>(false);
 
@@ -272,7 +249,7 @@ const TableList: React.FC = () => {
   const [flowTree, setFlowTree] = useState<any>([]);
   const [processes, setProcesses] = useState<any>([]);
   const restFormRef = useRef<ProFormInstance>();
-  const [resizeObj, setResizeObj] = useState({ searchSpan: 12, tableScrollHeight: 300, width:0 });
+  const [resizeObj, setResizeObj] = useState({ searchSpan: 12, tableScrollHeight: 300, width: 0 });
   //--MP start
   const MPSearchFormRef = useRef<ProFormInstance>();
   const [printModalVisible, handlePrintModalVisible] = useState<boolean>(false);
@@ -281,31 +258,42 @@ const TableList: React.FC = () => {
   const [paramsText, setParamsText] = useState<string>('');
   const [organizationList, setOrganizationList] = useState<any>([]);
   const [organizationMap, setOrganizationMap] = useState<any>({});
+
   const access = useAccess();
   const { initialState, setInitialState } = useModel('@@initialState');
   const { currentUser } = initialState || {};
-  const [tab, setTab] = useState('Terminal');
+  const [tab, setTab] = useState('Self');
   const [MPSorter, setMPSorter] = useState<any>({});
   const [moreOpen, setMoreOpen] = useState<boolean>(false);
   const [MpSortDataIndex, setMpSortDataIndex] = useState<string>('');
   const [MPPagination, setMPPagination] = useState<any>({})
   const [user_idData, setUser_idData] = useState<any>({});
-  
+
+  const [alertrule_idData, setAlertrule_idData] = useState<any>({});
+
+
+
+
+
+  const [company_idData, setCompany_idData] = useState<any>({});
   const right = (
     <div style={{ fontSize: 24 }}>
       <Space style={{ '--gap': '16px' }}>
         <SearchOutlined onClick={e => { setShowMPSearch(!showMPSearch) }} />
         <Access accessible={access.canAlertruleAdd()} fallback={<div></div>}>
-          {tab == 'Terminal' && <PlusOutlined onClick={() => { handleModalOpen(true) }} />}
+          {tab == 'Self' && <PlusOutlined onClick={() => { handleModalOpen(true) }} />}
         </Access>
 
-        <Popover onOpenChange={(v) => { setMoreOpen(v) }} open={moreOpen} placement="bottom" title={""} content={<div><Button type="primary" style={{ marginRight:10 }} key="print"
+        <Popover onOpenChange={(v) => { setMoreOpen(v) }} open={moreOpen} placement="bottom" title={""} content={<div><Button type="primary" style={{ marginRight: 10 }} key="print"
           onClick={() => {
             setMoreOpen(false)
             handlePrintModalVisible(true)
           }}
         ><PrinterOutlined /> <FormattedMessage id="pages.Print" defaultMessage="Print" />
-        </Button>
+        </Button>,<Button style={{ width: "100%" }} type="primary" key="out"
+          onClick={() => exportCSV(data, columns)}
+        ><FileExcelOutlined /> <FormattedMessage id="pages.CSV" defaultMessage="CSV" />
+          </Button>
 
         </div>} trigger="click">
           <EllipsisOutlined />
@@ -318,13 +306,13 @@ const TableList: React.FC = () => {
 
   const onFormSearchSubmit = (a) => {
 
-   
+
     setData([]);
     delete a._timestamp;
     setMPfilter(a)
     setShowMPSearch(!showMPSearch)
     setCurrentPage(1)
-   
+
     getData(1, a)
   }
   const InfiniteScrollContent = ({ hasMore }: { hasMore?: boolean }) => {
@@ -336,7 +324,7 @@ const TableList: React.FC = () => {
             <DotLoading />
           </>
         ) : (
-            <span>{data.length} items in total</span>
+          <span>{data.length} items in total</span>
         )}
       </>
     )
@@ -371,21 +359,21 @@ const TableList: React.FC = () => {
           "type": "ascend"
         }
       }, ...filter, tab: {
-      'field': 'tab',
-      'op': 'eq',
+        'field': 'tab',
+        'op': 'eq',
         'data': tab1
-    }, sorter
+      }, sorter
     })
-   
+
     setMPPagination({ total: append.total })
     setData(append.data)
   }
-  
 
 
-  
 
-  var  pathname=useLocation().pathname
+
+
+  var pathname = useLocation().pathname
   //--MP end
   const [events, setEvents] = useState<any>([]);
   useEffect(() => {
@@ -427,31 +415,34 @@ const TableList: React.FC = () => {
     })
 
     flow({ sorter: { sort: 'ascend' } }).then((res) => {
-      var b = { "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": intl.formatMessage({
-            id: 'pages.alertrule.entireTransaction',
-            defaultMessage: 'Entire Transaction',
-          }) }
+      var b = {
+        "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": intl.formatMessage({
+          id: 'pages.alertrule.entireTransaction',
+          defaultMessage: 'Entire Transaction',
+        })
+      }
       var p = {
         "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa": intl.formatMessage({
           id: 'pages.alertrule.entireTransaction',
           defaultMessage: 'Entire Transaction',
-        }) }
+        })
+      }
 
 
       res.data.forEach((r) => {
         if (r.type == 0) {
-        
+
           p[r.id] = r.name
         }
-          b[r.id] = r.name
-        })
-        setFlowConf(b)
-        setProcesses(p)
-     
+        b[r.id] = r.name
+      })
+      setFlowConf(b)
+      setProcesses(p)
+
 
       var treeData = tree(res.data, "                                    ", 'pid')
       setFlowTree(treeData)
-     
+
       alertrule({
         tab: {
           'field': 'tab',
@@ -462,8 +453,9 @@ const TableList: React.FC = () => {
           'field': 'type',
           'op': 'eq',
           'data': 1
-        } }).then((res2) => {
-        var d = {  }
+        }
+      }).then((res2) => {
+        var d = {}
 
 
 
@@ -481,49 +473,81 @@ const TableList: React.FC = () => {
     if (isMP) {
       getData(1)
     }
-  },[tab]);
+  }, [tab]);
   /**
    * @en-US International configuration
-   * @zh-CN 国际化配置
    * */
   const intl = useIntl();
- 
+
   const formRef = useRef<ProFormInstance>();
   const columns: ProColumns<AlertruleListItem>[] = [
 
-
     {
-      title: (
-        <FormattedMessage
-          id="pages.alert.xxx"
-          defaultMessage="Threshold ID"
-        />
-      ),
-
+      title: <FormattedMessage id="pages.role.xxx" defaultMessage="Threshold ID" />,
       dataIndex: 'alertrule_id',
-      hideInSearch: true,
+      valueEnum: alertrule_idData,
+      width: 130,
       sorter: true,
-      align: "left",
-      render: (dom, entity) => {
-        return "T"+dom
+      defaultSortOrder: 'descend',
+      search: {
+        transform: (value) => {
+          if (value && value.length > 0) {
+            return {
+              'name': {
+                'field': 'alertrule_id',
+                'op': 'in',
+                'data': value
+              }
+            }
+          }
+
+        }
       },
+      fieldProps: {
+        multiple: true,
+        mode: 'multiple',
+        maxTagCount: 0,
+        maxTagPlaceholder: (omittedValues) => {
+          return omittedValues.length + " Selected"
+        },
+        notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
+        showSearch: true,
+        allowClear: true,
+        onFocus: () => {
+          fieldSelectData({ model: "Alertrule", value: '', field: 'alertrule_id', Op: true, where: { tab: { "eq": tab } } }).then((res) => {
+            setAlertrule_idData(res.data)
+          })
+        },
+        onSearch: (newValue: string) => {
+
+          fieldSelectData({ model: 'Alertrule', value: newValue, field: 'alertrule_id', Op: true, where: { tab: { "eq": tab } } }).then((res) => {
+            setAlertrule_idData(res.data)
+          })
+
+        }
+      },
+      render: (dom, entity) => {
+
+        return "T" + entity.alertrule_id
+      }
     },
+
 
     {
       title: <FormattedMessage id="pages.alertrule.type" defaultMessage="Threshold Type" />,
       dataIndex: 'type',
       sorter: true,
       hideInSearch: true,
-      defaultSortOrder: 'ascend', 
+
       valueEnum: {
         0: { text: <FormattedMessage id="pages.alertrule.singleProcess" defaultMessage="Single Process" /> },
         1: { text: <FormattedMessage id="pages.alertrule.betweenTwoEvents" defaultMessage="Between Two Events" /> },
         2: { text: <FormattedMessage id="pages.alertrule.entireTransaction" defaultMessage="Entire Transaction" /> },
       }
-     
+
     },
 
-   
+
 
     {
       title: (
@@ -534,7 +558,7 @@ const TableList: React.FC = () => {
       ),
       dataIndex: 'flow_id',
       hideInTable: true,
-      hideInDescriptions:true,
+      hideInDescriptions: true,
       valueEnum: processes,
       fieldProps: {
         notFoundContent: <Empty />,
@@ -560,10 +584,10 @@ const TableList: React.FC = () => {
               }
             }
           }
-          
+
         }
       }
-},
+    },
 
 
     {
@@ -580,17 +604,17 @@ const TableList: React.FC = () => {
       valueEnum: events,
       fieldProps: {
         notFoundContent: <Empty />,
-       
-        dropdownMatchSelectWidth:isMP?true:false,
+
+        dropdownMatchSelectWidth: isMP ? true : false,
         width: '300px',
         mode: 'multiple',
         maxTagCount: 0,
         maxTagPlaceholder: (omittedValues) => {
           return omittedValues.length + " Selected"
         },
-          showSearch: false,
-          multiple: true
-        
+        showSearch: false,
+        multiple: true
+
       },
       search: {
         transform: (value) => {
@@ -614,8 +638,8 @@ const TableList: React.FC = () => {
           }
         }
       }
-     
-     
+
+
     },
 
     {
@@ -624,12 +648,14 @@ const TableList: React.FC = () => {
       hideInTable: true,
       hideInDescriptions: true,
       fieldProps: {
-
+        mode: 'multiple',
         dropdownMatchSelectWidth: isMP ? true : false,
         width: '300px',
-        
-       // showSearch: true,
-
+        maxTagCount: 0,
+        maxTagPlaceholder: (omittedValues) => {
+          return omittedValues.length + " Selected"
+        },
+       
 
       },
       valueEnum: {
@@ -643,17 +669,24 @@ const TableList: React.FC = () => {
       },
       search: {
         transform: (value) => {
-          if (value) {
+          if (value && value.length > 0) {
+            var arr1 = []
+            var arr2 = []
+            value.forEach((a) => {
+              arr1.push(a.split('-')[0])
+              arr2.push(a.split('-')[1])
+            })
+
             return {
               'vessel_size_dwt_from': {
                 'field': 'vessel_size_dwt_from',
-                'op': 'eq',
-                'data': value.split('-')[0]
+                'op': 'in',
+                'data': arr1
               },
               'vessel_size_dwt_to': {
                 'field': 'vessel_size_dwt_to',
-                'op': 'eq',
-                'data': value.split('-')[1]
+                'op': 'in',
+                'data': arr2
               }
             }
           }
@@ -662,34 +695,7 @@ const TableList: React.FC = () => {
       }
 
     },
-    /*{
-      title: (
-        <FormattedMessage
-          id="pages.alertrule.eee"
-          defaultMessage="Between two events"
-        />
-      ),
-      dataIndex: 'flow_id_to',
-      hideInDescriptions: true,
-      hideInTable: true,
-      renderFormItem: (_, fieldConfig, form) => {
-        if (fieldConfig.type === 'form') {
-          return null;
-        }
-        const status = form.getFieldValue('state');
-        if (status !== 'open') {
-          return (
-
-            <TreeSelect
-              allowClear
-              fieldNames={{ label: 'name', value: 'id' }}
-              treeData = { flowTree}
-            />)
-            
-        }
-        return fieldConfig.defaultRender(_);
-      },
-    },*/
+   
     {
       title: (
         <FormattedMessage
@@ -698,23 +704,24 @@ const TableList: React.FC = () => {
         />
       ),
       dataIndex: 'flow_id',
+      sorter: true,
       hideInSearch: true,
-      valueEnum: flowConf ,
+      valueEnum: flowConf,
       render: (dom, entity) => {
         if (entity.type == 0) {
           return flowConf[entity.flow_id]
         } else if (entity.type == 1) {
-          return flowConf[entity.flow_id] + " -> "+ flowConf[entity.flow_id_to]
-        }else{
+          return flowConf[entity.flow_id] + " -> " + flowConf[entity.flow_id_to]
+        } else {
           return '-'
         }
-       
+
       }
-      
+
     },
 
-   
-    
+
+
 
 
 
@@ -726,10 +733,10 @@ const TableList: React.FC = () => {
       sorter: true,
       hideInSearch: true,
       valueType: 'text',
-      
+
       render: (dom, entity) => {
         if (entity.vessel_size_dwt_from != null && entity.vessel_size_dwt_to) {
-         
+
           var valueEnum = {
             "0-25000": "GP",
             "25000-45000": "MR",
@@ -744,38 +751,48 @@ const TableList: React.FC = () => {
         } else {
           return '-'
         }
-        
+
       },
     },
     {
       title: <FormattedMessage id="pages.alertrule.throughputVolume1" defaultMessage="Total Nominated Quantity (MT)" />,
-      dataIndex: 'product_quantity_in_mt_from',
-      fieldProps: { placeholder: ['From', 'To']},
+      dataIndex: 'product_quantity_from',
+      fieldProps: { placeholder: ['From', 'To'] },
       valueType: "digitRange",
       width: 200,
       sorter: true,
       render: (dom, entity) => {
-        if (entity.product_quantity_in_mt_from  && entity.product_quantity_in_mt_to) {
+        if (entity.uom == "mt" && entity.product_quantity_from) {
 
-       
-          return numeral(entity.product_quantity_in_mt_from).format('0,0') + " - " + numeral(entity.product_quantity_in_mt_to).format('0,0')
+
+          return numeral(entity.product_quantity_from).format('0,0') + " - " + numeral(entity.product_quantity_to).format('0,0')
         } else {
           return '-'
         }
-       
+
       },
       search: {
         transform: (value) => {
-          if (value.length > 0) {
+          if (value && value.length > 0) {
 
             var a = value[0] || 0
             var b = value[1] || 1000000000
-           
+
             return {
-              'product_quantity_in_mt_from': {
-                'field': 'product_quantity_in_mt_from',
-                'op': 'between',
-                'data': [a,b]
+              'product_quantity_from': {
+                'field': 'product_quantity_from',
+                'op': 'gte',
+                'data': a
+              },
+              'product_quantity_to': {
+                'field': 'product_quantity_to',
+                'op': 'lte',
+                'data': b
+              },
+              'uom': {
+                'field': 'uom',
+                'op': 'eq',
+                'data': "mt"
               }
             }
           }
@@ -783,50 +800,67 @@ const TableList: React.FC = () => {
         }
       }
     },
-   
+
     {
-      title:"Total Nominated Quantity (Bls-60-F)",
-      dataIndex: 'product_quantity_in_bls_60_f_from',
+      title: "Total Nominated Quantity (Bls-60-F)",
+      dataIndex: 'product_quantity_to',
       fieldProps: {
-        placeholder: ['From', 'To']},
+        placeholder: ['From', 'To']
+      },
       valueType: "digitRange",
-      width:200,
+      width: 200,
       sorter: true,
       render: (dom, entity) => {
-        if (entity.product_quantity_in_bls_60_f_from && entity.product_quantity_in_bls_60_f_to ) {
-          return numeral(entity.product_quantity_in_bls_60_f_from).format('0,0') + " - " + numeral(entity.product_quantity_in_bls_60_f_to).format('0,0')
+        if (entity.uom == "bls_60_f" && entity.product_quantity_from) {
+          return numeral(entity.product_quantity_from).format('0,0') + " - " + numeral(entity.product_quantity_to).format('0,0')
         } else {
           return '-'
         }
-       
+
       },
       search: {
         transform: (value) => {
-          if (value.length > 0) {
+          if (value && value.length > 0) {
             var a = value[0] || 0
             var b = value[1] || 1000000000
             return {
-              'product_quantity_in_bls_60_f_from': {
-                'field': 'product_quantity_in_bls_60_f_from',
-                'op': 'between',
-                'data': [a,b]
+              'product_quantity_from': {
+                'field': 'product_quantity_from',
+                'op': 'gte',
+                'data': a
+              },
+              'product_quantity_to': {
+                'field': 'product_quantity_to',
+                'op': 'lte',
+                'data': b
+              },
+              'uom': {
+                'field': 'uom',
+                'op': 'eq',
+                'data': "bls_60_f"
               }
-             
+
             }
           }
 
         }
       }
     },
-    
+
     {
       title: <FormattedMessage id="pages.alertrule.thresholdLimit" defaultMessage="Threshold Limit" />,
       dataIndex: 'amber_hours',
       hideInSearch: true,
       valueType: 'text',
+      renderPrint: (dom, entity) => {
+
+        return (entity.amber_hours || entity.amber_mins ? ("Amber: " + (entity.amber_hours ? entity.amber_hours : '0') + "h " + (entity.amber_mins ? entity.amber_mins : '0') + "m") : "") +
+          (entity.red_hours || entity.red_mins ? (" Red: " + (entity.red_hours ? entity.red_hours : '0') + "h " + (entity.red_mins ? entity.red_mins : '0') + "m") : "")
+
+      },
       render: (dom, entity) => {
-        return (<div><div style={{ display: entity.amber_hours || entity.amber_mins ?"block":"none" }}> <SvgIcon style={{ color: "#DE7E39" }} type="icon-yuan" />{" " + (entity.amber_hours ? entity.amber_hours : '0') + "h " + (entity.amber_mins ? entity.amber_mins : '0') + "m"}</div>
-          <div style={{ display: entity.red_hours || entity.red_mins ? "block" : "none" }}><SvgIcon style={{ color: "red" }} type="icon-yuan" />{" " + (entity.red_hours ? entity.red_hours : '0') + "h " + (entity.red_mins ? entity.red_mins :'0') + "m"}</div></div>)
+        return (<div><div style={{ display: entity.amber_hours || entity.amber_mins ? "block" : "none" }}> <SvgIcon style={{ color: "#DE7E39" }} type="icon-yuan" />{" " + (entity.amber_hours ? entity.amber_hours : '0') + "h " + (entity.amber_mins ? entity.amber_mins : '0') + "m"}</div>
+          <div style={{ display: entity.red_hours || entity.red_mins ? "block" : "none" }}><SvgIcon style={{ color: "red" }} type="icon-yuan" />{" " + (entity.red_hours ? entity.red_hours : '0') + "h " + (entity.red_mins ? entity.red_mins : '0') + "m"}</div></div>)
       },
     },
     {
@@ -834,25 +868,18 @@ const TableList: React.FC = () => {
       dataIndex: 'email',
       hideInSearch: true,
       hideInTable: true,
-      hideInDescriptions:true,
+      hideInDescriptions: true,
       valueType: 'text',
     },
-   /* {
-      title: <FormattedMessage id="pages.alertrule.sendEmailSelect" defaultMessage="Send Email Select" />,
-      dataIndex: 'send_email_select',
-      hideInSearch: true,
-      hideInTable: true,
-      render: (dom, entity) => {
-
-        return dom;
-      },
-    },*/
+    
     {
-      title:  'Created By',
-      dataIndex: 'user_id',
-      valueEnum: user_idData,
+      title: 'Created By',
+      dataIndex: 'company_id',
+
+      valueEnum: company_idData,
+      hideInSearch: !(access.alertrule_list_tab() && tab == "Others"),
       fieldProps:
-                {
+      {
         notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
         showSearch: true,
         mode: 'multiple',
@@ -862,13 +889,59 @@ const TableList: React.FC = () => {
         },
         allowClear: true,
         onFocus: () => {
-          fieldSelectData({ model: "Alert", value: '', field: 'user_id', Op: true, where: { tab: { "eq": tab } } }).then((res) => {
+          fieldSelectData({ model: "Alertrule", value: '', field: 'company_id', Op: true, where: { tab: { "eq": tab } } }).then((res) => {
+            setCompany_idData(res.data)
+          })
+        },
+        onSearch: (newValue: string) => {
+
+          fieldSelectData({ model: "Alertrule", value: newValue, field: 'company_id', Op: true, where: { tab: { "eq": tab } } }).then((res) => {
+            setCompany_idData(res.data)
+          })
+
+        }
+      },
+      search: {
+        transform: (value) => {
+          if (value && value.length > 0) {
+            return {
+              'user_id': {
+                'field': 'company_id',
+                'op': 'in',
+                'data': value
+              }
+            }
+          }
+
+        }
+      },
+      hideInTable: true,
+      hideInDescriptions: true,
+
+    },
+    {
+      title: 'Created By',
+      dataIndex: 'user_id',
+      valueEnum: user_idData,
+      hideInSearch: access.alertrule_list_tab() && tab == "Others",
+      fieldProps:
+      {
+        notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
+        showSearch: true,
+        mode: 'multiple',
+        maxTagCount: 0,
+        maxTagPlaceholder: (omittedValues) => {
+          return omittedValues.length + " Selected"
+        },
+        allowClear: true,
+        onFocus: () => {
+          fieldSelectData({ model: "Alertrule", value: '', field: 'user_id', Op: true, where: { tab: { "eq": tab } } }).then((res) => {
             setUser_idData(res.data)
           })
         },
         onSearch: (newValue: string) => {
 
-          fieldSelectData({ model: "Alert", value: newValue, field: 'user_id',Op: true, where: { tab: { "eq": tab } } }).then((res) => {
+          fieldSelectData({ model: "Alertrule", value: newValue, field: 'user_id', Op: true, where: { tab: { "eq": tab } } }).then((res) => {
             setUser_idData(res.data)
           })
 
@@ -889,22 +962,33 @@ const TableList: React.FC = () => {
         }
       },
       hideInTable: true,
-      hideInDescriptions:true,
-     
+      hideInDescriptions: true,
+
     },
 
     {
-      title: access.alertrule_list_tab() ? (tab == 'Terminal' ? 'Created By' : 'Customer'): 'Created By',
+      title: access.alertrule_list_tab() ? (tab == 'Self' ? 'Created By' : 'Customer') : 'Created By',
       dataIndex: 'username',
+      sorter: true,
       hideInSearch: true,
       render: (dom, entity) => {
         if (access.alertrule_list_tab()) {
-          return tab == 'Terminal' ? dom.split('@')[0] : (entity.company_name || "-")
+          return tab == 'Self' ? dom.split('@')[0] : (entity.company_name || "-")
         } else {
-          return dom.split('@')[0]
+          return dom?.split('@')[0] || dom
         }
 
       },
+      valueType: 'text',
+    },
+
+    {
+      title: "Organization",
+      hideInSearch: true,
+      sorter: true,
+      hideInDescriptions: !access.canAdmin,
+     
+      dataIndex: 'company_name',
       valueType: 'text',
     },
     {
@@ -915,24 +999,58 @@ const TableList: React.FC = () => {
       sorter: true,
       valueType: 'dateTime',
     },
-    
+
     {
-      title: access.alertrule_list_tab() ?"Customer": "Organization",
-      dataIndex: 'organization_id',
-     
-      valueEnum: organizationMap,
-      hideInSearch: !(access.alertrule_list_tab() || access.canAdmin) || tab=="Terminal" ?true:false,
+      title: "Date of Threshold Alert Creation",
+
+
+      hideInDescriptions: true,
       hideInTable: true,
-      hideInDescriptions:true,
+      fieldProps: { style: { width: '100%' }, placeholder: ['From ', 'To '] },
+
+      dataIndex: 'created_at',
+      valueType: 'dateRange',
+
+      search: {
+        transform: (value) => {
+          if (value.length > 0) {
+            value[0] = moment(new Date(value[0])).format('YYYY-MM-DD') + " 00:00:00"
+            value[1] = moment(new Date(value[1])).format('YYYY-MM-DD') + " 23:59:59"
+            return {
+              'created_at': {
+                'field': 'created_at',
+                'op': 'between',
+                'data': value
+              }
+
+            }
+          }
+
+        }
+      }
+
+
+
+    },
+
+
+    {
+      title: access.alertrule_list_tab() ? "Customer" : "Organization",
+      dataIndex: 'organization_id',
+
+      valueEnum: organizationMap,
+      hideInSearch: !(access.alertrule_list_tab() || access.canAdmin) || tab == "Self" ? true : false,
+      hideInTable: true,
+      hideInDescriptions: true,
       fieldProps: {
         options: organizationList,
         multiple: true,
-        mode:"multiple",
+        mode: "multiple",
         notFoundContent: <Empty />,
       },
       search: {
         transform: (value) => {
-          if (value && value.length>0) {
+          if (value && value.length > 0) {
             return {
               'organization_id': {
                 'field': 'organization_id',
@@ -945,12 +1063,12 @@ const TableList: React.FC = () => {
         }
       }
     },
-   
+
     {
       title: <FormattedMessage id="pages.searchTable.titleOption" defaultMessage="Operating" />,
       dataIndex: 'option',
       valueType: 'option',
-      hideInTable:tab=="Trader"?true:false,
+      hideInTable: tab == "Others" ? true : false,
       render: (_, record) => [
 
         <Access accessible={access.canAlertruleMod()} fallback={<div></div>}>
@@ -980,10 +1098,7 @@ const TableList: React.FC = () => {
 
                 })
 
-                // record.send_email_select = record.send_email_select.split(",")
-
-
-
+             
               } catch (e) {
 
               }
@@ -1019,25 +1134,7 @@ const TableList: React.FC = () => {
 
           </a>
         </Access>
-        /*,
-          <Access accessible={access.canAlertruleMod()} fallback={<div></div>}>
-            <a
-              title={formatMessage({ id: "pages.details", defaultMessage: "Details" })  }
-            key="config"
-            onClick={() => {
-              setCurrentRow(record);
-              setShowDetail(true);
-            
-            }}
-          >
-              <InfoCircleOutlined style={{ fontSize:'20px'} } /> 
-           
-          </a>
-        </Access>*/
-
-
-
-        
+       
 
       ],
     }
@@ -1062,84 +1159,68 @@ const TableList: React.FC = () => {
 
   }
 
- 
+
   return (
-
-
-
 
     <RcResizeObserver
       key="resize-observer"
       onResize={(offset) => {
-        const { innerWidth, innerHeight } = window;
-       
-        var h = document.getElementsByClassName("ant-table-thead")?.[0]?.offsetHeight + 350
-        if (offset.width > 1280) {
-         
-          setResizeObj({ ...resizeObj, searchSpan: 8, tableScrollHeight: innerHeight - h });
-        }
-        if (offset.width < 1280 && offset.width > 900) {
-        
-          setResizeObj({ ...resizeObj, searchSpan: 12, tableScrollHeight: innerHeight - h });
-        }
-        if (offset.width < 900 && offset.width > 700) {
-          setResizeObj({ ...resizeObj, searchSpan: 24, tableScrollHeight: innerHeight - h });
-         
-        }
-       
-       
-        
+        ResizeObserverDo(offset, setResizeObj, resizeObj)
+
+
       }}
     >
 
-      
       <PageContainer className="myPage" header={{
-        title: isMP ? null : < FormattedMessage id="pages.alertrule.title" defaultMessage="Threshold Limit List" /> ,
-      breadcrumb: {},
-      extra: isMP?null:[<Access accessible={access.canAlertruleAdd()} fallback={<div></div>}>
-        {tab =='Terminal' &&  <Button
+        title: isMP ? null : < FormattedMessage id="pages.alertrule.title" defaultMessage="Threshold Limit List" />,
+        breadcrumb: {},
+        extra: isMP ? null : [<Access accessible={access.canAlertruleAdd()} fallback={<div></div>}>
+          {tab == 'Self' && <Button
 
-          type="primary"
-          key="primary"
+            type="primary"
+            key="primary"
+            onClick={() => {
+              handleModalOpen(true);
+            }}
+          >
+            <PlusOutlined /> <FormattedMessage id="pages.searchTable.new" defaultMessage="Create New" />
+          </Button>}
+        </Access>, <Button type="primary" key="print"
           onClick={() => {
-            handleModalOpen(true);
+            if (selectedRowsState.length == 0) {
+              message.error(<FormattedMessage
+                id="pages.selectDataFirst"
+                defaultMessage="Please select data first!"
+              />);
+              return false;
+            }
+            handlePrintModalVisible(true)
           }}
-        >
-          <PlusOutlined /> <FormattedMessage id="pages.searchTable.new" defaultMessage="Create New" />
-        </Button>}
-      </Access>, <Button type="primary" key="print"
-        onClick={() => {
-          if (selectedRowsState.length == 0) {
-            message.error(<FormattedMessage
-              id="pages.selectDataFirst"
-              defaultMessage="Please select data first!"
-            />);
-            return false;
-          }
-          handlePrintModalVisible(true)
-        }}
-      ><PrinterOutlined /> <FormattedMessage id="pages.Print" defaultMessage="Print" />
+        ><PrinterOutlined /> <FormattedMessage id="pages.Print" defaultMessage="Print" />
+        </Button>, <Button type="primary" key="out"
+          onClick={() => exportCSV(selectedRowsState, columns)}
+        ><FileExcelOutlined /> <FormattedMessage id="pages.CSV" defaultMessage="CSV" />
         </Button>]
       }}>
 
 
-        {access.dashboard_tab() && <ProCard
-         // title={<div className="my-font-size" style={{ height: 14, lineHeight: '14px', fontSize: 12 }}>Threshold set by</div>}
+        {access.alertrule_list_tab() && <ProCard
+
           headStyle={{ height: 14, lineHeight: '14px', fontSize: 12 }}
           className="my-tab"
           tabs={{
             type: 'card',
-            //tabPosition,
+
             activeKey: tab,
             items: [
               {
-                label: <div title="Threshold set by Terminal">Terminal</div>,
-                key: 'Terminal',
+                label: <div title={"Threshold set by " + currentUser?.company_name}>{currentUser?.company_name}</div>,
+                key: 'Self',
                 children: null,
               },
               {
-                label: <div title="Threshold set by Trader">Customer</div>,
-                key: 'Trader',
+                label: <div title="Threshold set by Others">Others</div>,
+                key: 'Others',
                 children: null,
               }
             ],
@@ -1153,99 +1234,100 @@ const TableList: React.FC = () => {
 
             },
           }}
-        />}  
-      {!isMP && (<ConfigProvider renderEmpty={customizeRenderEmpty}><ProTable<AlertruleListItem, API.PageParams>
-       
-        formRef={formRef}
-        className="mytable"
-        actionRef={actionRef}
-        rowKey="id"
-         scroll={{ x: 1800, y: resizeObj.tableScrollHeight }}
-        bordered size="small"
+        />}
+        {!isMP && (<ConfigProvider renderEmpty={customizeRenderEmpty}><ProTable<AlertruleListItem, API.PageParams>
+
+          formRef={formRef}
+          className="mytable"
+          actionRef={actionRef}
+          rowKey="id"
+          scroll={{ x: 1800, y: resizeObj.tableScrollHeight }}
+          bordered size="small"
           search={{
             layout: "vertical",
-          labelWidth: 210,
-          span: resizeObj.searchSpan,
-          searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
-        }}
-        options={false }
-        toolBarRender={() => []
+            labelWidth: 210,
+            span: resizeObj.searchSpan,
+            searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
+          }}
+          options={false}
+          toolBarRender={() => []
 
-        }
+          }
           pagination={{ size: "default", showSizeChanger: true, pageSizeOptions: [10, 20, 50, 100, 500] }}
           request={(params, sorter) => alertrule({
             ...params, sorter, tab: {
               'field': 'tab',
               'op': 'eq',
               'data': tab
-            } })}
-        columns={columns}
-        rowSelection={access.canAlertruleDel()?{
-          onChange: (_, selectedRows) => {
-            setSelectedRows(selectedRows);
-          },
-        }:false}
-      /></ConfigProvider >)}
+            }
+          })}
+          columns={columns}
+          rowSelection={access.canAlertruleDel() ? {
+            onChange: (_, selectedRows) => {
+              setSelectedRows(selectedRows);
+            },
+          } : false}
+        /></ConfigProvider >)}
 
-      {isMP && (<>
-       
+        {isMP && (<>
+
           <NavBar backArrow={false} left={
             <MPSort columns={columns} onSort={(k) => {
               setMPSorter(k)
               getData(1)
             }} />} right={right} onBack={back}>
-          {intl.formatMessage({
-            id: 'pages.alertrule.title',
-            defaultMessage: 'Threshold Limit List',
-          })}
-        </NavBar>
+            {intl.formatMessage({
+              id: 'pages.alertrule.title',
+              defaultMessage: 'Threshold Limit List',
+            })}
+          </NavBar>
 
-        <div style={{ padding: '20px', backgroundColor: "#5000B9", display: showMPSearch ? 'block' : 'none' }}>
-          <Search columns={columns.filter(a => !(a.hasOwnProperty('hideInSearch') && a['hideInSearch']))} action={actionRef} loading={false}
+          <div style={{ padding: '20px', backgroundColor: "#5000B9", display: showMPSearch ? 'block' : 'none' }}>
+            <Search columns={columns.filter(a => !(a.hasOwnProperty('hideInSearch') && a['hideInSearch']))} action={actionRef} loading={false}
 
-            onFormSearchSubmit={onFormSearchSubmit}
+              onFormSearchSubmit={onFormSearchSubmit}
 
               dateFormatter={'string'}
               formRef={formRef}
-            type={'form'}
-            cardBordered={true}
-            form={{
-              submitter: {
-                searchConfig: {
+              type={'form'}
+              cardBordered={true}
+              form={{
+                submitter: {
+                  searchConfig: {
 
-                  submitText: < FormattedMessage id="pages.search" defaultMessage="Search" />,
+                    submitText: < FormattedMessage id="pages.search" defaultMessage="Search" />,
+                  }
+
                 }
+              }}
 
-              }
-            }}
+              search={{}}
+              manualRequest={true}
+            />
+          </div>
+          <List>
+            {data.map((item, index) => (
+              <List.Item key={index}>
 
-            search={{}}
-            manualRequest={true}
-          />
-        </div>
-        <List>
-          {data.map((item, index) => (
-            <List.Item key={index}>
+                <ProDescriptions<AlertruleListItem>
+                  bordered={true}
+                  size="small"
+                  className="jetty-descriptions"
+                  layout="horizontal"
+                  column={1}
+                  title={item?.process_name}
+                  request={async () => ({
+                    data: item || {},
+                  })}
+                  params={{
+                    id: item?.id,
+                  }}
+                  columns={columns as ProDescriptionsItemProps<AlertruleListItem>[]}
+                />
 
-              <ProDescriptions<AlertruleListItem>
-                bordered={true}
-                size="small"
-                className="jetty-descriptions"
-                layout="horizontal"
-                column={1}
-                title={item?.process_name}
-                request={async () => ({
-                  data: item || {},
-                })}
-                params={{
-                  id: item?.id,
-                }}
-                columns={columns as ProDescriptionsItemProps<AlertruleListItem>[]}
-              />
-
-            </List.Item>
-          ))}
-        </List>
+              </List.Item>
+            ))}
+          </List>
           {MPPagination.total ? <div style={{ textAlign: 'center', padding: "20px 10px 90px 10px" }}>
             <Pagination
 
@@ -1254,104 +1336,104 @@ const TableList: React.FC = () => {
                 getData(page, MPfilter, pageSize)
               }}
               total={MPPagination.total}
-              
+
               showTotal={(total, range) => `${range[0]}-${range[1]} of ${total} items`}
               defaultPageSize={3}
               showSizeChanger={true}
-              pageSizeOptions={ [3, 20, 50, 100, 500] }
+              pageSizeOptions={[3, 20, 50, 100, 500]}
               defaultCurrent={1}
             />
           </div> : customizeRenderEmpty()}
 
           <FloatButton.BackTop visibilityHeight={0} />
-      </>)}
-     
-      
-      <CreateForm
-        onSubmit={async (value) => {
-         
-          const success = await handleAdd(value as AlertruleListItem);
-          if (success) {
+        </>)}
+
+
+        <CreateForm
+          onSubmit={async (value) => {
+
+            const success = await handleAdd(value as AlertruleListItem);
+            if (success) {
+              handleModalOpen(false);
+              setCurrentRow(undefined);
+              if (isMP) {
+                setData([]);
+                getData(1, MPfilter)
+              }
+              if (actionRef.current) {
+                actionRef.current.reload();
+              }
+            }
+          }}
+          onCancel={() => {
             handleModalOpen(false);
-            setCurrentRow(undefined);
-            if (isMP) {
-              setData([]);
-              getData(1, MPfilter)
+            if (!showDetail) {
+              setCurrentRow(undefined);
             }
-            if (actionRef.current) {
-              actionRef.current.reload();
+          }}
+          createModalOpen={createModalOpen}
+       
+        />
+        <UpdateForm
+          onSubmit={async (value) => {
+            value.id = currentRow?.id
+            const success = await handleUpdate(value);
+            if (success) {
+              handleUpdateModalOpen(false);
+              setCurrentRow(undefined);
+              if (isMP) {
+
+                setData([]);
+                getData(1, MPfilter)
+              }
+              if (actionRef.current) {
+                actionRef.current.reload();
+              }
             }
-          }
-        }}
-        onCancel={() => {
-          handleModalOpen(false);
-          if (!showDetail) {
-            setCurrentRow(undefined);
-          }
-        }}
-        createModalOpen={createModalOpen}
-        //values={currentRow || {}}
-      />
-      <UpdateForm
-        onSubmit={async (value) => {
-          value.id = currentRow?.id
-          const success = await handleUpdate(value);
-          if (success) {
+          }}
+          onCancel={() => {
             handleUpdateModalOpen(false);
-            setCurrentRow(undefined);
-            if (isMP) {
-             
-              setData([]);
-              getData(1, MPfilter)
+            if (!showDetail) {
+              setCurrentRow(undefined);
             }
-            if (actionRef.current) {
-              actionRef.current.reload();
-            }
-          }
-        }}
-        onCancel={() => {
-          handleUpdateModalOpen(false);
-          if (!showDetail) {
-            setCurrentRow(undefined);
-          }
-        }}
-        updateModalOpen={updateModalOpen}
+          }}
+          updateModalOpen={updateModalOpen}
           values={{ ...currentRow, type: currentRow?.type + "", flow_id: currentRow?.type == 2 ? null : currentRow?.flow_id } || {}}
-      />
+        />
 
-      <Drawer
-        width={isMP ? '100%':600}
-        open={showDetail}
-        onClose={() => {
-          setCurrentRow(undefined);
-          setShowDetail(false);
-        }}
-        closable={isMP?true:false}
-      >
-        {currentRow?.id && (
-          <ProDescriptions<AlertruleListItem>
-            column={isMP ? 1 : 1}
-            title={currentRow?.process_name}
-            request={async () => {
-              var d = { ...currentRow }
-              d.email = d.email.split(";").map((a) => {
-                a = a.replace(',a', ',Amber')
-                a = a.replace(',r', ',Red')
-                return a
-              })
-               d.email=d.email.join(";")
-              return { data: d || {} }
+        <Drawer
+          width={isMP ? '100%' : 600}
+          open={showDetail}
+          onClose={() => {
+            setCurrentRow(undefined);
+            setShowDetail(false);
+          }}
+          closable={isMP ? true : false}
+        >
+          {currentRow?.id && (
+            <ProDescriptions<AlertruleListItem>
+              column={isMP ? 1 : 1}
+              title={currentRow?.process_name}
+              request={async () => {
+                var d = { ...currentRow }
+                d.email = d.email.split(";").map((a) => {
+                  a = a.replace(',a', ',Amber')
+                  a = a.replace(',r', ',Red')
+                  return a
+                })
+                d.email = d.email.join(";")
+                return { data: d || {} }
 
 
-            }}
-            params={{
-              id: currentRow?.id,
-            }}
-            columns={columns as ProDescriptionsItemProps<AlertruleListItem>[]}
-          />
-        )}
+              }}
+              params={{
+                id: currentRow?.id,
+              }}
+              columns={columns as ProDescriptionsItemProps<AlertruleListItem>[]}
+            />
+          )}
         </Drawer>
-        {/* 调用打印模块 */}
+        {/* Calling the printing module */}
         <FrPrint
           title={""}
           subTitle={paramsText}
@@ -1362,20 +1444,9 @@ const TableList: React.FC = () => {
           }}
           printModalVisible={printModalVisible}
         />
-        {/*
-         <div style={{ marginTop: -45, paddingLeft: 10 }}>
-          <Button
-
-            type="primary"
-            onClick={async () => {
-              history.back()
-            }}
-          >Return to previous page</Button>
-        </div>
-
-        */ }
+       
       </PageContainer>
-      </RcResizeObserver>
+    </RcResizeObserver>
   )
 };
 

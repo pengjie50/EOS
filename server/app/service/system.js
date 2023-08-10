@@ -6,7 +6,7 @@
 */
 'use strict'
 
-const Service = require('egg').Service;
+const Service = require('./base_service');
 const uuid = require('uuid');
 const company = require('../model/company');
 
@@ -14,7 +14,36 @@ const company = require('../model/company');
 class SystemService extends Service {
 
     async fieldUniquenessCheck(params) {
-        const ctx = this.ctx;
+        const { ctx,app } = this;
+
+        if (params.where.alias) {
+
+            var arr = params.where.alias.split(",")
+            params.where[app.Sequelize.Op.or] =[]
+            arr.forEach((alias) => {
+                params.where[app.Sequelize.Op.or].push(
+                    {
+                        alias: { [app.Sequelize.Op.like]: '%,' + alias }
+                      
+                    },
+                    {
+                        alias: { [app.Sequelize.Op.like]: alias+',%' }
+
+                    },
+                    {
+                        alias: { [app.Sequelize.Op.like]: '%,'+alias+',%' }
+
+                    },{
+                        alias: { [app.Sequelize.Op.eq]: alias }
+                      
+                    }
+                )
+
+                 
+            })
+           delete params.where.alias
+        }
+        
         var res = await ctx.model[params.model].findOne({
             where: params.where,
             raw: true
@@ -24,12 +53,28 @@ class SystemService extends Service {
     async fieldSelectData(params) {
 
 
-        const { ctx, app } = this;
+        const { ctx, app,service } = this;
         var Op = app.Sequelize.Op
         let obj = {}
+
+
+         
+
+
+
+
+
+
+
+
+
+
+
+
+
         
         if (params.where) {
-            console.log(params.where)
+          
             obj.where = params.where
             if (params.Op) {
                 var w = {}
@@ -47,73 +92,191 @@ class SystemService extends Service {
             obj.where = {}
         }
 
-        if (params.model == 'Transaction') {
 
 
+        if (params.model == 'Alert') {
 
-            if (ctx.user.role_type == 'Super') {
-
-
-            } else {
-
-
-                obj.where[Op['or']] = [{ terminal_id: [...ctx.user.accessible_organization, ctx.user.company_id] }, { trader_id: [...ctx.user.accessible_organization, ctx.user.company_id] }]
+            await service.alert.list(obj)
+           
 
 
+            var data = {}
 
-            }
-        } else if (params.model == 'Alert') {
-            var Op = app.Sequelize.Op
+            ctx.body.data.forEach((a) => {
+                if (params.field == 'alert_id') {
+                    data[a[params.field]] = "A" + a[params.field]
+                } else if (params.field == 't.status') {
+                    data[a[params.field]] = a[params.field] == 0 ? "Open" : (a[params.field] == 1 ?"Closed":"Cancelled")
+                } else if (params.field == 'flow_id_to') {
+                    
+                    data[a.flow_id + "_" + a[params.field]] = a.flow_id + "_" + a[params.field]
+                } else {
 
-            if (ctx.user.role_type == 'Super') {
-
-                if (obj.where.organization_id) {
-                    obj.where.company_id = obj.where.organization_id
+                    data[a[params.field]] = a[params.field]
                 }
 
-            } else {
-                if (this.access("alert_list")) {
+            })
 
-                    obj.where.user_id = ctx.user.user_id
 
-                    if (this.access("alert_list_company")) {
-                        delete obj.where.user_id
-                        obj.where.company_id = ctx.user.company_id
+            
+            ctx.body = { success: true, data: data }
+
+            return
+        }
+
+        if (params.model == 'Report') {
+            if (ctx.user.company_type!='Super') {
+                obj.where = { company_id: ctx.user.company_id }
+            }
+           
+
+
+
+        } else
+            if (params.model == 'Transaction') {
+
+
+
+                if (ctx.user.role_type == 'Super') {
+                    if (obj.where.organization_id) {
+
+                        obj.where[Op['or']] = [{ terminal_id: obj.where.organization_id }, { trader_id: obj.where.organization_id }]
                     }
 
-                    if (this.access("alert_list_tab")) {
-                        if (obj.where.tab) {
-                            if (obj.where.tab[app.Sequelize.Op.eq] == 'Terminal') {
+                } else {
 
 
 
 
-                            } if (obj.where.tab[app.Sequelize.Op.eq] == 'Trader') {
-                                delete obj.where.user_id
-                                if (!obj.where.organization_id) {
 
-                                    obj.where.company_id = {
-                                        [app.Sequelize.Op['in']]: ctx.user.accessible_organization
-                                    }
+
+                    if (ctx.user.accessible_organization.length == 0) {
+                        obj.where.trader_id = "none"
+                        obj.where.terminal_id = "none"
+                    } else {
+                        if (obj.where.organization_id) {
+
+                            let terminalFilter = obj.where.organization_id[Op['in']].filter(item => ctx.user.accessible_organization_terminal.indexOf(item) > -1)
+                            let traderFilter = obj.where.organization_id[Op['in']].filter(item => ctx.user.accessible_organization_trader.indexOf(item) > -1)
+
+                            if (terminalFilter.length > 0 && traderFilter.length > 0) {
+                                obj.where.terminal_id = ctx.user.accessible_organization_terminal
+                                obj.where.trader_id = ctx.user.accessible_organization_trader
+                            } else {
+                                if (ctx.user.company_type == "Terminal" && traderFilter.length > 0) {
+                                    obj.where.terminal_id = ctx.user.company_id
+                                    obj.where.trader_id = traderFilter
+                                } else if (ctx.user.company_type == "Trader" && terminalFilter.length > 0) {
+                                    obj.where.terminal_id = terminalFilter
+                                    obj.where.trader_id = ctx.user.company_id
                                 } else {
-
-                                    obj.where.company_id = obj.where.organization_id
+                                    obj.where.trader_id = "none"
+                                    obj.where.terminal_id = "none"
                                 }
 
-                            } else if (obj.where.tab[app.Sequelize.Op.eq] == 'All') {
-                                delete obj.where.user_id
-                                obj.where.company_id = {
-                                    [app.Sequelize.Op['in']]: [...ctx.user.accessible_organization, ctx.user.company_id]
-                                }
+
+
                             }
+
+                        } else {
+
+                            obj.where.terminal_id = ctx.user.accessible_organization_terminal
+                            obj.where.trader_id = ctx.user.accessible_organization_trader
+
 
                         }
                     }
+
+
+
+
+                }
+            } else if (params.model == 'Alertrule') {
+
+                if (ctx.user.role_type != "Super") {
+                    var Op = app.Sequelize.Op
+
+
+                    obj.where[Op.or] = [
+
+                        {
+                            type: { [Op.ne]: 1 },
+                            flow_id: { [Op.in]: [ctx.user.accessible_timestamp, "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"] },
+                            flow_id_to: { [Op.eq]: null }
+                        },
+                        {
+                            type: { [Op.eq]: 1 },
+                            flow_id: { [Op.in]: ctx.user.accessible_timestamp },
+                            flow_id_to: { [Op.in]: ctx.user.accessible_timestamp }
+                        }
+                    ]
+
+
                 }
 
+
+
+
+
+                if (ctx.user.role_type == 'Super') {
+                    if (obj.where.organization_id) {
+                        obj.where.company_id = obj.where.organization_id
+                    }
+
+
+                } else {
+
+                    if (this.access("alertrule_list")) {
+
+                        obj.where.user_id = ctx.user.user_id
+
+                        if (this.access("alertrule_list_company")) {
+                            delete obj.where.user_id
+                            obj.where.company_id = ctx.user.company_id
+                        }
+
+                        if (this.access("alertrule_list_tab")) {
+                            if (obj.where.tab) {
+                                if (obj.where.tab[app.Sequelize.Op.eq] == 'Self') {
+
+
+
+
+                                } if (obj.where.tab[app.Sequelize.Op.eq] == 'Others') {
+                                    delete obj.where.user_id
+                                    if (!obj.where.organization_id) {
+
+                                        obj.where.company_id = {
+                                            [app.Sequelize.Op['in']]: ctx.user.accessible_organization.filter((a) => {
+                                                return a != ctx.user.company_id
+                                            })
+                                        }
+                                    } else {
+
+                                        obj.where.company_id = obj.where.organization_id
+                                    }
+
+                                } else if (obj.where.tab[app.Sequelize.Op.eq] == 'All') {
+                                    delete obj.where.user_id
+                                    obj.where.company_id = {
+                                        [app.Sequelize.Op['in']]: [...ctx.user.accessible_organization, ctx.user.company_id]
+                                    }
+                                }
+
+                            }
+                        }
+                    }
+
+
+
+                }
+                delete obj.where.organization_id
+                delete obj.where.tab
+
+
+
+
             }
-            delete obj.where.tab
-        }
 
         var companyMap = {}
         if (params.field != 'jetty_id') {
@@ -121,7 +284,7 @@ class SystemService extends Service {
             
             if (params.field == 'eos_id') {
                 obj.where[params.field] = { [this.app.Sequelize.Op.like]: params.value.replace("E", "") + "%" }
-            } else if (params.field == 'organization_id' || params.field == 'threshold_organization_id') {
+            } else if (params.field == 'organization_id' || params.field == 'threshold_organization_id' || params.field == 'company_id') {
                 var companyList = await ctx.model.Company.findAll({ where: { name: { [this.app.Sequelize.Op.like]: params.value + "%" } } })
                 companyList.forEach((c) => {
                     companyMap[c.id] = c.name
@@ -256,19 +419,49 @@ class SystemService extends Service {
                 data[a.id] = a.username
             } else if (params.field == 'organization_id' || params.field == 'threshold_organization_id') {
 
-                if (companyMap[a.trader_id] ) {
-                    data[a.trader_id] = companyMap[a.trader_id] 
+                if (ctx.user.role_type == "Super") {
+                   
+                    
+                } else {
+                    if (this.access("transactions_list_tab")) {
+                        if (companyMap[a.trader_id]) {
+                            data[a.trader_id] = companyMap[a.trader_id]
+                        }
+                    } else {
+                        if (companyMap[a.terminal_id]) {
+                            data[a.terminal_id] = companyMap[a.terminal_id]
+                        }
+                    }
+
+
                 }
 
-                if ( companyMap[a.terminal_id]) {
-                    data[a.terminal_id] = companyMap[a.terminal_id]
-                }
+                
+                
+               
 
                
 
 
+            } else if (params.field == 'company_id' ) {
+
+                
+                 data[a.company_id] = companyMap[a.company_id]
+                
+
+                
+
+
+
+
             } else if (params.field == 'eos_id') {
                 data[a[params.field]] = "E" + a[params.field]
+            } else if (params.field == 'alertrule_id') {
+                data[a[params.field]] = "T" + a[params.field]
+            } else if (params.field == 'alert_id') {
+                data[a[params.field]] = "A" + a[params.field]
+            } else if (params.field == 'role_id') {
+                data[a[params.field]] = "R" + a[params.field]
             } else {
                 data[a[params.field]] = a[params.field]
             }
@@ -319,7 +512,7 @@ class SystemService extends Service {
        
 
         var res = null
-        app.logger.warn(JSON.stringify(params));
+       
         if (params.payload) {
            
 

@@ -37,7 +37,36 @@ class InterfacedataService extends Service {
 
         const list = await ctx.model.Interfacedata.findAndCountAll(obj)
         var eos_id = []
-        service.tool.sendMail("504475705@qq.com", "222222", "eeeeee")
+
+
+
+
+        /*service.tool.sendMail("504475705@qq.com", "222222", "eeeeee")
+
+
+       var all= await ctx.model.AlertruleTransaction.findAll()
+
+       
+
+        var step2 = 0
+        async function Do2() {
+            if (step2 >= all.length) {
+                return
+            }
+            var bb=all[step2]
+            if (bb.product_quantity_in_mt_from) {
+                await bb.update({ product_quantity_from: bb.product_quantity_in_mt_from, product_quantity_to: bb.product_quantity_in_mt_to,uom:"mt" })
+            }
+
+            if (bb.product_quantity_in_bls_60_f_from) {
+                await bb.update({ product_quantity_from: bb.product_quantity_in_bls_60_f_from, product_quantity_to: bb.product_quantity_in_bls_60_f_to, uom: "bls_60_f" })
+            }
+            
+            step2++
+            await Do2()
+        }
+        await Do2()*/
+
         list.rows.forEach((t) => {
            
             eos_id.push(t.eos_id)

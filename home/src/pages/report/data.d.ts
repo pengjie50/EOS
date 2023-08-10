@@ -7,7 +7,6 @@ export interface ReportListItem  {
 
 export interface ReportList  {
   data?: ReportListItem[];
-  /** 列表的内容总数 */
   total?: number;
   success?: boolean;
 };

@@ -51,7 +51,28 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           defaultMessage: 'This company name is already in use',
         }))
       } else {
-        callback(undefined); // 必须返回一个callback
+        callback(undefined); 
+      }
+    });
+
+  }
+
+  const onlyCheck2 = (rule: any, value: any, callback: (arg0: string | undefined) => void) => {
+
+
+    fieldUniquenessCheck({ where: { alias: value }, model: 'Company' }).then((res) => {
+      if (values.alias == value) {
+        callback(undefined);
+        return
+      }
+      if (res.data) {
+
+        callback(intl.formatMessage({
+          id: 'pages.xxx',
+          defaultMessage: 'This company Alias is already in use',
+        }))
+      } else {
+        callback(undefined);
       }
     });
 
@@ -80,7 +101,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           resetButtonProps: {
             onClick: () => {
               restFormRef.current?.resetFields();
-              //   setModalVisible(false);
+             
             },
           },
         }}
@@ -109,28 +130,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           { validator: onlyCheck }
         ]}
       />
-      {/* <ProFormTreeSelect
-        name="pid"
-        width="md"
-        label={intl.formatMessage({
-          id: 'pages.user.parentCompany',
-          defaultMessage: 'Parent Company',
-        })}
-        request={async () => {
-          return company({}).then((res) => {
-
-            res.data = res.data.map((r) => {
-              r['value'] = r.id
-              r['title'] = r.name
-              return r
-            })
-
-            // setFlowList(tree(res.data, "                                    ", 'pid'))
-            return tree(res.data, "                                    ", 'pid')
-          });
-
-        }}
-      />*/ }
+     
       <ProFormSelect
         name="type"
         label={intl.formatMessage({
@@ -150,11 +150,11 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           },
         ]}
         valueEnum={{
-          "Surveyor": "Surveyor",
+         // "Surveyor": "Surveyor",
           "Trader": "Trader",
-          "Agent": "Agent",
+          //"Agent": "Agent",
           "Terminal": "Oil Terminal",
-          "Pilot": "Pilot",
+         // "Pilot": "Pilot",
           "Super": "Super User",
 
 
@@ -164,6 +164,10 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
       <ProFormTextArea
         name="alias"
         width="md"
+        rules={[
+          
+          { validator: onlyCheck2 }
+        ]}
         label={intl.formatMessage({
           id: 'pages.company.xxx',
           defaultMessage: 'Company Alias',

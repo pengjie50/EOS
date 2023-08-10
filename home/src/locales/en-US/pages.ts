@@ -87,6 +87,8 @@ export default {
   'pages.deleting': 'Deleting',
   'pages.deletedSuccessfully': 'Deleted successfully and will refresh soon',
   'pages.deleteFailed': 'Delete failed, please try again!',
+
+ 
   'pages.error.1001': 'Incorrect Username or Password',
   'pages.error.1002': 'Your password is incorrect, please input valid password or contact the administrator of this system for assistance',
   'pages.error.1003': 'Password continuous input error, account locked',
@@ -99,6 +101,10 @@ export default {
   'pages.error.1010': 'Failed to verify blockchain data',
   'pages.error.1011': 'Account logged in on another device, you have been logged out',
   'pages.error.1012': 'This role is currently assigned to users. Please remove these assignments before attempting to delete the role.',
+
+  'pages.error.1013': 'Sending email failed, creating user failed',
+
+
   'pages.user.add': 'New User',
   'pages.user.mod': 'Update User',
   'pages.user.username': 'Username',
@@ -215,7 +221,7 @@ export default {
   'pages.loginlog.success': 'Success',
   'pages.loginlog.error': 'Error',
   'pages.loginlog.information': 'Information',
-  'pages.loginlog.loginTime': 'Login Date',
+  'pages.loginlog.loginTime': 'Login Date and Time',
 
   'pages.alert.addrule': 'Add alert rule',
   'pages.alert.rulelist': 'View alert rules',

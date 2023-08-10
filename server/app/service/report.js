@@ -172,7 +172,7 @@ class ReportService extends Service {
                 if (next) {
                     var c = { ...transactionsMap[i] }
                     delete c.flow_id
-                    console.log("xxxxxxxxxxxxxxxxx", transactionsMap[i])
+                   
                     c.id = a.id
                     c.flow_pid = a.flow_pid
                     c.flow_id = a.flow_id

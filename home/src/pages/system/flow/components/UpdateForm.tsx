@@ -82,7 +82,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           resetButtonProps: {
             onClick: () => {
               restFormRef.current?.resetFields();
-              //   setModalVisible(false);
+              
             },
           },
         }}
@@ -117,7 +117,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         name="pid"
         label={intl.formatMessage({
           id: 'pages.flow.xxx',
-          defaultMessage: 'Process Name （Optional）',
+          defaultMessage: 'Process Name (Optional)',
         })}
         placeholder="Please select"
         allowClear

@@ -72,7 +72,14 @@ module.exports = app => {
             type: UUID
 
         },
-       
+        trader_name: {
+            type: STRING(100)
+
+        },
+        terminal_name: {
+            type: STRING(100)
+
+        },
         jetty_id: {
             type: UUID
 

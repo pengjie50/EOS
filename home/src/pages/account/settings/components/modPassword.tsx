@@ -85,7 +85,13 @@ const BaseView: React.FC = () => {
               }}
               hideRequiredMark
             >
-             
+            <div>
+              Your password should be at least eight characters and include at least the following:<br />
+              a) At least letters in both upper- and lowercase<br />
+              b) At least one number<br />
+              c) At least one special character
+            </div>
+            <br/>
               <ProFormText.Password
                 width="lg"
                 name="oldPassword"
@@ -113,12 +119,25 @@ const BaseView: React.FC = () => {
                 />}
                 rules={[
                    {
-                    required: true, pattern: new RegExp(/(?=.*[0-9])(?=.*[A-Z])(?=.*[a-z])(?=.*[\W])(?=.*[\S])^[0-9A-Za-z\S]{4,100}$/g),
-                  message: <>Your password should be at least eight characters and include at least the following:<br/>
-                    a) At least letters in both upper- and lowercase<br />
-                    b) At least one number<br />
-                    c) At least one special character</>
+                    required: true, pattern: new RegExp(/(?=.*[A-Z])(?=.*[a-z])/g),
+                    message: "At least letters in both upper- and lowercase"
+                   
+                  },
+                  {
+                    required: true, pattern: new RegExp(/(?=.*[0-9])/g),
+                    message: "At least one number"
+                  },
+                  {
+                    required: true, pattern: new RegExp(/(?=.*[\W])(?=.*[\S])/g),
+                    message: "At least one special character"
+                    
+                  },
+                  {
+                    required: true, pattern: new RegExp(/^.{8,100}$/g),
+                    message: "Your password should be at least eight characters"
+
                   }
+                  
 
                 ]}
               />
@@ -134,11 +153,24 @@ const BaseView: React.FC = () => {
                     rules={[
                      
                       {
-                        required: true, pattern: new RegExp(/(?=.*[0-9])(?=.*[A-Z])(?=.*[a-z])(?=.*[\W])(?=.*[\S])^[0-9A-Za-z\S]{4,100}$/g),
-                        message: <>Your password should be at least eight characters and include at least the following:<br />
-                          a) At least letters in both upper- and lowercase<br />
-                          b) At least one number<br />
-                          c) At least one special character</> },
+                        required: true, pattern: new RegExp(/(?=.*[A-Z])(?=.*[a-z])/g),
+                        message: "At least letters in both upper- and lowercase"
+
+                      },
+                      {
+                        required: true, pattern: new RegExp(/(?=.*[0-9])/g),
+                        message: "At least one number"
+                      },
+                      {
+                        required: true, pattern: new RegExp(/(?=.*[\W])(?=.*[\S])/g),
+                        message: "At least one special character"
+
+                      },
+                      {
+                        required: true, pattern: new RegExp(/^.{8,100}$/g),
+                        message: "Your password should be at least eight characters"
+
+                      },
                       {   //在这里使用antd 的validator通过promise去校验重复输入的密码和新密码是否一致
                         validator: (rule, value) =>
                           new Promise<void>((resolve, reject) => {

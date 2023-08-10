@@ -39,14 +39,8 @@ const { confirm } = Modal;
 import { InfiniteScroll, List, NavBar, Space, DotLoading } from 'antd-mobile'
 import { parseInt, template } from 'lodash';
 
-
-
-
 const handleAGenerateReport = async (fields: any) => {
-  /* const hide = message.loading(<FormattedMessage
-     id="pages.adding"
-     defaultMessage="Adding"
-   />);*/
+ 
   try {
 
     var cc = null
@@ -54,15 +48,10 @@ const handleAGenerateReport = async (fields: any) => {
       cc = res.data
 
     });
-    // hide();
-    /*  message.success(<FormattedMessage
-        id="pages.addedSuccessfully"
-        defaultMessage="Added successfully"
-      />);*/
-    
+   
     return cc;
   } catch (error) {
-    // hide();
+   
     message.error(<FormattedMessage
       id="pages.addingFailed"
       defaultMessage="Generate failed, please try again!"
@@ -174,8 +163,8 @@ export type UpdateFormProps = {
 
 };
 const UpdateForm: React.FC<UpdateFormProps> = (props) => {
-  
-  
+
+
 
   const [showDetail, setShowDetail] = useState<boolean>(false);
 
@@ -222,7 +211,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
   const [selectedRowKeys1, setSelectedRowKeys1] = useState<TransactionListItem[]>([]);
 
-  
+
   const intl = useIntl();
   const [responsive, setResponsive] = useState(false);
 
@@ -264,14 +253,14 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
     updateModalOpen,
     values
   } = props;
- 
+
   useEffect(() => {
-   
+
     if (values) {
- 
+
       if (!values.selected_fields) {
         values.selected_fields = []
-      } 
+      }
       var arr = columns.filter((c) => {
 
         return values.selected_fields.some((cc) => {
@@ -352,10 +341,6 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
       setFlowConf(b)
       setProcesses(p)
 
-
-      //  var treeData = tree(res.data, "                                    ", 'pid')
-      // setFlowTree(treeData)
-
       alertrule({
         type: {
           'field': 'type',
@@ -376,9 +361,6 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
       });
     });
-
-
-
 
 
     setAvailableColumns(columns)
@@ -410,7 +392,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
             onClick={() => {
 
               history.push(`/transaction/detail?transaction_id=` + entity.id);
-              // setShowDetail(true);
+              
             }}
           >
             {dom}
@@ -444,7 +426,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
     {
       title: <FormattedMessage id="pages.transaction.productType" defaultMessage="Product Type" />,
       dataIndex: 'product_name',
-      // valueEnum: producttypeList,
+      
     },
     {
       title: <FormattedMessage id="pages.transaction.arrivalID" defaultMessage="Arrival ID" />,
@@ -545,7 +527,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           defaultMessage: 'This name is already in use',
         }))
       } else {
-        callback(undefined); // 必须返回一个callback
+        callback(undefined); 
       }
     });
 
@@ -563,18 +545,18 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           defaultMessage: 'This name is already in use',
         }))
       } else {
-        callback(undefined); // 必须返回一个callback
+        callback(undefined); 
       }
     });
 
   }
 
 
-  
 
- 
+
+
   return (
-    
+
 
     <ModalForm width={'90%'}
       title="Template Info"
@@ -592,37 +574,6 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
         render: (_, dom) => null,
       }}>
-
-
-      {/* <ProFormRadio.Group
-        name="useExisting"
-        initialValue="new"
-        label="Generate your report with a new set of report parameters or from a saved report template. "
-        onChange={(v) => {
-          var o = formRef.current?.getFieldValue('useExisting')
-          formRef.current?.resetFields()
-          formRef.current?.setFieldValue('useExisting', o)
-          setAvailableColumns(columns)
-          setAvailableFilterColumns(columns)
-          setSelectedColumns([])
-          setSelectedFilterColumns([])
-
-        }}
-        options={[
-          {
-            label: 'New Report',
-            value: 'new',
-          },
-          {
-            label: 'Existing Report Template',
-            value: 'existing',
-          },
-
-        ]}
-      />*/ } 
-
-
-
 
 
 
@@ -864,7 +815,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
                     <DragSortTable
                       toolBarRender={() => [
-                       
+
                       ]}
                       options={false}
                       headerTitle="Available:"
@@ -890,7 +841,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                         </div>
                       )}
                       onDragSortEnd={(newDataSource: any) => {
-                       
+
                       }}
                     />
 
@@ -909,7 +860,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
                     <DragSortTable
                       toolBarRender={() => [
-                       
+
                       ]}
                       options={false}
                       headerTitle="Selected:"
@@ -935,9 +886,9 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                         </div>
                       )}
                       onDragSortEnd={(newDataSource: any) => {
-                        
+
                         setSelectedFilterColumns(newDataSource);
-                        
+
                       }}
                     />
 

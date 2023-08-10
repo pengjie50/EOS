@@ -37,23 +37,20 @@ module.exports = app => {
             type: UUID
 
         },
-        product_quantity_in_mt_from: {
+       
+
+        product_quantity_from: {
             type: INTEGER,
 
         },
-        product_quantity_in_mt_to: {
+        product_quantity_to: {
             type: INTEGER,
 
         },
-        product_quantity_in_bls_60_f_from: {
-            type: INTEGER,
+        uom: {
+            type: STRING(20)
 
         },
-        product_quantity_in_bls_60_f_to: {
-            type: INTEGER,
-
-        },
-
         vessel_size_dwt_from: {
             type: INTEGER,
 
@@ -99,11 +96,9 @@ module.exports = app => {
                 fields: ['flow_id', 'type', 'user_id', 'vessel_size_dwt_from', 'vessel_size_dwt_to']
             },
             {
-                fields: ['product_quantity_in_mt_from', 'product_quantity_in_mt_to']
-            },
-            {
-                fields: ['product_quantity_in_bls_60_f_from', 'product_quantity_in_bls_60_f_to']
+                fields: ['product_quantity_from', 'product_quantity_to']
             }
+           
 
         ],
 

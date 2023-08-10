@@ -63,8 +63,8 @@ class RoleService extends Service {
         params.company_id = 'cccccccc-cccc-cccc-cccc-cccccccccccc'
 
         params.role_type ="Normal"
-        const res = await ctx.model.Role.create(params);
-
+       const res = await ctx.model.Role.create(params);
+       
        
 
         if (res) {
@@ -93,6 +93,18 @@ class RoleService extends Service {
         })
 
         if (!user) {
+
+           
+            await ctx.model.User.destroy({
+                where: {
+                    role_id: params.id
+                }
+            })
+            await ctx.model.Rolepermission.destroy({
+                where: {
+                    role_id: params.id
+                }
+            })
             let res = await ctx.model.Role.destroy({
                 where: {
                     id: params.id

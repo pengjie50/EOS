@@ -38,7 +38,7 @@ class UploadController extends Controller {
         const params = ctx.request.body;
 
         let file = ctx.request.files[0]; // File contains information such as file name, file type, size, path, etc. You can print it yourself and take a look
-        console.log(file)
+        
         // read file
         var file2 = fs.readFileSync(file.filepath) //Files [0] represents obtaining the first file. If the front-end uploads multiple files, it can traverse this array object
        

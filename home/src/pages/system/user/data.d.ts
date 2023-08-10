@@ -8,7 +8,7 @@ export interface UserListItem  {
 
 export interface UserList  {
   data?: UserListItem[];
-  /** 列表的内容总数 */
+ 
   total?: number;
   success?: boolean;
 };

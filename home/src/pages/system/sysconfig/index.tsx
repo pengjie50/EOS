@@ -1,9 +1,12 @@
 import RcResizeObserver from 'rc-resize-observer';
+
+
 import MPSort from "@/components/MPSort";
 import { addSysconfig, removeSysconfig, sysconfig, updateSysconfig } from './service';
 import { PlusOutlined, SearchOutlined, FormOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import type { ActionType, ProColumns, ProDescriptionsItemProps } from '@ant-design/pro-components';
 import { SysconfigList, SysconfigListItem } from './data.d';
+import { ResizeObserverDo } from '@/components'
 import {
   FooterToolbar,
   ModalForm,
@@ -17,7 +20,7 @@ import {
 } from '@ant-design/pro-components';
 import { FormattedMessage, useIntl, formatMessage } from '@umijs/max';
 import { Button, Drawer, Input, message, Modal, Pagination, FloatButton, ConfigProvider, Empty } from 'antd';
-    
+
 import React, { useRef, useState, useEffect } from 'react';
 import CreateForm from './components/CreateForm';
 import UpdateForm from './components/UpdateForm';
@@ -27,7 +30,6 @@ const { confirm } = Modal;
 import { InfiniteScroll, List, NavBar, Space, DotLoading } from 'antd-mobile'
 /**
  * @en-US Add node
- * @zh-CN 添加节点
  * @param fields
  */
 
@@ -57,18 +59,21 @@ const handleAdd = async (fields: SysconfigListItem) => {
 
 /**
  * @en-US Update node
- * @zh-CN 更新节点
  *
  * @param fields
  */
 
 
-const handleUpdate = async (fields: Partial<SysconfigListItem> ) => {
+const handleUpdate = async (fields: Partial<SysconfigListItem>) => {
   const hide = message.loading(<FormattedMessage
     id="pages.modifying"
     defaultMessage="Modifying"
   />);
   try {
+
+    if (fields.hasOwnProperty("value1")) {
+      fields.value = fields.value1 + "/" + fields.value2
+    }
     await updateSysconfig({ ...fields });
     hide();
 
@@ -89,7 +94,6 @@ const handleUpdate = async (fields: Partial<SysconfigListItem> ) => {
 
 /**
  *  Delete node
- * @zh-CN 删除节点
  *
  * @param selectedRows
  */
@@ -142,12 +146,10 @@ const handleRemove = async (selectedRows: SysconfigListItem[], callBack: any) =>
 const TableList: React.FC = () => {
   /**
    * @en-US Pop-up window of new window
-   * @zh-CN 新建窗口的弹窗
    *  */
   const [createModalOpen, handleModalOpen] = useState<boolean>(false);
   /**
    * @en-US The pop-up window of the distribution update window
-   * @zh-CN 分布更新窗口的弹窗
    * */
   const [updateModalOpen, handleUpdateModalOpen] = useState<boolean>(false);
 
@@ -159,7 +161,6 @@ const TableList: React.FC = () => {
   const [resizeObj, setResizeObj] = useState({ searchSpan: 12, tableScrollHeight: 300 });
   /**
    * @en-US International configuration
-   * @zh-CN 国际化配置
    * */
   const intl = useIntl();
   //--MP start
@@ -170,7 +171,7 @@ const TableList: React.FC = () => {
   useEffect(() => {
 
 
-   
+
 
     if (isMP) {
       getData(1)
@@ -183,7 +184,7 @@ const TableList: React.FC = () => {
     <div style={{ fontSize: 24 }}>
       <Space style={{ '--gap': '16px' }}>
         <SearchOutlined onClick={e => { setShowMPSearch(!showMPSearch) }} />
-        {/*<PlusOutlined onClick={() => { handleModalOpen(true) }} />*/ }
+        {/*<PlusOutlined onClick={() => { handleModalOpen(true) }} />*/}
       </Space>
     </div>
   )
@@ -229,11 +230,11 @@ const TableList: React.FC = () => {
     })
 
 
-  
+
     setMPPagination({ total: append.total })
     setData(append.data)
   }
- 
+
   //--MP end
   const columns: ProColumns<SysconfigListItem>[] = [
     {
@@ -244,33 +245,29 @@ const TableList: React.FC = () => {
         />
       ),
       dataIndex: 'name',
-     
+      sorter: true,
       render: (dom, entity) => {
-        return (
-          <a
-            onClick={() => {
-              setCurrentRow(entity);
-              setShowDetail(true);
-            }}
-          >
-            {dom}
-          </a>
-        );
+        return dom
+
+
       },
     },
     {
       title: <FormattedMessage id="pages.sysconfig.key" defaultMessage="Key" />,
       dataIndex: 'config_key',
+      sorter: true,
       valueType: 'text',
     },
     {
       title: <FormattedMessage id="pages.sysconfig.value" defaultMessage="Value" />,
       dataIndex: 'value',
+      sorter: true,
       valueType: 'text',
     },
     {
       title: <FormattedMessage id="pages.sysconfig.description" defaultMessage="Description" />,
       dataIndex: 'description',
+      sorter: true,
       valueType: 'textarea',
     },
     {
@@ -282,6 +279,13 @@ const TableList: React.FC = () => {
           key="config"
           onClick={() => {
             handleUpdateModalOpen(true);
+            try {
+              record.value1 = record.value.split("/")[0]
+              record.value2 = record.value.split("/")[1]
+            } catch (e) {
+
+            }
+
             setCurrentRow(record);
           }}
         >
@@ -307,7 +311,7 @@ const TableList: React.FC = () => {
 
         </a>,*/
 
-       
+
       ],
     },
   ];
@@ -333,28 +337,15 @@ const TableList: React.FC = () => {
     <RcResizeObserver
       key="resize-observer"
       onResize={(offset) => {
-        const { innerWidth, innerHeight } = window;
+        ResizeObserverDo(offset, setResizeObj, resizeObj)
 
-        if (offset.width > 1280) {
-         
-          setResizeObj({ ...resizeObj, searchSpan: 8, tableScrollHeight: innerHeight - 420 });
-        }
-        if (offset.width < 1280 && offset.width > 900) {
-        
-          setResizeObj({ ...resizeObj, searchSpan: 12, tableScrollHeight: innerHeight - 420 });
-        }
-        if (offset.width < 900 && offset.width > 700) {
-          setResizeObj({ ...resizeObj, searchSpan: 24, tableScrollHeight: innerHeight - 420 });
-          
-        }
 
-       
 
       }}
     >
       <PageContainer className="myPage" header={{
-      title: isMP ? null : < FormattedMessage id="pages.sysconfig.title" defaultMessage="Security Settings" />,
-      breadcrumb: {},
+        title: isMP ? null : < FormattedMessage id="pages.sysconfig.title" defaultMessage="Security Settings" />,
+        breadcrumb: {},
         extra: isMP ? null : [
           /*
            <Button
@@ -366,90 +357,90 @@ const TableList: React.FC = () => {
         >
            <PlusOutlined /> <FormattedMessage id="pages.searchTable.new" defaultMessage="New" />
         </Button>,
-*/ 
-       
-      ]
+*/
+
+        ]
       }}>
-        {"" }
+        {""}
         {!isMP && (<ConfigProvider renderEmpty={customizeRenderEmpty}><ProTable<SysconfigListItem, API.PageParams>
           pagination={{ size: "default" }}
-        actionRef={actionRef}
+          actionRef={actionRef}
           rowKey="id"
-         
-          formRef={formRef }
+
+          formRef={formRef}
           scroll={{ x: 1800, y: resizeObj.tableScrollHeight }}
-        search={{
-          labelWidth: 130,
-          span: resizeObj.searchSpan,
-          searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
-        }}
+          search={{
+            labelWidth: 130,
+            span: resizeObj.searchSpan,
+            searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
+          }}
           options={false}
           bordered
-        className="mytable"
-        request={(params, sorter) => sysconfig({ ...params, sorter })}
-        columns={columns}
-        rowSelection={{
-          onChange: (_, selectedRows) => {
-            setSelectedRows(selectedRows);
-          },
-        }}
+          className="mytable"
+          request={(params, sorter) => sysconfig({ ...params, sorter })}
+          columns={columns}
+          rowSelection={{
+            onChange: (_, selectedRows) => {
+              setSelectedRows(selectedRows);
+            },
+          }}
         /></ConfigProvider>)}
 
-      {isMP && (<>
+        {isMP && (<>
 
-        <NavBar backArrow={false} right={right} onBack={back}>
-          {intl.formatMessage({
-            id: 'pages.sysconfig.title',
-            defaultMessage: 'Security Settings',
-          })}
-        </NavBar>
+          <NavBar backArrow={false} right={right} onBack={back}>
+            {intl.formatMessage({
+              id: 'pages.sysconfig.title',
+              defaultMessage: 'Security Settings',
+            })}
+          </NavBar>
 
-        <div style={{ padding: '20px', backgroundColor: "#5000B9", display: showMPSearch ? 'block' : 'none' }}>
-          <Search columns={columns.filter(a => !(a.hasOwnProperty('hideInSearch') && a['hideInSearch']))} action={actionRef} loading={false}
+          <div style={{ padding: '20px', backgroundColor: "#5000B9", display: showMPSearch ? 'block' : 'none' }}>
+            <Search columns={columns.filter(a => !(a.hasOwnProperty('hideInSearch') && a['hideInSearch']))} action={actionRef} loading={false}
 
-            onFormSearchSubmit={onFormSearchSubmit}
+              onFormSearchSubmit={onFormSearchSubmit}
 
-            dateFormatter={'string'}
+              dateFormatter={'string'}
               formRef={formRef}
-            type={'form'}
-            cardBordered={true}
-            form={{
-              submitter: {
-                searchConfig: {
+              type={'form'}
+              cardBordered={true}
+              form={{
+                submitter: {
+                  searchConfig: {
 
-                  submitText: < FormattedMessage id="pages.search" defaultMessage="Search" />,
+                    submitText: < FormattedMessage id="pages.search" defaultMessage="Search" />,
+                  }
+
                 }
+              }}
 
-              }
-            }}
+              search={{}}
+              manualRequest={true}
+            />
+          </div>
+          <List>
+            {data.map((item, index) => (
+              <List.Item key={index}>
 
-            search={{}}
-            manualRequest={true}
-          />
-        </div>
-        <List>
-          {data.map((item, index) => (
-            <List.Item key={index}>
+                <ProDescriptions<any>
+                  bordered={true}
+                  size="small"
+                  className="jetty-descriptions"
+                  layout="horizontal"
+                  column={1}
+                  title={""}
+                  request={async () => ({
+                    data: item || {},
+                  })}
+                  params={{
+                    id: item?.id,
+                  }}
+                  columns={columns as ProDescriptionsItemProps<any>[]}
+                />
 
-              <ProDescriptions<any>
-                bordered={true}
-                size="small"
-                className="jetty-descriptions"
-                layout="horizontal"
-                column={1}
-                title={""}
-                request={async () => ({
-                  data: item || {},
-                })}
-                params={{
-                  id: item?.id,
-                }}
-                columns={columns as ProDescriptionsItemProps<any>[]}
-              />
-
-            </List.Item>
-          ))}
-        </List>
+              </List.Item>
+            ))}
+          </List>
           {MPPagination.total > 0 ? <div style={{ textAlign: 'center', padding: "20px 10px 90px 10px" }}>
             <Pagination
 
@@ -465,118 +456,107 @@ const TableList: React.FC = () => {
             />
           </div> : customizeRenderEmpty()}
           <FloatButton.BackTop visibilityHeight={0} />
-      </>)}
-      {selectedRowsState?.length > 0 && (
-        <FooterToolbar
-          extra={
-            <div>
-              <FormattedMessage id="pages.searchTable.chosen" defaultMessage="Chosen" />{' '}
-              <a style={{ fontWeight: 600 }}>{selectedRowsState.length}</a>{' '}
-              <FormattedMessage id="pages.searchTable.item" defaultMessage="项" />
-              &nbsp;&nbsp;
-             
-            </div>
-          }
-        >
-          <Button
-            onClick={async () => {
-              await handleRemove(selectedRowsState, (success) => {
-                if (success) {
-                  setSelectedRows([]);
-                  actionRef.current?.reloadAndRest?.();
-                }
+        </>)}
+        {selectedRowsState?.length > 0 && (
+          <FooterToolbar
+            extra={
+              <div>
+                <FormattedMessage id="pages.searchTable.chosen" defaultMessage="Chosen" />{' '}
+                <a style={{ fontWeight: 600 }}>{selectedRowsState.length}</a>{' '}
+                <FormattedMessage id="pages.searchTable.item" defaultMessage="项" />
+                &nbsp;&nbsp;
 
-              });
-            }}
+              </div>
+            }
           >
-            <FormattedMessage
-              id="pages.searchTable.batchDeletion"
-              defaultMessage="Batch deletion"
-            />
-          </Button>
-          
-        </FooterToolbar>
-      )}
-      
-      <CreateForm
-        onSubmit={async (value) => {
-          value.id = currentRow?.id
-          const success = await handleAdd(value as SysconfigListItem);
-          if (success) {
-            handleModalOpen(false);
-            setCurrentRow(undefined);
-            if (actionRef.current) {
-              actionRef.current.reload();
-            }
-          }
-        }}
-        onCancel={() => {
-          handleModalOpen(false);
-          if (!showDetail) {
-            setCurrentRow(undefined);
-          }
-        }}
-        createModalOpen={createModalOpen}
-       
-      />
-      <UpdateForm
-        onSubmit={async (value) => {
-          value.id = currentRow?.id
-          const success = await handleUpdate(value);
-          if (success) {
-            handleUpdateModalOpen(false);
-            setCurrentRow(undefined);
-            if (actionRef.current) {
-              actionRef.current.reload();
-            }
-          }
-        }}
-        onCancel={() => {
-          handleUpdateModalOpen(false);
-          if (!showDetail) {
-            setCurrentRow(undefined);
-          }
-        }}
-        updateModalOpen={updateModalOpen}
-        values={currentRow || {}}
-      />
+            <Button
+              onClick={async () => {
+                await handleRemove(selectedRowsState, (success) => {
+                  if (success) {
+                    setSelectedRows([]);
+                    actionRef.current?.reloadAndRest?.();
+                  }
 
-      <Drawer
-        width={isMP ? '100%' : 600}
-        open={showDetail}
-        onClose={() => {
-          setCurrentRow(undefined);
-          setShowDetail(false);
-        }}
-        closable={isMP ? true : false}
-      >
-        {currentRow?.name && (
-          <ProDescriptions<SysconfigListItem>
-            column={isMP ? 1 : 2}
-           
-            title={currentRow?.name}
-            request={async () => ({
-              data: currentRow || {},
-            })}
-            params={{
-              id: currentRow?.name,
-            }}
-            columns={columns as ProDescriptionsItemProps<SysconfigListItem>[]}
-          />
+                });
+              }}
+            >
+              <FormattedMessage
+                id="pages.searchTable.batchDeletion"
+                defaultMessage="Batch deletion"
+              />
+            </Button>
+
+          </FooterToolbar>
         )}
-      </Drawer>
-        {/*
-         <div style={{ marginTop: -45, paddingLeft: 10 }}>
-          <Button
 
-            type="primary"
-            onClick={async () => {
-              history.back()
-            }}
-          >Return to previous page</Button>
-        </div>
+        <CreateForm
+          onSubmit={async (value) => {
+            value.id = currentRow?.id
+            const success = await handleAdd(value as SysconfigListItem);
+            if (success) {
+              handleModalOpen(false);
+              setCurrentRow(undefined);
+              if (actionRef.current) {
+                actionRef.current.reload();
+              }
+            }
+          }}
+          onCancel={() => {
+            handleModalOpen(false);
+            if (!showDetail) {
+              setCurrentRow(undefined);
+            }
+          }}
+          createModalOpen={createModalOpen}
 
-        */ }
+        />
+        <UpdateForm
+          onSubmit={async (value) => {
+            value.id = currentRow?.id
+            const success = await handleUpdate(value);
+            if (success) {
+              handleUpdateModalOpen(false);
+              setCurrentRow(undefined);
+              if (actionRef.current) {
+                actionRef.current.reload();
+              }
+            }
+          }}
+          onCancel={() => {
+            handleUpdateModalOpen(false);
+            if (!showDetail) {
+              setCurrentRow(undefined);
+            }
+          }}
+          updateModalOpen={updateModalOpen}
+          values={currentRow || {}}
+        />
+
+        <Drawer
+          width={isMP ? '100%' : 600}
+          open={showDetail}
+          onClose={() => {
+            setCurrentRow(undefined);
+            setShowDetail(false);
+          }}
+          closable={isMP ? true : false}
+        >
+          {currentRow?.name && (
+            <ProDescriptions<SysconfigListItem>
+              column={isMP ? 1 : 2}
+
+              title={currentRow?.name}
+              request={async () => ({
+                data: currentRow || {},
+              })}
+              params={{
+                id: currentRow?.name,
+              }}
+              columns={columns as ProDescriptionsItemProps<SysconfigListItem>[]}
+            />
+          )}
+        </Drawer>
+      
       </PageContainer></RcResizeObserver>
   );
 };

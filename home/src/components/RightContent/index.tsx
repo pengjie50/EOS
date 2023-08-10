@@ -17,6 +17,13 @@ export const SelectLang = () => {
   );
 };
 
+
+
+
+
+
+
+
 export const Question = () => {
   return (
     <div
@@ -25,7 +32,7 @@ export const Question = () => {
         height: 26,
       }}
       onClick={() => {
-       
+        history.push(`/EOSInstructionManualGuide`);
         //window.open('https://pro.ant.design/docs/getting-started');
       }}
     >
@@ -49,11 +56,16 @@ export const Alert = () => {
       }}
       onClick={() => {
         if (currentUser.userUnreadAlertCount > 0) {
+          currentUser.userUnreadAlertCount = 0
+          history.push(`/threshold/alertNoread`, { showNoRead: true });
          
-          setUserReadAlert({}).then((res) => {
-            currentUser.userUnreadAlertCount=0
-            history.push(`/threshold/alert`, { showNoRead: true });
-          })
+          setTimeout(() => {
+            setUserReadAlert({}).then((res) => {
+             
+
+            })
+          },1000)
+         
 
          // history.push(`/threshold/alert`,);
         } else {

@@ -20,7 +20,7 @@ class WritetoBC extends Subscription {
 
 
     async subscribe() {
-
+        var subscribeStartTime = (new Date()).getTime()
         const { ctx, service, app } = this;
 
 
@@ -68,6 +68,12 @@ class WritetoBC extends Subscription {
 
         var step2 = 0
         async function Do2() {
+
+            var nowTime = (new Date()).getTime()
+
+            if (nowTime - subscribeStartTime > 55000) {
+                return
+            }
             if (step2 >= transactionList.length) {
                 return
             }
@@ -120,9 +126,9 @@ class WritetoBC extends Subscription {
             }
 
 
-            console.log("sssssssssssssssssss")
+          
 
-            console.log(head_data)
+           
 
             ctx.activity_duration_start = new Date()
             const result = await ctx.curl(app.config.WriteHeaderBC, {
@@ -133,11 +139,10 @@ class WritetoBC extends Subscription {
                 dataType: 'json',
             });
 
-            console.log(result.data)
-            console.log(result)
+            
             await addAPILog({ data: head_data, result: result.data, status: result.status == 201 ? 0 : 1, errorCode: result.status == 201 ? 0 : result.status, url: app.config.WriteHeaderBC })
             if (result.status == 201) {
-                if (result.data[0].Stored == "True") {
+                if (result.data[0].Stored == "True" || result.data[0].Store=="True") {
                     await transaction.update({ blockchain_hex_key: result.data[0].HashID })
                 }
 
@@ -146,23 +151,30 @@ class WritetoBC extends Subscription {
 
 
 
-
             step2++
             await Do2()
         }
+        try {
+            await Do2()
+        } catch (e) {
 
-        await Do2()
-
-
-
-
-
-
+        }
+        
 
 
 
 
-        var transactionEventList = await ctx.model.Transactionevent.findAll({ order: [["event_time", "asc"]], where: { blockchain_hex_key: { [app.Sequelize.Op['eq']]: null } } });
+
+
+
+        var transactionEventList = await ctx.model.Transactionevent.findAll({
+            include:[{
+                as: 't',
+                attributes: [],
+                model: ctx.model.Transaction,
+                where: {status:1}
+
+            }],order: [["event_time", "asc"]], where: { blockchain_hex_key: null  } });
         var m = {}
 
         var ids = []
@@ -180,7 +192,7 @@ class WritetoBC extends Subscription {
         }
 
 
-        var transactionList = await ctx.model.Transaction.findAll({ where: { id: ids } });
+        var transactionList = await ctx.model.Transaction.findAll({ where: { id: ids,status:1 } });
 
         var transactionMap = {}
 
@@ -190,8 +202,7 @@ class WritetoBC extends Subscription {
 
 
 
-       
-
+      
 
 
         var flowList = await ctx.model.Flow.findAll();
@@ -203,11 +214,14 @@ class WritetoBC extends Subscription {
         })
 
 
-
-
+        
         var step3 = 0
         async function Do3() {
+
+          
             if (step3 >= transactionEventArr.length) {
+
+              
                 return
             }
             var transactionEvent = transactionEventArr[step3]
@@ -215,15 +229,13 @@ class WritetoBC extends Subscription {
 
             var reMap = {}
             
-
-          
+         
             var event_data = transactionEvent.map((te) => {
 
 
                 var EventSubStage = flowMap[te.flow_id]
 
-              
-              
+               
 
                 if (!reMap[flowMap[te.flow_id]]) {
 
@@ -234,43 +246,42 @@ class WritetoBC extends Subscription {
                 
 
 
-                console.log(reMap[flowMap[te.flow_id]] - 1)
+               
                
                 EventSubStage += (("00" + (reMap[flowMap[te.flow_id]]-1)).slice(-2))
                 
 
                 var b = {
                     "EOSID": transactionMap[te.transaction_id],
-                    "EventSubStage": EventSubStage,
+                    "EventSubStage": parseInt(EventSubStage),
                     "Timestamp": moment(new Date(te.event_time)).format('YYYY-MM-DDTHH:mm:ss+08:00'),
-                    "Field1": te.product_quantity_in_bls_60_f ? parseInt(te.product_quantity_in_bls_60_f) : 0,
-                    "Field2": te.tank_number ? parseInt(te.tank_number) : 0,
-                    "Field3": te.work_order_id ? parseInt(te.work_order_id) : 0,
-                    "Field4": te.work_order_sequence_number ? parseInt(te.work_order_sequence_number) : 0,
+                    "Field1": te.product_quantity_in_bls_60_f ? parseInt(te.product_quantity_in_bls_60_f) : null,
+                    "Field2": te.tank_number ? parseInt(te.tank_number) : null,
+                    "Field3": te.work_order_id ? parseInt(te.work_order_id) : null,
+                    "Field4": te.work_order_sequence_number ? parseInt(te.work_order_sequence_number) : null,
                     "Field5": te.work_order_operation_type ? te.work_order_operation_type : null,
                     "Field6": te.product_name ? te.product_name : null,
                     "Field7": te.work_order_status ? te.work_order_status : null,
                     "Field8": te.work_order_sequence_number_status ? te.work_order_sequence_number_status : null,
                     "Field9": te.work_order_surveyor ? te.work_order_surveyor : null
                 }
-
-                if (te.delay_duration) {
-                    b.Field5 = te.delay_duration
+                
+                if (te.delay_reason) {
+                    b.Field5 = te.delay_reason
                 }
 
                 if (te.location_from) {
                     b.Field6 = te.location_from
                 }
                 if (te.location_to) {
-                    b.Field6 = te.location_to
+                    b.Field7 = te.location_to
                 }
                 return b
             })
 
           
 
-            console.log(event_data)
-            console.log(app.config.WritetoBC)
+           
              ctx.activity_duration_start = new Date()
             const result = await ctx.curl(app.config.WritetoBC, {
                  timeout: 30000,
@@ -280,8 +291,7 @@ class WritetoBC extends Subscription {
                  dataType: 'json',
              });
  
-             console.log(result.data)
-             console.log(result)
+            
             await addAPILog({ data: event_data, result: result.data, status: result.status == 201 ? 0 : 1, errorCode: result.status == 201 ? 0 : result.status, url: app.config.WritetoBC })
             if (result.status == 201) {
                 if (result.data.length > 0) {
@@ -290,11 +300,12 @@ class WritetoBC extends Subscription {
                     var step4 = 0
                     async function Do4() {
                         if (step4 >= result.data.length) {
-                            step2++
+                           
                             return
                         }
                         var BCback = result.data[step4]
-                        if (BCback.Stored =="True") {
+                        if (BCback.Stored == "True") {
+                           
                             await transactionEvent[step4].update({ blockchain_hex_key: BCback.HashID })
                         }
                        
@@ -304,15 +315,13 @@ class WritetoBC extends Subscription {
                     }
 
 
-                    Do4()
+                    await Do4()
 
                 }   
  
              }
 
-
-
-
+           
 
             step3++
             await Do3()
@@ -322,9 +331,7 @@ class WritetoBC extends Subscription {
 
 
 
-        /* 
-  
-          console.log(result)*/
+        
 
     }
 }

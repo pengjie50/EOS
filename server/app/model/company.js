@@ -59,6 +59,9 @@ module.exports = app => {
             {
                 fields: ['name', 'phone', 'email', 'alias']
             }],
+
+        timestamps: true,
+        paranoid: false,
         tableName: 'company'
     });
 

@@ -6,7 +6,7 @@ import {
   ProFormTextArea,
   ModalForm,
   ProFormInstance
-  
+
 } from '@ant-design/pro-components';
 import { AlertListItem } from '../data.d';
 import { FormattedMessage, useIntl } from '@umijs/max';
@@ -25,7 +25,7 @@ export type UpdateFormProps = {
 const UpdateForm: React.FC<UpdateFormProps> = (props) => {
   const restFormRef = useRef<ProFormInstance>();
   const intl = useIntl();
- 
+
   const {
     onSubmit,
     onCancel,
@@ -35,7 +35,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
 
   return (
-   
+
     <ModalForm
       modalProps={{ destroyOnClose: true }}
       initialValues={values}
@@ -43,31 +43,31 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         if (!vi) {
           props.onCancel();
         }
-          
+
       }}
       formRef={restFormRef}
-        onFinish={props.onSubmit}
-        open={props.updateModalOpen}
-        submitter={{
-          searchConfig: {
-            resetText: intl.formatMessage({
-              id: 'pages.reset',
-              defaultMessage: 'Reset',
-            }),
+      onFinish={props.onSubmit}
+      open={props.updateModalOpen}
+      submitter={{
+        searchConfig: {
+          resetText: intl.formatMessage({
+            id: 'pages.reset',
+            defaultMessage: 'Reset',
+          }),
+        },
+        resetButtonProps: {
+          onClick: () => {
+            restFormRef.current?.resetFields();
+            
           },
-          resetButtonProps: {
-            onClick: () => {
-              restFormRef.current?.resetFields();
-              //   setModalVisible(false);
-            },
-          },
-        }}
-        title={intl.formatMessage({
-          id: 'pages.alert.mod',
-          defaultMessage: 'Modify Remarks',
-        })}
-      >
-      
+        },
+      }}
+      title={intl.formatMessage({
+        id: 'pages.alert.mod',
+        defaultMessage: 'Modify Remarks',
+      })}
+    >
+
       <ProFormTextArea
         name="remarks"
         width="md"
@@ -77,9 +77,9 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         })}
 
       />
-        
+
     </ModalForm>
-     
+
   );
 };
 

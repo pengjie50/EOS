@@ -66,9 +66,7 @@ export default function access(initialState: { currentUser?: API.CurrentUser } |
     },
 
     jetty_list_tab: () => {
-      if (currentUser && currentUser.permissions.some((a) => {
-        return a == 'jetty_list_tab'
-      })) {
+      if (currentUser && currentUser?.compnay_type != 'Trader') {
         return true
       } else {
         return false
@@ -139,7 +137,7 @@ export default function access(initialState: { currentUser?: API.CurrentUser } |
     },
     canJettyList: () => {
       if ((currentUser && currentUser.permissions.some((a) => {
-        return a == 'jetty' || a == 'jetty_list' || a == 'jetty_list_terminal'
+        return a == 'jetty' || a == 'jetty_list' 
       })) || currentUser?.role_type === 'Super') {
         return true
       } else {

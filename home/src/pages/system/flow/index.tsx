@@ -1,11 +1,13 @@
 import RcResizeObserver from 'rc-resize-observer';
 import FrPrint from "../../../components/FrPrint";
 import { addFlow, removeFlow, flow, updateFlow } from './service';
-import { PlusOutlined, SearchOutlined, FormOutlined, DeleteOutlined, ExclamationCircleOutlined, EllipsisOutlined,FileExcelOutlined, PrinterOutlined } from '@ant-design/icons';
+import { PlusOutlined, SearchOutlined, FormOutlined, DeleteOutlined, ExclamationCircleOutlined, EllipsisOutlined, FileExcelOutlined, PrinterOutlined } from '@ant-design/icons';
 import type { ActionType, ProColumns, ProDescriptionsItemProps } from '@ant-design/pro-components';
 import { FlowList, FlowListItem } from './data.d';
 import { exportCSV } from "../../../components/export";
+import { ResizeObserverDo } from '@/components'
 import { Icon as Iconfy } from '@iconify/react';
+import { fieldSelectData } from '@/services/ant-design-pro/api';
 import MPSort from "@/components/MPSort";
 import {
   FooterToolbar,
@@ -20,7 +22,7 @@ import {
   ProTable,
 } from '@ant-design/pro-components';
 import { FormattedMessage, useIntl, formatMessage } from '@umijs/max';
-import { Button, Drawer, Input, message, Modal, Popover, Pagination, FloatButton } from 'antd';
+import { Button, Drawer, Input, message, Modal, Popover, Pagination, Empty, FloatButton } from 'antd';
 import React, { useRef, useState, useEffect } from 'react';
 import CreateForm from './components/CreateForm';
 import UpdateForm from './components/UpdateForm';
@@ -32,7 +34,6 @@ const { confirm } = Modal;
 import { InfiniteScroll, List, NavBar, Space, DotLoading } from 'antd-mobile'
 /**
  * @en-US Add node
- * @zh-CN 添加节点
  * @param fields
  */
 const handleAdd = async (fields: FlowListItem) => {
@@ -60,11 +61,10 @@ const handleAdd = async (fields: FlowListItem) => {
 
 /**
  * @en-US Update node
- * @zh-CN 更新节点
  *
  * @param fields
  */
-const handleUpdate = async (fields: Partial<FlowListItem> ) => {
+const handleUpdate = async (fields: Partial<FlowListItem>) => {
   const hide = message.loading(<FormattedMessage
     id="pages.modifying"
     defaultMessage="Modifying"
@@ -90,7 +90,6 @@ const handleUpdate = async (fields: Partial<FlowListItem> ) => {
 
 /**
  *  Delete node
- * @zh-CN 删除节点
  *
  * @param selectedRows
  */
@@ -143,12 +142,10 @@ const handleRemove = async (selectedRows: FlowListItem[], callBack: any) => {
 const TableList: React.FC = () => {
   /**
    * @en-US Pop-up window of new window
-   * @zh-CN 新建窗口的弹窗
    *  */
   const [createModalOpen, handleModalOpen] = useState<boolean>(false);
   /**
    * @en-US The pop-up window of the distribution update window
-   * @zh-CN 分布更新窗口的弹窗
    * */
   const [updateModalOpen, handleUpdateModalOpen] = useState<boolean>(false);
 
@@ -161,7 +158,6 @@ const TableList: React.FC = () => {
   const [resizeObj, setResizeObj] = useState({ searchSpan: 12, tableScrollHeight: 300 });
   /**
    * @en-US International configuration
-   * @zh-CN 国际化配置
    * */
   const intl = useIntl();
   //--MP start
@@ -169,6 +165,10 @@ const TableList: React.FC = () => {
   const [isLock, setIsLock] = useState<boolean>(true);
   const [showMPSearch, setShowMPSearch] = useState<boolean>(false);
   const [isMP, setIsMP] = useState<boolean>(!isPC());
+
+  const [sortData, setSortData] = useState<any>({});
+  const [codeData, setCodeData] = useState<any>({});
+
   const [moreOpen, setMoreOpen] = useState<boolean>(false);
   const right = (
     <div style={{ fontSize: 24 }}>
@@ -178,14 +178,14 @@ const TableList: React.FC = () => {
 
 
           <Button type="primary" style={{ width: "100%" }} key="print"
-          onClick={() => {
-            setMoreOpen(false)
-            handlePrintModalVisible(true)
-          }}
-        ><PrinterOutlined /> <FormattedMessage id="pages.Print" defaultMessage="Print" />
-        </Button>, <Button style={{ width: "100%" }} type="primary" key="out"
-          onClick={() => exportCSV(data, columns)}
-        ><FileExcelOutlined /> <FormattedMessage id="pages.CSV" defaultMessage="CSV" />
+            onClick={() => {
+              setMoreOpen(false)
+              handlePrintModalVisible(true)
+            }}
+          ><PrinterOutlined /> <FormattedMessage id="pages.Print" defaultMessage="Print" />
+          </Button>, <Button style={{ width: "100%" }} type="primary" key="out"
+            onClick={() => exportCSV(data, columns)}
+          ><FileExcelOutlined /> <FormattedMessage id="pages.CSV" defaultMessage="CSV" />
           </Button>
 
         </div>} trigger="click">
@@ -206,7 +206,7 @@ const TableList: React.FC = () => {
   )
   useEffect(() => {
 
-   
+
     if (isMP) {
       getData(1)
     }
@@ -264,12 +264,12 @@ const TableList: React.FC = () => {
     })
 
     tree(append.data, "                                    ", 'pid')
-    
+
     setMPPagination({ total: append.total })
     setData(append.data)
-   
+
   }
- 
+
   //--MP end
   const columns: ProColumns<FlowListItem>[] = [
 
@@ -277,7 +277,7 @@ const TableList: React.FC = () => {
       title: <FormattedMessage id="pages.flow.xxx" defaultMessage="No." />,
       dataIndex: 'no',
       hideInSearch: true,
-     
+
       valueType: 'text',
     },
     {
@@ -288,21 +288,61 @@ const TableList: React.FC = () => {
         />
       ),
       dataIndex: 'name',
-      
-      width:400,
-      
+
+      width: 400,
+
     },
     {
       title: <FormattedMessage id="pages.flow.xxx" defaultMessage="Code" />,
       dataIndex: 'code',
-      hideInSearch: true,
-     
-      valueType: 'text',
+
+
+      valueEnum: codeData,
+      search: {
+        transform: (value) => {
+
+          if (value !== null && value.length > 0) {
+            return {
+
+              code: {
+                'field': 'code',
+                'op': 'in',
+                'data': value
+              }
+
+            }
+          }
+
+        }
+      },
+      fieldProps: {
+        multiple: true,
+        mode: 'multiple',
+        maxTagCount: 0,
+        maxTagPlaceholder: (omittedValues) => {
+          return omittedValues.length + " Selected"
+        },
+        notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
+        showSearch: true,
+        allowClear: true,
+        onFocus: () => {
+          fieldSelectData({ model: "Flow", value: '', field: 'code' }).then((res) => {
+            setCodeData(res.data)
+          })
+        },
+        onSearch: (newValue: string) => {
+
+          fieldSelectData({ model: "Flow", value: newValue, field: 'code' }).then((res) => {
+            setCodeData(res.data)
+          })
+
+        }
+      },
     },
     {
       title: <FormattedMessage id="pages.flow.type" defaultMessage="Type" />,
       dataIndex: 'type',
-    
+
       valueEnum: {
         0: { text: <FormattedMessage id="pages.flow.process" defaultMessage="Process" />, status: 'Success' },
         1: { text: <FormattedMessage id="pages.flow.event" defaultMessage="Event" />, status: 'Error' },
@@ -312,17 +352,57 @@ const TableList: React.FC = () => {
     {
       title: <FormattedMessage id="pages.flow.xxx" defaultMessage="Sort Order" />,
       dataIndex: 'sort',
-      hideInSearch: true,
-    
-    
-      valueType: 'text',
+      valueEnum: sortData,
+      search: {
+        transform: (value) => {
+
+          if (value !== null && value.length > 0) {
+            return {
+
+              sort: {
+                'field': 'sort',
+                'op': 'in',
+                'data': value
+              }
+
+            }
+          }
+
+        }
+      },
+      fieldProps: {
+        multiple: true,
+        mode: 'multiple',
+        maxTagCount: 0,
+        maxTagPlaceholder: (omittedValues) => {
+          return omittedValues.length + " Selected"
+        },
+        notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
+        showSearch: true,
+        allowClear: true,
+        onFocus: () => {
+          fieldSelectData({ model: "Flow", value: '', field: 'sort' }).then((res) => {
+            setSortData(res.data)
+          })
+        },
+        onSearch: (newValue: string) => {
+
+          fieldSelectData({ model: "Flow", value: newValue, field: 'sort' }).then((res) => {
+            setSortData(res.data)
+          })
+
+        }
+      }
+
+
+
     },
-   
+
     {
       title: <FormattedMessage id="pages.flow.xxx" defaultMessage="Description" />,
       dataIndex: 'description',
       valueType: 'textarea'
-     
+
     },
     {
       title: <FormattedMessage id="pages.searchTable.titleOption" defaultMessage="Operating" />,
@@ -331,9 +411,9 @@ const TableList: React.FC = () => {
       render: (_, record) => [
         <a
           key="config"
-          
+
           onClick={() => {
-            if(isLock){
+            if (isLock) {
               return
             }
             handleUpdateModalOpen(true);
@@ -364,7 +444,7 @@ const TableList: React.FC = () => {
           <DeleteOutlined style={{ fontSize: '20px', color: 'red' }} />
 
         </a>*/
-       
+
       ],
     },
   ];
@@ -373,31 +453,19 @@ const TableList: React.FC = () => {
     <RcResizeObserver
       key="resize-observer"
       onResize={(offset) => {
-        const { innerWidth, innerHeight } = window;
+        ResizeObserverDo(offset, setResizeObj, resizeObj)
 
-        if (offset.width > 1280) {
-         
-          setResizeObj({ ...resizeObj, searchSpan: 8, tableScrollHeight: innerHeight - 420 });
-        }
-        if (offset.width < 1280 && offset.width > 900) {
-         
-          setResizeObj({ ...resizeObj, searchSpan: 12, tableScrollHeight: innerHeight - 420 });
-        }
-        if (offset.width < 900 && offset.width > 700) {
-          setResizeObj({ ...resizeObj, searchSpan: 24, tableScrollHeight: innerHeight - 420 });
-         
-        }
 
-        
 
       }}
     >
       <PageContainer className="myPage" header={{
         title: isMP ? null : <div>
-          <div>Caution: Do not update this page unless necessary as it may impact system logic</div>
+
           <div className="ant-page-header-heading-title">< FormattedMessage id="pages.flow.xxx" defaultMessage="Transaction Flow" /></div>
-          </div>,
-      breadcrumb: {},
+          <div style={{ color: 'red' }}>Caution: Do not update this page unless necessary as it may impact system logic</div>
+        </div>,
+        breadcrumb: {},
         extra: isMP ? null : [
 
           <Button
@@ -413,131 +481,147 @@ const TableList: React.FC = () => {
             }} className="white-icon" icon="bxs:lock" /> : <Iconfy onClick={() => {
               setIsLock(!isLock)
             }} className="white-icon" icon="bytesize:unlock" />}
-           
+
           </Button>,
-        <Button
-          type="primary"
-          key="primary"
-          onClick={() => {
-            handleModalOpen(true);
-          }}
-        >
-          <PlusOutlined /> <FormattedMessage id="pages.searchTable.xxx" defaultMessage="Create New Transaction Flow" />
-        </Button>, <Button type="primary" key="print"
-          onClick={() => {
-            if (selectedRowsState.length == 0) {
-              message.error(<FormattedMessage
-                id="pages.selectDataFirst"
-                defaultMessage="Please select data first!"
-              />);
-              return false;
-            }
-            handlePrintModalVisible(true)
-          }}
-        ><PrinterOutlined /> <FormattedMessage id="pages.Print" defaultMessage="Print" />
-        </Button>,<Button type="primary" key="out"
-          onClick={() => exportCSV(selectedRowsState, columns,"Transaction Flow")}
-        ><FileExcelOutlined /> <FormattedMessage id="pages.CSV" defaultMessage="CSV" />
-        </Button>
-      
-      ]
-    }}>
-        {!isMP && (<DragSortTable<FlowListItem, API.PageParams>
+          <Button
+            type="primary"
+            key="primary"
+            onClick={() => {
+              handleModalOpen(true);
+            }}
+          >
+            <PlusOutlined /> <FormattedMessage id="pages.searchTable.xxx" defaultMessage="Create New Transaction Flow" />
+          </Button>, <Button type="primary" key="print"
+            onClick={() => {
+              if (selectedRowsState.length == 0) {
+                message.error(<FormattedMessage
+                  id="pages.selectDataFirst"
+                  defaultMessage="Please select data first!"
+                />);
+                return false;
+              }
+              handlePrintModalVisible(true)
+            }}
+          ><PrinterOutlined /> <FormattedMessage id="pages.Print" defaultMessage="Print" />
+          </Button>, <Button type="primary" key="out"
+            onClick={() => exportCSV(selectedRowsState, columns, "Transaction Flow")}
+          ><FileExcelOutlined /> <FormattedMessage id="pages.CSV" defaultMessage="CSV" />
+          </Button>
+
+        ]
+      }}>
+        {!isMP && (<ProTable<FlowListItem, API.PageParams>
 
 
 
           dragSortKey="no"
           onDragSortEnd={(a) => {
-            
+
           }}
           dragSortHandlerRender={(rowData: any, idx: any) => (
             <div style={{ cursor: 'grab' }} >
 
-             {rowData.no}
+              {rowData.no}
             </div>
           )}
 
-          pagination={{ size: "default", pageSize:500 }}
+          pagination={{ size: "default", pageSize: 500 }}
           actionRef={actionRef}
-        
+
           rowKey="id"
           scroll={{ x: 1800, y: resizeObj.tableScrollHeight }}
-        search={{
-          labelWidth: 150,
-          searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
-        }}
-        options={false}
-        className="mytable"
-        request={async (params, sorter) => {
-          var d = await flow({ ...params, sorter: {sort:"ascend"} })
-          d.data=tree(d.data, "                                    ", 'pid')
-          return d
-        }}
+          search={{
+            labelWidth: 150,
+            searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
+          }}
+          options={false}
+          className="mytable"
+          request={async (params, sorter) => {
+            var all = await flow({ sorter: { sort: "ascend" } })
+            tree(all.data, "                                    ", 'pid')
+
+            
+
+
+            var d = await flow({ ...params, sorter: { sort: "ascend" } })
+            var old = d.data
+            d.data = tree(d.data, "                                    ", 'pid')
+
+            if (d.data.length == 0) {
+              d.data = all.data.filter((a) => {
+                return old.some((b) => {
+                  return b.id == a.id
+                })
+              })
+            }
+
+            return d
+          }}
           bordered
-        columns={columns}
-        rowSelection={{
-          onChange: (_, selectedRows) => {
-            setSelectedRows(selectedRows);
-          },
-        }}
-      />)}
+          columns={columns}
+          rowSelection={{
+            onChange: (_, selectedRows) => {
+              setSelectedRows(selectedRows);
+            },
+          }}
+        />)}
 
-      {isMP && (<>
+        {isMP && (<>
 
-        <NavBar backArrow={false} right={right} onBack={back}>
-          {intl.formatMessage({
-            id: 'pages.flow.xxx',
-            defaultMessage: 'Transaction Flow',
-          })}
-        </NavBar>
+          <NavBar backArrow={false} right={right} onBack={back}>
+            {intl.formatMessage({
+              id: 'pages.flow.xxx',
+              defaultMessage: 'Transaction Flow',
+            })}
+          </NavBar>
 
-        <div style={{ padding: '20px', backgroundColor: "#5000B9", display: showMPSearch ? 'block' : 'none' }}>
-          <Search columns={columns.filter(a => !(a.hasOwnProperty('hideInSearch') && a['hideInSearch']))} action={actionRef} loading={false}
+          <div style={{ padding: '20px', backgroundColor: "#5000B9", display: showMPSearch ? 'block' : 'none' }}>
+            <Search columns={columns.filter(a => !(a.hasOwnProperty('hideInSearch') && a['hideInSearch']))} action={actionRef} loading={false}
 
-            onFormSearchSubmit={onFormSearchSubmit}
+              onFormSearchSubmit={onFormSearchSubmit}
 
-            dateFormatter={'string'}
-            formRef={MPSearchFormRef}
-            type={'form'}
-            cardBordered={true}
-            form={{
-              submitter: {
-                searchConfig: {
+              dateFormatter={'string'}
+              formRef={MPSearchFormRef}
+              type={'form'}
+              cardBordered={true}
+              form={{
+                submitter: {
+                  searchConfig: {
 
-                  submitText: < FormattedMessage id="pages.search" defaultMessage="Search" />,
+                    submitText: < FormattedMessage id="pages.search" defaultMessage="Search" />,
+                  }
+
                 }
+              }}
 
-              }
-            }}
-
-            search={{}}
-            manualRequest={true}
-          />
-        </div>
+              search={{}}
+              manualRequest={true}
+            />
+          </div>
           <List>
-            <div style={{ padding:10 }}>Caution: Do not update this page unless necessary as it may impact system logic</div>
-          {data.map((item, index) => (
-            <List.Item key={index}>
+            <div style={{ padding: 10, color: 'red' }}>Caution: Do not update this page unless necessary as it may impact system logic</div>
+            {data.map((item, index) => (
+              <List.Item key={index}>
 
-              <ProDescriptions<any>
-                bordered={true}
-                size="small"
-                className="jetty-descriptions"
-                layout="horizontal"
-                column={1}
-                title={""}
-                request={async () => ({
-                  data: item || {},
-                })}
-                params={{
-                  id: item?.id,
-                }}
-                columns={columns as ProDescriptionsItemProps<any>[]}
-              />
+                <ProDescriptions<any>
+                  bordered={true}
+                  size="small"
+                  className="jetty-descriptions"
+                  layout="horizontal"
+                  column={1}
+                  title={""}
+                  request={async () => ({
+                    data: item || {},
+                  })}
+                  params={{
+                    id: item?.id,
+                  }}
+                  columns={columns as ProDescriptionsItemProps<any>[]}
+                />
 
-            </List.Item>
-          ))}
-        </List>
+              </List.Item>
+            ))}
+          </List>
           {MPPagination.total && <div style={{ textAlign: 'center', padding: "20px 10px 90px 10px" }}>
             <Pagination
 
@@ -553,139 +637,128 @@ const TableList: React.FC = () => {
             />
           </div>}
           <FloatButton.BackTop visibilityHeight={0} />
-      </>)}
-      {selectedRowsState?.length > 0 && (
-        <FooterToolbar
-          extra={
-            <div>
-              <FormattedMessage id="pages.searchTable.chosen" defaultMessage="Chosen" />{' '}
-              <a style={{ fontWeight: 600 }}>{selectedRowsState.length}</a>{' '}
-              <FormattedMessage id="pages.searchTable.item" defaultMessage="项" />
-              &nbsp;&nbsp;
-             
-            </div>
-          }
-        >
-          <Button
-            onClick={async () => {
-              await handleRemove(selectedRowsState, (success) => {
-                if (success) {
-                  setSelectedRows([]);
-                  if (isMP) {
-                    setData([]);
-                    getData(1, MPfilter)
-                  }
-                  actionRef.current?.reloadAndRest?.();
-                }
+        </>)}
+        {selectedRowsState?.length > 0 && (
+          <FooterToolbar
+            extra={
+              <div>
+                <FormattedMessage id="pages.searchTable.chosen" defaultMessage="Chosen" />{' '}
+                <a style={{ fontWeight: 600 }}>{selectedRowsState.length}</a>{' '}
+                <FormattedMessage id="pages.searchTable.item" defaultMessage="项" />
+                &nbsp;&nbsp;
 
-              });
-            }}
+              </div>
+            }
           >
-            <FormattedMessage
-              id="pages.searchTable.batchDeletion"
-              defaultMessage="Batch deletion"
-            />
-          </Button>
-          
-        </FooterToolbar>
-      )}
-      
-      <CreateForm
-        onSubmit={async (value) => {
-          value.id = currentRow?.id
-          const success = await handleAdd(value as FlowListItem);
-          if (success) {
-           // handleModalOpen(false);
-            setCurrentRow(undefined);
-            if (isMP) {
-              setData([]);
-              getData(1, MPfilter)
-            }
-            if (actionRef.current) {
-              actionRef.current.reload();
-            }
-          }
-        }}
-        onCancel={() => {
-          handleModalOpen(false);
-          if (!showDetail) {
-            setCurrentRow(undefined);
-          }
-        }}
-        createModalOpen={createModalOpen}
-        values={currentRow || {}}
-      />
-      <UpdateForm
-        onSubmit={async (value) => {
-          value.id = currentRow?.id
-          const success = await handleUpdate(value);
-          if (success) {
-            handleUpdateModalOpen(false);
-            setCurrentRow(undefined);
-            if (isMP) {
-              setData([]);
-              getData(1, MPfilter)
-            }
-            if (actionRef.current) {
-              actionRef.current.reload();
-            }
-          }
-        }}
-        onCancel={() => {
-          handleUpdateModalOpen(false);
-          if (!showDetail) {
-            setCurrentRow(undefined);
-          }
-        }}
-        updateModalOpen={updateModalOpen}
-        values={currentRow || {}}
-      />
+            <Button
+              onClick={async () => {
+                await handleRemove(selectedRowsState, (success) => {
+                  if (success) {
+                    setSelectedRows([]);
+                    if (isMP) {
+                      setData([]);
+                      getData(1, MPfilter)
+                    }
+                    actionRef.current?.reloadAndRest?.();
+                  }
 
-      <Drawer
-        width={isMP ? '100%' : 600}
-        open={showDetail}
-        onClose={() => {
-          setCurrentRow(undefined);
-          setShowDetail(false);
-        }}
-        closable={isMP ? true : false}
-      >
-        {currentRow?.name && (
-          <ProDescriptions<FlowListItem>
-            column={isMP ? 1 : 2}
-            title={currentRow?.name}
-            request={async () => ({
-              data: currentRow || {},
-            })}
-            params={{
-              id: currentRow?.name,
-            }}
-            columns={columns as ProDescriptionsItemProps<FlowListItem>[]}
-          />
+                });
+              }}
+            >
+              <FormattedMessage
+                id="pages.searchTable.batchDeletion"
+                defaultMessage="Batch deletion"
+              />
+            </Button>
+
+          </FooterToolbar>
         )}
+
+        <CreateForm
+          onSubmit={async (value) => {
+            value.id = currentRow?.id
+            const success = await handleAdd(value as FlowListItem);
+            if (success) {
+             
+              setCurrentRow(undefined);
+              if (isMP) {
+                setData([]);
+                getData(1, MPfilter)
+              }
+              if (actionRef.current) {
+                actionRef.current.reload();
+              }
+            }
+          }}
+          onCancel={() => {
+            handleModalOpen(false);
+            if (!showDetail) {
+              setCurrentRow(undefined);
+            }
+          }}
+          createModalOpen={createModalOpen}
+          values={currentRow || {}}
+        />
+        <UpdateForm
+          onSubmit={async (value) => {
+            value.id = currentRow?.id
+            const success = await handleUpdate(value);
+            if (success) {
+              handleUpdateModalOpen(false);
+              setCurrentRow(undefined);
+              if (isMP) {
+                setData([]);
+                getData(1, MPfilter)
+              }
+              if (actionRef.current) {
+                actionRef.current.reload();
+              }
+            }
+          }}
+          onCancel={() => {
+            handleUpdateModalOpen(false);
+            if (!showDetail) {
+              setCurrentRow(undefined);
+            }
+          }}
+          updateModalOpen={updateModalOpen}
+          values={currentRow || {}}
+        />
+
+        <Drawer
+          width={isMP ? '100%' : 600}
+          open={showDetail}
+          onClose={() => {
+            setCurrentRow(undefined);
+            setShowDetail(false);
+          }}
+          closable={isMP ? true : false}
+        >
+          {currentRow?.name && (
+            <ProDescriptions<FlowListItem>
+              column={isMP ? 1 : 2}
+              title={currentRow?.name}
+              request={async () => ({
+                data: currentRow || {},
+              })}
+              params={{
+                id: currentRow?.name,
+              }}
+              columns={columns as ProDescriptionsItemProps<FlowListItem>[]}
+            />
+          )}
         </Drawer>
         <FrPrint
           title={""}
           subTitle={paramsText}
           columns={columns}
-          dataSource={[...(isMP ? data : selectedRowsState)/*, sumRow*/]}
+          dataSource={[...(isMP ? data : selectedRowsState)]}
           onCancel={() => {
             handlePrintModalVisible(false);
           }}
           printModalVisible={printModalVisible}
         />
-        {/*
-         <div style={{ marginTop: -45, paddingLeft: 10 }}>
-          <Button
-
-            type="primary"
-            onClick={async () => {
-              history.back()
-            }}
-          >Return to previous page</Button>
-        </div>
-
-        */ }
+       
       </PageContainer></RcResizeObserver>
   );
 };

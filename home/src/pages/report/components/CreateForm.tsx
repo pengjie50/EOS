@@ -10,7 +10,7 @@ import {
   ProForm,
   ProList,
   ModalForm,
-  ProFormRadio ,
+  ProFormRadio,
   FooterToolbar,
   ProFormTextArea,
   ProFormSelect,
@@ -22,7 +22,7 @@ import {
 } from '@ant-design/pro-components';
 import { FormattedMessage, useIntl, useModel, formatMessage, history } from '@umijs/max';
 import { FileTextOutlined, FileAddOutlined, ArrowRightOutlined, DeleteOutlined, ExclamationCircleOutlined, CloseOutlined, MenuOutlined } from '@ant-design/icons';
-import { reportTemplate, addReportTemplate,updateReportTemplate, removeReportTemplate,addReport } from '../service';
+import { reportTemplate, addReportTemplate, updateReportTemplate, removeReportTemplate, addReport } from '../service';
 import { fieldUniquenessCheck, fieldSelectData } from '@/services/ant-design-pro/api';
 
 import RcResizeObserver from 'rc-resize-observer';
@@ -45,33 +45,24 @@ import { parseInt, template } from 'lodash';
 //import access from '../../../access';
 /**
  * @en-US Add node
- * @zh-CN 添加节点
  * @param fields
  */
 
 
 
-const handleAGenerateReport= async (fields: any) => {
- /* const hide = message.loading(<FormattedMessage
-    id="pages.adding"
-    defaultMessage="Adding"
-  />);*/
+const handleAGenerateReport = async (fields: any) => {
+ 
   try {
 
-    var cc=null
+    var cc = null
     var obj = await addReport({ ...fields }).then((res) => {
       cc = res.data
 
     });
-   // hide();
-  /*  message.success(<FormattedMessage
-      id="pages.addedSuccessfully"
-      defaultMessage="Added successfully"
-    />);*/
     
     return cc;
   } catch (error) {
-   // hide();
+    
     message.error(<FormattedMessage
       id="pages.addingFailed"
       defaultMessage="Generate failed, please try again!"
@@ -182,15 +173,8 @@ export type UpdateFormProps = {
 
 };
 const UpdateForm: React.FC<UpdateFormProps> = (props) => {
-  /**
-   * @en-US Pop-up window of new window
-   * @zh-CN 新建窗口的弹窗
-   *  */
-  //const [createModalOpen, handleModalOpen] = useState<boolean>(false);
-  /**
-   * @en-US The pop-up window of the distribution update window
-   * @zh-CN 分布更新窗口的弹窗
-   * */
+ 
+  
   const [updateModalOpen, handleUpdateModalOpen] = useState<boolean>(false);
 
   const [showDetail, setShowDetail] = useState<boolean>(false);
@@ -217,53 +201,57 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
   const [alertrule_typeData, setAlertrule_typeData] = useState<any>({});
   const [vessel_size_dwtData, setVessel_size_dwtData] = useState<any>({});
-  
+
 
 
   const [threshold_organization_idData, setThreshold_organization_idData] = useState<any>({});
-  
-  
+
+
   const [jetty_idData, setJetty_idData] = useState<any>({});
-  
+
   const [trader_idData, setTrader_idData] = useState<any>({});
-  
+
   const [templateName, setTemplateName] = useState("");
 
   const [report_type, setReport_type] = useState(1);
-  
+
   const [isMP, setIsMP] = useState<boolean>(!isPC());
 
   const access = useAccess();
   const [selectedColumns, setSelectedColumns] = useState<any>([]);
-  
+
 
   const [availableColumns, setAvailableColumns] = useState<any>([]);
-  
-  
+
+
   const [imo_numberData, setImo_numberData] = useState<any>({});
 
   const [fields, setFields] = useState<any>([]);
   const getOrganizationName = () => {
+
     if (access.canAdmin) {
       return 'Organization'
     }
     if (!(access.canAdmin || access.dashboard_tab())) {
-      return 'Terminal'
+      return 'Customer'
     }
     if (access.dashboard_tab()) {
       return 'Customer'
     }
+
   }
 
 
   const [selectedRowKeys, setSelectedRowKeys] = useState<any[]>([]);
-  
-  
+
+
+  const [columns, setColumns] = useState<any>([]);
+
+
   const [selectedRowKeys1, setSelectedRowKeys1] = useState<any[]>([]);
-  
+
   /**
    * @en-US International configuration
-   * @zh-CN 国际化配置
    * */
   const intl = useIntl();
   const [responsive, setResponsive] = useState(false);
@@ -274,7 +262,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
       type: {
         'field': 'type',
         'op': 'in',
-        'data': [1,2,3]
+        'data': [1, 2, 3]
       }
     }).then((res) => {
 
@@ -302,9 +290,9 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
   useEffect(() => {
 
 
-   
+
     getReportTemplate()
-    jetty({  sorter: { name: 'ascend' } }).then((res) => {
+    jetty({ sorter: { name: 'ascend' } }).then((res) => {
       var b = {}
       res.data.forEach((r) => {
         b[r.id] = r.name
@@ -355,10 +343,6 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
       setFlowConf(b)
       setProcesses(p)
 
-
-      //  var treeData = tree(res.data, "                                    ", 'pid')
-      // setFlowTree(treeData)
-
       alertrule({
         type: {
           'field': 'type',
@@ -379,43 +363,121 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
       });
     });
-    if (currentUser?.role_type == "Trader") {
-      columns.splice(2, 1);
-    } else if (currentUser?.role_type == "Terminal") {
-      columns.splice(3, 1);
+
+
+    for (var k in processes) {
+      if (k != "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa") {
+
+        columns1.push({
+          title: "Duration of " + processes[k] + " Processes",
+          dataIndex: k,
+
+        })
+      }
+
     }
 
+
+
+
+    if (currentUser?.role_type != "Super" && !access.transactions_list_tab()) {
+      columns1.splice(11, 1);
+    } else if (access.transactions_list_tab()) {
+      columns1.splice(12, 1);
+    }
+
+    if (!access.transactions_list_tab()) {
+      columns1.splice(6, 2);
+
+    }
+    if (report_type == 1) {
+      setColumns(columns1)
+    }
     if (report_type == 2) {
-      columns = columns2
+      setColumns(columns2)
     }
     if (report_type == 3) {
 
-      
-      columns = columns3
+
+      setColumns(columns3)
     }
+    setColumns((v) => {
 
-    setAvailableColumns(columns.filter((a) => {
-      return !a.mustSelect
-    }))
-    
+      setAvailableColumns(v.filter((a) => {
+        return !a.mustSelect
+      }))
 
 
-    setSelectedColumns(columns.filter((a) => {
-      return a.mustSelect
-    }))
-   
+
+      setSelectedColumns(v.filter((a) => {
+        return a.mustSelect
+      }))
+      return v
+    })
+
+
 
 
 
 
   }, [report_type]);
 
-  
-  var columns= [
-   
+
+  var columns1 = [
+    {
+      title: (<FormattedMessage id="pages.transaction.transactionID" defaultMessage="EOS ID" />),
+      dataIndex: 'eos_id',
+      mustSelect: true
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.xxx" defaultMessage="Transaction Status" />,
+      dataIndex: 'status'
+
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.startOfTransaction" defaultMessage="Start Of Transaction" />,
+      dataIndex: 'start_of_transaction',
+
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.endOfTransaction" defaultMessage="End Of Transaction" />,
+      dataIndex: 'end_of_transaction',
+
+
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Number of Amber Alert(s) Triggered " />,
+      dataIndex: 'amber_alert_num',
+
+
+    },
     {
 
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Total/ Current Duration" />,
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Number of Red Alert(s) Triggered" />,
+      dataIndex: 'red_alert_num',
+
+
+    },
+
+
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Number of Amber Alert(s) Triggered (Threshold created by Others)" />,
+      dataIndex: 'amber_alert_num_customer',
+
+
+    },
+
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Number of Red Alert(s) Triggered (Threshold created by Others)" />,
+      dataIndex: 'red_alert_num_customer',
+
+
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Entire/Current Duration" />,
       dataIndex: 'total_duration',
 
     },
@@ -423,21 +485,21 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
       title: <FormattedMessage id="pages.transaction.xxx" defaultMessage="Current Process" />,
       dataIndex: 'flow_id',
-     
+
     },
     {
-      title: access.transactions_list_tab() ? "Customer" : <FormattedMessage id="pages.transaction.jettyName" defaultMessage="Trader" />,
-      dataIndex: 'trader_id',
+      title: "Trader",
+      dataIndex: 'trader_name',
 
     },
     {
       title: <FormattedMessage id="pages.transaction.jettyName" defaultMessage="Terminal" />,
-      dataIndex: 'terminal_id',
+      dataIndex: 'terminal_name',
 
     },
     {
       title: <FormattedMessage id="pages.transaction.jettyName" defaultMessage="Jetty Name" />,
-      dataIndex: 'jetty_id',
+      dataIndex: 'jetty_name',
 
     },
     {
@@ -461,63 +523,82 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
     },
     {
-      title: <FormattedMessage id="pages.transaction.productType" defaultMessage="Product Type" />,
-      dataIndex: 'product_name',
-
-    },
-    {
       title: <FormattedMessage id="pages.transaction.xxx" defaultMessage="Total Nominated Quantity (Bls-60-F)" />,
       dataIndex: 'product_quantity_in_bls_60_f',
 
     },
     {
-      title: (<FormattedMessage id="pages.transaction.transactionID" defaultMessage="EOS ID" />),
-      dataIndex: 'eos_id',
-      mustSelect: true
-    },
-    {
-      title: <FormattedMessage id="pages.transaction.xxx" defaultMessage="Transaction Status" />,
-      dataIndex: 'status',
-      mustSelect: true
-    },
-    {
-      title: <FormattedMessage id="pages.transaction.startOfTransaction" defaultMessage="Start Of Transaction" />,
-      dataIndex: 'start_of_transaction',
-      mustSelect: true
-    },
-    {
-      title: <FormattedMessage id="pages.transaction.endOfTransaction" defaultMessage="End Of Transaction" />,
-      dataIndex: 'end_of_transaction',
-      mustSelect: true
+      title: <FormattedMessage id="pages.transaction.xxx" defaultMessage="Total nominated Qty (L-obs)" />,
+      dataIndex: 'product_quantity_in_l_obs',
 
     },
-   
     {
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Number of Amber Alert" />,
-      dataIndex: 'amber_alert_num',
-      mustSelect: true
-     
-    },
-    {
+      title: <FormattedMessage id="pages.transaction.xxx" defaultMessage="Total nominated Qty (L-15-C)" />,
+      dataIndex: 'product_quantity_in_l_15_c',
 
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Number of Red Alert" />,
-      dataIndex: 'red_alert_num',
-      mustSelect: true
-      
     },
-   
-   
+    {
+      title: <FormattedMessage id="pages.transaction.xxx" defaultMessage="Total nominated Qty (Mt)" />,
+      dataIndex: 'product_quantity_in_mt',
+
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.xxx" defaultMessage="Total nominated Qty (MtV)" />,
+      dataIndex: 'product_quantity_in_mtv',
+
+    },
+
+    {
+      title: "Product Type(S)",
+      dataIndex: 'product_name',
+
+    }
+
+
+
+
+
+
+
+
+
+
   ];
 
   const columns2 = [
 
-    
+
     {
-    title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="EOS ID" />,
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="EOS ID" />,
       dataIndex: 'eos_id',
       mustSelect: true
 
     },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Vessel Name" />,
+      dataIndex: 't.vessel_name',
+
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Arrival ID" />,
+      dataIndex: 't.arrival_id',
+
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Arrival ID Status" />,
+      dataIndex: 't.arrival_id_status',
+
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="IMO Number" />,
+      dataIndex: 't.imo_number',
+
+    },
+
     {
 
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Process" />,
@@ -526,7 +607,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
     },
     {
 
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Event" />,
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Event Name" />,
       dataIndex: 'flow_id',
       mustSelect: true
     },
@@ -534,21 +615,48 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Event Time" />,
       dataIndex: 'event_time',
+      valueType: "dateTime",
       mustSelect: true
     },
     {
 
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Agent" />,
+      dataIndex: 'agent',
+
+    },
+
+    {
+
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Work Order ID" />,
       dataIndex: 'work_order_id',
-     
+      mustSelect: true
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Work order Status" />,
+      dataIndex: 'work_order_status',
+
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Operation Type" />,
+      dataIndex: 'work_order_operation_type',
+
+    },
+
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Surveyor Name" />,
+      dataIndex: 'work_order_surveyor',
+
     },
     {
 
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Sequence No." />,
       dataIndex: 'work_order_sequence_number',
-     
+      mustSelect: true
     },
-    
+
     {
 
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Tank ID" />,
@@ -621,68 +729,99 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Delay Duration" />,
       dataIndex: 'delay_duration',
 
-    }
+    },
+
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Threshold/Alert" />,
+      dataIndex: 'threshold_alert',
+      mustSelect: true
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Alert" />,
+      dataIndex: 'alertList',
+      mustSelect: true,
+      children: [
+        {
+          dataIndex: 'alert_id',
+
+        },
+        {
+
+          title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Alert Type" />,
+          dataIndex: 'alert_type',
+
+        },
+        {
+
+          title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Alert Triggered Time" />,
+          dataIndex: 'alert_triggered_time',
+
+        },
+        {
+
+          title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Threshold ID" />,
+          dataIndex: 'threshold_id',
+          mustSelect: true
+        }
+      ]
+    },
 
 
-  
 
-    
-]
+    {
+      title: "Update Log",
+      dataIndex: "transactioneventlogList",
+      children: [
+        {
+          title: "Type Of Data",
+          dataIndex: "TypeOfData"
+        },
+        {
+          title: "Previous Value",
+          dataIndex: "PreviousValue",
+          render: (dom, entity) => {
+            if (entity.TypeOfData == "Event Time") {
+              return moment(dom).format('YYYY-MM-DD HH:mm:ss')
+            } else {
+              return dom
+            }
+
+          }
+        },
+        {
+          title: "New Value",
+          dataIndex: "NewValue",
+          render: (dom, entity) => {
+            if (entity.TypeOfData == "Event Time") {
+              return moment(dom).format('YYYY-MM-DD HH:mm:ss')
+            } else {
+              return dom
+            }
+
+          }
+        },
+        {
+          title: "Update Time",
+          dataIndex: "UpdateTime",
+          render: (dom, entity) => {
+            return moment(dom).format('YYYY-MM-DD HH:mm:ss')
+          }
+        }
+      ]
+    },
+
+
+
+
+
+
+
+  ]
   const columns3 = [
-    {
-
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="IMO Number" />,
-      dataIndex: 'imo_number',
-     
-
-    },
-    {
-
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Threshold Vessel Size" />,
-      dataIndex: 'ar.vessel_size_dwt_from',
-
-    },
-    {
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Threshold Nominated Quantity Range" />,
-      dataIndex: 'ar.product_quantity_in_mt_from',
-    
-
-    },
-    {
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Transaction Vessel Size" />,
-      dataIndex: 't.vessel_size_dwt',
 
 
-    },
-
-    {
-
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Transaction Nominated Quantity Range" />,
-      dataIndex: 't.product_quantity_in_bls_60_f',
-     
-
-    },
-
-    {
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Product Type" />,
-      dataIndex: 't.product_name',
-      
-
-    },
-    {
-
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Terminal" />,
-      dataIndex: 't.terminal_id',
-     
-
-    },
-    {
-
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Trader" />,
-      dataIndex: 't.trader_id',
-     
-
-    },
     {
 
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Alert ID" />,
@@ -693,16 +832,16 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
     {
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Alert Type" />,
       dataIndex: 'type',
-      mustSelect: true
 
-    }, 
+
+    },
 
     {
 
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Alert Triggered Time" />,
       dataIndex: 'created_at',
-      
-      mustSelect: true
+
+
 
     },
 
@@ -716,41 +855,133 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Threshold Type" />,
       dataIndex: 'alertrule_type',
-      mustSelect: true
+
 
     },
     {
 
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Threshold Limit" />,
       dataIndex: 'ar.amber_hours',
-      mustSelect: true
+
 
     },
     {
 
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="EOS ID" />,
       dataIndex: 't.eos_id',
-      mustSelect: true
 
-    }, 
+
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Threshold Process/ Events" />,
+      dataIndex: 'flow_id',
+
+
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Transaction Total/ Current Duration" />,
+      dataIndex: 't.total_duration',
+
+
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Vessel IMO Number" />,
+      dataIndex: 't.imo_number',
+
+
+    },
 
     {
 
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Total / Current Duration" />,
-      dataIndex: 'total_duration',
-      mustSelect: true
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Vessel Name" />,
+      dataIndex: 't.vessel_name',
 
+    },
+
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Threshold Condition: Vessel Size" />,
+      dataIndex: 'ar.vessel_size_dwt_from',
+
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Transaction Vessel Size" />,
+      dataIndex: 't.vessel_size_dwt',
+
+    },
+
+
+
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Threshold Condition: Nominated Quantity Range (from - to)" />,
+      dataIndex: 'ar.product_quantity_from',
+
+
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Transaction Nominated Quantity" />,
+      dataIndex: 't.product_quantity',
+
+
+    },
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="UOM" />,
+      dataIndex: 'ar.uom',
+
+
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Product Type" />,
+      dataIndex: 't.product_name',
+
+
+    },
+    {
+      title: "Trader",
+      dataIndex: 't.trader_name',
+
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.jettyName" defaultMessage="Terminal" />,
+      dataIndex: 't.terminal_name',
+
+    },
+
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Threshold Set By" />,
+      dataIndex: 'ar.username',
+    },
+
+    {
+
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage=" Date of Threshold Alert Creation" />,
+      dataIndex: 'ar.created_at',
     }
+
+
+
+
+
   ]
- 
+
   const formRef = useRef<ProFormInstance>();
   const onlyCheck = (rule: any, value: any, callback: (arg0: string | undefined) => void) => {
 
-
+    if (!value) {
+      callback(undefined);
+    }
     fieldUniquenessCheck({ where: { name: value, type: [1, 2, 3], company_id: currentUser?.company_id }, model: 'Userconfig' }).then((res) => {
-      var template_nam=formRef.current?.getFieldValue("template_name")
-      if (templateMap && templateMap[template_nam] && templateMap[template_nam].name==value){
-           callback(undefined); 
+      var template_nam = formRef.current?.getFieldValue("template_name")
+      if (templateMap && templateMap[template_nam] && templateMap[template_nam].name == value) {
+        callback(undefined);
       }
       if (res.data) {
 
@@ -759,17 +990,19 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           defaultMessage: 'This name is already in use',
         }))
       } else {
-        callback(undefined); // 必须返回一个callback
+        callback(undefined); 
       }
     });
 
   }
   const onlyCheck2 = (rule: any, value: any, callback: (arg0: string | undefined) => void) => {
-
+    if (!value) {
+      callback(undefined);
+    }
 
     fieldUniquenessCheck({ where: { name: value, company_id: currentUser?.company_id }, model: 'Report' }).then((res) => {
 
-     
+
       if (res.data) {
 
         callback(intl.formatMessage({
@@ -777,7 +1010,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           defaultMessage: 'This name is already in use',
         }))
       } else {
-        callback(undefined); // 必须返回一个callback
+        callback(undefined); 
       }
     });
 
@@ -791,8 +1024,8 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
   } = props;
   return (
-  
-      
+
+
     <ModalForm width={'90%'}
       title="Create New Report"
       open={props.createModalOpen}
@@ -808,70 +1041,81 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
         render: (_, dom) => <div style={{ padding: 20, backgroundColor: "#fff", position: 'relative', height: isMP ? 240 : 80 }}>
 
-        
-         
-            <Button style={{ width: isMP ? '100%' : null }} onClick={() => {
 
 
-              formRef.current?.resetFields()
-              setAvailableColumns(columns)
-             
-              setSelectedColumns([])
-             
-          } }>
+          <Button style={{ width: isMP ? '100%' : null }} onClick={() => {
+
+
+            formRef.current?.resetFields()
+            setAvailableColumns(columns)
+
+            setSelectedColumns([])
+
+          }}>
             Reset
           </Button>
 
-          <Access accessible={access.canReportAdd()} fallback={<div></div>}> <Button style={{ marginLeft: isMP ? 0 : 20, marginTop: isMP ? 20 : 0,width: isMP ? '100%' : null }} icon={<FileTextOutlined />}  type="primary" onClick={ async () => {
+          <Access accessible={access.canReportAdd()} fallback={<div></div>}> <Button style={{ marginLeft: isMP ? 0 : 20, marginTop: isMP ? 20 : 0, width: isMP ? '100%' : null }} icon={<FileTextOutlined />} type="primary" onClick={async () => {
+
+            if (!formRef.current?.getFieldValue("name")) {
+              message.error("Report name cannot be empty!");
+              return
+
+            }
+
+
             await formRef.current?.validateFields(['name'])
-           
+
 
             var reportName = formRef.current?.getFieldValue("name")
             var templateName = formRef.current?.getFieldValue("templateName")
             var data = formRef.current?.getFieldsValue()
             var report_type = data.report_type
-           
+
             if (report_type < 4) {
-              
+
               data.selected_fields = selectedColumns.map((c) => { return c.dataIndex })
             } else {
-              data.selected_fields=[]
+              data.selected_fields = []
             }
-            
-            
 
-           
+
+
+
             delete data.report_type
             delete data.useExisting
 
             if (data.time_period && data.time_period != '0') {
-             
-              data.dateArr = [new Date((new Date()).getTime() - 3600 *24* 1000 * parseInt(data.time_period)), new Date()]
+
+              data.dateArr = [new Date((new Date()).getTime() - 3600 * 24 * 1000 * parseInt(data.time_period)), new Date()]
 
               if (data.dateRange) {
                 delete data.dateRange
               }
-              
+
             }
-             // var ok = { name: reportName, value: JSON.stringify(data) , template_name: templateName ? templateName : null }
            
-            var ok = await handleAGenerateReport({ name: reportName, value: data,  type: report_type,template_name: templateName ? templateName : null })
-           
+
+            var ok = await handleAGenerateReport({ name: reportName, value: data, type: report_type, template_name: templateName ? templateName : null })
+
             if (ok) {
               props.onSubmit({})
               history.push(`/Report/ReportSummary`, ok);
-           }
+            }
 
-           
+
 
           }}>Generate Report</Button></Access>
           <Access accessible={access.canReportAddWithTemplate()} fallback={<div></div>}><Button style={{ marginLeft: isMP ? 0 : 20, marginTop: isMP ? 20 : 0, width: isMP ? '100%' : null }} onClick={() => {
             setIsModalOpen(true)
 
-           
+
 
           }} type="primary" icon={<FileAddOutlined />}>Save Template</Button></Access>
-         <Modal title="Save Template" open={isModalOpen} onOk={async () => {
+          <Modal title="Save Template" open={isModalOpen} onOk={async () => {
+
+
+
             await formRef.current?.validateFields(['templateName'])
             var templateName = formRef.current?.getFieldValue("templateName")
             var data = formRef.current?.getFieldsValue()
@@ -885,56 +1129,56 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
             } else {
               data.selected_fields = []
             }
-           
+
             if (data.time_period && data.time_period != '0') {
 
-              data.dateArr = [new Date((new Date()).getTime() - 3600*24 * 1000 * parseInt(data.time_period)), new Date()]
+              data.dateArr = [new Date((new Date()).getTime() - 3600 * 24 * 1000 * parseInt(data.time_period)), new Date()]
 
               if (data.dateRange) {
                 delete data.dateRange
               }
 
             }
-            
-            if (data.save_type=='b') {
+
+            if (data.save_type == 'b') {
               await handleUpdate({ name: templateName, value: data, id: data.template_name, type: report_type })
             } else {
 
-             
+
               await handleAdd({ name: templateName, value: data, type: parseInt(report_type) })
             }
-            
+
             getReportTemplate()
             setIsModalOpen(false)
 
-           // props.onSubmit({})
+            
 
 
           }} onCancel={() => { setIsModalOpen(false) }}>
 
             <ProFormText label="save_type" name="save_type" hidden initialValue="a" />
 
-            <ProFormDependency name={['template_name','save_type']}>
+            <ProFormDependency name={['template_name', 'save_type']}>
               {({ template_name, save_type }) => {
 
-               
+
                 if (template_name) {
                   if (save_type == "b") {
-                          
+
                     formRef.current?.setFieldValue("templateName", templateMap[template_name].name)
                   } else {
-                     
+
                     formRef.current?.setFieldValue("templateName", null)
                   }
-                
+
                   return (<>
 
                     <ProCard ghost={true} wrap={isMP ? true : false} gutter={0} bodyStyle={{ marginBottom: 20 }}>
                       <ProCard ghost={true} colSpan={isMP ? 24 : 10} bodyStyle={{ marginBottom: 20 }} >
-                        <Button type={save_type == "a" ? 'primary' : "default"} style={{width:'100%'}}  onClick={() => {
-                          formRef.current?.setFieldValue("save_type",'a')
+                        <Button type={save_type == "a" ? 'primary' : "default"} style={{ width: '100%' }} onClick={() => {
+                          formRef.current?.setFieldValue("save_type", 'a')
 
-                        } } >New Template</Button>
+                        }} >New Template</Button>
                       </ProCard>
                       <ProCard ghost={true} colSpan={isMP ? 24 : 14} style={{ paddingLeft: isMP ? 0 : 10 }}>
                         <Access accessible={access.canReportTemplateList()} fallback={<div></div>}> <Button type={save_type == "b" ? 'primary' : "default"} style={{ width: '100%' }} onClick={() => {
@@ -943,40 +1187,40 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                         }} >Replace Existing Template</Button> </Access>
                       </ProCard>
                     </ProCard>
-                    
-
-                   
-
-                   
-                    
-                 
 
 
-                 
-                    
 
-                      <ProFormText label="Template Name" name="templateName" style={{ width: '100%' }} rules={[
-                        {
-                          required: true,
-                          message: (
-                            <FormattedMessage
-                              id="pages.rules.required"
-                              defaultMessage=""
-                            />
-                          ),
-                        }, { validator: onlyCheck }
-                      ]} />
 
-                   
-                    
-                  
-                    </>
+
+
+
+
+
+
+
+
+                    <ProFormText label="Template Name" name="templateName" style={{ width: '100%' }} rules={[
+                      {
+                        required: true,
+                        message: (
+                          <FormattedMessage
+                            id="pages.rules.required"
+                            defaultMessage=""
+                          />
+                        ),
+                      }
+                    ]} />
+
+
+
+
+                  </>
                   )
-                
-                   
 
 
-                  
+
+
+
 
 
                 } else {
@@ -991,21 +1235,21 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                             defaultMessage=""
                           />
                         ),
-                      }, { validator: onlyCheck }
+                      }
                     ]} />
                   </ProForm.Group >)
                 }
 
               }}
-             </ProFormDependency>
+            </ProFormDependency>
 
 
-            
-           
+
+
           </Modal></div>,
       }}>
 
-     
+
       <ProFormRadio.Group
         name="useExisting"
         initialValue="new"
@@ -1015,28 +1259,28 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           formRef.current?.resetFields()
           formRef.current?.setFieldValue('useExisting', o)
           setAvailableColumns(columns)
-         
-          setSelectedColumns([])
-          
 
-        } }
+          setSelectedColumns([])
+
+
+        }}
         options={[
           {
             label: 'New Report',
             value: 'new',
           },
-          access.canReportAddWithTemplate()? {
+          access.canReportAddWithTemplate() ? {
             label: 'Existing Report Template',
             value: 'existing',
-          }:null,
-          
+          } : null,
+
         ]}
       />
 
-     
 
 
-      
+
+
 
       <ProFormDependency name={['useExisting', 'report_type', 'template_name']}>
         {({ useExisting, report_type, template_name }) => {
@@ -1044,55 +1288,55 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           setReport_type(report_type)
           return <>
 
-          
+
 
             {useExisting == "existing" && <ProFormSelect name="template_name" label="Selected Template" fieldProps={{
-        options: templateList, onChange: (() => {
-          var id = formRef.current?.getFieldValue("template_name")
-          try {
-            var value = eval('(' + templateMap[id].value + ')');
-            value.report_type = templateMap[id].type+""
-            formRef.current?.setFieldsValue(value)
+              options: templateList, onChange: (() => {
+                var id = formRef.current?.getFieldValue("template_name")
+                try {
+                  var value = eval('(' + templateMap[id].value + ')');
+                  value.report_type = templateMap[id].type + ""
+                  formRef.current?.setFieldsValue(value)
 
-            setTimeout(() => {
+                  setTimeout(() => {
 
 
-            
-          
-            if (!value.selected_fields) {
-              value.selected_fields = []
-            }
-            var arr = columns.filter((c) => {
 
-              return value.selected_fields.some((cc) => {
-                return cc == c.dataIndex
+
+                    if (!value.selected_fields) {
+                      value.selected_fields = []
+                    }
+                    var arr = columns.filter((c) => {
+
+                      return value.selected_fields.some((cc) => {
+                        return cc == c.dataIndex
+                      })
+                    })
+                    setSelectedColumns(arr)
+
+
+
+
+                    setAvailableColumns(columns.filter((a) => {
+                      return !arr.some((b) => {
+                        return a.dataIndex == b.dataIndex
+                      })
+                    }))
+
+
+
+                    setFields(value.selected_fields)
+                  }, 1000)
+                } catch (e) {
+
+                }
+
+
               })
-            })
-            setSelectedColumns(arr)
-            
-
-
-
-            setAvailableColumns(columns.filter((a) => {
-              return !arr.some((b) => {
-                return a.dataIndex == b.dataIndex
-              })
-            }))
-
-          
-
-            setFields(value.selected_fields)
-            }, 1000)
-          } catch (e) {
-
-          }
-              
-
-        })
             }} width="lg" />}
             {((useExisting == "existing" && template_name) || useExisting == "new") && <ProFormSelect
 
-              valueEnum={currentUser?.role_type=="Super"?
+              valueEnum={currentUser?.role_type == "Super" ?
                 {
                   '1': "Transaction Summary",
                   '2': "Transaction Details",
@@ -1101,15 +1345,15 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                   '5': "Login Log",
                   '6': "User Activity Log",
                   '7': "API Activity"
-                     
+
                 } : {
                   '1': "Transaction Summary",
                   '2': "Transaction Details",
                   '3': "Alert Reports"
-                  
+
 
                 }
-}
+              }
               width="lg"
               name="report_type"
               label="Report Type"
@@ -1124,20 +1368,20 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                     defaultMessage="This field cannot be empty！"
                   />
                 ),
-              }, { validator: onlyCheck2 }
+              }
 
             ]} />}
 
-          
-
-     
-       
-    
-
-   
 
 
-            {report_type  && <ProCard title="Output Filter" colSpan={24} headerBordered collapsible={true} headStyle={{ backgroundColor: "#d4d4d4" }}>
+
+
+
+
+
+
+
+            {report_type && <ProCard title="Output Filter" colSpan={24} headerBordered collapsible={true} headStyle={{ backgroundColor: "#d4d4d4" }}>
 
               <ProForm.Group  >
 
@@ -1182,7 +1426,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
               </ProForm.Group>
               <ProFormDependency name={['time_period', 'dateRange']}>
                 {({ time_period, dateRange }) => {
-                  var dateArr=[]
+                  var dateArr = []
                   if (time_period && time_period != '0') {
 
                     dateArr = [new Date((new Date()).getTime() - 3600 * 24 * 1000 * parseInt(time_period)), new Date()]
@@ -1195,7 +1439,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                     }
                   }
 
-                  
+
 
                   return <> {report_type && report_type < 4 && <ProForm.Group >
                     <ProFormSelect
@@ -1206,7 +1450,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                       fieldProps={
                         {
 
-                         
+
 
                           dropdownMatchSelectWidth: isMP ? true : false,
                           mode: 'multiple',
@@ -1214,14 +1458,14 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                           maxTagPlaceholder: (omittedValues) => {
                             return omittedValues.length + " Selected"
                           },
-                          
-                       
+
+
 
                           notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
                           showSearch: true,
                           allowClear: true,
                           onFocus: () => {
-                            fieldSelectData({ model: "Transaction", value: '', field: 'eos_id', Op: true, where: dateArr.length>0?{ 'start_of_transaction': { "between": dateArr } }:null }).then((res) => {
+                            fieldSelectData({ model: "Transaction", value: '', field: 'eos_id', Op: true, where: dateArr.length > 0 ? { 'start_of_transaction': { "between": dateArr } } : null }).then((res) => {
 
                               setEos_idData(res.data)
                             })
@@ -1343,15 +1587,15 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                         allowClear: true,
                         onFocus: () => {
                           fieldSelectData({ model: "Transaction", value: '', field: 'status', Op: true, where: dateArr.length > 0 ? { 'start_of_transaction': { "between": dateArr } } : null }).then((res) => {
-                            var o={
+                            var o = {
                               0: "Open",
                               1: "Closed",
                               2: "Cancelled"
-                              }
-                            
+                            }
+
                             for (var k in res.data) {
-                              res.data[k] =o[k]
-                             }
+                              res.data[k] = o[k]
+                            }
                             setStatusData(res.data)
                           })
                         },
@@ -1373,7 +1617,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                         }
                       }}
 
-                      valueEnum={statusData }
+                      valueEnum={statusData}
                       width="sm"
                       name="status"
                       label="Status"
@@ -1382,9 +1626,9 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
 
 
-                    
 
-                     <ProFormSelect
+
+                    <ProFormSelect
                       valueEnum={organization_idData}
                       fieldProps={{
                         mode: 'multiple',
@@ -1397,28 +1641,28 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                         allowClear: true,
                         onFocus: () => {
                           fieldSelectData({ model: "Transaction", value: '', field: 'organization_id', Op: true, where: dateArr.length > 0 ? { 'start_of_transaction': { "between": dateArr } } : null }).then((res) => {
-                            
+
                             setOrganization_idData(res.data)
                           })
                         },
                         onSearch: (newValue: string) => {
 
                           fieldSelectData({ model: "Transaction", value: newValue, field: 'organization_id', Op: true, where: dateArr.length > 0 ? { 'start_of_transaction': { "between": dateArr } } : null }).then((res) => {
-                           
+
                             setOrganization_idData(res.data)
                           })
 
                         }
                       }}
-                        width="sm"
-                        name="organization_id"
-                        label={getOrganizationName()}
-                      />
+                      width="sm"
+                      name="organization_id"
+                      label={getOrganizationName()}
+                    />
 
-                    
 
-                    
-                       <ProFormSelect
+
+
+                    <ProFormSelect
                       valueEnum={threshold_organization_idData}
                       fieldProps={{
                         mode: 'multiple',
@@ -1444,16 +1688,16 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
                         }
                       }}
-                        width="sm"
+                      width="sm"
                       name="threshold_organization_id"
-                        label={"Threshold created by"}
-                      />
+                      label={"Threshold created by"}
+                    />
 
-                    
+
                     {((currentUser?.role_type == "Trader" && report_type != 1) || (currentUser?.role_type == "Terminal") || (currentUser?.role_type == "Super" && report_type != 3)) && <ProFormSelect
                       width="sm"
                       name="alertrule_type"
-                    
+
                       valueEnum={alertrule_typeData}
                       fieldProps={{
                         mode: 'multiple',
@@ -1491,7 +1735,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                     {((currentUser?.role_type == "Trader" && report_type != 1) || (currentUser?.role_type == "Terminal") || (currentUser?.role_type == "Super" && report_type != 3)) && <ProFormSelect
                       width="sm"
                       name="vessel_size_dwt"
-                      
+
 
                       valueEnum={vessel_size_dwtData}
                       fieldProps={{
@@ -1519,9 +1763,9 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
                         }
                       }}
-                      
 
-                     
+
+
                       label="Vessel Size"
 
                     />}
@@ -1540,23 +1784,18 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                       width="sm"
                       name="uom"
                       label="UOM"
-                      initialValue={"Bls-60-F"}
+                      initialValue={"bls_60_f"}
                       valueEnum={{
-                        "L-obs": "L-obs",
-                        "L-15-C": "L-15-C",
-                        "Mt": "Mt",
-                        "MtV": "MtV",
-                        "Bls-60-F": "Bls-60-F",
+                        "l_obs": "L-obs",
+                        "l_15_c": "L-15-C",
+                        "mt": "Mt",
+                        "mtv": "MtV",
+                        "bls_60_f": "Bls-60-F",
 
                       }}
 
 
                     />
-
-
-
-
-
 
 
                   </ProForm.Group>}</>
@@ -1565,12 +1804,9 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
               </ProFormDependency>
 
-
-
-             
             </ProCard>}
 
-            { report_type && report_type < 4   && <RcResizeObserver
+            {report_type && report_type < 4 && <RcResizeObserver
               key="resize-observer"
               onResize={(offset) => {
                 setResponsive(offset.width < 596);
@@ -1580,7 +1816,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                 title="Report Fields"
                 headStyle={{ backgroundColor: "#d4d4d4" }}
                 collapsible={true}
-               
+
                 extra=""
                 split={responsive ? 'horizontal' : 'vertical'}
                 bordered
@@ -1594,13 +1830,13 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                         <Button key="3" type="primary" onClick={() => {
 
 
-                          var arr=availableColumns.filter((a) => {
+                          var arr = availableColumns.filter((a) => {
                             return !selectedRowKeys.some((b) => {
-                              return  b.dataIndex==a.dataIndex
+                              return b.dataIndex == a.dataIndex
                             })
                           })
 
-                         
+
                           setAvailableColumns(arr)
 
 
@@ -1608,7 +1844,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
                           setSelectedRowKeys([])
                           setSelectedRowKeys1([])
-                       
+
 
                         }}>
                           {'>>'}
@@ -1616,15 +1852,15 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                       ]}
                       options={false}
                       headerTitle="Available:"
-                      
+
                       columns={[{
                         title: '',
                         dataIndex: 'title',
                       }]}
                       rowSelection={{
-                        selectedRowKeys: selectedRowKeys.map((a)=>a.dataIndex),
+                        selectedRowKeys: selectedRowKeys.map((a) => a.dataIndex),
                         onChange: (_, selectedRows) => {
-                          
+
                           setSelectedRowKeys(selectedRows);
                         },
                       }}
@@ -1635,25 +1871,18 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                       dragSortKey="title"
                       dragSortHandlerRender={(rowData: any, idx: any) => (
                         <div style={{ cursor: 'grab' }} >
-                         
-                         {idx + 1} - {rowData.title}
+
+                          {idx + 1} - {rowData.title}
                         </div>
                       )}
                       onDragSortEnd={(newDataSource: any) => {
-                       
-                      } }
+
+                      }}
                     />
-
-
-
-
-
-
-                 
 
                   </div>
                 </ProCard>
-                <ProCard title="" ghost={isMP ? true : false } colSpan={isMP ? 24 : 12}>
+                <ProCard title="" ghost={isMP ? true : false} colSpan={isMP ? 24 : 12}>
                   <div >
 
 
@@ -1664,11 +1893,11 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
                           var selectedRowKeys2 = selectedRowKeys1.filter((a) => {
 
-                             return !columns.filter((b) => {
+                            return !columns.filter((b) => {
                               return b.mustSelect
-                             }).some((c) => {
-                               return c.dataIndex == a.dataIndex
-                             })
+                            }).some((c) => {
+                              return c.dataIndex == a.dataIndex
+                            })
 
 
                           })
@@ -1694,7 +1923,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                       ]}
                       options={false}
                       headerTitle="Selected:"
-                      
+
                       columns={[{
                         title: '',
                         dataIndex: 'title',
@@ -1717,39 +1946,30 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                         </div>
                       )}
                       onDragSortEnd={(newDataSource: any) => {
-                       
-                       setSelectedColumns(newDataSource);
-                       
+
+                        setSelectedColumns(newDataSource);
+
                       }}
                     />
 
-                   
+
 
                   </div>
                 </ProCard>
               </ProCard>
 
 
-
-
-
-
-
-
-
             </RcResizeObserver>}
 
 
           </>
-      
+
         }}
 
-
-
       </ProFormDependency>
-        </ModalForm>
+    </ModalForm>
 
-   
+
   );
 };
 

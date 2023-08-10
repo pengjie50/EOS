@@ -6,7 +6,7 @@ import {
   ProFormTextArea,
   ModalForm,
   ProFormInstance
-  
+
 } from '@ant-design/pro-components';
 import { JettyListItem } from '../data.d';
 import { FormattedMessage, useIntl, useModel } from '@umijs/max';
@@ -20,15 +20,15 @@ export type CreateFormProps = {
   onCancel: (flag?: boolean, formVals?: Partial<JettyListItem>) => void;
   onSubmit: (values: Partial<JettyListItem>) => Promise<void>;
   createModalOpen: boolean;
-  
+
 };
 
 const UpdateForm: React.FC<CreateFormProps> = (props) => {
   const restFormRef = useRef<ProFormInstance>();
   const intl = useIntl();
-  const [terminalList, setTerminalList] = useState<any>({});
 
-  
+
+
   const [depth_alongsideData, setDepth_alongsideData] = useState<any>({});
   const [depth_approachesData, setDepth_approachesData] = useState<any>({});
 
@@ -41,7 +41,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
   const { initialState, setInitialState } = useModel('@@initialState');
   const { currentUser } = initialState || {};
 
-
+  const [terminalList, setTerminalList] = useState<any>({});
   const onlyCheck = (rule: any, value: any, callback: (arg0: string | undefined) => void) => {
 
 
@@ -54,7 +54,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
           defaultMessage: 'Chosen Jetty No. already exist within EOS',
         }))
       } else {
-        callback(undefined); // 必须返回一个callback
+        callback(undefined);
       }
     });
 
@@ -62,7 +62,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
   useEffect(() => {
 
 
-    organization({type: "Terminal", sorter: { name: 'ascend' } }).then((res) => {
+    organization({ type: "Terminal", sorter: { name: 'ascend' } }).then((res) => {
       var b = {}
       res.data.forEach((r) => {
         b[r.id] = r.name
@@ -83,47 +83,47 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
 
   } = props;
 
-  
+
   return (
-   
+
     <ModalForm
       modalProps={{ destroyOnClose: true }}
       onOpenChange={(vi) => {
         if (!vi) {
           props.onCancel();
         }
-          
+
       }}
       formRef={restFormRef}
-        onFinish={props.onSubmit}
+      onFinish={props.onSubmit}
       open={props.createModalOpen}
-        submitter={{
-          searchConfig: {
-            resetText: intl.formatMessage({
-              id: 'pages.reset',
-              defaultMessage: 'Reset',
-            }),
+      submitter={{
+        searchConfig: {
+          resetText: intl.formatMessage({
+            id: 'pages.reset',
+            defaultMessage: 'Reset',
+          }),
+        },
+        resetButtonProps: {
+          onClick: () => {
+            restFormRef.current?.resetFields();
+           
           },
-          resetButtonProps: {
-            onClick: () => {
-              restFormRef.current?.resetFields();
-              //   setModalVisible(false);
-            },
-          },
-        }}
-        title={intl.formatMessage({
-          id: 'pages.jetty.add',
-          defaultMessage: 'Add Jetty',
+        },
+      }}
+      title={intl.formatMessage({
+        id: 'pages.jetty.add',
+        defaultMessage: 'Add Jetty',
+      })}
+    >
+      <ProFormText
+        name="name"
+        label={intl.formatMessage({
+          id: 'pages.jetty.xxx',
+          defaultMessage: 'Jetty No.',
         })}
-      >
-        <ProFormText
-          name="name"
-          label={intl.formatMessage({
-            id: 'pages.jetty.xxx',
-            defaultMessage: 'Jetty No.',
-          })}
         width="lg"
-          rules={[
+        rules={[
           {
             required: true,
             message: (
@@ -132,10 +132,10 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
                 defaultMessage=""
               />
             ),
-            }, { validator: onlyCheck }
+          }, { validator: onlyCheck }
         ]}
       />
-     
+
       <ProFormSelect
         name="depth_alongside"
         label="Depth Alongside (M)"
@@ -167,7 +167,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
 
                 })
 
-                //restFormRef.current?.setFieldValue("depth_approaches",newValue)
+               
               })
 
             }
@@ -185,7 +185,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
             showSearch: true,
             dropdownMatchSelectWidth: isMP ? true : false,
             allowClear: true,
-            
+
             onFocus: () => {
               fieldSelectData({ model: "Jetty", value: '', field: 'depth_approaches' }).then((res) => {
                 setDepth_approachesData(res.data)
@@ -196,16 +196,16 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
                 return
               }
               fieldSelectData({ model: "Jetty", value: newValue, field: 'depth_approaches' }).then((res) => {
-                setDepth_approachesData({ [newValue+""]: newValue, ...res.data })
+                setDepth_approachesData({ [newValue + ""]: newValue, ...res.data })
 
                 setDepth_approachesData(val => {
                   alert(newValue)
-                  restFormRef.current?.setFieldValue("depth_approaches", newValue+"")
+                  restFormRef.current?.setFieldValue("depth_approaches", newValue + "")
                   return val
 
                 })
 
-                //restFormRef.current?.setFieldValue("depth_approaches",newValue)
+               
               })
 
             }
@@ -236,13 +236,13 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
                 setMax_loaData({ [newValue + ""]: newValue, ...res.data })
 
                 setMax_loaData(val => {
-                  
+
                   restFormRef.current?.setFieldValue("max_loa", newValue + "")
                   return val
 
                 })
 
-                //restFormRef.current?.setFieldValue("depth_approaches",newValue)
+                
               })
 
             }
@@ -273,13 +273,13 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
                 setMin_loaData({ [newValue + ""]: newValue, ...res.data })
 
                 setMin_loaData(val => {
-                 
+
                   restFormRef.current?.setFieldValue("min_loa", newValue + "")
                   return val
 
                 })
 
-                //restFormRef.current?.setFieldValue("depth_approaches",newValue)
+                
               })
 
             }
@@ -311,19 +311,19 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
                 setMax_displacementData({ [newValue + ""]: newValue, ...res.data })
 
                 setMax_displacementData(val => {
-                  
+
                   restFormRef.current?.setFieldValue("max_displacement", newValue + "")
                   return val
 
                 })
 
-                //restFormRef.current?.setFieldValue("depth_approaches",newValue)
+                
               })
 
             }
           }}
       />
-    
+
       <ProFormSelect
         name="mla_envelop_at_mhws_3m"
         label="MLA Envelop At MHWS 3.0m (Unless Otherwise Specified) (M)"
@@ -349,19 +349,19 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
                 setMla_envelop_at_mhws_3mData({ [newValue + ""]: newValue, ...res.data })
 
                 setMla_envelop_at_mhws_3mData(val => {
-                 
+
                   restFormRef.current?.setFieldValue("mla_envelop_at_mhws_3m", newValue + "")
                   return val
 
                 })
 
-                //restFormRef.current?.setFieldValue("depth_approaches",newValue)
+                
               })
 
             }
           }}
       />
-    
+
 
       {currentUser?.role_type != 'Terminal' && <ProFormSelect
         name="terminal_id"
@@ -371,10 +371,10 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
         })}
         width="lg"
         valueEnum={terminalList}
-      />} 
-       
+      />}
+
     </ModalForm>
-     
+
   );
 };
 

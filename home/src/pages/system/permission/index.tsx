@@ -4,6 +4,7 @@ import { addPermission, removePermission, permission, updatePermission } from '.
 import { PlusOutlined, SearchOutlined, FormOutlined, DeleteOutlined, ExclamationCircleOutlined } from '@ant-design/icons';
 import type { ActionType, ProColumns, ProDescriptionsItemProps } from '@ant-design/pro-components';
 import { PermissionList, PermissionListItem } from './data.d';
+import { ResizeObserverDo } from '@/components'
 import {
   FooterToolbar,
   ModalForm,
@@ -27,7 +28,6 @@ const { confirm } = Modal;
 import { InfiniteScroll, List, NavBar, Space, DotLoading } from 'antd-mobile'
 /**
  * @en-US Add node
- * @zh-CN 添加节点
  * @param fields
  */
 const handleAdd = async (fields: PermissionListItem) => {
@@ -55,13 +55,12 @@ const handleAdd = async (fields: PermissionListItem) => {
 
 /**
  * @en-US Update node
- * @zh-CN 更新节点
  *
  * @param fields
  */
 const handleUpdate = async (fields: Partial<PermissionListItem>) => {
 
-  
+
   const hide = message.loading(<FormattedMessage
     id="pages.modifying"
     defaultMessage="Modifying"
@@ -88,7 +87,6 @@ const handleUpdate = async (fields: Partial<PermissionListItem>) => {
 
 /**
  *  Delete node
- * @zh-CN 删除节点
  *
  * @param selectedRows
  */
@@ -142,12 +140,10 @@ const handleRemove = async (selectedRows: PermissionListItem[], callBack: any) =
 const TableList: React.FC = () => {
   /**
    * @en-US Pop-up window of new window
-   * @zh-CN 新建窗口的弹窗
    *  */
   const [createModalOpen, handleModalOpen] = useState<boolean>(false);
   /**
    * @en-US The pop-up window of the distribution update window
-   * @zh-CN 分布更新窗口的弹窗
    * */
   const [updateModalOpen, handleUpdateModalOpen] = useState<boolean>(false);
 
@@ -159,7 +155,6 @@ const TableList: React.FC = () => {
   const [resizeObj, setResizeObj] = useState({ searchSpan: 12, tableScrollHeight: 300 });
   /**
    * @en-US International configuration
-   * @zh-CN 国际化配置
    * */
   const intl = useIntl();
   //--MP start
@@ -172,7 +167,7 @@ const TableList: React.FC = () => {
 
   useEffect(() => {
 
-    
+
     if (isMP) {
       getData(1)
     }
@@ -234,14 +229,14 @@ const TableList: React.FC = () => {
         "pageSize": 3
 
       }, ...filter, sorter: { sort: "ascend" }
-    
+
     })
 
 
     setMPPagination({ total: append.total })
     setData(append.data)
   }
-  
+
   //--MP end
   const columns: ProColumns<PermissionListItem>[] = [
     {
@@ -252,10 +247,10 @@ const TableList: React.FC = () => {
         />
       ),
       sorter: true,
-    
-      
+
+
       dataIndex: 'name',
-     
+
       render: (dom, entity) => {
         return (
           <a
@@ -351,127 +346,114 @@ const TableList: React.FC = () => {
     <RcResizeObserver
       key="resize-observer"
       onResize={(offset) => {
-        const { innerWidth, innerHeight } = window;
+        ResizeObserverDo(offset, setResizeObj, resizeObj)
 
-        if (offset.width > 1280) {
-          
-          setResizeObj({ ...resizeObj, searchSpan: 8, tableScrollHeight: innerHeight - 420 });
-        }
-        if (offset.width < 1280 && offset.width > 900) {
-          
-          setResizeObj({ ...resizeObj, searchSpan: 12, tableScrollHeight: innerHeight - 420 });
-        }
-        if (offset.width < 900 && offset.width > 700) {
-          setResizeObj({ ...resizeObj, searchSpan: 24, tableScrollHeight: innerHeight - 420 });
-         
-        }
 
-      
 
       }}
     >
       <PageContainer className="myPage" header={{
-      title: isMP ? null : < FormattedMessage id="pages.permission.title" defaultMessage="Permission" />,
-      breadcrumb: {},
-      /*extra: isMP ? null : [
-        <Button
-          type="primary"
-          key="primary"
-          onClick={() => {
-            handleModalOpen(true);
-          }}
-        >
-          <PlusOutlined /> <FormattedMessage id="pages.searchTable.new" defaultMessage="New" />
-        </Button>,
-      ]*/
-    }}>
+        title: isMP ? null : < FormattedMessage id="pages.permission.title" defaultMessage="Permission" />,
+        breadcrumb: {},
+        /*extra: isMP ? null : [
+          <Button
+            type="primary"
+            key="primary"
+            onClick={() => {
+              handleModalOpen(true);
+            }}
+          >
+            <PlusOutlined /> <FormattedMessage id="pages.searchTable.new" defaultMessage="New" />
+          </Button>,
+        ]*/
+      }}>
         {!isMP && (<ConfigProvider renderEmpty={customizeRenderEmpty}><ProTable<PermissionListItem, API.PageParams>
           pagination={{ size: "default", pageSize: 500 }}
-        actionRef={actionRef}
+          actionRef={actionRef}
           rowKey="id"
           formRef={formRef}
-          scroll={{  y: resizeObj.tableScrollHeight }}
-        search={{
-          labelWidth: 220,
-          span: resizeObj.searchSpan,
-          searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
-        }}
+          scroll={{ y: resizeObj.tableScrollHeight }}
+          search={{
+            labelWidth: 220,
+            span: resizeObj.searchSpan,
+            searchText: < FormattedMessage id="pages.search" defaultMessage="Search" />
+          }}
           className="mytable"
-          indentSize={0 }
-        options={false }
+          indentSize={0}
+          options={false}
           request={async (params, sorter) => {
             var d = await permission({ ...params, sorter: { sort: "ascend" } })
-           d.data = tree(d.data, null, 'pid')
+            d.data = tree(d.data, null, 'pid')
             return d
           }}
           columns={columns}
           bordered
-        rowSelection={{
-          onChange: (_, selectedRows) => {
-            setSelectedRows(selectedRows);
-          },
-        }}
+          rowSelection={{
+            onChange: (_, selectedRows) => {
+              setSelectedRows(selectedRows);
+            },
+          }}
         /></ConfigProvider>)}
 
-      {isMP && (<>
+        {isMP && (<>
 
           <NavBar backArrow={false} left={
             <MPSort columns={columns} onSort={(k) => {
               setMPSorter(k)
               getData(1)
             }} />} right={right} onBack={back}>
-          {intl.formatMessage({
-            id: 'pages.permission.title',
-            defaultMessage: 'Permission',
-          })}
-        </NavBar>
+            {intl.formatMessage({
+              id: 'pages.permission.title',
+              defaultMessage: 'Permission',
+            })}
+          </NavBar>
 
-        <div style={{ padding: '20px', backgroundColor: "#5000B9", display: showMPSearch ? 'block' : 'none' }}>
-          <Search columns={columns.filter(a => !(a.hasOwnProperty('hideInSearch') && a['hideInSearch']))} action={actionRef} loading={false}
+          <div style={{ padding: '20px', backgroundColor: "#5000B9", display: showMPSearch ? 'block' : 'none' }}>
+            <Search columns={columns.filter(a => !(a.hasOwnProperty('hideInSearch') && a['hideInSearch']))} action={actionRef} loading={false}
 
-            onFormSearchSubmit={onFormSearchSubmit}
+              onFormSearchSubmit={onFormSearchSubmit}
 
-            dateFormatter={'string'}
+              dateFormatter={'string'}
               formRef={formRef}
-            type={'form'}
-            cardBordered={true}
-            form={{
-              submitter: {
-                searchConfig: {
+              type={'form'}
+              cardBordered={true}
+              form={{
+                submitter: {
+                  searchConfig: {
 
-                  submitText: < FormattedMessage id="pages.search" defaultMessage="Search" />,
+                    submitText: < FormattedMessage id="pages.search" defaultMessage="Search" />,
+                  }
+
                 }
+              }}
 
-              }
-            }}
+              search={{}}
+              manualRequest={true}
+            />
+          </div>
+          <List>
+            {data.map((item, index) => (
+              <List.Item key={index}>
 
-            search={{}}
-            manualRequest={true}
-          />
-        </div>
-        <List>
-          {data.map((item, index) => (
-            <List.Item key={index}>
+                <ProDescriptions<any>
+                  bordered={true}
+                  size="small"
+                  className="jetty-descriptions"
+                  layout="horizontal"
+                  column={1}
+                  title={""}
+                  request={async () => ({
+                    data: item || {},
+                  })}
+                  params={{
+                    id: item?.id,
+                  }}
+                  columns={columns as ProDescriptionsItemProps<any>[]}
+                />
 
-              <ProDescriptions<any>
-                bordered={true}
-                size="small"
-                className="jetty-descriptions"
-                layout="horizontal"
-                column={1}
-                title={""}
-                request={async () => ({
-                  data: item || {},
-                })}
-                params={{
-                  id: item?.id,
-                }}
-                columns={columns as ProDescriptionsItemProps<any>[]}
-              />
-
-            </List.Item>
-          ))}
-        </List>
+              </List.Item>
+            ))}
+          </List>
           {MPPagination.total > 0 ? <div style={{ textAlign: 'center', padding: "20px 10px 90px 10px" }}>
             <Pagination
 
@@ -487,129 +469,118 @@ const TableList: React.FC = () => {
             />
           </div> : customizeRenderEmpty()}
           <FloatButton.BackTop visibilityHeight={0} />
-      </>)}
-      {selectedRowsState?.length > 0 && (
-        <FooterToolbar
-          extra={
-            <div>
-              <FormattedMessage id="pages.searchTable.chosen" defaultMessage="Chosen" />{' '}
-              <a style={{ fontWeight: 600 }}>{selectedRowsState.length}</a>{' '}
-              <FormattedMessage id="pages.searchTable.item" defaultMessage="项" />
-              &nbsp;&nbsp;
-             s
-            </div>
-          }
-        >
-          <Button
-            onClick={async () => {
-              await handleRemove(selectedRowsState, (success) => {
-                if (success) {
-                  setSelectedRows([]);
-                  if (isMP) {
-                    setData([]);
-                    getData(1, MPfilter)
-                  }
-                  actionRef.current?.reloadAndRest?.();
-                }
-
-              });
-            }}
+        </>)}
+        {selectedRowsState?.length > 0 && (
+          <FooterToolbar
+            extra={
+              <div>
+                <FormattedMessage id="pages.searchTable.chosen" defaultMessage="Chosen" />{' '}
+                <a style={{ fontWeight: 600 }}>{selectedRowsState.length}</a>{' '}
+                <FormattedMessage id="pages.searchTable.item" defaultMessage="项" />
+                &nbsp;&nbsp;
+                s
+              </div>
+            }
           >
-            <FormattedMessage
-              id="pages.searchTable.batchDeletion"
-              defaultMessage="Batch deletion"
-            />
-          </Button>
-          
-        </FooterToolbar>
-      )}
-      
-      <CreateForm
-        onSubmit={async (value) => {
-          value.id = currentRow?.id
-          const success = await handleAdd(value as PermissionListItem);
-          if (success) {
-            handleModalOpen(false);
-            setCurrentRow(undefined);
-            if (isMP) {
-              setData([]);
-              getData(1, MPfilter)
-            }
-            if (actionRef.current) {
-              actionRef.current.reload();
-            }
-          }
-        }}
-        onCancel={() => {
-          handleModalOpen(false);
-          if (!showDetail) {
-            setCurrentRow(undefined);
-          }
-        }}
-        createModalOpen={createModalOpen}
-        
-      />
-      <UpdateForm
-        onSubmit={async (value) => {
-          value.id = currentRow?.id
-          const success = await handleUpdate(value);
-          if (success) {
-            handleUpdateModalOpen(false);
-            setCurrentRow(undefined);
-            if (isMP) {
-              setData([]);
-              getData(1, MPfilter)
-            }
-            if (actionRef.current) {
-              actionRef.current.reload();
-            }
-          }
-        }}
-        onCancel={() => {
-          handleUpdateModalOpen(false);
-          if (!showDetail) {
-            setCurrentRow(undefined);
-          }
-        }}
-        updateModalOpen={updateModalOpen}
-        values={currentRow || {}}
-      />
+            <Button
+              onClick={async () => {
+                await handleRemove(selectedRowsState, (success) => {
+                  if (success) {
+                    setSelectedRows([]);
+                    if (isMP) {
+                      setData([]);
+                      getData(1, MPfilter)
+                    }
+                    actionRef.current?.reloadAndRest?.();
+                  }
 
-      <Drawer
-        width={isMP ? '100%' : 600}
-        open={showDetail}
-        onClose={() => {
-          setCurrentRow(undefined);
-          setShowDetail(false);
-        }}
-        closable={isMP ? true : false}
-      >
-        {currentRow?.name && (
-          <ProDescriptions<PermissionListItem>
-            column={isMP ? 1 : 2}
-            title={currentRow?.name}
-            request={async () => ({
-              data: currentRow || {},
-            })}
-            params={{
-              id: currentRow?.name,
-            }}
-            columns={columns as ProDescriptionsItemProps<PermissionListItem>[]}
-          />
+                });
+              }}
+            >
+              <FormattedMessage
+                id="pages.searchTable.batchDeletion"
+                defaultMessage="Batch deletion"
+              />
+            </Button>
+
+          </FooterToolbar>
         )}
-      </Drawer>
-        {/*
-         <div style={{ marginTop: -45, paddingLeft: 10 }}>
-          <Button
 
-            type="primary"
-            onClick={async () => {
-              history.back()
-            }}
-          >Return to previous page</Button>
-        </div>
+        <CreateForm
+          onSubmit={async (value) => {
+            value.id = currentRow?.id
+            const success = await handleAdd(value as PermissionListItem);
+            if (success) {
+              handleModalOpen(false);
+              setCurrentRow(undefined);
+              if (isMP) {
+                setData([]);
+                getData(1, MPfilter)
+              }
+              if (actionRef.current) {
+                actionRef.current.reload();
+              }
+            }
+          }}
+          onCancel={() => {
+            handleModalOpen(false);
+            if (!showDetail) {
+              setCurrentRow(undefined);
+            }
+          }}
+          createModalOpen={createModalOpen}
 
-        */ }
+        />
+        <UpdateForm
+          onSubmit={async (value) => {
+            value.id = currentRow?.id
+            const success = await handleUpdate(value);
+            if (success) {
+              handleUpdateModalOpen(false);
+              setCurrentRow(undefined);
+              if (isMP) {
+                setData([]);
+                getData(1, MPfilter)
+              }
+              if (actionRef.current) {
+                actionRef.current.reload();
+              }
+            }
+          }}
+          onCancel={() => {
+            handleUpdateModalOpen(false);
+            if (!showDetail) {
+              setCurrentRow(undefined);
+            }
+          }}
+          updateModalOpen={updateModalOpen}
+          values={currentRow || {}}
+        />
+
+        <Drawer
+          width={isMP ? '100%' : 600}
+          open={showDetail}
+          onClose={() => {
+            setCurrentRow(undefined);
+            setShowDetail(false);
+          }}
+          closable={isMP ? true : false}
+        >
+          {currentRow?.name && (
+            <ProDescriptions<PermissionListItem>
+              column={isMP ? 1 : 2}
+              title={currentRow?.name}
+              request={async () => ({
+                data: currentRow || {},
+              })}
+              params={{
+                id: currentRow?.name,
+              }}
+              columns={columns as ProDescriptionsItemProps<PermissionListItem>[]}
+            />
+          )}
+        </Drawer>
+       
       </PageContainer></RcResizeObserver>
   );
 };
