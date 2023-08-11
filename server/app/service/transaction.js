@@ -353,7 +353,7 @@ class TransactionService extends Service {
 
 
 
-            await ctx.model.Transactioneventlog.count({ where: cw })
+          
 
 
             for (var k in mm) {

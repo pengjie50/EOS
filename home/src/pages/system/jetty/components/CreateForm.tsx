@@ -3,6 +3,7 @@ import {
   ProFormRadio,
   ProFormSelect,
   ProFormText,
+  ProFormDigit,
   ProFormTextArea,
   ModalForm,
   ProFormInstance
@@ -107,7 +108,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
         resetButtonProps: {
           onClick: () => {
             restFormRef.current?.resetFields();
-           
+
           },
         },
       }}
@@ -135,7 +136,56 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
           }, { validator: onlyCheck }
         ]}
       />
+      <ProFormText
+        name="depth_alongside"
+        label={intl.formatMessage({
+          id: 'pages.jetty.depthAlongside',
+          defaultMessage: 'Depth Approaches (M)',
+        })}
+        width="md"
+      />
+      <ProFormText
+        name="depth_approaches"
+        label={intl.formatMessage({
+          id: 'pages.jetty.depthApproaches',
+          defaultMessage: 'Depth Approaches (M)',
+        })}
+        width="md"
+      />
+      <ProFormText
+        name="max_loa"
+        label={intl.formatMessage({
+          id: 'pages.jetty.maxLOA',
+          defaultMessage: 'Max. LOA (M)',
+        })}
+        width="md"
+      />
+      <ProFormText
+        name="min_loa"
+        label={intl.formatMessage({
+          id: 'pages.jetty.minLOA',
+          defaultMessage: 'Min. LOA (M)',
+        })}
+        width="md"
+      />
+      <ProFormText
+        name="max_displacement"
+        label={intl.formatMessage({
+          id: 'pages.jetty.maxDisplacement',
+          defaultMessage: 'Max. Displacement (MT)D',
+        })}
+        width="md"
+      />
+      <ProFormText
+        name="mla_envelop_at_mhws_3m"
+        label={intl.formatMessage({
+          id: 'pages.jetty.mlaEnvelopAtMHWS3m',
+          defaultMessage: 'MLA Envelop At MHWS 3.0m (Unless Otherwise Specified) (M)',
+        })}
+        width="md"
 
+      />
+      {/*
       <ProFormSelect
         name="depth_alongside"
         label="Depth Alongside (M)"
@@ -161,7 +211,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
                 setDepth_alongsideData({ [newValue + ""]: newValue, ...res.data })
 
                 setDepth_alongsideData(val => {
-                  alert(newValue)
+                 
                   restFormRef.current?.setFieldValue("depth_alongside", newValue + "")
                   return val
 
@@ -199,7 +249,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
                 setDepth_approachesData({ [newValue + ""]: newValue, ...res.data })
 
                 setDepth_approachesData(val => {
-                  alert(newValue)
+                  
                   restFormRef.current?.setFieldValue("depth_approaches", newValue + "")
                   return val
 
@@ -361,6 +411,8 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
             }
           }}
       />
+
+*/ }
 
 
       {currentUser?.role_type != 'Terminal' && <ProFormSelect

@@ -16,8 +16,11 @@ class SystemService extends Service {
     async fieldUniquenessCheck(params) {
         const { ctx,app } = this;
 
-        if (params.where.alias) {
-
+        if (params.where.hasOwnProperty("alias")) {
+            if (!params.where.alias) {
+                ctx.body = { success: true, data: null }
+                return
+            }
             var arr = params.where.alias.split(",")
             params.where[app.Sequelize.Op.or] =[]
             arr.forEach((alias) => {
