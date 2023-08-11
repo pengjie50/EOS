@@ -174,7 +174,7 @@ class WritetoBC extends Subscription {
                 model: ctx.model.Transaction,
                 where: {status:1}
 
-            }],order: [["event_time", "asc"]], where: { blockchain_hex_key: null  } });
+            }], order: [["event_time", "asc"]], where: { blockchain_hex_key: { [app.Sequelize.Op['in']]: [null,""] }  } });
         var m = {}
 
         var ids = []

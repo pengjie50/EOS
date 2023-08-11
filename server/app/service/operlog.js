@@ -50,6 +50,10 @@ class OperlogService extends Service {
             if (report && report.json_string) {
 
                 var backData = eval('(' + report.json_string + ')')
+                var offset = parseInt((params.page - 1)) * parseInt(params.limit)
+                var limit = parseInt(params.limit)
+
+                backData.data = backData.data.slice(offset, offset + limit)
                 ctx.body = backData
 
                 return

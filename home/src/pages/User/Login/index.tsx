@@ -364,7 +364,7 @@ const Login: React.FC = () => {
     <div className={containerClassName}>
 
       <div style={{ position: 'fixed', top: 0, width: '100%', height: '100%', zIndex: -1 }}>
-        <img style={{ width: '100%', height: '100%' }} src="http://eosuat.southeastasia.cloudapp.azure.com/upload/login_bg.png" />
+        <img style={{ width: '100%', height: '100%' }} src="https://eosuat.southeastasia.cloudapp.azure.com/upload/login_bg.png" />
 
       </div>
       <div className={titleClassName}>
@@ -498,10 +498,11 @@ const Login: React.FC = () => {
 
 
                 <div>
-                  Your password should be at least eight characters and include at least the following:<br />
-                  a) At least letters in both upper- and lowercase<br />
-                  b) At least one number<br />
-                  c) At least one special character
+                  Your password should be at least eight characters long and include the following:<br />
+                  <br />
+                  a) At least one letter in both uppercase and lowercase.<br />
+                  b) At least one number.<br />
+                  c) At least one special character.
                 </div>
 
                 <ProFormText.Password
@@ -514,12 +515,12 @@ const Login: React.FC = () => {
                   rules={[
                     {
                       required: true, pattern: new RegExp(/(?=.*[A-Z])(?=.*[a-z])/g),
-                      message: "At least letters in both upper- and lowercase"
+                      message: "At least one letter in both uppercase and lowercase."
 
                     },
                     {
                       required: true, pattern: new RegExp(/(?=.*[0-9])/g),
-                      message: "At least one number"
+                      message: "At least one number."
                     },
                     {
                       required: true, pattern: new RegExp(/(?=.*[\W])(?=.*[\S])/g),
@@ -528,7 +529,7 @@ const Login: React.FC = () => {
                     },
                     {
                       required: true, pattern: new RegExp(/^.{8,100}$/g),
-                      message: "Your password should be at least eight characters"
+                      message: "Your password should be at least eight characters long"
 
                     }
 
@@ -544,15 +545,14 @@ const Login: React.FC = () => {
                       width="lg"
                       name="repeatNewPassword"
                       rules={[
-
                         {
                           required: true, pattern: new RegExp(/(?=.*[A-Z])(?=.*[a-z])/g),
-                          message: "At least letters in both upper- and lowercase"
+                          message: "At least one letter in both uppercase and lowercase."
 
                         },
                         {
                           required: true, pattern: new RegExp(/(?=.*[0-9])/g),
-                          message: "At least one number"
+                          message: "At least one number."
                         },
                         {
                           required: true, pattern: new RegExp(/(?=.*[\W])(?=.*[\S])/g),
@@ -561,7 +561,7 @@ const Login: React.FC = () => {
                         },
                         {
                           required: true, pattern: new RegExp(/^.{8,100}$/g),
-                          message: "Your password should be at least eight characters"
+                          message: "Your password should be at least eight characters long"
 
                         },
                         {   

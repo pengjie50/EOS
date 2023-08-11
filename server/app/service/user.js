@@ -193,7 +193,7 @@ class UserService extends Service {
         })
 
 
-        const log = await ctx.model.Loginlog.findOne({ where: { user_id: res.id }, order: [['login_time', 'desc']] });
+        const log = await ctx.model.Loginlog.findOne({ where: { user_id: res.id },status:0, order: [['login_time', 'desc']] });
         if (log) {
 
             var active_duration = parseInt(((new Date).getTime() - new Date(log.login_time).getTime()) / 1000)

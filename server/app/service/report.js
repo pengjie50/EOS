@@ -32,13 +32,15 @@ class ReportService extends Service {
             obj.offset = parseInt((params.page - 1)) * parseInt(params.limit)
             obj.limit = parseInt(params.limit)
         }
-        obj.attributes = [[ctx.model.col('u.username'), 'username'], [ctx.model.col('c.name'), 'company_name'], 'report.*']
+        obj.attributes = [[ctx.model.col('u.username'), 'username'], [ctx.model.col('c.name'), 'company_name'], 'report.name', 'report.template_name', 'report.id', 'report.value', 'report.type', 'report.created_at']
         obj.include = [{
             as: 'c',
+            attributes: [],
             model: ctx.model.Company
 
         }, {
             as: 'u',
+            attributes: [],
             model: ctx.model.User
 
         }]

@@ -331,8 +331,9 @@ export var columnsBase: ProColumns<OperlogListItem>[] = [
 
     hideInSearch: true,
     dataIndex: 'oper_time',
-    valueType: 'dateTime'
-
+    valueType: 'dateTime',
+    sorter: true,
+    defaultSortOrder: 'descend'
   },
   {
     title: (
@@ -341,11 +342,11 @@ export var columnsBase: ProColumns<OperlogListItem>[] = [
         defaultMessage="Operation Date and Time"
       />
     ),
-    sorter: true,
+    
 
     hideInForm: true,
     hideInTable: true,
-    defaultSortOrder: 'descend',
+    
     dataIndex: 'oper_time',
     valueType: 'dateRange',
     search: {
@@ -588,7 +589,7 @@ const TableList: React.FC = () => {
             handlePrintModalVisible(true)
           }}
         ><PrinterOutlined /> <FormattedMessage id="pages.Print" defaultMessage="Print" />
-        </Button>, <Button style={{ width: "100%" }} type="primary" key="out"
+        </Button><Button style={{ width: "100%", marginTop: 20 }} type="primary" key="out"
           onClick={() => exportCSV(data, columns, "Super User Activity Log")}
         ><FileExcelOutlined /> <FormattedMessage id="pages.CSV" defaultMessage="CSV" />
           </Button>

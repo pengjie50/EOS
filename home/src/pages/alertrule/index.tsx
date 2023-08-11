@@ -290,7 +290,7 @@ const TableList: React.FC = () => {
             handlePrintModalVisible(true)
           }}
         ><PrinterOutlined /> <FormattedMessage id="pages.Print" defaultMessage="Print" />
-        </Button>,<Button style={{ width: "100%" }} type="primary" key="out"
+        </Button>,<Button style={{ width: "100%", marginTop: 20 }} type="primary" key="out"
           onClick={() => exportCSV(data, columns)}
         ><FileExcelOutlined /> <FormattedMessage id="pages.CSV" defaultMessage="CSV" />
           </Button>
@@ -700,10 +700,11 @@ const TableList: React.FC = () => {
       title: (
         <FormattedMessage
           id="pages.alertrule.eee"
-          defaultMessage="Threshold Process/Events"
+          defaultMessage="Threshold Process / Events"
         />
       ),
       dataIndex: 'flow_id',
+      width:180,
       sorter: true,
       hideInSearch: true,
       valueEnum: flowConf,
@@ -850,6 +851,7 @@ const TableList: React.FC = () => {
     {
       title: <FormattedMessage id="pages.alertrule.thresholdLimit" defaultMessage="Threshold Limit" />,
       dataIndex: 'amber_hours',
+      sorter: true,
       hideInSearch: true,
       valueType: 'text',
       renderPrint: (dom, entity) => {

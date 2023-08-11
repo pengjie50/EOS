@@ -767,7 +767,7 @@ const Detail: React.FC<any> = (props) => {
             width: '22px',
             height: '22px',
             fontSize: "16px",
-            backgroundColor: th.red == 1 ? "red" : (th.amber == 1 ? "#70AD47" : (th.transaction_event_id_from && th.transaction_event_id_to ? "#70AD47" : "#595959")),
+            backgroundColor: th.red == 1 ? "red" : (th.amber == 1 ? "#de7e39" : (th.transaction_event_id_from && th.transaction_event_id_to ? "#70AD47" : "#595959")),
             borderRadius: '50%',
             textAlign: 'center',
             lineHeight: '22px'

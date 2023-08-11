@@ -226,12 +226,10 @@ function TableToJson(tableid){//tableid是你要转化的表的表名，是一�
 const TableList: React.FC = () => {
   /**
    * @en-US Pop-up window of new window
-   * @zh-CN 新建窗口的弹窗
    *  */
   const [createModalOpen, handleModalOpen] = useState<boolean>(false);
   /**
    * @en-US The pop-up window of the distribution update window
-   * @zh-CN 分布更新窗口的弹窗
    * */
   const [updateModalOpen, handleUpdateModalOpen] = useState<boolean>(false);
 
@@ -296,7 +294,7 @@ const TableList: React.FC = () => {
             handlePrintModalVisible(true)
           }}
         ><PrinterOutlined /> <FormattedMessage id="pages.Print" defaultMessage="Print" />
-        </Button>, <Button style={{ width: "100%" }} type="primary" key="out"
+        </Button> <Button style={{ width: "100%", marginTop:20 }} type="primary" key="out"
           onClick={() => exportCSV(data, columns)}
         ><FileExcelOutlined /> <FormattedMessage id="pages.CSV" defaultMessage="CSV" />
           </Button>
@@ -324,9 +322,9 @@ const TableList: React.FC = () => {
     setData([]);
     delete a._timestamp;
     setMPfilter(a)
-    setShowMPSearch(!showMPSearch)
-    setCurrentPage(1)
     
+    setCurrentPage(1)
+
     getData(1, a)
   }
   const InfiniteScrollContent = ({ hasMore }: { hasMore?: boolean }) => {
@@ -358,25 +356,32 @@ const TableList: React.FC = () => {
       sorter = sorter_
       return sorter_
     })
+
     var filter = {}
-    await setMPfilter((filter_) => {
+    if (filter__) {
+      filter = filter__
+    }
+     setMPfilter((filter_) => {
       filter = filter_
+     
       return filter_
     })
 
   
-
+  
 
     const append = await transaction({
       ...{
         "current": page,
-        "pageSize": pageSize ? getData:3,
+        "pageSize": pageSize ? pageSize:3,
         "sorter": {
           "start_of_transaction": "descend"
         }
       }, ...filter, sorter
     })
+   
 
+    
     
 
     setMPPagination({ total:append.total})
@@ -511,7 +516,6 @@ const TableList: React.FC = () => {
   }, [true]);
   /**
    * @en-US International configuration
-   * @zh-CN 国际化配置
    * */
   const intl = useIntl();
   const access = useAccess();
@@ -1850,10 +1854,12 @@ const TableList: React.FC = () => {
           })}
         </NavBar>
 
-        <div style={{ padding: '20px', backgroundColor: "#5000B9", display: showMPSearch ? 'block' : 'none' }}>
+        <div style={showMPSearch ? { padding: '20px', backgroundColor: "#5000B9" } :
+          { padding: '0px', backgroundColor: "#ffffff", height: '0.1px', overflow: "hidden" }
+          }>
           <Search columns={columns.filter(a => !(a.hasOwnProperty('hideInSearch') && a['hideInSearch']))} action={actionRef} loading={false}
             beforeSearchSubmit={(params) => {
-
+             
 
               delete params.aaa
               delete params.bbb
@@ -1868,8 +1874,7 @@ const TableList: React.FC = () => {
                 }
               })
 
-
-
+            
 
               return params
             }}

@@ -733,7 +733,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
     {
 
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Threshold/Alert" />,
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Threshold / Alert" />,
       dataIndex: 'threshold_alert',
       mustSelect: true
     },
@@ -744,26 +744,29 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
       mustSelect: true,
       children: [
         {
+          title:"Alert ID",
           dataIndex: 'alert_id',
-
+          noShowCheck:true
         },
         {
 
           title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Alert Type" />,
           dataIndex: 'alert_type',
+          noShowCheck: true
 
         },
         {
 
           title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Alert Triggered Time" />,
           dataIndex: 'alert_triggered_time',
-
+          noShowCheck: true
         },
         {
 
           title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Threshold ID" />,
           dataIndex: 'threshold_id',
-          mustSelect: true
+          
+          noShowCheck: true
         }
       ]
     },
@@ -776,11 +779,13 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
       children: [
         {
           title: "Type Of Data",
-          dataIndex: "TypeOfData"
+          dataIndex: "TypeOfData",
+          noShowCheck: true
         },
         {
           title: "Previous Value",
           dataIndex: "PreviousValue",
+          noShowCheck: true,
           render: (dom, entity) => {
             if (entity.TypeOfData == "Event Time") {
               return moment(dom).format('YYYY-MM-DD HH:mm:ss')
@@ -793,6 +798,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         {
           title: "New Value",
           dataIndex: "NewValue",
+          noShowCheck: true,
           render: (dom, entity) => {
             if (entity.TypeOfData == "Event Time") {
               return moment(dom).format('YYYY-MM-DD HH:mm:ss')
@@ -805,6 +811,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         {
           title: "Update Time",
           dataIndex: "UpdateTime",
+          noShowCheck: true,
           render: (dom, entity) => {
             return moment(dom).format('YYYY-MM-DD HH:mm:ss')
           }
@@ -1445,7 +1452,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                     <ProFormSelect
                       name="eos_id"
                       label="EOS ID"
-                      width="sm"
+                      width={isMP ? "lg" : "sm" }
                       valueEnum={eos_idData}
                       fieldProps={
                         {
@@ -1482,7 +1489,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
                     <ProFormSelect
 
-                      width="sm"
+                      width={isMP ? "lg" : "sm"}
                       name="jetty_name"
                       label="Jetty"
                       valueEnum={jetty_nameData}
@@ -1510,7 +1517,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                     <ProFormSelect
                       name="imo_number"
                       label="IMO Number"
-                      width="sm"
+                      width={isMP ? "lg" : "sm"}
                       valueEnum={imo_numberData}
                       fieldProps={
                         {
@@ -1548,7 +1555,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                     <ProFormSelect
                       name="product_name"
                       label="Product Type"
-                      width="sm"
+                      width={isMP ? "lg" : "sm"}
                       valueEnum={product_nameData}
                       fieldProps={{
                         mode: 'multiple',
@@ -1618,7 +1625,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                       }}
 
                       valueEnum={statusData}
-                      width="sm"
+                      width={isMP ? "lg" : "sm"}
                       name="status"
                       label="Status"
 
@@ -1654,7 +1661,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
                         }
                       }}
-                      width="sm"
+                      width={isMP ? "lg" : "sm"}
                       name="organization_id"
                       label={getOrganizationName()}
                     />
@@ -1688,14 +1695,14 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
                         }
                       }}
-                      width="sm"
+                      width={isMP ? "lg" : "sm"}
                       name="threshold_organization_id"
                       label={"Threshold created by"}
                     />
 
 
                     {((currentUser?.role_type == "Trader" && report_type != 1) || (currentUser?.role_type == "Terminal") || (currentUser?.role_type == "Super" && report_type != 3)) && <ProFormSelect
-                      width="sm"
+                      width={isMP ? "lg" : "sm"}
                       name="alertrule_type"
 
                       valueEnum={alertrule_typeData}
@@ -1733,7 +1740,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
 
                     {((currentUser?.role_type == "Trader" && report_type != 1) || (currentUser?.role_type == "Terminal") || (currentUser?.role_type == "Super" && report_type != 3)) && <ProFormSelect
-                      width="sm"
+                      width={isMP ? "lg" : "sm"}
                       name="vessel_size_dwt"
 
 
@@ -1781,7 +1788,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                     />}
 
                     <ProFormSelect
-                      width="sm"
+                      width={isMP ? "lg" : "sm"}
                       name="uom"
                       label="UOM"
                       initialValue={"bls_60_f"}
@@ -1858,6 +1865,23 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                         dataIndex: 'title',
                       }]}
                       rowSelection={{
+                        renderCell: (checked, record, index, originNode) => {
+                          console.log(record)
+                          if (record.noShowCheck) {
+                            return null
+                          }
+                          return originNode
+                        },
+
+         
+                        getCheckboxProps: (record)=>{
+                          return {
+                              disabled: false,
+                              chn_name: record.chn_name
+                            }
+                          
+                        },
+
                         selectedRowKeys: selectedRowKeys.map((a) => a.dataIndex),
                         onChange: (_, selectedRows) => {
 
@@ -1929,6 +1953,13 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                         dataIndex: 'title',
                       }]}
                       rowSelection={{
+                        renderCell: (checked, record, index, originNode) => {
+                          console.log(record)
+                          if (record.noShowCheck) {
+                            return null
+                          }
+                          return originNode
+                        },
                         selectedRowKeys: selectedRowKeys1.map((a) => a.dataIndex),
                         onChange: (_, selectedRows) => {
                           setSelectedRowKeys1(selectedRows);

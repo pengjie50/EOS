@@ -254,7 +254,7 @@ class ProcessIngInterfaceData extends Subscription {
 
 
 
-                    if (transaction) {
+                if (transaction && transaction.status == 0) {
                         if (i.toai_agent) {
                             await transaction.update({ agent: i.toai_agent })
                         }
@@ -355,7 +355,7 @@ class ProcessIngInterfaceData extends Subscription {
                 }
 
 
-                if (transaction) {
+                if (transaction && transaction.status == 0) {
                     var transactioneventList = await ctx.model.Transactionevent.findAll({ raw: true, order: [['event_time', 'asc']], where: { transaction_id: transaction.id } })
                     if (isDE1DE21DE3StopCheck(transactioneventList)) {
 
@@ -364,6 +364,18 @@ class ProcessIngInterfaceData extends Subscription {
                         await oneDo()
                         return
                     }
+
+
+                    if (i.towoi_work_order_status == "Cancelled") {
+
+                        await ctx.model.Transactionevent.destroy({ where: { transaction_id: transaction.id, work_order_id: i.towoi_work_order_id } })
+                        await ctx.model.Transactioneventlog.destroy({ where: { transaction_id: transaction.id, work_order_id: i.towoi_work_order_id } })
+                        step++
+                        await oneDo()
+                        return
+
+                    }
+
 
                     if (i.toiwo_work_order_customer_name) {
                         var customer = await ctx.model.Company.findOne({
@@ -524,7 +536,7 @@ class ProcessIngInterfaceData extends Subscription {
                 }
 
 
-                if (transaction) {
+                if (transaction && transaction.status==0) {
                     var transactioneventList = await ctx.model.Transactionevent.findAll({ raw: true, order: [['event_time', 'asc']], where: { transaction_id: transaction.id } })
 
                     if (isDE1DE21DE3StopCheck(transactioneventList)) {
@@ -700,7 +712,7 @@ class ProcessIngInterfaceData extends Subscription {
                             return
                         }
                         var transaction = transactionList[s]
-                        if (transaction) {
+                        if (transaction && transaction.status == 0) {
                             var transactioneventList = await ctx.model.Transactionevent.findAll({ raw: true, order: [['event_time', 'asc']], where: { transaction_id: transaction.id } })
                             var isDE4DE5StopBerthing = false
                             var isDE4DE5StopUnBerthing = false
@@ -730,19 +742,22 @@ class ProcessIngInterfaceData extends Subscription {
                                 if (i.pilot_location_to == transactionJetty.jetty_name) {
                                     if (transactioneventMap[flowMap['1006'].id]) {
 
-                                        if ((new Date(i.pilot_onboard_time)).getTime() - (new Date(transactioneventMap[flowMap['1006'].id].event_time)).getTime() > 3600 * 1000) {
+                                        if ((new Date(i.pilot_onboard_time)).getTime() > (new Date(transactioneventMap[flowMap['1006'].id].event_time)).getTime() + 3600 * 1000
+                                            || (new Date(i.pilot_onboard_time)).getTime() < (new Date(transactioneventMap[flowMap['1006'].id].event_time)).getTime() - 3600 * 1000
+                                        ) {
 
 
                                             s++
-                                            oneCreate()
-
+                                            await oneCreate()
+                                            return
 
                                         }
 
 
                                     } else {
                                         s++
-                                        oneCreate()
+                                        await oneCreate()
+                                        return
                                     }
 
 
@@ -754,7 +769,8 @@ class ProcessIngInterfaceData extends Subscription {
 
 
                                             s++
-                                            oneCreate()
+                                            await oneCreate()
+                                            return
 
 
                                         }
@@ -762,7 +778,8 @@ class ProcessIngInterfaceData extends Subscription {
 
                                     } else {
                                         s++
-                                        oneCreate()
+                                        await oneCreate()
+                                        return
                                     }
                                 }
 
@@ -858,7 +875,7 @@ class ProcessIngInterfaceData extends Subscription {
 
                         s++
                     }
-                    oneCreate()
+                    await oneCreate()
 
 
                 }
@@ -878,8 +895,31 @@ class ProcessIngInterfaceData extends Subscription {
                     }
                     var transaction = transactionList[s]
 
-                    if (transaction) {
+                    if (transaction && transaction.status == 0) {
                         var transactioneventList = await ctx.model.Transactionevent.findAll({ raw: true, order: [['event_time', 'asc']], where: { transaction_id: transaction.id } })
+                        var transactioneventMap = {}
+                        transactioneventList.forEach((t) => {
+                            transactioneventMap[t.flow_id] = t
+                        })
+
+                        if (transactioneventMap[flowMap['4009'].id]) {
+                            if ((new Date(i.lqb_pilot_on_board_time)).getTime() - 3600 * 4 * 1000 > (new Date(transactioneventMap[flowMap['4006'].id].event_time)).getTime()
+
+                                || (new Date(transactioneventMap[flowMap['4006'].id].event_time)).getTime() > (new Date(i.lqb_pilot_on_board_time)).getTime() + 3600 * 4 * 1000) {
+                                s++
+                                await oneCreate()
+                                return
+
+                            } 
+                        } else {
+                            s++
+                            await oneCreate()
+                            return 
+                        }
+                        
+
+                        
+
                         var isDE4DE5StopBerthing = false
                         var isDE4DE5StopUnBerthing = false
                         if (transactioneventList.some((v) => { return flowIdMap[v.flow_id].code == "4014" })) {
@@ -977,7 +1017,7 @@ class ProcessIngInterfaceData extends Subscription {
 
                     s++
                 }
-                oneCreate()
+                await oneCreate()
 
 
 

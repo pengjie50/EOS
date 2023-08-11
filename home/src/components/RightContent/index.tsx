@@ -5,7 +5,7 @@ import { history, useModel } from '@umijs/max';
 export type SiderTheme = 'light' | 'dark';
 import { Badge } from 'antd';
 
-import { setUserReadAlert } from "../../pages/alert/service"
+
 
 export const SelectLang = () => {
   return (
@@ -58,13 +58,7 @@ export const Alert = () => {
         if (currentUser.userUnreadAlertCount > 0) {
           currentUser.userUnreadAlertCount = 0
           history.push(`/threshold/alertNoread`, { showNoRead: true });
-         
-          setTimeout(() => {
-            setUserReadAlert({}).then((res) => {
-             
-
-            })
-          },1000)
+       
          
 
          // history.push(`/threshold/alert`,);

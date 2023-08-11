@@ -18,6 +18,7 @@ import { organization } from '../system/company/service';
 import { history } from '@umijs/max';
 import numeral from 'numeral';
 import moment from 'moment'
+import { setUserReadAlert } from "../../pages/alert/service"
 import { jetty } from '../system/jetty/service';
 import {
   FooterToolbar,
@@ -214,7 +215,7 @@ const TableList: React.FC = () => {
             handlePrintModalVisible(true)
           }}
         ><PrinterOutlined /> <FormattedMessage id="pages.Print" defaultMessage="Print" />
-        </Button>, <Button style={{ width: "100%" }} type="primary" key="out"
+        </Button> <Button style={{ width: "100%", marginTop: 20 }} type="primary" key="out"
           onClick={() => exportCSV(data, columns)}
         ><FileExcelOutlined /> <FormattedMessage id="pages.CSV" defaultMessage="CSV" />
           </Button>
@@ -234,7 +235,7 @@ const TableList: React.FC = () => {
     setData([]);
 
 
-    setShowMPSearch(!showMPSearch)
+    //setShowMPSearch(!showMPSearch)
     setCurrentPage(1)
 
     getData(1)
@@ -303,9 +304,10 @@ const TableList: React.FC = () => {
 
 
     if (showNoRead) {
-
+      await setUserReadAlert({})
       var a = await getInitialState()
       setInitialState(a)
+     
     }
     setMPPagination({ total: append.total })
     setData(append.data)
@@ -700,11 +702,12 @@ const TableList: React.FC = () => {
       title: (
         <FormattedMessage
           id="pages.alertrule.eee"
-          defaultMessage="Threshold Process/Events"
+          defaultMessage="Threshold Process / Events"
         />
       ),
       dataIndex: 'flow_id',
       width: 300,
+      sorter: true,
       hideInSearch: true,
       valueEnum: flowConf,
       render: (dom, entity) => {
@@ -722,6 +725,7 @@ const TableList: React.FC = () => {
     {
       title: <FormattedMessage id="pages.alertrule.xxx" defaultMessage="Alert Raised" />,
       dataIndex: 'type',
+      sorter: true,
       hideInSearch: true,
       valueType: 'text',
       renderPrint: (dom, entity) => {
@@ -742,6 +746,7 @@ const TableList: React.FC = () => {
       title: <FormattedMessage id="pages.alertrule.thresholdLimit" defaultMessage="Threshold Limit" />,
       dataIndex: 'ar.amber_hours',
       hideInSearch: true,
+      sorter: true,
       valueType: 'text',
       renderPrint: (dom, entity) => {
         entity.amber_hours = entity['ar.amber_hours']
@@ -764,6 +769,7 @@ const TableList: React.FC = () => {
     {
       title: "Total/Current Duration (in seconds)",
       dataIndex: 'total_duration',
+     
       hideInDescriptions: true,
       hideInTable: true,
       fieldProps: {
@@ -802,9 +808,11 @@ const TableList: React.FC = () => {
       }
     },
     {
-      title: "Total/Current Duration",
+      title: "Total / Current Duration",
       dataIndex: 'total_duration',
+      width:150,
       hideInSearch: true,
+      sorter: true,
       render: (dom, entity) => {
 
 
@@ -821,7 +829,7 @@ const TableList: React.FC = () => {
       title: <FormattedMessage id="pages.alertrule.vesselSizeLimit" defaultMessage="Vessel Size Limit (DWT)" />,
       dataIndex: 'ar.vessel_size_dwt_from',
       onFilter: true,
-
+      sorter: true,
       hideInSearch: true,
       valueType: 'text',
 
@@ -849,6 +857,7 @@ const TableList: React.FC = () => {
     {
       title: <FormattedMessage id="pages.alertrule.ee" defaultMessage="Total Nominated Quantity (Bls-60-F)" />,
       dataIndex: 't.product_quantity_in_bls_60_f',
+      sorter: true,
       hideInSearch: true,
       width: 200,
       align: "center",
@@ -1001,6 +1010,7 @@ const TableList: React.FC = () => {
       title: <FormattedMessage id="pages.alert.productType" defaultMessage="Product Type" />,
       dataIndex: 't.product_name',
       align: "center",
+      sorter: true,
       valueEnum: product_nameData,
       search: {
         transform: (value) => {
@@ -1256,6 +1266,7 @@ const TableList: React.FC = () => {
     {
       title: <FormattedMessage id="pages.alert.specificProcess" defaultMessage="Remarks" />,
       dataIndex: 'remarks',
+      sorter: true,
       hideInSearch: true,
       renderPrint: (dom, entity) => {
 
@@ -1394,7 +1405,7 @@ const TableList: React.FC = () => {
           }}
         />}
         {!isMP && (<ConfigProvider renderEmpty={customizeRenderEmpty}> <ProTable<AlertListItem, API.PageParams>
-          scroll={{ x: 2500, y: resizeObj.tableScrollHeight }}
+          scroll={{ x: 2600, y: resizeObj.tableScrollHeight }}
           bordered size="small"
 
           className="mytable"
@@ -1425,7 +1436,7 @@ const TableList: React.FC = () => {
             }
             var list = await getAlert(d)
             if (showNoRead) {
-
+              await setUserReadAlert({})
               var a = await getInitialState()
               setInitialState(a)
             }
@@ -1460,7 +1471,9 @@ const TableList: React.FC = () => {
             })}
           </NavBar>
 
-          <div style={{ padding: '20px', backgroundColor: "#5000B9", display: showMPSearch ? 'block' : 'none' }}>
+          <div style={showMPSearch ? { padding: '20px', backgroundColor: "#5000B9" } :
+            { padding: '0px', backgroundColor: "#ffffff", height: '0.1px', overflow: "hidden" }
+          }>
             <Search columns={columns.filter(a => !(a.hasOwnProperty('hideInSearch') && a['hideInSearch']))} action={actionRef} loading={false}
 
               onFormSearchSubmit={onFormSearchSubmit}

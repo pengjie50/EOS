@@ -86,10 +86,11 @@ const BaseView: React.FC = () => {
               hideRequiredMark
             >
             <div>
-              Your password should be at least eight characters and include at least the following:<br />
-              a) At least letters in both upper- and lowercase<br />
-              b) At least one number<br />
-              c) At least one special character
+              Your password should be at least eight characters long and include the following:<br />
+              <br />
+              a) At least one letter in both uppercase and lowercase.<br />
+              b) At least one number.<br />
+              c) At least one special character.
             </div>
             <br/>
               <ProFormText.Password
@@ -120,12 +121,12 @@ const BaseView: React.FC = () => {
                 rules={[
                    {
                     required: true, pattern: new RegExp(/(?=.*[A-Z])(?=.*[a-z])/g),
-                    message: "At least letters in both upper- and lowercase"
+                    message: "At least one letter in both uppercase and lowercase."
                    
                   },
                   {
                     required: true, pattern: new RegExp(/(?=.*[0-9])/g),
-                    message: "At least one number"
+                    message: "At least one number."
                   },
                   {
                     required: true, pattern: new RegExp(/(?=.*[\W])(?=.*[\S])/g),
@@ -134,7 +135,7 @@ const BaseView: React.FC = () => {
                   },
                   {
                     required: true, pattern: new RegExp(/^.{8,100}$/g),
-                    message: "Your password should be at least eight characters"
+                    message: "Your password should be at least eight characters long"
 
                   }
                   
@@ -154,12 +155,12 @@ const BaseView: React.FC = () => {
                      
                       {
                         required: true, pattern: new RegExp(/(?=.*[A-Z])(?=.*[a-z])/g),
-                        message: "At least letters in both upper- and lowercase"
+                        message: "At least one letter in both uppercase and lowercase."
 
                       },
                       {
                         required: true, pattern: new RegExp(/(?=.*[0-9])/g),
-                        message: "At least one number"
+                        message: "At least one number."
                       },
                       {
                         required: true, pattern: new RegExp(/(?=.*[\W])(?=.*[\S])/g),
@@ -168,7 +169,7 @@ const BaseView: React.FC = () => {
                       },
                       {
                         required: true, pattern: new RegExp(/^.{8,100}$/g),
-                        message: "Your password should be at least eight characters"
+                        message: "Your password should be at least eight characters long"
 
                       },
                       {   //在这里使用antd 的validator通过promise去校验重复输入的密码和新密码是否一致

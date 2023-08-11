@@ -1,13 +1,12 @@
 {
   "ExpandedNodes": [
     "",
-    "\\app",
-    "\\config",
-    "\\public\\dist",
-    "\\public\\dist\\bjjjg",
-    "\\public\\dist\\template",
-    "\\public\\dist\\template\\default\\skin"
+    "\\app\\controller",
+    "\\app\\middleware",
+    "\\app\\schedule",
+    "\\app\\service",
+    "\\config"
   ],
-  "SelectedNode": "\\config\\config.default.js",
+  "SelectedNode": "\\app",
   "PreviewInSolutionExplorer": false
 }

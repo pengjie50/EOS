@@ -182,7 +182,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
               message: (
                 <FormattedMessage
                   id="pages.role.rules.name"
-                  defaultMessage="Please enter a role mame !"
+                  defaultMessage="Please enter a role name !"
                 />
               ),
             },

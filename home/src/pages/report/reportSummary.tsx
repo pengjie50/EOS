@@ -41,7 +41,7 @@ import {
   ProTable,
 } from '@ant-design/pro-components';
 import { FormattedMessage, useIntl, formatMessage, useLocation, useModel } from '@umijs/max';
-import { Button, Drawer, Input, message, Modal, Tooltip, Empty, ConfigProvider, Popover, Pagination, FloatButton } from 'antd';
+import { Button, Drawer, Input, message, Modal, Tooltip, Empty, ConfigProvider, Popover, Pagination, FloatButton, Table } from 'antd';
 import React, { useRef, useState, useEffect } from 'react';
 import CreateForm from './components/CreateForm';
 import UpdateForm from './components/UpdateForm';
@@ -419,7 +419,8 @@ const TableList: React.FC = () => {
             handlePrintModalVisible(true)
           }}
         ><PrinterOutlined /> <FormattedMessage id="pages.Print" defaultMessage="Print" />
-        </Button>, <Button style={{ width: "100%" }} type="primary" key="out"
+        </Button>
+        <Button style={{ width: "100%"}} type="primary" key="out"
           onClick={() => exportCSV(data, columns, report_name)}
         ><FileExcelOutlined /> <FormattedMessage id="pages.CSV" defaultMessage="CSV" />
         </Button>
@@ -469,23 +470,39 @@ const TableList: React.FC = () => {
 
     var params = {
       "current": page,
-      "pageSize": pageSize
+      "pageSize":   pageSize || 3
 
     }
-
+   
     var sorter = null
     var ss = ""
+   
     if (report_type == 1) {
 
-      ss = await transaction({ ...params, sorter, ...filter, is_report: true })
+      ss = await transaction({
+        ...params, sorter, ...filter, is_report: true, report_id: {
+          'field': 'report_id',
+          'op': 'eq',
+          'data': report_id
+        } })
 
     } else if (report_type == 2) {
 
-      ss = await transaction({ ...params, sorter, ...filter, is_detail_report: true })
+      ss = await transaction({
+        ...params, sorter, ...filter, is_detail_report: true, report_id: {
+          'field': 'report_id',
+          'op': 'eq',
+          'data': report_id
+        } })
 
     } else if (report_type == 3) {
 
-      ss = await getAlert({ ...params, sorter, ...filter, is_report: true })
+      ss = await getAlert({
+        ...params, sorter, ...filter, is_report: true, report_id: {
+          'field': 'report_id',
+          'op': 'eq',
+          'data': report_id
+        } })
 
     } else if (report_type == 4) {
       ss = await operlog({
@@ -1010,7 +1027,7 @@ const TableList: React.FC = () => {
     },
     {
 
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Threshold/Alert" />,
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Threshold / Alert" />,
       dataIndex: 'threshold_alert',
       mustSelect: true
     },
@@ -1025,6 +1042,7 @@ const TableList: React.FC = () => {
 
           title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Alert ID" />,
           dataIndex: 'alert_id',
+          className:"cloumsNoSpace",
           mustSelect: true,
           width: 120,
           render: (dom, entity) => {
@@ -1032,11 +1050,12 @@ const TableList: React.FC = () => {
 
             return entity.alertList.length > 0 ? <ProTable<TransactionListItem, API.PageParams>
 
-
-
+              style={isMP ?{ width: 300, overflow: 'auto' }:null}
+            
               pagination={false}
-              showHeader={false}
+              showHeader={isMP?true:false}
               size="small"
+             
               dataSource={entity.alertList}
               rowKey="id"
               options={false}
@@ -1137,6 +1156,7 @@ const TableList: React.FC = () => {
         {
           title: "Type Of Data",
           width: 200,
+          className: "cloumsNoSpace",
           dataIndex: "TypeOfData",
           render: (dom, entity) => {
 
@@ -1181,17 +1201,17 @@ const TableList: React.FC = () => {
 
             return entity.transactioneventlogList?.length > 0 ? <ProTable<TransactionListItem, API.PageParams>
 
-
+              style={isMP ? { width: 300, overflow: 'auto' } : null}
               bordered={false}
               pagination={false}
-              showHeader={false}
+              showHeader={isMP ? true : false}
               size="small"
               dataSource={logObjArr}
               rowKey="id"
               options={false}
               search={false}
               className="myspantable"
-
+              scroll={{ x: 200}}
               columns={[{
                 title: "Type Of Data",
                 dataIndex: "TypeOfData",
@@ -1565,8 +1585,15 @@ const TableList: React.FC = () => {
 
     columns = columns4
   } else if (report_type == 6) {
-
+    
     columns = columns6
+   columns= columns.map((c) => {
+      if (c.dataIndex == "company_id") {
+        c.valueEnum = organizationList
+
+      }
+      return c
+    })
   } else if (report_type == 7) {
 
     columns = columns7

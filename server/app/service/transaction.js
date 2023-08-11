@@ -262,6 +262,11 @@ class TransactionService extends Service {
             if (report && report.json_string) {
 
                 var backData = eval('(' + report.json_string + ')')
+                var offset = parseInt((params.page - 1)) * parseInt(params.limit)
+                var limit = parseInt(params.limit)
+
+                backData.data = backData.data.slice(offset, offset + limit)
+
                 ctx.body = backData
               
                 return
@@ -279,7 +284,12 @@ class TransactionService extends Service {
             var timelist = await ctx.model.Transaction.findAll({ ...obj, offset: null, limit: null, order: [['start_of_transaction', "asc"]] })
             if (timelist.length > 0) {
                 start_time = timelist[0].start_of_transaction
-                end_time = timelist[timelist.length - 1].start_of_transaction
+                if (timelist[timelist.length - 1].end_of_transaction) {
+                    end_time = timelist[timelist.length - 1].end_of_transaction
+                } else {
+                    end_time = new Date()
+                }
+                
             }
         }
 

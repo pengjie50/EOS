@@ -347,40 +347,47 @@ const TableList: React.FC = () => {
       dataIndex: 'option',
       width: 80,
       valueType: 'option',
-      render: (_, record) => [
-        <a
-          key="config"
-          onClick={() => {
-            handleUpdateModalOpen(true);
-            setCurrentRow(record);
-          }}
-        >
-          <FormOutlined style={{ fontSize: '20px' }} />
-        </a>,
+      render: (_, record) => {
+        if (record.type =="Super") {
+          return ""
+        }
 
-        <a
-          title={formatMessage({ id: "pages.delete", defaultMessage: "Delete" })}
-          key="config"
-          onClick={() => {
-            setCurrentRow(record);
-            handleRemove([record], (success) => {
-              if (success) {
-                if (isMP) {
-                  setData([]);
-                  getData(1, MPfilter)
+        return [
+          <a
+            key="config"
+            onClick={() => {
+              handleUpdateModalOpen(true);
+              setCurrentRow(record);
+            }}
+          >
+            <FormOutlined style={{ fontSize: '20px' }} />
+          </a>,
+
+          <a
+            title={formatMessage({ id: "pages.delete", defaultMessage: "Delete" })}
+            key="config"
+            onClick={() => {
+              setCurrentRow(record);
+              handleRemove([record], (success) => {
+                if (success) {
+                  if (isMP) {
+                    setData([]);
+                    getData(1, MPfilter)
+                  }
+                  actionRef.current?.reloadAndRest?.();
                 }
-                actionRef.current?.reloadAndRest?.();
-              }
-            });
+              });
 
 
-          }}
-        >
-          <DeleteOutlined style={{ fontSize: '20px', color: 'red' }} />
+            }}
+          >
+            <DeleteOutlined style={{ fontSize: '20px', color: 'red' }} />
 
-        </a>
+          </a>
 
-      ],
+        ]
+
+      } 
     },
   ];
   const customizeRenderEmpty = () => {

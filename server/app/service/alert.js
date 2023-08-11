@@ -56,10 +56,10 @@ class AlertService extends Service {
                     }
 
                     if (k == "ar") {
-                        otherOrder[k].push([{ model: ctx.model.Alertrule, as: 'ar' }
+                        otherOrder[k].push([{ model: ctx.model.AlertruleTransaction, as: 'ar' }
                             , arr[1], a[1]])
 
-                        orderArr.push([{ model: ctx.model.Alertrule, as: 'ar' }
+                        orderArr.push([{ model: ctx.model.AlertruleTransaction, as: 'ar' }
                             , arr[1], a[1]])
                     }
                     
@@ -195,7 +195,7 @@ class AlertService extends Service {
         delete obj.where.tab
         delete obj.where.organization_id
 
-       
+       console.log(obj.order)
         obj.include = [{
             as: 't',
             model: ctx.model.Transaction,
@@ -249,6 +249,10 @@ class AlertService extends Service {
             if (report && report.json_string) {
 
                 var backData = eval('(' + report.json_string + ')')
+                var offset = parseInt((params.page - 1)) * parseInt(params.limit)
+                var limit = parseInt(params.limit)
+
+                backData.data = backData.data.slice(offset, offset + limit)
                 ctx.body = backData
 
                 return
@@ -264,7 +268,11 @@ class AlertService extends Service {
             var timelist = await ctx.model.Transaction.findAll({ ...t_where, offset: null, limit: null, order: [['start_of_transaction', "asc"]] })
             if (timelist.length > 0) {
                 start_time = timelist[0].start_of_transaction
-                end_time = timelist[timelist.length - 1].start_of_transaction
+                if (timelist[timelist.length - 1].end_of_transaction) {
+                    end_time = timelist[timelist.length - 1].end_of_transaction
+                } else {
+                    end_time = new Date()
+                }
             }
 
 

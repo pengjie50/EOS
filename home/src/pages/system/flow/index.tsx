@@ -183,7 +183,7 @@ const TableList: React.FC = () => {
               handlePrintModalVisible(true)
             }}
           ><PrinterOutlined /> <FormattedMessage id="pages.Print" defaultMessage="Print" />
-          </Button>, <Button style={{ width: "100%" }} type="primary" key="out"
+          </Button> <Button style={{ width: "100%", marginTop: 20 }} type="primary" key="out"
             onClick={() => exportCSV(data, columns)}
           ><FileExcelOutlined /> <FormattedMessage id="pages.CSV" defaultMessage="CSV" />
           </Button>
