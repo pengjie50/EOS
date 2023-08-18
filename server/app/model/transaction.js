@@ -140,6 +140,11 @@ module.exports = app => {
                 fields: ['eos_id']
             },
             {
+                
+                fields: ['work_order_items_check']
+            },
+            
+            {
                 fields: ['start_of_transaction', 'end_of_transaction', 'imo_number', 'vessel_name', 'jetty_id', 'terminal_id']
             }],
 

@@ -179,7 +179,11 @@ export const columnsBase: ProColumns<OperlogListItem>[] = [
 
     hideInSearch: true,
     dataIndex: 'oper_time',
-    valueType: 'dateTime',
+    render: (dom, entity) => {
+
+      return moment(new Date(dom)).format('DD MMM YYYY HH:mm:ss')
+
+    },
     sorter: true
   },
   {

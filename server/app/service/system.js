@@ -138,7 +138,7 @@ class SystemService extends Service {
         } else
             if (params.model == 'Transaction') {
 
-
+                obj.where.work_order_items_check = { [app.Sequelize.Op.ne]: null }
 
                 if (ctx.user.role_type == 'Super') {
                     if (obj.where.organization_id) {

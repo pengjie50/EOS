@@ -148,7 +148,7 @@ class UserService extends Service {
             return;
         }
         loginlog.invalid_attempts = p
-
+       
         const salt = res.password.split('&')[0]
         res = await ctx.model.User.findOne({
             where: {
@@ -193,18 +193,42 @@ class UserService extends Service {
         })
 
 
-        const log = await ctx.model.Loginlog.findOne({ where: { user_id: res.id },status:0, order: [['login_time', 'desc']] });
-        if (log) {
+        const logs = await ctx.model.Loginlog.findAll({ where: { user_id: res.id, logout_time: null, status: 0 }, order: [['login_time', 'desc']] });
+        if (logs && logs.length > 0) {
+            var step3 = 0
+            async function Do3() {
 
-            var active_duration = parseInt(((new Date).getTime() - new Date(log.login_time).getTime()) / 1000)
-            var token_timeout = parseInt(await ctx.service.sysconfig.getValueByKey("token_timeout"));
 
-            if (active_duration > token_timeout) {
-                active_duration = token_timeout
+                if (step3 >= logs.length) {
+
+
+                    return
+                }
+
+                var log = logs[step3]
+                if (log) {
+
+                    var active_duration = parseInt(((new Date).getTime() - new Date(log.login_time).getTime()) / 1000)
+                    var token_timeout = parseInt(await ctx.service.sysconfig.getValueByKey("token_timeout"));
+
+                    if (active_duration > token_timeout) {
+                        active_duration = token_timeout
+                    }
+                    await log.update({ logout_time: new Date(), active_duration: active_duration, status: 1 });
+
+                }
+
+                step3++
+                await Do3()
             }
-             await log.update({ logout_time: new Date(), active_duration: active_duration });
+
+            await Do3()
 
         }
+
+
+
+        
 
        
 

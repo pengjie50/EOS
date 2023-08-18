@@ -111,7 +111,7 @@ module.exports = appInfo => {
         QueryHeaderBC: "http://165.22.55.213:3002/eos/QueryHeaderBC",
 
         user_email: "504475705@qq.com",
-        auth_code: "gatvtdmruiwjbiih"
+        auth_code: "xgfelmexsnrjbhgh"
         // myAppName: 'egg',
     };
 

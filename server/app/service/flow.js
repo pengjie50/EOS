@@ -50,12 +50,20 @@ class FlowService extends Service {
                 list.rows = list.rows.filter((a) => {
                     return ctx.user.accessible_timestamp.some((b) => {
                         return b == a.id
-                    })
+                    })  
 
                 })
             }
             
         }
+        if (!isGetAll) {
+            list.rows = list.rows.filter((a) => {
+                return a.code != 4009 && a.code != 1006
+
+            })
+        }
+       
+
         ctx.status = 200;
         ctx.body = {
             success: true,

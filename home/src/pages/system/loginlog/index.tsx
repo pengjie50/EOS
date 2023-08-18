@@ -171,7 +171,11 @@ export var columnsBase: ProColumns<LoginlogListItem>[] = [
     defaultSortOrder: 'descend',
     width: 200,
     dataIndex: 'login_time',
-    valueType: 'dateTime',
+    render: (dom, entity) => {
+
+      return moment(new Date(dom)).format('DD MMM YYYY HH:mm:ss')
+
+    },
     hideInSearch: true
 
   },

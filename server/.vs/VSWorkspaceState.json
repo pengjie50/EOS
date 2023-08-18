@@ -1,12 +1,7 @@
 {
   "ExpandedNodes": [
-    "",
-    "\\app\\controller",
-    "\\app\\middleware",
-    "\\app\\schedule",
-    "\\app\\service",
+    "\\app",
     "\\config"
   ],
-  "SelectedNode": "\\app",
   "PreviewInSolutionExplorer": false
 }

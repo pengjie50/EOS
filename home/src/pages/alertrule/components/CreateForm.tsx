@@ -43,6 +43,9 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
   const [isMP, setIsMP] = useState<boolean>(!isPC());
   const [organizationList, setOrganizationList] = useState<any>([]);
   const [organizationMap, setOrganizationMap] = useState<any>({});
+
+
+  const [varr, setVarr] = useState<any>([]);
   const {
     onSubmit,
     onCancel,
@@ -97,7 +100,15 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
 
       initialValues={{ emailArr: [(new Date).getTime()], typeArr: [(new Date).getTime()] }}
       formRef={restFormRef}
-      onFinish={props.onSubmit}
+      onFinish={async (v) => {
+       
+        var cc = await restFormRef.current?.validateFields(varr)
+
+        cc = await restFormRef.current?.validateFields(varr)
+     
+       
+       return props.onSubmit(v)
+      }}
       open={props.createModalOpen}
       submitter={{
         searchConfig: {
@@ -1190,8 +1201,9 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
               (aa) => {
                 var arr = []
                 var v = []
+                varr.length=0
                 aa.emailArr.map((a, index) => {
-                  v.push(a + "_email")
+                  
                   arr.push(<ProFormGroup><ProFormText
 
                     fieldProps={{
@@ -1234,9 +1246,9 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
 
                     <ProFormDependency name={['typeArr']} >
 
-                      {(cc) => {
+                      {(ccc) => {
 
-                        cc.typeArr?.forEach((f) => {
+                        ccc.typeArr?.forEach((f) => {
 
                           v.push(f + "_amber_" + 'hours')
                           v.push(f + "_amber_" + 'mins')
@@ -1283,15 +1295,16 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
                             var r = [
 
                             ]
-
-                            if (emailReg.test(cc[a + "_email"])) {
+                           
+                            if (emailReg.test(restFormRef?.current?.getFieldValue(a + "_email"))) {
+                              
                               r.push({
                                 required: true,
                                 message: "Please select an alert to proceed.",
                               })
                             }
 
-
+                            varr.push(a + "_send_type_select")
 
                             return <ProFormCheckbox.Group
                               rules={r}
@@ -1313,6 +1326,8 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
 
                   </ProFormGroup>)
                 })
+
+             
                 return arr
               }
             }

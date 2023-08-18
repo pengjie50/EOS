@@ -6,7 +6,7 @@
 module.exports = app => {
     const { router, controller } = app;
     app.beforeStart(async () => {
-      // await app.model.Report.sync({ alter: true });//force  If false does not overwrite true, it will be deleted and re created; Alter true can add or delete fields;
+      // await app.model.Transaction.sync({ alter: true });//force  If false does not overwrite true, it will be deleted and re created; Alter true can add or delete fields;
     });
     //truncate table alert; truncate table alertrule_transaction;
     router.get('/', controller.home.index);

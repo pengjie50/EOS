@@ -1078,8 +1078,12 @@ const TableList: React.FC = () => {
       dataIndex: 'start_of_transaction',
       sorter: true,
       width: 150,
-    
-      valueType: 'date',
+      render: (dom, entity) => {
+       
+          return  moment(new Date(dom)).format('DD MMM YYYY') 
+       
+      },
+     
       hideInSearch: true,
     },
     {
@@ -1091,7 +1095,7 @@ const TableList: React.FC = () => {
       hideInSearch: true,
       render: (dom, entity) => {
         if (entity.status == 1) {
-          return dom ? moment(new Date(dom)).format('YYYY-MM-DD'):"-"
+          return dom ? moment(new Date(dom)).format('DD MMM YYYY'):"-"
         } else {
           return "-"
         }

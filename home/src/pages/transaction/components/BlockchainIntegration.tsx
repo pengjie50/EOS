@@ -297,11 +297,11 @@ const Detail: React.FC<any> = (props) => {
     {
       title: <FormattedMessage id="pages.transaction.startOfTransaction" defaultMessage="Start of transaction" />,
       dataIndex: 'start_of_transaction',
-      valueType: 'dateTime',
+     
       hideInSearch: true,
       render: (dom, entity) => {
       
-          return moment(new Date(dom)).format('DD/MM/YYYY HH:mm') 
+        return moment(dom).format('DD MMM YYYY HH:mm') 
        
        
       },
@@ -309,12 +309,12 @@ const Detail: React.FC<any> = (props) => {
     {
       title: <FormattedMessage id="pages.transaction.endOfTransaction" defaultMessage="End of transaction" />,
       dataIndex: 'end_of_transaction',
-      valueType: 'dateTime',
+     
       hideInSearch: true,
       render: (dom, entity) => {
        
 
-          return dom?moment(new Date(dom)).format('DD/MM/YYYY HH:mm') :"-"
+        return dom ? moment(dom).format('DD MMM YYYY HH:mm') :"-"
        
 
       },
@@ -504,7 +504,11 @@ const Detail: React.FC<any> = (props) => {
     {
       title: <FormattedMessage id="pages.blockchainIntegration.timeStamp" defaultMessage="Time Stamp" />,
       dataIndex: 'time_stamp',
-      valueType: "dateTime",
+      
+      render: (dom, entity) => {
+        return moment(dom).format('DD MMM YYYY HH:mm:ss')
+      },
+      
       hideInSearch: true,
     },
     {
@@ -622,7 +626,9 @@ const Detail: React.FC<any> = (props) => {
         transactionevent({
           transaction_id: transaction_id, sorter: { event_time: 'ascend' }
         }).then((res) => {
-
+          res.data=res.data.filter((a) => {
+            return a.flow_id != "1e026150-d910-11ed-a7e5-47842df0d9cc" && a.flow_id != "66ba5680-d912-11ed-a7e5-47842df0d9cc"
+          })
 
           setTransactioneventList(res.data)
           var reMap = {}
@@ -903,7 +909,7 @@ const Detail: React.FC<any> = (props) => {
 
 
         if (c.dataIndex == "event_time") {
-          r['value'] = moment(new Date(r['value'])).format('YYYY-MM-DD HH:mm:ss')
+          r['value'] = moment(new Date(r['value'])).format('DD MMM YYYY HH:mm:ss')
         }
         var obj = {}
         var bc_event_data_one = bc_event_data.find((j) => {
@@ -922,7 +928,7 @@ const Detail: React.FC<any> = (props) => {
         r['bc_value'] = c.render ? c.render(obj[k], obj) : obj[k]
 
         if (c.dataIndex == "event_time") {
-          r['bc_value'] = moment(new Date(r['bc_value'])).format('YYYY-MM-DD HH:mm:ss')
+          r['bc_value'] = moment(new Date(r['bc_value'])).format('DD MMM YYYY HH:mm:ss')
 
         }
         if (r['bc_value'] == "") {

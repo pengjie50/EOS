@@ -16,7 +16,7 @@ const EOSInstructionManualGuide: React.FC = () => {
   var url = ""
   if (access.canAdmin) {
     url = "https://eosuat.southeastasia.cloudapp.azure.com/EOSInstructionManualGuide/EOSInstructionManualGuideforSuperuser.htm"
-  } else if (access.dashboard_tab() || access.alertrule_list_tab() || access.transactions_list_tab() || access.jetty_list_tab() || access.alert_list_tab()) {
+  } else if (currentUser?.company_type =="Terminal") {
 
     url = "https://eosuat.southeastasia.cloudapp.azure.com/EOSInstructionManualGuide/EOSInstructionManualGuideforTerminal.htm"
   } else {

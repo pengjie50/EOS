@@ -42,8 +42,8 @@ const handleAdd = async (fields: JettyListItem) => {
     await addJetty({ ...fields });
     hide();
     message.success(<FormattedMessage
-      id="pages.addedSuccessfully"
-      defaultMessage="Added successfully"
+      id="pages.xxx"
+      defaultMessage="Your Jetty has been successfully added"
     />);
     return true;
   } catch (error) {
@@ -71,8 +71,8 @@ const handleUpdate = async (fields: Partial<JettyListItem>) => {
     hide();
 
     message.success(<FormattedMessage
-      id="pages.modifySuccessful"
-      defaultMessage="Modify is successful"
+      id="pages.xxx"
+      defaultMessage="Your jetty has been successfully modified"
     />);
     return true;
   } catch (error) {

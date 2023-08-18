@@ -38,6 +38,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
   const [flowMap, setFlowMap] = useState<any>({});
   const [flowList, setFlowList] = useState<any>([]);
   const [isMP, setIsMP] = useState<boolean>(!isPC());
+  const [varr, setVarr] = useState<any>([]);
   const {
     onSubmit,
     onCancel,
@@ -92,7 +93,15 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
       }}
       formRef={restFormRef}
-      onFinish={props.onSubmit}
+      onFinish={async (v) => {
+
+        var cc = await restFormRef.current?.validateFields(varr)
+
+        cc = await restFormRef.current?.validateFields(varr)
+
+
+        return props.onSubmit(v)
+      }}
       open={props.updateModalOpen}
       submitter={{
         searchConfig: {
@@ -599,8 +608,9 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
               (aa) => {
                 var arr = []
                 var v = []
+                varr.length = 0
                 aa?.emailArr?.map((a, index) => {
-                  v.push(a + "_email")
+                 
                   arr.push(<ProFormGroup><ProFormText
 
                     fieldProps={{
@@ -699,7 +709,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                                 message: "Please select an alert to proceed.",
                               })
                             }
-
+                            varr.push(a + "_send_type_select")
                             return <ProFormCheckbox.Group
                               rules={r}
                               name={a + "_send_type_select"}

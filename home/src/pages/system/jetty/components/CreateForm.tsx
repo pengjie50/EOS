@@ -142,7 +142,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
           id: 'pages.jetty.depthAlongside',
           defaultMessage: 'Depth Approaches (M)',
         })}
-        width="md"
+        width="lg"
       />
       <ProFormText
         name="depth_approaches"
@@ -150,7 +150,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
           id: 'pages.jetty.depthApproaches',
           defaultMessage: 'Depth Approaches (M)',
         })}
-        width="md"
+        width="lg"
       />
       <ProFormText
         name="max_loa"
@@ -158,7 +158,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
           id: 'pages.jetty.maxLOA',
           defaultMessage: 'Max. LOA (M)',
         })}
-        width="md"
+        width="lg"
       />
       <ProFormText
         name="min_loa"
@@ -166,7 +166,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
           id: 'pages.jetty.minLOA',
           defaultMessage: 'Min. LOA (M)',
         })}
-        width="md"
+        width="lg"
       />
       <ProFormText
         name="max_displacement"
@@ -174,7 +174,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
           id: 'pages.jetty.maxDisplacement',
           defaultMessage: 'Max. Displacement (MT)D',
         })}
-        width="md"
+        width="lg"
       />
       <ProFormText
         name="mla_envelop_at_mhws_3m"
@@ -182,7 +182,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
           id: 'pages.jetty.mlaEnvelopAtMHWS3m',
           defaultMessage: 'MLA Envelop At MHWS 3.0m (Unless Otherwise Specified) (M)',
         })}
-        width="md"
+        width="lg"
 
       />
       {/*

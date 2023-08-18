@@ -199,8 +199,7 @@ class SendAlarmEmail extends Subscription {
 
 
         }
-
-
+       
         const clearAlert = async (flowMap, ar, transaction, ar_amber_time, ar_red_time, trueTime, fromEventObj, toEventObj) => {
            
             var work_order_id = toEventObj?.work_order_id || fromEventObj?.work_order_id || null
@@ -245,44 +244,19 @@ class SendAlarmEmail extends Subscription {
                     isDeleteAlert = true
                     isUpdateAr = true
                 }
-
+                 
                
                 if (ar_amber_time > 0 && trueTime > ar_amber_time) {
                    
+                    if (oa.total_duration != trueTime && (trueTime - oa.total_duration > 3600 || oa.total_duration - trueTime > 3600) ){
+                       isUpdateAr=true
+                    }
+                   
                     if (isUpdateAr) {
-                        if (ar.email) {
-                            
-                            try {
-                                var emailArr = ar.email.split(";")
-                                var sendEmail = []
-                                emailArr.forEach((c) => {
-                                    var v = c.split(',')
-                                    if (v.some((f) => {
-                                        return f == (oa.type == 0 ? 'a' : 'r')
-
-                                    })) {
-                                        sendEmail.push(v[0])
-                                    }
-
-
-                                })
-                               
-                                if (sendEmail.length > 0) {
-                                   
-                                    
-
-                                  
-                                    await service.tool.sendMail(sendEmail.join(","), createUpdateTitle(oa, ar, transaction, flowMap), createUpdateContent(oa, ar, transaction, flowMap))
-                                }
-
-
-                            } catch (e) {
-
-                            }
-
-                        }
-                       
-                        await ctx.model.Alert.update({ total_duration: trueTime }, { where: { id: oa.id } })
+                        console.log("11111111111111111111111111")
+                        await service.tool.sendMailDo(ar, oa, transaction, flowMap, "Update")
+                      
+                        await ctx.model.Alert.update({ total_duration: trueTime}, { where: { id: oa.id } })
                         
                     }
 
@@ -302,35 +276,7 @@ class SendAlarmEmail extends Subscription {
                 if (isDeleteAlert) {
                    
                     modart.amber = null
-                    if (ar.email) {
-                        try {
-                            var emailArr = ar.email.split(";")
-                            var sendEmail = []
-                            emailArr.forEach((c) => {
-                                var v = c.split(',')
-                                if (v.some((f) => {
-                                    return f == (oa.type == 0 ? 'a' : 'r')
-
-                                })) {
-                                    sendEmail.push(v[0])
-                                }
-
-
-                            })
-                            if (sendEmail.length > 0) {
-
-                               await service.tool.sendMail(sendEmail.join(","), createClearTitle(oa, ar, transaction, flowMap), createClearContent(oa, ar, transaction, flowMap))
-                            }
-
-
-                        } catch (e) {
-
-                        }
-
-                    }
-
-                  
-
+                    await service.tool.sendMailDo(ar, oa, transaction, flowMap, "Clear")
 
                     await ctx.model.Alert.destroy({
                         where: {
@@ -365,37 +311,15 @@ class SendAlarmEmail extends Subscription {
 
 
                 if (ar_red_time > 0 && trueTime > ar_red_time) {
-
-
+ 
+                    if (oa.total_duration != trueTime && (trueTime - oa.total_duration > 3600 || oa.total_duration - trueTime > 3600)) {
+                            isUpdateAr=true
+                          }
                    
-                        if (isUpdateAr) {
-                            if (ar.email) {
-                                try {
-                                    var emailArr = ar.email.split(";")
-                                    var sendEmail = []
-                                    emailArr.forEach((c) => {
-                                        var v = c.split(',')
-                                        if (v.some((f) => {
-                                            return f == (oa.type == 0 ? 'a' : 'r')
-
-                                        })) {
-                                            sendEmail.push(v[0])
-                                        }
-
-
-                                    })
-                                    if (sendEmail.length > 0) {
-                                        
-                                        await service.tool.sendMail(sendEmail.join(","), createUpdateTitle(oa, ar, transaction, flowMap), createUpdateContent(oa, ar, transaction, flowMap))
-                                    }
-
-
-                                } catch (e) {
-
-                                }
-
-                            }
-
+                    if (isUpdateAr) {
+                        console.log("2222222222222222222222222222222")
+                            await service.tool.sendMailDo(ar, oa, transaction, flowMap, "Update")
+                           
                             await ctx.model.Alert.update({ total_duration: trueTime }, { where: { id: oa.id}})
 
 
@@ -419,32 +343,7 @@ class SendAlarmEmail extends Subscription {
                 if (isDeleteAlert) {
 
                     modart.red = null
-                    if (ar.email) {
-                        try {
-                            var emailArr = ar.email.split(";")
-                            var sendEmail = []
-                            emailArr.forEach((c) => {
-                                var v = c.split(',')
-                                if (v.some((f) => {
-                                    return f == (oa.type == 0 ? 'a' : 'r')
-
-                                })) {
-                                    sendEmail.push(v[0])
-                                }
-
-
-                            })
-                            if (sendEmail.length > 0) {
-                                
-                               await service.tool.sendMail(sendEmail.join(","), createClearTitle(oa, ar, transaction, flowMap), createClearContent(oa, ar, transaction, flowMap))
-                            }
-
-
-                        } catch (e) {
-
-                        }
-
-                    }
+                    await service.tool.sendMailDo(ar, oa, transaction, flowMap, "Clear")
 
 
                    
@@ -466,8 +365,9 @@ class SendAlarmEmail extends Subscription {
             if (isUpdateAr) {
                
 
-               
-               
+                    modart.transaction_event_id_from=fromEventObj?.id || null
+
+                    modart.transaction_event_id_to = toEventObj?.id || null
                
                    AlertruleTransactionMap[artk] = await AlertruleTransactionMap[artk].update(modart)
                    
@@ -557,8 +457,8 @@ class SendAlarmEmail extends Subscription {
 
         var transactionList = transactionList.map((t) => {
 
-            t.terminal_name = terminalMap[t.terminal_id]?.name || ""
-            t.jetty_name = jettyMap[t.jetty_id]?.name || ""
+            //t.terminal_name = terminalMap[t.terminal_id]?.name || ""
+            //t.jetty_name = jettyMap[t.jetty_id]?.name || t.jetty_name
             return t
         })
         var ids = transactionList.map((t) => {

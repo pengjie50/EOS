@@ -333,7 +333,11 @@ const TableList: React.FC = () => {
       defaultSortOrder: 'descend',
       hideInSearch: true,
       dataIndex: 'created_at',
-      valueType: 'dateTime'
+      render: (dom, entity) => {
+
+        return moment(new Date(dom)).format('DD MMM YYYY HH:mm:ss')
+
+      }
 
     },
     {
@@ -461,8 +465,8 @@ const TableList: React.FC = () => {
       render: (dom, entity) => {
         return (
 
-
-          dom ? <a
+          /*
+          <a
             onClick={
               () => {
 
@@ -484,7 +488,10 @@ const TableList: React.FC = () => {
                 handleUpdateModalOpen(true);
 
               }}
-          >{dom} </a > : 'N.A.'
+          >{dom} </a >
+
+          */
+          dom ? dom  : 'N.A.'
 
         );
       },

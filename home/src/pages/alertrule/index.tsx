@@ -723,10 +723,6 @@ const TableList: React.FC = () => {
 
 
 
-
-
-
-
     {
       title: <FormattedMessage id="pages.alertrule.vesselSizeLimit" defaultMessage="Vessel Size Limit (DWT)" />,
       dataIndex: 'vessel_size_dwt_from',
@@ -999,7 +995,11 @@ const TableList: React.FC = () => {
       width: 200,
       hideInSearch: true,
       sorter: true,
-      valueType: 'dateTime',
+      render: (dom, entity) => {
+
+        return moment(new Date(dom)).format('DD MMM YYYY HH:mm:ss')
+
+      }
     },
 
     {

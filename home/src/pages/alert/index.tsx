@@ -647,6 +647,9 @@ const TableList: React.FC = () => {
 
         }
       },
+      renderText: (dom, entity) => {
+       return "A" + entity.alert_id
+      },
       render: (dom, entity) => {
         return (
           <a
@@ -673,7 +676,11 @@ const TableList: React.FC = () => {
       hideInSearch: true,
 
       sorter: true,
-      valueType: 'dateTime',
+      render: (dom, entity) => {
+
+        return moment(new Date(dom)).format('DD MMM YYYY HH:mm:ss')
+
+      }
     },
     {
       title: <FormattedMessage id="pages.alertrule.type" defaultMessage="Threshold Type" />,

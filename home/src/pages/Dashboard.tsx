@@ -31,7 +31,7 @@ const getFilterStr = (organization_id, organizationMap, dateArr, status, title) 
 
     return organizationMap[a]?.name
   })
-  var dateStr = dateArr[0] && dateArr[1] ? (arr?.length>0?' - ':"") + moment(dateArr[0]).format('DD/MM/YYYY') + ' to ' + moment(dateArr[1]).format('DD/MM/YYYY') : ''
+  var dateStr = dateArr[0] && dateArr[1] ? (arr?.length>0?' - ':"") + moment(dateArr[0]).format('DD MMM YYYY') + ' to ' + moment(dateArr[1]).format('DD MMM YYYY') : ''
   var terminalStr = (organization_id ? arr.join(",") : "")
 
  // var statusStr = (status === '' ? '' : (status == 1 ? 'Closed' : 'Open'))
@@ -77,6 +77,10 @@ import { useContext } from 'react';
 
 
 const getTimeStr = (time) => {
+  if (!time) {
+    return "-"
+  }
+ 
   return (time ? parseInt((time / 3600) + "") : 0) + "h " + (time ? parseInt((time % 3600) / 60) : 0) + "m"
 }
 const Welcome: React.FC = () => {
@@ -699,13 +703,14 @@ const Welcome: React.FC = () => {
                   title: <FormattedMessage id="pages.transaction.xxx" defaultMessage="Start Of Transaction" />,
                   dataIndex: 'start_of_transaction',
                   width: 200,
-                  //sorter: true,
-                  // defaultSortOrder: 'descend',
-                  valueType: 'dateTime',
+                  render: (dom, entity) => {
+                    return moment(dom).format('DD MMM YYYY HH:mm:ss')
+                  },
+                 
                   hideInSearch: true,
                 },
                 {
-                  title: <span>imo_number</span>,
+                  title: <span>IMO Number</span>,
                   dataIndex: 'imo_number'
                   
                 },

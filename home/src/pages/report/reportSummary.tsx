@@ -671,14 +671,24 @@ const TableList: React.FC = () => {
     },
     {
       title: <FormattedMessage id="pages.transaction.startOfTransaction" defaultMessage="Start Of Transaction" />,
-      valueType: "dateTime",
+      render: (dom, entity) => {
+
+        return moment(new Date(dom)).format('DD MMM YYYY HH:mm:ss')
+
+      },
       sorter: true,
       dataIndex: 'start_of_transaction',
 
     },
     {
       title: <FormattedMessage id="pages.transaction.endOfTransaction" defaultMessage="End Of Transaction" />,
-      valueType: "dateTime",
+      render: (dom, entity) => {
+        if (entity.status == 1) {
+          return dom ? moment(new Date(dom)).format('DD MMM YYYY') : "-"
+        } else {
+          return "-"
+        }
+      },
       sorter: true,
       dataIndex: 'end_of_transaction',
 
@@ -720,7 +730,7 @@ const TableList: React.FC = () => {
       dataIndex: 'total_duration',
       sorter: true,
       render: (dom, entity) => {
-        if (dom > 0 && entity.status == 1) {
+        if (dom > 0) {
           return parseInt((dom / 3600) + "") + "h " + parseInt((dom % 3600) / 60) + "m"
         } else {
           return '-'
@@ -783,10 +793,10 @@ const TableList: React.FC = () => {
       dataIndex: 'product_quantity_in_bls_60_f',
       sorter: true,
       render: (dom, entity) => {
-        if (dom) {
+        if (dom != "-") {
           return numeral(dom).format('0,0')
         }
-
+        return dom
       },
     },
     {
@@ -794,10 +804,10 @@ const TableList: React.FC = () => {
       dataIndex: 'product_quantity_in_l_obs',
       sorter: true,
       render: (dom, entity) => {
-        if (dom) {
+        if (dom !="-") {
           return numeral(dom).format('0,0')
         }
-
+        return dom
       },
     },
     {
@@ -805,10 +815,10 @@ const TableList: React.FC = () => {
       dataIndex: 'product_quantity_in_l_15_c',
       sorter: true,
       render: (dom, entity) => {
-        if (dom) {
+        if (dom != "-") {
           return numeral(dom).format('0,0')
         }
-
+        return dom
       },
     },
     {
@@ -816,10 +826,10 @@ const TableList: React.FC = () => {
       dataIndex: 'product_quantity_in_mt',
       sorter: true,
       render: (dom, entity) => {
-        if (dom) {
+        if (dom != "-") {
           return numeral(dom).format('0,0')
         }
-
+        return dom
       },
     },
     {
@@ -827,10 +837,10 @@ const TableList: React.FC = () => {
       dataIndex: 'product_quantity_in_mtv',
       sorter: true,
       render: (dom, entity) => {
-        if (dom) {
+        if (dom != "-") {
           return numeral(dom).format('0,0')
         }
-
+        return dom
       },
     },
 
@@ -895,7 +905,7 @@ const TableList: React.FC = () => {
 
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Process" />,
       dataIndex: 'flow_pid',
-      valueEnum: flowConf,
+      valueEnum: processes,
       mustSelect: true
     },
     {
@@ -909,7 +919,11 @@ const TableList: React.FC = () => {
 
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Event Time" />,
       dataIndex: 'event_time',
-      valueType: "dateTime",
+      render: (dom, entity) => {
+
+        return moment(new Date(dom)).format('DD MMM YYYY HH:mm:ss')
+
+      },
       mustSelect: true
     },
 
@@ -968,31 +982,59 @@ const TableList: React.FC = () => {
 
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Product Quantity (l-15-c)" />,
       dataIndex: 'product_quantity_in_l_15_c',
+      render: (dom, entity) => {
+        if (dom != "-") {
+          return numeral(dom).format('0,0')
+        }
+        return dom
+      },
+
 
     },
     {
 
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Product Quantity (mt)" />,
       dataIndex: 'product_quantity_in_mt',
-
+      render: (dom, entity) => {
+        
+        if (dom != "-") {
+          return numeral(dom).format('0,0')
+        }
+        return dom
+      },
     },
     {
 
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Product Quantity (mtv)" />,
       dataIndex: 'product_quantity_in_mtv',
-
+      render: (dom, entity) => {
+        if (dom != "-") {
+          return numeral(dom).format('0,0')
+        }
+        return dom
+      },
     },
     {
 
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Product Quantity (l-obs)" />,
       dataIndex: 'product_quantity_in_l_obs',
-
+      render: (dom, entity) => {
+        if (dom != "-") {
+          return numeral(dom).format('0,0')
+        }
+        return dom
+      },
     },
     {
 
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Product Quantity (Bls-60-f)" />,
       dataIndex: 'product_quantity_in_bls_60_f',
-
+      render: (dom, entity) => {
+        if (dom != "-") {
+          return numeral(dom).format('0,0')
+        }
+        return dom
+      },
     },
     {
 
@@ -1031,7 +1073,6 @@ const TableList: React.FC = () => {
       dataIndex: 'threshold_alert',
       mustSelect: true
     },
-
     {
 
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Alert" />,
@@ -1042,20 +1083,28 @@ const TableList: React.FC = () => {
 
           title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Alert ID" />,
           dataIndex: 'alert_id',
-          className:"cloumsNoSpace",
+          className: "cloumsNoSpace",
           mustSelect: true,
           width: 120,
+          renderText: (dom, entity) => {
+            if (entity.alert_id) {
+              return "A" + (entity.alert_id || "")
+            } else {
+              return ""
+            }
+            
+          },
           render: (dom, entity) => {
 
 
             return entity.alertList.length > 0 ? <ProTable<TransactionListItem, API.PageParams>
 
-              style={isMP ?{ width: 300, overflow: 'auto' }:null}
-            
+              style={isMP ? { width: 300, overflow: 'auto' } : null}
+
               pagination={false}
-              showHeader={isMP?true:false}
+              showHeader={isMP ? true : false}
               size="small"
-             
+
               dataSource={entity.alertList}
               rowKey="id"
               options={false}
@@ -1097,7 +1146,11 @@ const TableList: React.FC = () => {
                   hideInSearch: true,
 
                   sorter: true,
-                  valueType: 'dateTime',
+                  render: (dom, entity) => {
+
+                    return moment(new Date(dom)).format('DD MMM YYYY HH:mm:ss')
+
+                  }
                 },
                 {
                   title: "Threshold ID",
@@ -1113,27 +1166,186 @@ const TableList: React.FC = () => {
                   }
                 },
 
+                {
+                  title: <FormattedMessage id="pages.alertrule.type" defaultMessage="Threshold Type" />,
+                  dataIndex: 'ar.type',
+                  width: 120,
+                 
+                  valueEnum: {
+                    0: { text: <FormattedMessage id="pages.alertrule.singleProcess" defaultMessage="Single Process" /> },
+                    1: { text: <FormattedMessage id="pages.alertrule.betweenTwoEvents" defaultMessage="Between Two Events" /> },
+                    2: { text: <FormattedMessage id="pages.alertrule.entireTransaction" defaultMessage="Entire Transaction" /> },
+                  }
+
+                },
+
+                {
+                  title: <FormattedMessage id="pages.alertrule.thresholdLimit" defaultMessage="Threshold Limit" />,
+                  dataIndex: 'ar.amber_hours',
+                  width: 120,
+                  renderPrint: (dom, entity_) => {
+                    var entity = {}
+                    entity.amber_hours = entity_['ar.amber_hours']
+                    entity.amber_mins = entity_['ar.amber_mins']
+                    entity.red_hours = entity_['ar.red_hours']
+                    entity.red_mins = entity_['ar.red_mins']
+                    return (entity.amber_hours || entity.amber_mins ? ("Amber: " + (entity.amber_hours ? entity.amber_hours : '0') + "h " + (entity.amber_mins ? entity.amber_mins : '0') + "m") : "") +
+                      (entity.red_hours || entity.red_mins ? (" Red: " + (entity.red_hours ? entity.red_hours : '0') + "h " + (entity.red_mins ? entity.red_mins : '0') + "m") : "")
+
+                  },
+                  render: (dom, entity_) => {
+
+                    var entity = {}
+                    entity.amber_hours = entity_['ar.amber_hours']
+                    entity.amber_mins = entity_['ar.amber_mins']
+                    entity.red_hours = entity_['ar.red_hours']
+                    entity.red_mins = entity_['ar.red_mins']
+                    return (<div><div style={{ display: entity.amber_hours || entity.amber_mins ? "block" : "none" }}> <SvgIcon style={{ color: "#DE7E39" }} type="icon-yuan" />{" " + (entity.amber_hours ? entity.amber_hours : '0') + "h " + (entity.amber_mins ? entity.amber_mins : '0') + "m"}</div>
+                      <div style={{ display: entity.red_hours || entity.red_mins ? "block" : "none" }}><SvgIcon style={{ color: "red" }} type="icon-yuan" />{" " + (entity.red_hours ? entity.red_hours : '0') + "h " + (entity.red_mins ? entity.red_mins : '0') + "m"}</div></div>)
+                  },
+                },
+
+                {
+                  title: (
+                    <FormattedMessage
+                      id="pages.alertrule.eee"
+                      defaultMessage="Threshold Process / Events"
+                    />
+                  ),
+                  dataIndex: 'ar.flow_id',
+                  width: 120,
+                  render: (dom, entity) => {
+                    if (entity['ar.type'] == 0) {
+                      return flowConf[entity['ar.flow_id']]
+                    } else if (entity['ar.type'] == 1) {
+                      return flowConf[entity['ar.flow_id']] + " -> " + flowConf[entity['ar.flow_id_to']]
+                    } else {
+                      return '-'
+                    }
+
+                  }
+
+
+                },
+                {
+                  title: <FormattedMessage id="pages.alertrule.vesselSizeLimit" defaultMessage="Vessel Size Limit (DWT)" />,
+                  dataIndex: 'ar.vessel_size_dwt_from',
+                  width: 120,
+                  render: (dom, entity_) => {
+
+                    var entity = {}
+                    entity.vessel_size_dwt_from = entity_['ar.vessel_size_dwt_from']
+
+                    entity.vessel_size_dwt_to = entity_['ar.vessel_size_dwt_to']
+                    if (entity.vessel_size_dwt_from != null && entity.vessel_size_dwt_to) {
+
+                      var valueEnum = {
+                        "0-25000": "GP",
+                        "25000-45000": "MR",
+                        "45000-80000": "LR1",
+                        "80000-120000": "AFRA",
+                        "120000-160000": "LR2",
+                        "160000-320000": "VLCC",
+                        "320000-1000000000": "ULCC",
+                      }
+
+                      return valueEnum[entity.vessel_size_dwt_from + "-" + entity.vessel_size_dwt_to];
+                    } else {
+                      return '-'
+                    }
+
+                  },
+
+                },
+                {
+                  title: <FormattedMessage id="pages.alertrule.throughputVolume1" defaultMessage="Total Nominated Quantity" />,
+                  dataIndex: 'ar.product_quantity_from',
+                  width: 120,
+                  render: (dom, entity_) => {
+                    var entity = {}
+                    entity.product_quantity_from = entity_['ar.product_quantity_from']
+                    entity.product_quantity_to = entity_['ar.product_quantity_to']
+                    if (entity.product_quantity_from) {
+
+
+                      return numeral(entity.product_quantity_from).format('0,0') + " - " + numeral(entity.product_quantity_to).format('0,0')
+                    } else {
+                      return '-'
+                    }
+
+                  }
+
+                },
+                {
+
+                  title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="UOM" />,
+                  dataIndex: 'ar.uom',
+                  width: 120,
+                  valueEnum: {
+                    "l_obs": "L-obs",
+                    "l_15_c": "L-15-C",
+                    "mt": "Mt",
+                    "mtv": "MtV",
+                    "bls_60_f": "Bls-60-F",
+
+                  }
+
+                },
+                {
+                  title: 'Created By',
+                  dataIndex: 'ar.user_name',
+                  width: 120,
+
+
+                },
+                {
+                  title: <FormattedMessage id="pages.alertrule.userName" defaultMessage="Date of Threshold Alert Creation" />,
+                  dataIndex: 'ar.created_at',
+                  width: 200,
+                  valueType: 'dateTime'
+
+                }
+
               ]}
               rowSelection={false}
             /> : "-"
 
           },
           onCell: (_, index) => ({
-            colSpan: 4,
+            colSpan: 12,
           }),
         },
         {
 
           title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Alert Type" />,
           width: 120,
-          dataIndex: 'alert_type',
+          dataIndex: 'a.type',
+          renderPrint: (dom, entity) => {
+            if (dom == 0) {
+              return "Amber"
+            } else if (dom == 1) {
+              return "Red"
+            } else {
+              return ""
+            }
+
+          },
           onCell: sharedOnCell,
         },
         {
 
           title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Alert Triggered Time" />,
           width: 200,
-          dataIndex: 'alert_triggered_time',
+          render: (dom, entity) => {
+            if (dom) {
+              return moment(new Date(dom)).format('DD MMM YYYY HH:mm:ss')
+            } else {
+              return ""
+            }
+           
+
+          },
+          dataIndex: 'a.created_at',
           onCell: sharedOnCell,
         },
         {
@@ -1142,10 +1354,173 @@ const TableList: React.FC = () => {
           width: 120,
           mustSelect: true,
           dataIndex: 'threshold_id',
+          render: (dom, entity) => {
+          
+              if (entity["ar.alertrule_id"]) {
+              return "T" + entity["ar.alertrule_id"] 
+              } else {
+                return ""
+              }
+              
+
+           
+
+          },
           onCell: sharedOnCell,
         },
+
+        {
+          title: <FormattedMessage id="pages.alertrule.type" defaultMessage="Threshold Type" />,
+          dataIndex: 'ar.type',
+          width: 120,
+          onCell: sharedOnCell,
+          valueEnum: {
+            0: { text: <FormattedMessage id="pages.alertrule.singleProcess" defaultMessage="Single Process" /> },
+            1: { text: <FormattedMessage id="pages.alertrule.betweenTwoEvents" defaultMessage="Between Two Events" /> },
+            2: { text: <FormattedMessage id="pages.alertrule.entireTransaction" defaultMessage="Entire Transaction" /> },
+          }
+
+        },
+
+        {
+          title: <FormattedMessage id="pages.alertrule.thresholdLimit" defaultMessage="Threshold Limit" />,
+          dataIndex: 'ar.amber_hours',
+          onCell: sharedOnCell,
+          width: 120,
+          renderPrint: (dom, entity_) => {
+            var entity = {}
+            entity.amber_hours = entity_['ar.amber_hours']
+            entity.amber_mins = entity_['ar.amber_mins']
+            entity.red_hours = entity_['ar.red_hours']
+            entity.red_mins = entity_['ar.red_mins']
+            return (entity.amber_hours || entity.amber_mins ? ("Amber: " + (entity.amber_hours ? entity.amber_hours : '0') + "h " + (entity.amber_mins ? entity.amber_mins : '0') + "m") : "") +
+              (entity.red_hours || entity.red_mins ? (" Red: " + (entity.red_hours ? entity.red_hours : '0') + "h " + (entity.red_mins ? entity.red_mins : '0') + "m") : "")
+
+          },
+          render: (dom, entity_) => {
+
+            var entity = {}
+            entity.amber_hours = entity_['ar.amber_hours']
+            entity.amber_mins = entity_['ar.amber_mins']
+            entity.red_hours = entity_['ar.red_hours']
+            entity.red_mins = entity_['ar.red_mins']
+            return (<div><div style={{ display: entity.amber_hours || entity.amber_mins ? "block" : "none" }}> <SvgIcon style={{ color: "#DE7E39" }} type="icon-yuan" />{" " + (entity.amber_hours ? entity.amber_hours : '0') + "h " + (entity.amber_mins ? entity.amber_mins : '0') + "m"}</div>
+              <div style={{ display: entity.red_hours || entity.red_mins ? "block" : "none" }}><SvgIcon style={{ color: "red" }} type="icon-yuan" />{" " + (entity.red_hours ? entity.red_hours : '0') + "h " + (entity.red_mins ? entity.red_mins : '0') + "m"}</div></div>)
+          },
+        },
+
+        {
+          title: (
+            <FormattedMessage
+              id="pages.alertrule.eee"
+              defaultMessage="Threshold Process / Events"
+            />
+          ),
+          dataIndex: 'ar.flow_id',
+          onCell: sharedOnCell,
+          width: 120,
+          render: (dom, entity) => {
+            if (entity['ar.type'] == 0) {
+              return flowConf[entity['ar.flow_id']]
+            } else if (entity['ar.type'] == 1) {
+              return flowConf[entity['ar.flow_id']] + " -> " + flowConf[entity['ar.flow_id_to']]
+            } else {
+              return '-'
+            }
+
+          }
+
+
+        },
+        {
+          title: <FormattedMessage id="pages.alertrule.vesselSizeLimit" defaultMessage="Vessel Size Limit (DWT)" />,
+          dataIndex: 'ar.vessel_size_dwt_from',
+          width: 120,
+          onCell: sharedOnCell,
+          render: (dom, entity_) => {
+
+            var entity = {}
+            entity.vessel_size_dwt_from = entity_['ar.vessel_size_dwt_from']
+
+            entity.vessel_size_dwt_to = entity_['ar.vessel_size_dwt_to']
+            if (entity.vessel_size_dwt_from != null && entity.vessel_size_dwt_to) {
+
+              var valueEnum = {
+                "0-25000": "GP",
+                "25000-45000": "MR",
+                "45000-80000": "LR1",
+                "80000-120000": "AFRA",
+                "120000-160000": "LR2",
+                "160000-320000": "VLCC",
+                "320000-1000000000": "ULCC",
+              }
+
+              return valueEnum[entity.vessel_size_dwt_from + "-" + entity.vessel_size_dwt_to];
+            } else {
+              return '-'
+            }
+
+          },
+
+        },
+        {
+          title: <FormattedMessage id="pages.alertrule.throughputVolume1" defaultMessage="Total Nominated Quantity" />,
+          dataIndex: 'ar.product_quantity_from',
+          width: 120,
+          onCell: sharedOnCell,
+          render: (dom, entity_) => {
+            var entity = {}
+            entity.product_quantity_from = entity_['ar.product_quantity_from']
+            entity.product_quantity_to = entity_['ar.product_quantity_to']
+            if (entity.product_quantity_from) {
+
+
+              return numeral(entity.product_quantity_from).format('0,0') + " - " + numeral(entity.product_quantity_to).format('0,0')
+            } else {
+              return '-'
+            }
+
+          }
+
+        },
+        {
+
+          title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="UOM" />,
+          dataIndex: 'ar.uom',
+          onCell: sharedOnCell,
+          width: 120,
+          valueEnum: {
+            "l_obs": "L-obs",
+            "l_15_c": "L-15-C",
+            "mt": "Mt",
+            "mtv": "MtV",
+            "bls_60_f": "Bls-60-F",
+
+          }
+
+        },
+        {
+          title: 'Created By',
+          onCell: sharedOnCell,
+          dataIndex: 'ar.user_name',
+          width: 120,
+
+
+        },
+        {
+          title: <FormattedMessage id="pages.alertrule.userName" defaultMessage="Date of Threshold Alert Creation" />,
+          dataIndex: 'ar.created_at',
+          onCell: sharedOnCell,
+          width: 200,
+          valueType: 'dateTime'
+
+        }
       ]
     },
+
+
+
+
 
 
 
@@ -1160,7 +1535,9 @@ const TableList: React.FC = () => {
           dataIndex: "TypeOfData",
           render: (dom, entity) => {
 
-
+            if (!entity.transactioneventlogList) {
+              return "-"
+            }
 
             var c = entity
 
@@ -1248,7 +1625,9 @@ const TableList: React.FC = () => {
                 dataIndex: "UpdateTime",
                 width: 200,
                 render: (dom, entity) => {
-                  return moment(dom).format('YYYY-MM-DD HH:mm:ss')
+                  if (dom) {
+                    return moment(dom).format('YYYY-MM-DD HH:mm:ss')
+                  }
                 }
               }]}
               rowSelection={false}
@@ -1293,7 +1672,10 @@ const TableList: React.FC = () => {
           width: 200,
           onCell: sharedOnCell,
           render: (dom, entity) => {
-            return moment(dom).format('YYYY-MM-DD HH:mm:ss')
+            if (dom) {
+              return moment(dom).format('YYYY-MM-DD HH:mm:ss')
+            }
+            
           }
         }
       ]
@@ -1336,7 +1718,11 @@ const TableList: React.FC = () => {
 
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Alert Triggered Time" />,
       dataIndex: 'created_at',
-      valueType: 'dateTime',
+      render: (dom, entity) => {
+
+        return moment(new Date(dom)).format('DD MMM YYYY HH:mm:ss')
+
+      }
 
 
     },
@@ -1462,7 +1848,7 @@ const TableList: React.FC = () => {
     },
     {
 
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Transaction Vessel Size" />,
+      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Transaction Vessel Size (DWT)" />,
       dataIndex: 't.vessel_size_dwt',
 
     },
@@ -1475,7 +1861,7 @@ const TableList: React.FC = () => {
       dataIndex: 'ar.product_quantity_from',
       render: (dom, entity) => {
         if (entity["ar.product_quantity_from"]) {
-          return numeral(entity["ar.product_quantity_from"]).format('0,0') + " - " + numeral(entity["ar.product_quantity_from"]).format('0,0')
+          return numeral(entity["ar.product_quantity_from"]).format('0,0') + " - " + numeral(entity["ar.product_quantity_to"]).format('0,0')
         } else {
           return '-'
         }
@@ -1555,7 +1941,7 @@ const TableList: React.FC = () => {
           title: "Duration of " + processes[k] + " Processes",
 
           render: (dom, entity) => {
-            if (dom > 0 && entity.status == 1) {
+            if (dom > 0) {
               return parseInt((dom / 3600) + "") + "h " + parseInt((dom % 3600) / 60) + "m"
             } else {
               return '-'

@@ -385,7 +385,11 @@ const TableList: React.FC = () => {
       ),
       sorter: true,
       dataIndex: 'created_at',
-      valueType: 'dateTime',
+      render: (dom, entity) => {
+
+        return moment(new Date(dom)).format('DD MMM YYYY HH:mm:ss')
+
+      },
       hideInSearch: true
 
     },
@@ -426,52 +430,60 @@ const TableList: React.FC = () => {
       dataIndex: 'option',
       width: 80,
       valueType: 'option',
-      render: (_, record) => [
-        <a
-          key="config"
-          onClick={async () => {
+      render: (_, record) => {
+        if (record.name == "Super User") {
+          return ""
+        }
+
+        return [
+
+          <a
+            key="config"
+            onClick={async () => {
 
 
 
 
-            var r = await queryMenuByRoleId({ role_id: record.id })
+              var r = await queryMenuByRoleId({ role_id: record.id })
 
 
-            record.accessible_permissions = r.data.map((p) => {
-              return p.permission_id
-            })
+              record.accessible_permissions = r.data.map((p) => {
+                return p.permission_id
+              })
 
-            setCurrentRow(record);
-            handleUpdateModalOpen(true);
-          }}
-        >
-          <FormOutlined style={{ fontSize: '20px' }} />
-        </a>,
+              setCurrentRow(record);
+              handleUpdateModalOpen(true);
+            }}
+          >
+            <FormOutlined style={{ fontSize: '20px' }} />
+          </a>,
 
-        <a
-          title={formatMessage({ id: "pages.delete", defaultMessage: "Delete" })}
-          key="config"
-          onClick={() => {
-            setCurrentRow(record);
-            handleRemove([record], (success) => {
-              if (success) {
-                if (isMP) {
-                  setData([]);
-                  getData(1, MPfilter)
+          <a
+            title={formatMessage({ id: "pages.delete", defaultMessage: "Delete" })}
+            key="config"
+            onClick={() => {
+              setCurrentRow(record);
+              handleRemove([record], (success) => {
+                if (success) {
+                  if (isMP) {
+                    setData([]);
+                    getData(1, MPfilter)
+                  }
+                  actionRef.current?.reloadAndRest?.();
                 }
-                actionRef.current?.reloadAndRest?.();
-              }
-            });
+              });
 
 
-          }}
-        >
-          <DeleteOutlined style={{ fontSize: '20px', color: 'red' }} />
+            }}
+          >
+            <DeleteOutlined style={{ fontSize: '20px', color: 'red' }} />
 
-        </a>,
-      
+          </a>,
 
-      ],
+
+        ]
+
+      }
     },
   ];
   const formRef = useRef<ProFormInstance>();

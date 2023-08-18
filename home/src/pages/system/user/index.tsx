@@ -452,7 +452,11 @@ const TableList: React.FC = () => {
       ),
       sorter: true,
       dataIndex: 'created_at',
-      valueType: 'dateTime',
+      render: (dom, entity) => {
+
+        return moment(new Date(dom)).format('DD MMM YYYY HH:mm:ss')
+
+      },
       hideInSearch: true
 
     },

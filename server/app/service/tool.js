@@ -63,7 +63,7 @@ class ToolService extends Service {
         str += '<td>Jetty Number</td><td>' + transaction.jetty_name + '</td>'
         str += '</tr>'
         str += '<tr>'
-        str += '<td>Product</td><td>' + transaction.product_name + '</td>'
+        str += '<td>Product</td><td>' + (transaction.product_name || "") + '</td>'
         str += '</tr>'
         str += '</table>'
         str += '<br/>'
@@ -132,7 +132,7 @@ class ToolService extends Service {
         str += '<td>Jetty Number</td><td>' + transaction.jetty_name + '</td>'
         str += '</tr>'
         str += '<tr>'
-        str += '<td>Product</td><td>' + transaction.product_name + '</td>'
+        str += '<td>Product</td><td>' + (transaction.product_name || "") + '</td>'
         str += '</tr>'
         str += '</table>'
         str += '<br/>'
@@ -188,7 +188,7 @@ class ToolService extends Service {
         str += '<td>Jetty Number</td><td>' + transaction.jetty_name + '</td>'
         str += '</tr>'
         str += '<tr>'
-        str += '<td>Product</td><td>' + transaction.product_name + '</td>'
+        str += '<td>Product</td><td>' + (transaction.product_name || "") + '</td>'
         str += '</tr>'
         str += '</table>'
         str += '<br/>'
@@ -219,9 +219,50 @@ class ToolService extends Service {
 
         return str
     }
+    async sendMailDo(ar, alert, transaction, flowMap,type) {
+        if (ar.email) {
+            try {
+                var emailArr = ar.email.split(";")
+                var sendEmail = []
+                emailArr.forEach((c) => {
+                    var v = c.split(',')
+                    if (v.some((f) => {
+                        return f == (alert.type == 0 ? 'a' : 'r')
+
+                    })) {
+                        sendEmail.push(v[0])
+                    }
 
 
-    getDurationInfo(transactioneventList, flowMap_){
+                })
+                if (sendEmail.length > 0) {
+                    if (type == "Update") {
+                        await this.sendMail(sendEmail.join(","), this.createUpdateTitle(alert, ar, transaction, flowMap), this.createUpdateContent(alert, ar, transaction, flowMap))
+                    } else if (type == "Clear") {
+                        await this.sendMail(sendEmail.join(","), this.createClearTitle(alert, ar, transaction, flowMap), this.createClearContent(alert, ar, transaction, flowMap))
+                    } else {
+                        await this.sendMail(sendEmail.join(","), this.createTitle(alert, ar, transaction, flowMap), this.createContent(alert, ar, transaction, flowMap))
+                    }
+                    
+                }
+
+
+            } catch (e) {
+
+            }
+
+        }
+
+    }
+   
+
+    getDurationInfo(transactioneventList, flowMap_) {
+
+        if (transactioneventList && transactioneventList.length > 0) {
+
+        } else {
+            return { ee:null, se:null }
+        }
         
         var pMap = {}
         var pArr = []
@@ -275,7 +316,7 @@ class ToolService extends Service {
             // Call function to send email
 
             var s = await transporter.sendMail(mailOptions);
-
+           
             if (s.accepted.length > 0) {
                 return true;
             } else {
@@ -287,7 +328,7 @@ class ToolService extends Service {
 
 
         } catch (err) {
-
+            console.log(err)
             return false;
         }
     }

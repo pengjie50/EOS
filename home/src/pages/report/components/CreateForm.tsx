@@ -767,7 +767,73 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           dataIndex: 'threshold_id',
           
           noShowCheck: true
+        },
+
+        {
+          title: <FormattedMessage id="pages.alertrule.type" defaultMessage="Threshold Type" />,
+          dataIndex: 'ar.type',
+        noShowCheck: true
+        },
+
+        {
+          title: <FormattedMessage id="pages.alertrule.thresholdLimit" defaultMessage="Threshold Limit" />,
+          dataIndex: 'ar.amber_hours',
+          noShowCheck: true
+        },
+        
+        {
+          title: (
+            <FormattedMessage
+              id="pages.alertrule.eee"
+              defaultMessage="Threshold Process / Events"
+            />
+          ),
+          dataIndex: 'ar.flow_id',
+          noShowCheck: true
+          
+     
+        },
+        {
+          title: <FormattedMessage id="pages.alertrule.vesselSizeLimit" defaultMessage="Vessel Size Limit (DWT)" />,
+          dataIndex: 'ar.vessel_size_dwt_from',
+          noShowCheck: true
+         
+        },
+        {
+          title: <FormattedMessage id="pages.alertrule.throughputVolume1" defaultMessage="Total Nominated Quantity" />,
+          dataIndex: 'ar.product_quantity_from',
+          noShowCheck: true
+         
+        },
+        {
+
+          title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="UOM" />,
+          dataIndex: 'ar.uom',
+          noShowCheck: true
+         
+
+        },
+        {
+          title: 'Created By',
+          dataIndex: 'ar.user_name',
+          noShowCheck: true
+
+        },
+        {
+          title: <FormattedMessage id="pages.alertrule.userName" defaultMessage="Date of Threshold Alert Creation" />,
+          dataIndex: 'ar.created_at',
+          noShowCheck: true
+         
         }
+
+     
+
+
+      
+
+
+
+
       ]
     },
 
@@ -1791,7 +1857,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                       width={isMP ? "lg" : "sm"}
                       name="uom"
                       label="UOM"
-                      initialValue={"bls_60_f"}
+                     
                       valueEnum={{
                         "l_obs": "L-obs",
                         "l_15_c": "L-15-C",

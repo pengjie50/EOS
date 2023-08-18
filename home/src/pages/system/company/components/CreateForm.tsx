@@ -53,9 +53,11 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
 
   }
   const onlyCheck2 = (rule: any, value: any, callback: (arg0: string | undefined) => void) => {
-
+    if (!value) {
+      callback(undefined);
+    }
     fieldUniquenessCheck({ where: { alias: value }, model: 'Company' }).then((res) => {
-
+     
       if (res.data) {
 
         callback(intl.formatMessage({
@@ -152,7 +154,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
           // "Agent": "Agent",
           "Terminal": "Oil Terminal",
           // "Pilot": "Pilot",
-          "Super": "Super User",
+          //"Super": "Super User",
 
 
         }}

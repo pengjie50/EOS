@@ -29,7 +29,7 @@ class TransactionService extends Service {
         } else {
             obj.where = {}
         }
-
+        obj.where.work_order_items_check = { [app.Sequelize.Op.ne]:null}
 
         var is_report = false
         var is_detail_report = false
@@ -376,8 +376,10 @@ class TransactionService extends Service {
             }
 
             list.rows = list.rows.map((t) => {
-
+               
                 var r = { ...t, ...mm[t.id] }
+
+                console.log(r)
                 return r
             })
 
@@ -459,6 +461,12 @@ class TransactionService extends Service {
            // obj.limit = parseInt(params.limit)
             obj.order = [["event_time", "asc"], ["transaction_id", "asc"]]
             obj.attributes = [[ctx.model.col('t.eos_id'), 'eos_id'], 'transaction_event.*'];
+
+            var fArr=ctx.user.accessible_timestamp.filter((a) => {
+                return a != '66ba5680-d912-11ed-a7e5-47842df0d9cc' && a != '1e026150-d910-11ed-a7e5-47842df0d9cc'
+
+            })
+
             obj.include = [{
                 as: 't',
 
@@ -468,19 +476,22 @@ class TransactionService extends Service {
                 as: 'f',
                 attributes: [],
                 model: ctx.model.Flow,
-                where: ctx.user.role_type != "Super" ? { id: ctx.user.accessible_timestamp } : null
+                where: ctx.user.role_type != "Super" ? { id: fArr } : {
+                    id: { [Op.notIn]: ['66ba5680-d912-11ed-a7e5-47842df0d9cc', '1e026150-d910-11ed-a7e5-47842df0d9cc'] }
+                }
+            
 
             }]
             list = await ctx.model.Transactionevent.findAndCountAll(obj)
             var flow_ids = []
-            var ids = list.rows.map((a) => {
+            var ids2 = list.rows.map((a) => {
                 flow_ids.push(a.flow_id)
                 return a.id
 
             })
 
 
-            var transactioneventlogList = await ctx.model.Transactioneventlog.findAll({ raw: true, where: { transaction_event_id: ids } })
+            var transactioneventlogList = await ctx.model.Transactioneventlog.findAll({ raw: true, where: { transaction_event_id: ids2 } })
             var transactioneventlogMap = {}
             transactioneventlogList.forEach((tel) => {
                 if (!transactioneventlogMap[tel.transaction_event_id]) {
@@ -493,8 +504,9 @@ class TransactionService extends Service {
                 raw: true, include:[ {
                         as: 'ar',
                         model: ctx.model.AlertruleTransaction,
-                    }], where: {
-                    [Op.or]: [
+                }], where: {
+                        transaction_id:ids
+                   /* [Op.or]: [
 
                         {
 
@@ -505,36 +517,105 @@ class TransactionService extends Service {
 
                             flow_id_to: { [Op.in]: flow_ids }
                         }
-                    ]
+                    ]*/
                 }
             })
+
+            var alertMap1 = {}
+            alertList.forEach((tel) => {
+                if (!alertMap1[tel.transaction_id]) {
+                    alertMap1[tel.transaction_id] = []
+                }
+                alertMap1[tel.transaction_id].push({})
+                alertMap1[tel.transaction_id].push({})
+                alertMap1[tel.transaction_id].push({})
+                alertMap1[tel.transaction_id].push({})
+
+            })
+
+
             var alertMap = {}
             alertList.forEach((tel) => {
-                if (!alertMap[tel.flow_id]) {
-                    alertMap[tel.flow_id] = []
-                }
-                alertMap[tel.flow_id].push(tel)
+
+                if (tel.alertrule_type == 1) {
+                    if (!alertMap[tel.transaction_event_id_from]) {
+                        alertMap[tel.transaction_event_id_from] = []
+                    }
+                    alertMap[tel.transaction_event_id_from].push(tel)
 
 
-                if (tel.flow_id_to && !alertMap[tel.flow_id_to]) {
-                    alertMap[tel.flow_id_to] = []
-                }
+                    if (tel.transaction_event_id_to && !alertMap[tel.transaction_event_id_to]) {
+                        alertMap[tel.transaction_event_id_to] = []
+                    }
 
-                if (tel.flow_id_to) {
-                    alertMap[tel.flow_id_to].push(tel)
+                    if (tel.transaction_event_id_to) {
+                        alertMap[tel.transaction_event_id_to].push(tel)
+                    }
+                } else if (tel.alertrule_type == 2) {
+                    var k = tel.transaction_id + "_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                    if (!alertMap[k]) {
+                        alertMap[k] = []
+                    }
+                    alertMap[k].push(tel)
+
+
+                } else if (tel.alertrule_type == 0) {
+                    var k = tel.transaction_id + "_"+tel.flow_id
+                    if (!alertMap[k]) {
+                        alertMap[k] = []
+                    }
+                    alertMap[k].push(tel)
+
+
                 }
+               
 
 
             })
+            var lockMap = {}
+            var addArr=[]
             list.rows = list.rows.map((m) => {
+                var k = m.transaction_id + "_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                if (!lockMap[k]) {
+                    var d = { ...m }
+                    for (var i in d) {
+                        d[i]=null
+                    }
+                    d.id = k
+                    d.eos_id = m.eos_id
+                    d.flow_pid="aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                    d.alertList = alertMap[d.id]
+                    d.alertList = [...new Set(d.alertList)]
+                    d.threshold_alert = d.alertList.length > 0 ? "Alert" : ""
+                    addArr.push(d)
+                    lockMap[k]=true
+                }
+
+
+                 k = m.transaction_id + "_"+m.flow_pid
+                if (!lockMap[k]) {
+                    var d = { ...m }
+                    for (var i in d) {
+                        d[i] = null
+                    }
+                    d.id = k
+                    d.eos_id = m.eos_id
+                    d.flow_pid = m.flow_pid
+                    d.alertList = alertMap[d.id]
+                    d.alertList = [...new Set(d.alertList)]
+                    d.threshold_alert = d.alertList.length > 0 ? "Alert" : ""
+                    addArr.push(d)
+                    lockMap[k] = true
+                }
+
                 m.transactioneventlogList = transactioneventlogMap[m.id] || []
-                m.alertList = alertMap[m.flow_id]
+                m.alertList = alertMap[m.id]
                 m.alertList = [...new Set(m.alertList)]
                 m.threshold_alert = m.alertList.length > 0 ? "Alert" : ""
                 return m
             })
-
-            
+            list.count += addArr.length
+            list.rows = addArr.concat(list.rows)
 
         }
        
@@ -570,7 +651,7 @@ class TransactionService extends Service {
         } else {
             obj.where = {}
         }
-
+       // obj.where.work_order_items_check = { [app.Sequelize.Op.ne]: null }
         var data = {
             average_total_duration_per_transaction: {
                 all_time: 0,
@@ -837,7 +918,7 @@ class TransactionService extends Service {
             if ((a.amber_hours || a.amber_mins) && (a.red_hours || a.red_mins)) {
                 step = 2
             }
-            if (a == 2) {
+            if (a.type == 1) {
 
 
                 if (!alertruleTransactionCountMap['b2e']) {

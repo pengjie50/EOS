@@ -509,7 +509,7 @@ const TableList: React.FC = () => {
       valueEnum: {
         1: "Already Used",
         0: "Not Used",
-        2: "Expire",
+        2: "Already Used",
       },
     },
     {
@@ -560,7 +560,7 @@ const TableList: React.FC = () => {
         }
       },
       render: (dom, entity) => {
-        if (entity.already_used == 1) {
+        if (entity.already_used == 1 || entity.already_used ==2) {
           return (
             <a
               onClick={() => {
@@ -583,7 +583,11 @@ const TableList: React.FC = () => {
       defaultSortOrder: 'descend',
       hideInSearch: true,
       dataIndex: 'created_at',
-      valueType: 'dateTime',
+      render: (dom, entity) => {
+
+        return moment(new Date(dom)).format('DD MMM YYYY HH:mm:ss')
+
+      },
       width: 200
     },
 
