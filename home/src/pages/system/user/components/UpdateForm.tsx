@@ -42,7 +42,10 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
     role({ pageSize: 100, current: 1 }).then((res) => {
       var b = {}
       res.data.forEach((r) => {
-        b[r.id] = r.name
+        if (r.type != "Super") {
+          b[r.id] = r.name
+        }
+
       })
       setRoleConf(b)
 
@@ -130,7 +133,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
       })}
     >
 
-      <ProFormTreeSelect
+      {values.role_id != 'rrrrrrrr-rrrr-rrrr-rrrr-rrrrrrrrrrrr' && <ProFormTreeSelect
         name="company_id"
         width="md"
         label={intl.formatMessage({
@@ -138,20 +141,25 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           defaultMessage: 'Organization Name',
         })}
         request={async () => {
-          return company({}).then((res) => {
+          return company({
+            'type': {
+              'field': 'type',
+              'op': 'ne',
+              'data': 'Super'
+            }
+          }).then((res) => {
 
             res.data = res.data.map((r) => {
               r['value'] = r.id
-              r['title'] = r.name
+              r['label'] = r.name
               return r
             })
+            return res.data
 
-          
-            return tree(res.data, "                                    ", 'pid')
           });
 
         }}
-      />
+      />}
     
       <ProFormText
         name="username"
@@ -181,7 +189,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           { validator: onlyCheck }
         ]}
       />
-      <ProFormSelect
+      {values.role_id != 'rrrrrrrr-rrrr-rrrr-rrrr-rrrrrrrrrrrr' && <ProFormSelect
         name="role_id"
         width="md"
         label={intl.formatMessage({
@@ -189,7 +197,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           defaultMessage: '',
         })}
         valueEnum={roleConf}
-      />
+      />}
       <ProFormRadio.Group
         name="status"
         label={intl.formatMessage({
@@ -217,12 +225,12 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
           },
         ]}
       />
-      <ProFormCheckbox.Group
+      {values.role_id != 'rrrrrrrr-rrrr-rrrr-rrrr-rrrrrrrrrrrr' && <ProFormCheckbox.Group
         name="email_notification"
         layout="vertical"
         label=""
         options={[{ label: "Send email notification for Password Reset", value: "send_email" }]}
-      />
+      />}
     </ModalForm>
 
   );

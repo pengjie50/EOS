@@ -1,4 +1,4 @@
-import { GridContent, ProFormSelect, ProFormDateRangePicker, ProCard, ProFormGroup, ProFormInstance, ProFormDatePicker, ProTable, ProForm } from '@ant-design/pro-components';
+import { GridContent, PageContainer, ProFormSelect, ProFormDateRangePicker, ProCard, ProFormGroup, ProFormInstance, ProFormDatePicker, ProTable, ProForm } from '@ant-design/pro-components';
 import { useModel } from '@umijs/max';
 import { EyeOutlined } from '@ant-design/icons';
 import { Card, theme, Progress, Statistic, Badge, message, Tooltip, Button, Empty, ConfigProvider, Steps, Pagination } from 'antd';
@@ -509,14 +509,14 @@ const Welcome: React.FC = () => {
             
                 
 
-    <GridContent  className="dashboard">
+    <PageContainer className="dashboard" header={{ title: getFilterStr(organization_id, organizationMap, dateArr, status, "Transactions Overview") }} >
+
      
+
       <ProCard ghost={true} bodyStyle={isMP ? { padding: '5px' } : {}} wrap >
 
 
-        <ProCard colSpan={24} bodyStyle={{ padding: '5px 0px 5px 25px', fontWeight: '500' }} >
-          <div className="page_title"> {getFilterStr(organization_id, organizationMap, dateArr, status, "Transactions Overview")}</div>
-        </ProCard>
+       
 
         <Access accessible={access.dashboard_tab()} fallback={<div></div>}> <ProCard
 
@@ -1213,7 +1213,7 @@ const Welcome: React.FC = () => {
        
         
      
-    </GridContent>
+    </PageContainer>
   );
 };
 

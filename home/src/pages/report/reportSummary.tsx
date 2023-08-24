@@ -920,8 +920,13 @@ const TableList: React.FC = () => {
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Event Time" />,
       dataIndex: 'event_time',
       render: (dom, entity) => {
-
-        return moment(new Date(dom)).format('DD MMM YYYY HH:mm:ss')
+        
+        if (entity.event_time ) {
+          return moment(new Date(dom)).format('DD MMM YYYY HH:mm:ss')
+        } else {
+          return '-'
+        }
+        
 
       },
       mustSelect: true
@@ -930,7 +935,7 @@ const TableList: React.FC = () => {
     {
 
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Agent" />,
-      dataIndex: 'agent',
+      dataIndex: 't.agent',
 
     },
 
@@ -1067,12 +1072,7 @@ const TableList: React.FC = () => {
       dataIndex: 'delay_duration',
 
     },
-    {
-
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Threshold / Alert" />,
-      dataIndex: 'threshold_alert',
-      mustSelect: true
-    },
+   
     {
 
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Alert" />,
@@ -1081,23 +1081,23 @@ const TableList: React.FC = () => {
       children: [
         {
 
-          title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Alert ID" />,
-          dataIndex: 'alert_id',
+          title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Threshold / Alert" />,
+          dataIndex: 'threshold_alert',
           className: "cloumsNoSpace",
           mustSelect: true,
           width: 120,
           renderText: (dom, entity) => {
             if (entity.alert_id) {
-              return "A" + (entity.alert_id || "")
+              return "Alert"
             } else {
-              return ""
+              return "Applicable threshold"
             }
-            
+
           },
           render: (dom, entity) => {
 
 
-            return entity.alertList.length > 0 ? <ProTable<TransactionListItem, API.PageParams>
+            return entity.alertList && entity.alertList.length > 0 ? <ProTable<TransactionListItem, API.PageParams>
 
               style={isMP ? { width: 300, overflow: 'auto' } : null}
 
@@ -1112,17 +1112,33 @@ const TableList: React.FC = () => {
               className="myspantable"
               bordered={false}
               columns={[
+                {
 
+                  title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Threshold / Alert" />,
+                  dataIndex: 'threshold_alert',
+                  width: 120,
+                  mustSelect: true,
+                  render: (dom, entity) => {
+                    if (entity.alert_id) {
+                      return "Alert"
+                    } else {
+                      return "Applicable threshold"
+                    }
+
+                  },
+                },
                 {
                   title: <FormattedMessage id="pages.role.xxx" defaultMessage="Alert ID" />,
                   dataIndex: 'alert_id',
                   width: 120,
                   render: (dom, entity) => {
-                    return (
 
-                      "A" + entity.alert_id
+                    if (entity.alert_id) {
+                      return "A" + (entity.alert_id || "")
+                    } else {
+                      return ""
+                    }
 
-                    );
 
                   }
                 },
@@ -1147,8 +1163,12 @@ const TableList: React.FC = () => {
 
                   sorter: true,
                   render: (dom, entity) => {
-
-                    return moment(new Date(dom)).format('DD MMM YYYY HH:mm:ss')
+                    if (entity.created_at) {
+                      return moment(new Date(dom)).format('DD MMM YYYY HH:mm:ss')
+                    } else {
+                      "-"
+                    }
+                    
 
                   }
                 },
@@ -1170,7 +1190,7 @@ const TableList: React.FC = () => {
                   title: <FormattedMessage id="pages.alertrule.type" defaultMessage="Threshold Type" />,
                   dataIndex: 'ar.type',
                   width: 120,
-                 
+
                   valueEnum: {
                     0: { text: <FormattedMessage id="pages.alertrule.singleProcess" defaultMessage="Single Process" /> },
                     1: { text: <FormattedMessage id="pages.alertrule.betweenTwoEvents" defaultMessage="Between Two Events" /> },
@@ -1184,6 +1204,7 @@ const TableList: React.FC = () => {
                   dataIndex: 'ar.amber_hours',
                   width: 120,
                   renderPrint: (dom, entity_) => {
+
                     var entity = {}
                     entity.amber_hours = entity_['ar.amber_hours']
                     entity.amber_mins = entity_['ar.amber_mins']
@@ -1194,7 +1215,7 @@ const TableList: React.FC = () => {
 
                   },
                   render: (dom, entity_) => {
-
+                   
                     var entity = {}
                     entity.amber_hours = entity_['ar.amber_hours']
                     entity.amber_mins = entity_['ar.amber_mins']
@@ -1213,7 +1234,7 @@ const TableList: React.FC = () => {
                     />
                   ),
                   dataIndex: 'ar.flow_id',
-                  width: 120,
+                  width: 300,
                   render: (dom, entity) => {
                     if (entity['ar.type'] == 0) {
                       return flowConf[entity['ar.flow_id']]
@@ -1294,7 +1315,7 @@ const TableList: React.FC = () => {
                 {
                   title: 'Created By',
                   dataIndex: 'ar.user_name',
-                  width: 120,
+                  width: 200,
 
 
                 },
@@ -1312,8 +1333,26 @@ const TableList: React.FC = () => {
 
           },
           onCell: (_, index) => ({
-            colSpan: 12,
-          }),
+            colSpan: 13,
+          })
+        },
+        {
+
+          title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Alert ID" />,
+          dataIndex: 'alert_id',
+          onCell: sharedOnCell,
+          mustSelect: true,
+          width: 120,
+          render: (dom, entity) => {
+            if (entity.alert_id) {
+              return "A" + (entity.alert_id || "")
+            } else {
+              return ""
+            }
+            
+          }
+          
+          
         },
         {
 
@@ -1389,6 +1428,7 @@ const TableList: React.FC = () => {
           width: 120,
           renderPrint: (dom, entity_) => {
             var entity = {}
+           
             entity.amber_hours = entity_['ar.amber_hours']
             entity.amber_mins = entity_['ar.amber_mins']
             entity.red_hours = entity_['ar.red_hours']
@@ -1418,7 +1458,7 @@ const TableList: React.FC = () => {
           ),
           dataIndex: 'ar.flow_id',
           onCell: sharedOnCell,
-          width: 120,
+          width: 300,
           render: (dom, entity) => {
             if (entity['ar.type'] == 0) {
               return flowConf[entity['ar.flow_id']]
@@ -1438,7 +1478,8 @@ const TableList: React.FC = () => {
           width: 120,
           onCell: sharedOnCell,
           render: (dom, entity_) => {
-
+           
+           
             var entity = {}
             entity.vessel_size_dwt_from = entity_['ar.vessel_size_dwt_from']
 
@@ -1503,7 +1544,7 @@ const TableList: React.FC = () => {
           title: 'Created By',
           onCell: sharedOnCell,
           dataIndex: 'ar.user_name',
-          width: 120,
+          width: 200,
 
 
         },
@@ -1533,12 +1574,23 @@ const TableList: React.FC = () => {
           width: 200,
           className: "cloumsNoSpace",
           dataIndex: "TypeOfData",
+          renderPrint: (dom, entity) => {
+            if (entity.TypeOfData) {
+              return entity.TypeOfData
+            } else {
+              return "-"
+            }
+          
+          },
           render: (dom, entity) => {
 
             if (!entity.transactioneventlogList) {
               return "-"
             }
-
+            if (entity.transactioneventlogList.length==0) {
+              return "-"
+            }
+            console.log("gggg",entity.transactioneventlogList)
             var c = entity
 
 
@@ -1575,8 +1627,8 @@ const TableList: React.FC = () => {
               }
 
             })
-
-            return entity.transactioneventlogList?.length > 0 ? <ProTable<TransactionListItem, API.PageParams>
+           
+            return logObjArr && logObjArr?.length > 0 ? <ProTable<TransactionListItem, API.PageParams>
 
               style={isMP ? { width: 300, overflow: 'auto' } : null}
               bordered={false}

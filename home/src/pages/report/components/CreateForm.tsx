@@ -621,7 +621,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
     {
 
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Agent" />,
-      dataIndex: 'agent',
+      dataIndex: 't.agent',
 
     },
 
@@ -731,18 +731,19 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
 
     },
 
-    {
-
-      title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Threshold / Alert" />,
-      dataIndex: 'threshold_alert',
-      mustSelect: true
-    },
+   
     {
 
       title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Alert" />,
       dataIndex: 'alertList',
       mustSelect: true,
       children: [
+        {
+
+          title: <FormattedMessage id="pages.transaction.ccc" defaultMessage="Threshold / Alert" />,
+          dataIndex: 'threshold_alert',
+          noShowCheck: true
+        },
         {
           title:"Alert ID",
           dataIndex: 'alert_id',

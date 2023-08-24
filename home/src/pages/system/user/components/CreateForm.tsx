@@ -49,7 +49,10 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
       role({ pageSize: 100, current: 1 }).then((res) => {
         var b = {}
         res.data.forEach((r) => {
-          b[r.id] = r.name
+          if (r.type!="Super") {
+            b[r.id] = r.name
+          }
+        
         })
         setRoleConf(b)
 
@@ -128,16 +131,22 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
           defaultMessage: 'Organization Name',
         })}
         request={async () => {
-          return company({}).then((res) => {
+          return company({
+            'type': {
+              'field': 'type',
+              'op': 'ne',
+              'data': 'Super'
+            }
+          }).then((res) => {
 
-            res.data = res.data.map((r) => {
-              r['value'] = r.id
-              r['label'] = r.name
-              return r
-            })
-            return res.data
+              res.data = res.data.map((r) => {
+                r['value'] = r.id
+                r['label'] = r.name
+                return r
+              })
+              return res.data
 
-          });
+            });
 
         }}
       />

@@ -164,6 +164,8 @@ const Detail: React.FC<any> = (props) => {
 
   const [eventTree, setEventTree] = useState<any>({});
 
+  const [oldEventDataMap, setOldEventDataMap] = useState<any>({});
+  
 
   const [flowList, setFlowList] = useState<any>([]);
 
@@ -246,7 +248,7 @@ const Detail: React.FC<any> = (props) => {
   sss['1008'] = sss['1001']
   sss['1009'] = sss['1001']
   sss['1010'] = {
-    white: ['event_time', 'agent', 'work_order_id', 'work_order_operation_type']
+    white: ['event_time', 'agent', 'work_order_operation_type']
     , grey: ['imo_number', 'vessel_name', 'vessel_size_dwt', 'arrival_id']
   }
   sss['2001'] = sss['1001']
@@ -262,7 +264,7 @@ const Detail: React.FC<any> = (props) => {
   }
   sss['2005'] = sss['2004']
   sss['2006'] = {
-    white: ['event_time', 'agent', 'order_no', 'work_order_operation_type']
+    white: ['event_time', 'agent', 'work_order_operation_type']
     , grey: ['imo_number', 'vessel_name','vessel_size_dwt', 'arrival_id']
   }
   sss['2007'] = {
@@ -286,17 +288,11 @@ const Detail: React.FC<any> = (props) => {
 
 
   sss['4001'] = {
-    white: ['event_time', 'terminal_id', 'jetty_id', 'work_order_id']
+    white: ['event_time', 'terminal_id', 'order_no', 'location_from', 'location_to']
     , grey: ['imo_number', 'vessel_name', 'trader_id']
   }
-  sss['4002'] = {
-    white: ['event_time', 'terminal_id', 'jetty_id']
-    , grey: ['imo_number', 'vessel_name', 'trader_id']
-  }
-  sss['4003'] = {
-    white: ['event_time', 'agent', 'order_no', 'location_from', 'location_to']
-    , grey: ['imo_number', 'vessel_name', 'trader_id']
-  }
+  sss['4002'] = sss['4001']
+  sss['4003'] = sss['4001']
   sss['4004'] = sss['4001']
   sss['4005'] = sss['4001']
   sss['4006'] = sss['4001']
@@ -992,8 +988,13 @@ const Detail: React.FC<any> = (props) => {
         }, sorter: { event_time: 'ascend' }
       })
 
+
+      var oldEventDataMap_ = {}
+
       var om = {}
       res2.data.forEach((o) => {
+        oldEventDataMap_[o.id] = {...o}
+
         if (o.work_order_id && o.work_order_operation_type) {
           om[o.work_order_id + "work_order_operation_type"] = o.work_order_operation_type
         }
@@ -1001,16 +1002,38 @@ const Detail: React.FC<any> = (props) => {
         if (o.work_order_id && o.work_order_surveyor) {
           om[o.work_order_id + "work_order_surveyor"] = o.work_order_surveyor
         }
+        if (o.order_no && o.flow_pid) {
+         
+          om['order_no' + o.flow_pid] = o.order_no
+        }
+       
+        if (o.location_from && o.flow_pid) {
+        
+          om['location_from' + o.flow_pid] = o.location_from
+        }
 
+        if (o.location_to && o.flow_pid) {
+          om['location_to' + o.flow_pid] = o.location_to
+        }
 
       })
-
+      setOldEventDataMap(oldEventDataMap_)
       res2.data = res2.data.map((o) => {
         if (om[o.work_order_id + "work_order_operation_type"]) {
           o.work_order_operation_type = om[o.work_order_id + "work_order_operation_type"]
         }
         if (om[o.work_order_id + "work_order_surveyor"]) {
           o.work_order_surveyor = om[o.work_order_id + "work_order_surveyor"]
+        }
+        if (om['order_no' + o.flow_pid]) {
+          o.order_no = om['order_no' + o.flow_pid]
+        }
+
+        if (om['location_from' + o.flow_pid]) {
+          o.location_from = om['location_from' + o.flow_pid]
+        }
+        if (om['location_to' + o.flow_pid]) {
+          o.location_to = om['location_to' + o.flow_pid]
         }
 
         return o
@@ -1587,7 +1610,7 @@ const Detail: React.FC<any> = (props) => {
           colSpan={isMP ? 24 : 12}
           style={{ backgroundColor: "#d2faf5" }}
           layout="center"
-          title={"General Information"}
+          title={<div className="page_title">General Information</div>}
           wrap={true}
           bordered
         >
@@ -1637,7 +1660,7 @@ const Detail: React.FC<any> = (props) => {
           colSpan={isMP ? 24 : 12}
           style={{ height: '100%', backgroundColor: "#d2faf5", marginTop: isMP ? 10 : 0 }}
           layout="center"
-          title={"Products"}
+          title={<div className="page_title">Products</div>}
           wrap={true}
           bordered
         >
@@ -2362,7 +2385,7 @@ const Detail: React.FC<any> = (props) => {
 
 
                                 var logObjArr = []
-                                var newList = [c, ...eventLogMap[c.id]]
+                                var newList = [oldEventDataMap[c.id], ...eventLogMap[c.id]]
 
 
                                 newList.forEach((aa, index) => {
@@ -2371,7 +2394,7 @@ const Detail: React.FC<any> = (props) => {
 
                                     if (diff) {
                                       for (var m in diff) {
-                                        if (m != 'created_at' && m != 'updated_at' && m != 'id' && m != 'event_duration') {
+                                        if (m != 'created_at' && m != 'updated_at' && m != 'id' && m != 'event_duration'  && m != "blockchain_hex_key") {
                                           var obj = {
                                             TypeOfData: keyNameMap[m],
                                             PreviousValue: newList[index + 1][m],

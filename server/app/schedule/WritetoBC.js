@@ -89,12 +89,12 @@ class WritetoBC extends Subscription {
                 if (te.order_no && te.location_to && te.location_from) {
 
 
-                    if (te.flow_pid == "9f2431b0-d3c9-11ed-a0d9-55ccaa27cc37" && !BerthingPilotage) {
+                    if (te.flow_pid == "9f2431b0-d3c9-11ed-a0d9-55ccaa27cc37" ) {
 
                         BerthingPilotage = te
                     }
 
-                    if (te.flow_pid == "a7332eb0-d3c9-11ed-a0d9-55ccaa27cc37" && !UnberthingPilotage) {
+                    if (te.flow_pid == "a7332eb0-d3c9-11ed-a0d9-55ccaa27cc37") {
                         UnberthingPilotage = te
                     }
                 }
@@ -162,11 +162,6 @@ class WritetoBC extends Subscription {
         
 
 
-
-
-
-
-
         var transactionEventList = await ctx.model.Transactionevent.findAll({
             include:[{
                 as: 't',
@@ -174,7 +169,7 @@ class WritetoBC extends Subscription {
                 model: ctx.model.Transaction,
                 where: {status:1}
 
-            }], order: [["event_time", "asc"]], where: { blockchain_hex_key: { [app.Sequelize.Op['in']]: [null,""] }  } });
+            }], order: [["event_time", "asc"]], where: { blockchain_hex_key: [null,"" ]}   });
         var m = {}
 
         var ids = []

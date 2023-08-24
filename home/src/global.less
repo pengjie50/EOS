@@ -6,6 +6,7 @@
 * {
   font-family: Arial !important;
 }
+
 html,
 body,
 #root {
@@ -41,8 +42,8 @@ body,
   font-weight: bold;
   color: #000;
 }
+
 .ant-pro-table .ant-table-wrapper .ant-table-pagination.ant-pagination {
- 
   padding-right: 10px;
 }
 
@@ -105,11 +106,11 @@ body,
   .myPage {
     padding-top: 35px;
   }
+
   .ant-drawer .ant-drawer-mask {
-    
     position: fixed;
-  
   }
+
   *:not(.my-font-size,.my-font-size *) {
     font-size: 16px !important;
   }
@@ -263,6 +264,7 @@ ol {
     margin-left: 0;
     display: block !important;
   }
+
   .ant-pro-layout .ant-pro-layout-content {
     padding-block: 6px !important;
     padding-inline: 8px !important;
@@ -292,7 +294,7 @@ ol {
 }
 
 
-a:not(.ant-menu-title-content a) {
+td a {
   color: #5000B9 !important;
 }
 
@@ -528,7 +530,7 @@ a:not(.ant-menu-title-content a) {
 
 .runtime-keep-alive-tabs-layout {
   height: 1px;
-  overflow:hidden;
+  overflow: hidden;
 }
 
 .my-tab .ant-pro-card {
@@ -586,68 +588,97 @@ a:not(.ant-menu-title-content a) {
   border-right: 1px solid #fff;
 }
 
-
-.dashboard .ant-select:not(.ant-select-disabled):not(.ant-select-customize-input):not(.ant-pagination-size-changer):hover .ant-select-selector {
-  border-color: #FF4D00 !important;
-}
-.dashboard .ant-select-open .ant-select-selector {
-  border-color: #FF4D00 !important;
-}
-.dashboard .ant-select-focused .ant-select-selector {
+/**/
+ .ant-select:not(.ant-select-disabled):not(.ant-select-customize-input):not(.ant-pagination-size-changer):hover .ant-select-selector {
   border-color: #FF4D00 !important;
 }
 
-.dashboard .ant-picker:hover, :where(.css-dev-only-do-not-override-11d2zjd).ant-picker-focused {
+ .ant-select-open .ant-select-selector {
+  border-color: #FF4D00 !important;
+}
+
+ .ant-select-focused .ant-select-selector {
+  border-color: #FF4D00 !important;
+}
+
+ .ant-picker:hover, :where(.css-dev-only-do-not-override-11d2zjd).ant-picker-focused {
   border-color: #FF4D00 !important;
   border-inline-end-width: 1px;
 }
-.dashboard .ant-picker-range .ant-picker-active-bar {
+
+ .ant-picker-range .ant-picker-active-bar {
   background: #FF4D00 !important;
 }
 
-.dashboard .ant-select-multiple .ant-select-selection-item {
+ .ant-select-multiple .ant-select-selection-item {
   background: rgba(255, 255, 255, 1);
   border: 1px solid rgba(255, 255, 255, 1);
 }
 
-.ant-tooltip .ant-tooltip-inner{
-    max-height:300px;
-    max-width:600px;
-    overflow:auto;
+.ant-input:focus {
+  border-color: #FF4D00 !important;
+}
+
+.ant-input:hover {
+  border-color: #FF4D00 !important;
+}
+.ant-input-affix-wrapper:hover {
+  border-color: #FF4D00 !important;
+}
+.ant-input-affix-wrapper-focused {
+  border-color: #FF4D00 !important;
+}
+.ant-input-number-focused {
+  border-color: #FF4D00 !important;
+}
+.ant-input-number:hover {
+  border-color: #FF4D00 !important;
+}/**/
+
+.ant-btn-default:hover {
+  border-color: #FF4D00 !important;
+  color: #FF4D00 !important;
 }
 
 
-.my-descriptions-item-white .ant-descriptions-item {
-  padding-bottom: 0px !important;
+
+.ant-tooltip .ant-tooltip-inner {
+  max-height: 300px;
+  max-width: 600px;
+  overflow: auto;
 }
 
-.printContent {
-  overflow: hidden;
-  height: 0;
-}
-.eventFromTo .ant-descriptions-item {
-  padding-bottom: 0px !important;
-}
 
-.myspantable .ant-table {
-  margin-inline: 0px -8px !important;
-}
-.myspantable {
- 
-}
-.cloumsNoSpace {
-  padding: 0px !important;
-  padding-top: 8px !important;
-  padding-right: 8px !important;
-  
-}
+  .my-descriptions-item-white .ant-descriptions-item {
+    padding-bottom: 0px !important;
+  }
 
-.cloumsNoSpace tr:last-child td {
-  border-bottom: 0px solid red;
-}
- 
+  .printContent {
+    overflow: hidden;
+    height: 0;
+  }
 
-/*.ant-table {
+  .eventFromTo .ant-descriptions-item {
+    padding-bottom: 0px !important;
+  }
+
+  .myspantable .ant-table {
+    margin-inline: 0px -8px !important;
+  }
+
+  .myspantable {
+  }
+
+  .cloumsNoSpace {
+    padding: 0px !important;
+    padding-top: 8px !important;
+    padding-right: 8px !important;
+  }
+
+  .cloumsNoSpace tr:last-child td {
+    border-bottom: 0px solid red;
+  }
+  /*.ant-table {
   width: 100% !important;
 
   

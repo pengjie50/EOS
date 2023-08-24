@@ -129,7 +129,7 @@ const Detail: React.FC<any> = (props) => {
   const [headValidated, setHeadValidated] = useState<any>(headValidated_);
   useLocation().state.validateData?.event_data?.forEach((v) => {
     m[v.EventSubStage] = v.Verified
-    if (v.Verified == "True") {
+    if (v.Verified == "True" && v.EventSubStage != 100600 && v.EventSubStage !=400900) {
       yesCount++
     }
 
@@ -416,9 +416,63 @@ const Detail: React.FC<any> = (props) => {
 
       },
     },
+    {
+      title: <FormattedMessage id="pages.transaction.xxx" defaultMessage="Trader Name" />,
+      dataIndex: 'trader_name',
+     
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.xxx" defaultMessage="Agent" />,
+      dataIndex: 'agent',
+
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.xxx" defaultMessage="Arrival Status" />,
+      dataIndex: 'arrival_id_status',
+
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.xxx" defaultMessage="Vessel Size" />,
+      dataIndex: 'vessel_size_dwt',
+
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.xxx" defaultMessage="Berthing Rilotage ID" />,
+      dataIndex: 'BerthingRilotageID',
+
+    },
+    
+    {
+      title: <FormattedMessage id="pages.transaction.xxx" defaultMessage="Pilotage Location From1" />,
+      dataIndex: 'PilotageLocationFrom1',
+
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.xxx" defaultMessage="Pilotage Location To1" />,
+      dataIndex: 'PilotageLocationTo1',
+
+    },
 
 
     {
+      title: <FormattedMessage id="pages.transaction.xxx" defaultMessage="Unberthing Pilotage ID" />,
+      dataIndex: 'UnberthingPilotageID',
+
+    },
+   
+    {
+      title: <FormattedMessage id="pages.transaction.xxx" defaultMessage="Pilotage Location From2" />,
+      dataIndex: 'PilotageLocationFrom2',
+
+    },
+    {
+      title: <FormattedMessage id="pages.transaction.xxx" defaultMessage="Pilotage Location To2" />,
+      dataIndex: 'PilotageLocationTo2',
+
+    },
+   
+    
+    /*{
       title: <FormattedMessage id="pages.transaction.productType" defaultMessage="Product Type" />,
       dataIndex: 'product_name',
      // valueEnum: producttypeList,
@@ -490,7 +544,7 @@ const Detail: React.FC<any> = (props) => {
       },
       
       valueType: 'text',
-    }
+    }*/
   ];
   
   const columnsBlockchain: ProColumns<TransactionListItem>[] = [
@@ -660,6 +714,118 @@ const Detail: React.FC<any> = (props) => {
 
           setBlockchainRowRow(blockchainRow)
 
+
+          transaction({ pageSize: 1, current: 1, id: transaction_id }).then((res2) => {
+            var transactionInfo = res2.data[0]
+
+            var BerthingPilotage = {}
+            var UnberthingPilotage = {}
+
+            res.data.forEach((te) => {
+              if (te.order_no && te.location_to && te.location_from) {
+              
+
+                if (te.flow_pid == "9f2431b0-d3c9-11ed-a0d9-55ccaa27cc37") {
+                  
+                  BerthingPilotage = te
+                }
+
+                if (te.flow_pid == "a7332eb0-d3c9-11ed-a0d9-55ccaa27cc37") {
+                 
+                  UnberthingPilotage = te
+                }
+              }
+
+            })
+
+            transactionInfo.BerthingPilotageID = BerthingPilotage.order_no ? parseInt(BerthingPilotage.order_no) : null,
+              transactionInfo.PilotageLocationFrom1 = BerthingPilotage.location_from || null,
+              transactionInfo.PilotageLocationTo1 = BerthingPilotage.location_to || null,
+              transactionInfo.UnberthingPilotageID = UnberthingPilotage.order_no ? parseInt(UnberthingPilotage.order_no) : null,
+              transactionInfo.PilotageLocationFrom2 = UnberthingPilotage.location_from || null,
+              transactionInfo.PilotageLocationTo2 = UnberthingPilotage.location_to || null
+
+
+
+
+
+
+
+
+            transactionInfo.validated = headValidated ? 1 : 0
+
+            var arr = []
+
+            var dMap = {
+
+              "EOSID": "eos_id",
+              "ArrivalID": "arrival_id",
+              "StartOfTransaction": "start_of_transaction",
+              "EndOfTransaction": "end_of_transaction",
+              "Jetty": "jetty_name",
+              "VesselName": "vessel_name",
+              "TerminalName": "terminal_name",
+              "TraderName": "trader_name",
+              "Agent": "agent",
+              "Status": "status",
+              "VesselSize": "vessel_size_dwt",
+              "ArrivalStatus": "arrival_id_status",
+              "IMONumber": "imo_number",
+              "BerthingRilotageID": "BerthingRilotageID",
+
+              "PilotageLocationFrom1": "PilotageLocationFrom1",
+              "PilotageLocationTo1": "PilotageLocationTo1",
+
+              "UnberthingPilotagel": "UnberthingPilotagel",
+              "PilotageLocationFrom2": "PilotageLocationFrom2",
+              "PilotageLocationTo2": "PilotageLocationTo2"
+
+            }
+
+            for (var k in transactionInfo) {
+
+              var c = columns.find((a) => { return a.dataIndex == k })
+              if (c) {
+                var r = {}
+
+                r['title'] = c.title
+                r['validated'] = false
+
+                r['value'] = c.render ? c.render(transactionInfo[k], transactionInfo) : transactionInfo[k]
+                var obj = {}
+                for (var m in bc_header_data) {
+                  obj[dMap[m]] = bc_header_data[m]
+
+                }
+                r['bc_value'] = c.render ? c.render(obj[k], obj) : obj[k]
+
+
+                r['validation_status'] = headValidated ? 1 : 0
+
+                arr.push(r)
+              }
+
+
+            }
+
+            setCurrentRow2(arr)
+
+            setCurrentRow(transactionInfo)
+
+          });
+
+
+
+
+
+
+
+
+
+
+
+
+
         });
 
 
@@ -696,63 +862,7 @@ const Detail: React.FC<any> = (props) => {
 
     
     
-    transaction({ pageSize: 1, current: 1, id: transaction_id }).then((res) => {
-
-     
-      res.data[0].validated = headValidated ? 1 : 0
-
-      var arr = []
-
-      var dMap = {
-
-        "EOSID": "eos_id",
-        "ArrivalID":"arrival_id",
-        "StartOfTransaction": "start_of_transaction",
-        "EndOfTransaction": "end_of_transaction",
-        "Jetty": "jetty_name",
-        "VesselName": "vessel_name",
-        "TerminalName": "terminal_name",
-        "TraderName": "trader_name",
-        "Agent": "agent",
-        "Status": "status",
-        "VesselSize": "vessel_size_dwt",
-        "ArrivalStatus":"arrival_id_status",
-        "IMONumber": "imo_number",
-       
-
-      }
-
-      for (var k in res.data[0]) {
-
-        var c = columns.find((a) => { return a.dataIndex == k })
-        if (c) {
-          var r = {}
-          
-          r['title'] = c.title
-          r['validated'] = false
-          
-          r['value'] = c.render ? c.render(res.data[0][k], res.data[0]) : res.data[0][k]
-          var obj = {}
-          for (var m in bc_header_data) {
-            obj[dMap[m]] = bc_header_data[m]
-
-          }
-          r['bc_value'] = c.render ? c.render(obj[k], obj) : obj[k]
-
-          
-          r['validation_status'] = headValidated?1:0
-
-          arr.push(r)
-        }
-        
-
-      }
-      
-      setCurrentRow2(arr)
-
-      setCurrentRow(res.data[0])
-
-    });
+    
     return () => {
 
     };

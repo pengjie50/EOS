@@ -1,6 +1,8 @@
 {
   "ExpandedNodes": [
-    "\\public\\iconfont",
+    "",
+    "\\config",
+    "\\src",
     "\\src\\pages",
     "\\src\\pages\\account",
     "\\src\\pages\\account\\filterOfTimestamps",
@@ -9,5 +11,6 @@
     "\\src\\pages\\transaction\\components",
     "\\src\\utils"
   ],
+  "SelectedNode": "\\config\\oneapi.json",
   "PreviewInSolutionExplorer": false
 }

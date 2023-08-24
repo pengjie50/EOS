@@ -596,26 +596,26 @@ class ProcessIngInterfaceData extends Subscription {
                 }
 
 
-            } else if (interfaceObj.type == 3) {
+            } else if (interfaceObj.type == 3 ) {
                 var transaction = null
                 if (!transaction) {
                     transaction = await ctx.model.Transaction.findOne({ where: { work_order_items_check: { [Op.like]: "%" + i.tosi_work_order_id + "%" } } })
 
                 }
-
+               
 
                 if (transaction && transaction.status==0) {
                     var transactioneventList = await ctx.model.Transactionevent.findAll({ raw: true, order: [['event_time', 'asc']], where: { transaction_id: transaction.id } })
 
                     if (isDE1DE21DE3StopCheck(transactioneventList)) {
-
+                        
                         await interfaceObj.update({ already_used: 0 })
                         step++
                         await oneDo()
                         return
                     }
 
-
+                  
                     var eventArr = []
                     var updateEventArr = []
                     var updateLogEventArr = []
@@ -653,7 +653,7 @@ class ProcessIngInterfaceData extends Subscription {
                            event.product_quantity_in_bls_60_f = i['tosi_product_quantity_in_Bls-60-f']
 
 
-
+                          
                             event.work_order_sequence_number = i.tosi_work_order_sequence_number
 
                             event.tank_number = i.tosi_tank_number
@@ -693,6 +693,7 @@ class ProcessIngInterfaceData extends Subscription {
 
                         }
                     }
+                   
                     if (updateEventArr.length > 0) {
                         await ctx.model.Transactionevent.destroy({
                             where: {
@@ -705,7 +706,7 @@ class ProcessIngInterfaceData extends Subscription {
 
                         await ctx.model.Transactioneventlog.bulkCreate(updateLogEventArr)
                     }
-
+                   
                     var res = await ctx.model.Transactionevent.bulkCreate(eventArr)
                    
                     var isNoTime = false
@@ -718,8 +719,8 @@ class ProcessIngInterfaceData extends Subscription {
                     } else {
 
                         var updateEventArr2 = allEvent.filter((a) => {
-                            return !updateEventArr.some((b) => {
-                                return b.id==a.id
+                            return !updateLogEventArr.some((b) => {
+                                return b.transaction_event_id == a.id
                             })
 
                         })
@@ -736,7 +737,7 @@ class ProcessIngInterfaceData extends Subscription {
                         var product_quantity_in_mt = i['tosi_product_quantity_in_mt']
                         var product_quantity_in_mtv = i['tosi_product_quantity_in_mtv']
                         var product_quantity_in_bls_60_f = i['tosi_product_quantity_in_Bls-60-f']
-                        var product_name = gg.tosi_product_name
+                        var product_name = i.tosi_product_name
 
                         if (
                             oldEvent.product_name != product_name
@@ -840,9 +841,9 @@ class ProcessIngInterfaceData extends Subscription {
 
 
             } else if (interfaceObj.type == 4 ) {
-               
+              
 
-                if (i.pilot_onboard_time) {
+              
                    
                     var transactionList = await ctx.model.Transaction.findAll({ where: { imo_number: i.pilot_imo_no } })
 
@@ -852,7 +853,7 @@ class ProcessIngInterfaceData extends Subscription {
                             return
                         }
 
-                       
+                        
                         var transaction = transactionList[s]
                         if (transaction && transaction.status == 0) {
                             var transactioneventList = await ctx.model.Transactionevent.findAll({ raw: true, order: [['event_time', 'asc']], where: { transaction_id: transaction.id } })
@@ -882,10 +883,10 @@ class ProcessIngInterfaceData extends Subscription {
                             const transactionJetty = await ctx.model.Transaction.findOne({ where: { imo_number: i.pilot_imo_no,jetty_name: [i.pilot_location_from, i.pilot_location_to] } })
 
                             if (transactionJetty) {
-
+                                
                                
                                 if (i.pilot_location_to == transactionJetty.jetty_name) {
-                                    if (transactioneventMap[flowMap['1006'].id]) {
+                                    if (transactioneventMap[flowMap['1006'].id] && i.pilot_onboard_time ) {
 
                                         if ((new Date(i.pilot_onboard_time)).getTime() > (new Date(transactioneventMap[flowMap['1006'].id].event_time)).getTime() + 3600 * 1000
                                             || (new Date(i.pilot_onboard_time)).getTime() < (new Date(transactioneventMap[flowMap['1006'].id].event_time)).getTime() - 3600 * 1000
@@ -900,7 +901,7 @@ class ProcessIngInterfaceData extends Subscription {
 
 
                                     } else {
-                                      
+                                        
                                         s++
                                         await oneCreate()
                                         return
@@ -913,7 +914,7 @@ class ProcessIngInterfaceData extends Subscription {
 
                                         if ((new Date(transactioneventMap[flowMap['4009'].id].event_time)).getTime() != (new Date(i.pilot_booking_confirmed_time)).getTime()) {
 
-                                            
+                                           
                                             s++
                                             await oneCreate()
                                             return
@@ -923,7 +924,7 @@ class ProcessIngInterfaceData extends Subscription {
 
 
                                     } else {
-                                       
+                                        
                                         s++
                                         await oneCreate()
                                         return
@@ -1030,16 +1031,16 @@ class ProcessIngInterfaceData extends Subscription {
                     await oneCreate()
 
 
-                }
+                //}
 
 
 
             } else if (interfaceObj.type == 5  ) {
 
-                console.log("333333333333333333333333333333")
+              
 
                 var transactionList = await ctx.model.Transaction.findAll({ where: { imo_number: i.pilot_lqb_imo_no } })
-                console.log("333333333333333333333333333333", transactionList)
+               
                 var s = 0
                 var oneCreate = async () => {
                     if (s == transactionList.length) {
@@ -1049,7 +1050,7 @@ class ProcessIngInterfaceData extends Subscription {
 
                     if (transaction && transaction.status == 0) {
 
-                        console.log("44444444444444444444444444444444")
+                       
                         var transactioneventList = await ctx.model.Transactionevent.findAll({ raw: true, order: [['event_time', 'asc']], where: { transaction_id: transaction.id } })
                         var transactioneventMap = {}
                         transactioneventList.forEach((t) => {
@@ -1057,31 +1058,31 @@ class ProcessIngInterfaceData extends Subscription {
                         })
 
                         
-                        console.log("44444444444444444444444444444444")
+                        
 
                         
 
                         var isDE4DE5StopBerthing = false
                         var isDE4DE5StopUnBerthing = false
                         if (transactioneventList.some((v) => { return flowIdMap[v.flow_id].code == "4014" })) {
-                            console.log("hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh")
+                           
                             isDE4DE5StopUnBerthing = true
                         }
 
 
                         if (transactioneventList.some((v) => { return flowIdMap[v.flow_id].code == "2003" })) {
-                            console.log("tttttttttttttttttttttttttttttttttttttt")
+                           
                             isDE4DE5StopBerthing = true
                         }
 
                         const transactionJetty = await ctx.model.Transaction.findOne({ where: { imo_number: i.pilot_lqb_imo_no, jetty_name: [i.pilot_lqb_location_from, i.pilot_lqb_location_to] } })
                       
                         if (transactionJetty) {
-                           
+                            
 
                             if (i.pilot_lqb_location_to == transactionJetty.jetty_name) {
                                
-
+                                
                                 if (transactioneventMap[flowMap['1006'].id] &&  transactioneventMap[flowMap['1004'].id]) {
                                     var ctime = null
                                   
@@ -1092,23 +1093,22 @@ class ProcessIngInterfaceData extends Subscription {
 
                                         || (new Date(ctime)).getTime() > (new Date(i.lqb_pilot_on_board_time)).getTime() + 3600 * 4 * 1000) {
 
-                                        console.log("5555555555555555555555555555")
-
+                                        
+                                       
                                         s++
                                         await oneCreate()
                                         return
 
                                     }
                                 } else {
-                                    console.log("66666666666666666666666666666", flowMap['1004'].id)
-                                    console.log("66666666666666666666666666666", transactioneventMap[flowMap['1004'].id])
+                                   
                                     s++
                                     await oneCreate()
                                     return
                                 }
                                
                             } else {
-                                console.log("66666666666666666666666666")
+                               
                                 if (transactioneventMap[flowMap['4009'].id] && transactioneventMap[flowMap['4006'].id] ) {
                                     var ctime = null
                                     if (transactioneventMap[flowMap['4006'].id]) {
@@ -1119,7 +1119,7 @@ class ProcessIngInterfaceData extends Subscription {
 
                                         || (new Date(ctime)).getTime() > (new Date(i.lqb_pilot_on_board_time)).getTime() + 3600 * 4 * 1000) {
 
-                                        console.log("7777777777777777777777777777777")
+                                       
 
                                         s++
                                         await oneCreate()
@@ -1127,8 +1127,8 @@ class ProcessIngInterfaceData extends Subscription {
 
                                     }
                                 } else {
-                                    console.log("888888888888888888888888")
-
+                                   
+                                  
                                     s++
                                     await oneCreate()
                                     return
@@ -1138,8 +1138,7 @@ class ProcessIngInterfaceData extends Subscription {
 
 
 
-                            console.log("999999999999999999999999")
-
+                           
                            
                            
                             var eventArr = []
@@ -1154,14 +1153,14 @@ class ProcessIngInterfaceData extends Subscription {
                                         event.flow_id = flowMap[codeMap[k + "_to"]].id
                                         event.flow_pid = flowMap[codeMap[k + "_to"]].pid
                                         if (isDE4DE5StopBerthing) {
-                                            console.log("hhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhhh")
+                                            
                                             continue
                                         }
                                     } else {
                                         event.flow_id = flowMap[codeMap[k]].id
                                         event.flow_pid = flowMap[codeMap[k]].pid
                                         if (isDE4DE5StopUnBerthing) {
-                                            console.log("yyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyyy")
+                                           
                                             continue
                                         }
                                     }
@@ -1195,6 +1194,7 @@ class ProcessIngInterfaceData extends Subscription {
                                 }
                             }
                             if (updateEventArr.length == 0 && eventArr.length == 0) {
+                               
                                 await interfaceObj.update({ already_used:0 })
                                 s++
                                 await oneCreate()
@@ -1215,6 +1215,7 @@ class ProcessIngInterfaceData extends Subscription {
                             }
                             var res = await ctx.model.Transactionevent.bulkCreate(eventArr)
                             await closeTransaction(transaction, transactioneventList)
+                            
                             if (res) {
                                 await interfaceObj.update({ already_used: 1, eos_id: transaction.eos_id })
                             }

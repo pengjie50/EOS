@@ -258,7 +258,7 @@ class TransactionService extends Service {
         var report
         if (is_report || is_detail_report) {
 
-             report = await ctx.model.Report.findOne({ where: { id: obj.where.report_id } })
+            report = await ctx.model.Report.findOne({ where: { id: obj.where.report_id } })
             if (report && report.json_string) {
 
                 var backData = eval('(' + report.json_string + ')')
@@ -291,6 +291,8 @@ class TransactionService extends Service {
                 }
                 
             }
+
+            delete obj.where.report_id
         }
 
 
@@ -302,6 +304,13 @@ class TransactionService extends Service {
             jetty_id.push(t.jetty_id)
             company_id.push(t.trader_id)
             company_id.push(t.terminal_id)
+        })
+
+
+        const userList = await ctx.model.User.findAll({ raw: true })
+        var userMap = {}
+        userList.forEach((c) => {
+            userMap[c.id] = c
         })
 
         const companyList = await ctx.model.Company.findAll({ raw: true, where: { id: company_id } })
@@ -500,12 +509,67 @@ class TransactionService extends Service {
                 transactioneventlogMap[tel.transaction_event_id].push(tel)
             })
 
+            var alertruleWhere = {}
+            if (ctx.user.role_type == 'Super') {
+                if (params.where.threshold_organization_id) {
+                    alertruleWhere.company_id = params.where.threshold_organization_id
+                }
+
+
+            } else {
+
+                if (this.access("alertrule_list") || this.access("transactions_list")) {
+
+                    alertruleWhere.user_id = ctx.user.user_id
+
+                    if (this.access("alertrule_list_company") || this.access("transactions_list_company")) {
+                        delete alertruleWhere.user_id
+                        alertruleWhere.company_id = ctx.user.company_id
+                    }
+
+                    if (this.access("alertrule_list_tab") || this.access("transactions_list_tab")) {
+                        
+                        delete alertruleWhere.user_id
+                        alertruleWhere.company_id = {
+                                    [app.Sequelize.Op['in']]: [...ctx.user.accessible_organization, ctx.user.company_id]
+                                }
+                           
+                    }
+
+
+
+                   
+                }
+
+
+
+            }
+            if (params.where.alertrule_type) {
+                alertruleWhere.type = params.where.alertrule_type
+            }
+           
+
+            var alertruleTransaction = await ctx.model.AlertruleTransaction.findAll({
+                raw:true,
+                where: {
+                    transaction_id: ids,
+                    ...alertruleWhere
+                }
+            })
+            var alertruleTransactionIds= alertruleTransaction.map((a) => {
+                return a.id
+            })
+
+            
+
             var alertList = await ctx.model.Alert.findAll({
                 raw: true, include:[ {
                         as: 'ar',
                         model: ctx.model.AlertruleTransaction,
                 }], where: {
-                        transaction_id:ids
+                    transaction_id: ids,
+                    ...alertruleWhere
+
                    /* [Op.or]: [
 
                         {
@@ -520,8 +584,12 @@ class TransactionService extends Service {
                     ]*/
                 }
             })
+           
+
+
 
             var alertMap1 = {}
+            var alertMap2 = {}
             alertList.forEach((tel) => {
                 if (!alertMap1[tel.transaction_id]) {
                     alertMap1[tel.transaction_id] = []
@@ -530,13 +598,58 @@ class TransactionService extends Service {
                 alertMap1[tel.transaction_id].push({})
                 alertMap1[tel.transaction_id].push({})
                 alertMap1[tel.transaction_id].push({})
+                
+                alertMap2[tel.alert_rule_transaction_id]=true
+            })
+
+
+            console.log(alertruleTransaction.length)
+            
+            alertruleTransaction=alertruleTransaction.filter((b) => {
+
+                return !alertMap2[b.id]
+            })
+            console.log(alertruleTransaction.length)
+            var alertruleTransactionMap = {}
+            alertruleTransaction.forEach((art) => {
+                if (art.type == 1) {
+                    if (!alertruleTransactionMap[art.transaction_event_id_from]) {
+                        alertruleTransactionMap[art.transaction_event_id_from] = []
+                    }
+                    alertruleTransactionMap[art.transaction_event_id_from].push(art)
+                   
+
+                    if (art.transaction_event_id_to && !alertruleTransactionMap[art.transaction_event_id_to]) {
+                        alertruleTransactionMap[art.transaction_event_id_to] = []
+                    }
+
+                    if (art.transaction_event_id_to) {
+                        alertruleTransactionMap[art.transaction_event_id_to].push(art)
+                    }
+                } else if (art.type == 2) {
+                    var k = art.transaction_id + "_aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa"
+                    if (!alertruleTransactionMap[k]) {
+                        alertruleTransactionMap[k] = []
+                    }
+                    alertruleTransactionMap[k].push(art)
+
+
+                } else if (art.type == 0) {
+                    var k = art.transaction_id + "_" + art.flow_id
+                    if (!alertruleTransactionMap[k]) {
+                        alertruleTransactionMap[k] = []
+                    }
+                    alertruleTransactionMap[k].push(art)
+
+
+                }
 
             })
 
 
             var alertMap = {}
             alertList.forEach((tel) => {
-
+                tel['ar.user_name'] = userMap[tel['ar.user_id']].username
                 if (tel.alertrule_type == 1) {
                     if (!alertMap[tel.transaction_event_id_from]) {
                         alertMap[tel.transaction_event_id_from] = []
@@ -610,7 +723,28 @@ class TransactionService extends Service {
 
                 m.transactioneventlogList = transactioneventlogMap[m.id] || []
                 m.alertList = alertMap[m.id]
+                if (alertruleTransactionMap[m.id]) {
+                    alertruleTransactionMap[m.id].forEach((art) => {
+                        var nart = {}
+                        for (var k in art) {
+                            nart['ar.'+k]=art[k]
+                            
+                        }
+                        if (!m.alertList) {
+                            m.alertList=[]
+                        } 
+                        m.alertList.push(nart)
+                        
+                        
+                    })
+                }
+
+
                 m.alertList = [...new Set(m.alertList)]
+
+
+
+
                 m.threshold_alert = m.alertList.length > 0 ? "Alert" : ""
                 return m
             })
