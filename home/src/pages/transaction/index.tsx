@@ -401,7 +401,7 @@ const TableList: React.FC = () => {
       return 'Organization'
     }
     if (!(access.canAdmin || access.dashboard_tab())) {
-      return 'Customer'
+      return 'Organization'
     }
     if (access.dashboard_tab()) {
       return 'Customer'
@@ -463,7 +463,11 @@ const TableList: React.FC = () => {
           }
           typeMap[r.type].push({ label: r.name, value: r.id })
         } else {
-          b.push({ label: r.name, value: r.id })
+
+          if (r.id != currentUser?.company_id) {
+            b.push({ label: r.name, value: r.id })
+          }
+         
         }
 
       })
@@ -488,7 +492,7 @@ const TableList: React.FC = () => {
 
         formRef.current?.setFieldValue('eos_id', eos_id)
       }
-      if (organization_id) {
+      if (organization_id && organization_id.length > 0) {
        
         formRef.current?.setFieldValue('organization_id', organization_id)
       }
@@ -1401,21 +1405,17 @@ const TableList: React.FC = () => {
             var b = value[1] || 1000000000
 
             return {
-              'product_quantity_from': {
-                'field': 'product_quantity_from',
+              'product_quantity_in_mt': {
+                'field': 'product_quantity_in_mt',
                 'op': 'gte',
                 'data': a
               },
-              'product_quantity_to': {
-                'field': 'product_quantity_to',
+              'product_quantity_in_mt': {
+                'field': 'product_quantity_in_mt',
                 'op': 'lte',
                 'data': b
-              },
-              'uom': {
-                'field': 'uom',
-                'op': 'eq',
-                'data': "mt"
               }
+             
             }
           }
 
@@ -1440,21 +1440,17 @@ const TableList: React.FC = () => {
             var a = value[0] || 0
             var b = value[1] || 1000000000
             return {
-              'product_quantity_from': {
-                'field': 'product_quantity_from',
+              'product_quantity_in_bls_60_f': {
+                'field': 'product_quantity_in_bls_60_f',
                 'op': 'gte',
                 'data': a
               },
-              'product_quantity_to': {
-                'field': 'product_quantity_to',
+              'product_quantity_in_bls_60_f': {
+                'field': 'product_quantity_in_bls_60_f',
                 'op': 'lte',
                 'data': b
-              },
-              'uom': {
-                'field': 'uom',
-                'op': 'eq',
-                'data': "bls_60_f"
               }
+            
 
             }
           }
@@ -1804,7 +1800,8 @@ const TableList: React.FC = () => {
             columns.forEach((c) => {
               if (c.search?.transform) {
                
-                  var p = c.search?.transform(params[c.dataIndex])
+                var p = c.search?.transform(params[c.dataIndex])
+               
                   params = { ...params, ...p }
                 
               

@@ -397,7 +397,14 @@ const TableList: React.FC = () => {
           }
           typeMap[r.type].push({ label: r.name, value: r.id })
         } else {
-          b.push({ label: r.name, value: r.id })
+          if (tab == "Others") {
+            if (r.id != currentUser?.company_id) {
+              b.push({ label: r.name, value: r.id })
+            }
+
+          } else {
+            b.push({ label: r.name, value: r.id })
+          }
         }
 
       })
@@ -870,12 +877,12 @@ const TableList: React.FC = () => {
       valueType: 'text',
     },
     
-    {
+    /*{
       title: 'Created By',
       dataIndex: 'company_id',
 
       valueEnum: company_idData,
-      hideInSearch: !(access.alertrule_list_tab() && tab == "Others"),
+      hideInSearch: access.alertrule_list_tab() && tab == "Others",
       fieldProps:
       {
         notFoundContent: <Empty description={'Oops! There appears to be no valid records based on your search criteria.'} />,
@@ -916,7 +923,7 @@ const TableList: React.FC = () => {
       hideInTable: true,
       hideInDescriptions: true,
 
-    },
+    },*/
     {
       title: 'Created By',
       dataIndex: 'user_id',

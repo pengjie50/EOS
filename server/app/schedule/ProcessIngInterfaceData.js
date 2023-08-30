@@ -754,10 +754,10 @@ class ProcessIngInterfaceData extends Subscription {
 
                             }, { where: { transaction_id: transaction.id, work_order_id: i.tosi_work_order_id, work_order_sequence_number: i.tosi_work_order_sequence_number } })
 
-
+                           // await ctx.model.Transactioneventlog.bulkCreate(updateEventArr2)
                         }
 
-                        await ctx.model.Transactioneventlog.bulkCreate(updateEventArr2)
+                        
 
                        
 

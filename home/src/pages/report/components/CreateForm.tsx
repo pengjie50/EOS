@@ -233,7 +233,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
       return 'Organization'
     }
     if (!(access.canAdmin || access.dashboard_tab())) {
-      return 'Customer'
+      return 'Organization'
     }
     if (access.dashboard_tab()) {
       return 'Customer'

@@ -80,7 +80,7 @@ class WritetoBC extends Subscription {
             var transaction = transactionList[step2]
 
 
-            var transactionEventList = await ctx.model.Transactionevent.findAll({ raw: true, where: { transaction_id: transaction.id, blockchain_hex_key: { [app.Sequelize.Op['eq']]: null } } });
+            var transactionEventList = await ctx.model.Transactionevent.findAll({ raw: true, where: { transaction_id: transaction.id } });
 
             var BerthingPilotage = {}
             var UnberthingPilotage = {}

@@ -214,7 +214,14 @@ const Welcome: React.FC = () => {
           }
           typeMap[r.type].push({ label: r.name, value: r.id })
         } else {
-          b.push({ label: r.name, value: r.id })
+
+         
+            if (r.id != currentUser?.company_id) {
+              b.push({ label: r.name, value: r.id })
+            }
+            
+          
+         
         }
 
       })
@@ -226,6 +233,8 @@ const Welcome: React.FC = () => {
         }
         setOrganizationList(a)
       } else {
+        
+
         setOrganizationList(b)
       }
 
@@ -483,7 +492,7 @@ const Welcome: React.FC = () => {
       return 'Organization'
     }
     if (!(access.canAdmin || access.dashboard_tab())) {
-      return 'Customer'
+      return 'Organization'
     }
     if (access.dashboard_tab()) {
       return 'Customer'
@@ -555,6 +564,7 @@ const Welcome: React.FC = () => {
               setOrganization_id([])
               setStatus([])
               setDateArr([])
+              setIsLoding(!isLoding)
             }}
             
             submitter={{
@@ -916,7 +926,19 @@ const Welcome: React.FC = () => {
                     cancelled = parseInt((statisticsObj?.no_of_transaction?.cancelled / statisticsObj?.no_of_transaction?.total) * 100 + "")
 
                     if (closed + open + cancelled != 100) {
-                      open += (100 - (closed + open + cancelled))
+                      if (open != 0) {
+                        open += (100 - (closed + open + cancelled))
+                      } else if (closed != 0) {
+                       
+                          closed += (100 - (closed + open + cancelled))
+                        
+                      } else if (cancelled != 0) {
+
+                        cancelled += (100 - (closed + open + cancelled))
+
+                      }
+                      
+                      
                     }
                   }
 

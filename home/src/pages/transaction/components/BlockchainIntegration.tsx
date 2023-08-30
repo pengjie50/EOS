@@ -260,16 +260,16 @@ const Detail: React.FC<any> = (props) => {
       dataIndex: 'validation_status',
       render: (dom, entity) => {
 
-        if (currentRow?.blockchain_hex_key) {
+        //if (currentRow?.blockchain_hex_key) {
           if (dom === 1) {
             return <span><CheckOutlined style={{ color: 'green' }} /></span>
           } else {
             return <span><CloseOutlined style={{ color: 'red' }} /></span>
           }
 
-        } else {
-          return "-"
-        }
+       // } else {
+          //return "-"
+        //}
       }
 
     },
@@ -799,8 +799,14 @@ const Detail: React.FC<any> = (props) => {
                 }
                 r['bc_value'] = c.render ? c.render(obj[k], obj) : obj[k]
 
+                if (r['value'] != r['bc_value']) {
+                  r['validation_status'] =  0 
+                } else {
+                  r['validation_status'] = 1  
+                }
 
-                r['validation_status'] = headValidated ? 1 : 0
+
+               
 
                 arr.push(r)
               }

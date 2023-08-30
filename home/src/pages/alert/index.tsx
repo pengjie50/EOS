@@ -199,7 +199,7 @@ const TableList: React.FC = () => {
       return 'Organization'
     }
     if (!(access.alert_list_tab() || access.canAdmin)) {
-      return 'Customer'
+      return 'Organization'
     }
     if (access.alert_list_tab()) {
       return 'Customer'
@@ -285,7 +285,7 @@ const TableList: React.FC = () => {
     var d = {
       ...{
         "current": page,
-        "pageSize": pageSize || 3
+        "pageSize": pageSize || (showNoRead ? 500 :3)
 
       }, ...f, sorter
     }
@@ -434,7 +434,14 @@ const TableList: React.FC = () => {
           }
           typeMap[r.type].push({ label: r.name, value: r.id })
         } else {
-          b.push({ label: r.name, value: r.id })
+          if (tab == "Others") {
+            if (r.id != currentUser?.company_id) {
+              b.push({ label: r.name, value: r.id })
+            }
+            
+          } else {
+            b.push({ label: r.name, value: r.id })
+          }
         }
 
       })
@@ -1453,7 +1460,7 @@ const TableList: React.FC = () => {
           columns={columns}
 
 
-          pagination={{ size: "default", showSizeChanger: true, pageSizeOptions: [10, 20, 50, 100, 500] }}
+          pagination={{ size: "default", showSizeChanger: true, pageSizeOptions: [10, 20, 50, 100, 500], defaultPageSize: showNoRead?500:20 }}
           options={false}
           rowSelection={{
             onSelectAll: (selected, selectedRows, changeRows) => {

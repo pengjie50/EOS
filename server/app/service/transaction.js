@@ -142,10 +142,21 @@ class TransactionService extends Service {
 
                         if (ctx.user.company_type == "Terminal" && traderFilter.length > 0 && terminalFilter.length > 0) {
                             obj.where.terminal_id = ctx.user.company_id
-                            obj.where.trader_id = traderFilter
+                            if (obj.where.organization_id) {
+                                obj.where.trader_id = obj.where.organization_id
+                            } else {
+                                obj.where.trader_id = traderFilter
+                            }
+                           
                         } else if (ctx.user.company_type == "Trader" && traderFilter.length > 0 && terminalFilter.length > 0) {
-                            obj.where.terminal_id = terminalFilter
+                           
                             obj.where.trader_id = ctx.user.company_id
+
+                            if (obj.where.organization_id) {
+                                obj.where.terminal_id = obj.where.organization_id
+                            } else {
+                                obj.where.terminal_id = terminalFilter
+                            }
                         } else {
                             obj.where.trader_id = "none"
                             obj.where.terminal_id = "none"
@@ -196,7 +207,7 @@ class TransactionService extends Service {
                 } else {
 
                     if (obj.where.organization_id) {
-
+                        console.log(obj.where.organization_id)
                         let terminalFilter = obj.where.organization_id[Op['in']].filter(item => ctx.user.accessible_organization_terminal.indexOf(item) > -1)
                         let traderFilter = obj.where.organization_id[Op['in']].filter(item => ctx.user.accessible_organization_trader.indexOf(item) > -1)
 
@@ -264,9 +275,11 @@ class TransactionService extends Service {
                 var backData = eval('(' + report.json_string + ')')
                 var offset = parseInt((params.page - 1)) * parseInt(params.limit)
                 var limit = parseInt(params.limit)
-
+                backData.data.sort((a, b) => {
+                    return a.eos_id - b.eos_id
+                })
                 backData.data = backData.data.slice(offset, offset + limit)
-
+                
                 ctx.body = backData
               
                 return
@@ -751,6 +764,11 @@ class TransactionService extends Service {
             list.count += addArr.length
             list.rows = addArr.concat(list.rows)
 
+            list.rows.sort((a, b) => {
+                return a.eos_id -b.eos_id
+            })
+
+
         }
        
 
@@ -837,10 +855,21 @@ class TransactionService extends Service {
 
                         if (ctx.user.company_type == "Terminal" && traderFilter.length > 0 && terminalFilter.length > 0) {
                             obj.where.terminal_id = ctx.user.company_id
-                            obj.where.trader_id = traderFilter
+                            if (obj.where.organization_id) {
+                                obj.where.trader_id = obj.where.organization_id
+                            } else {
+                                obj.where.trader_id = traderFilter
+                            }
+
                         } else if (ctx.user.company_type == "Trader" && traderFilter.length > 0 && terminalFilter.length > 0) {
-                            obj.where.terminal_id = terminalFilter
+
                             obj.where.trader_id = ctx.user.company_id
+
+                            if (obj.where.organization_id) {
+                                obj.where.terminal_id = obj.where.organization_id
+                            } else {
+                                obj.where.terminal_id = terminalFilter
+                            }
                         } else {
                             obj.where.trader_id = "none"
                             obj.where.terminal_id = "none"
@@ -1483,12 +1512,12 @@ class TransactionService extends Service {
             if (te.order_no && te.location_to && te.location_from) {
 
 
-                if (te.flow_pid == "9f2431b0-d3c9-11ed-a0d9-55ccaa27cc37" && !BerthingPilotage) {
+                if (te.flow_pid == "9f2431b0-d3c9-11ed-a0d9-55ccaa27cc37" ) {
 
                     BerthingPilotage = te
                 }
 
-                if (te.flow_pid == "a7332eb0-d3c9-11ed-a0d9-55ccaa27cc37" && !UnberthingPilotage) {
+                if (te.flow_pid == "a7332eb0-d3c9-11ed-a0d9-55ccaa27cc37") {
                     UnberthingPilotage = te
                 }
             }
