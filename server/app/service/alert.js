@@ -195,7 +195,7 @@ class AlertService extends Service {
         delete obj.where.tab
         delete obj.where.organization_id
 
-       console.log(obj.order)
+       
         obj.include = [{
             as: 't',
             model: ctx.model.Transaction,

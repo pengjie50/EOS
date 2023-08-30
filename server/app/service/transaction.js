@@ -207,7 +207,7 @@ class TransactionService extends Service {
                 } else {
 
                     if (obj.where.organization_id) {
-                        console.log(obj.where.organization_id)
+                        
                         let terminalFilter = obj.where.organization_id[Op['in']].filter(item => ctx.user.accessible_organization_terminal.indexOf(item) > -1)
                         let traderFilter = obj.where.organization_id[Op['in']].filter(item => ctx.user.accessible_organization_trader.indexOf(item) > -1)
 
@@ -401,7 +401,7 @@ class TransactionService extends Service {
                
                 var r = { ...t, ...mm[t.id] }
 
-                console.log(r)
+              
                 return r
             })
 
@@ -616,13 +616,13 @@ class TransactionService extends Service {
             })
 
 
-            console.log(alertruleTransaction.length)
+           
             
             alertruleTransaction=alertruleTransaction.filter((b) => {
 
                 return !alertMap2[b.id]
             })
-            console.log(alertruleTransaction.length)
+            
             var alertruleTransactionMap = {}
             alertruleTransaction.forEach((art) => {
                 if (art.type == 1) {

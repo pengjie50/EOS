@@ -328,7 +328,7 @@ class ToolService extends Service {
 
 
         } catch (err) {
-            console.log(err)
+           
             return false;
         }
     }

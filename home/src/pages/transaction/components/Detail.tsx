@@ -889,7 +889,7 @@ const Detail: React.FC<any> = (props) => {
             if (res.data.bc_head_data && res.data.bc_event_data) {
               setValidateStatus(2)
               setValidateData(res.data)
-              console.log(res.data)
+             
               if (res.data.head_data.Verified == "False" || res.data.event_data.some((a) => {
                 return a.Verified == "False"
               })) {

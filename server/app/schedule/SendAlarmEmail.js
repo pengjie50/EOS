@@ -253,7 +253,7 @@ class SendAlarmEmail extends Subscription {
                     }
                    
                     if (isUpdateAr) {
-                        console.log("11111111111111111111111111")
+                       
                         await service.tool.sendMailDo(ar, oa, transaction, flowMap, "Update")
                       
                         await ctx.model.Alert.update({ total_duration: trueTime}, { where: { id: oa.id } })
@@ -317,7 +317,7 @@ class SendAlarmEmail extends Subscription {
                           }
                    
                     if (isUpdateAr) {
-                        console.log("2222222222222222222222222222222")
+                        
                             await service.tool.sendMailDo(ar, oa, transaction, flowMap, "Update")
                            
                             await ctx.model.Alert.update({ total_duration: trueTime }, { where: { id: oa.id}})

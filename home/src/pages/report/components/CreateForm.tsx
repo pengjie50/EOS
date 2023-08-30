@@ -1933,7 +1933,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                       }]}
                       rowSelection={{
                         renderCell: (checked, record, index, originNode) => {
-                          console.log(record)
+                          
                           if (record.noShowCheck) {
                             return null
                           }
@@ -2021,7 +2021,7 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
                       }]}
                       rowSelection={{
                         renderCell: (checked, record, index, originNode) => {
-                          console.log(record)
+                         
                           if (record.noShowCheck) {
                             return null
                           }

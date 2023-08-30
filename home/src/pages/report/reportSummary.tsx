@@ -1590,7 +1590,7 @@ const TableList: React.FC = () => {
             if (entity.transactioneventlogList.length==0) {
               return "-"
             }
-            console.log("gggg",entity.transactioneventlogList)
+            
             var c = entity
 
 
