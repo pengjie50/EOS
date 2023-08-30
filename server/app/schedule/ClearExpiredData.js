@@ -26,7 +26,8 @@ class ClearExpiredData extends Subscription {
         var pDate = new Date((new Date()).getTime()-3600*24*30*1000)
         var res = await ctx.model.Transaction.destroy({
             where: {
-                created_at: { [app.Sequelize.Op.lt]: pDate }
+                created_at: { [app.Sequelize.Op.lt]: pDate },
+                work_order_items_check:{ [app.Sequelize.Op.ne]: null }
             }
         })
         if (res) {
