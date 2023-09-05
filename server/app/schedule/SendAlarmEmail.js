@@ -1,8 +1,4 @@
 const Subscription = require('egg').Subscription;
-const uuid = require('uuid');
-
-
-
 
 
 class SendAlarmEmail extends Subscription {
@@ -14,31 +10,15 @@ class SendAlarmEmail extends Subscription {
         };
     }
 
- 
-
-
-
-
-
-
-
-
 
     async subscribe() {
         var AlertruleTransactionMap = {}
         var AlertMap = {}
 
         var subscribeStartTime = (new Date()).getTime()
-        
+
         const { ctx, service, app } = this;
 
-        var createClearContent=service.tool.createClearContent
-        var createClearTitle =service.tool.createClearTitle
-        var createTitle =service.tool.createTitle
-        var createContent = service.tool.createContent
-
-        var createUpdateTitle = service.tool.createUpdateTitle
-        var createUpdateContent = service.tool.createUpdateContent
 
         var AlertruleTransaction = await ctx.model.AlertruleTransaction.findAll()
 
@@ -48,11 +28,11 @@ class SendAlarmEmail extends Subscription {
 
 
         var Alert = await ctx.model.Alert.findAll({ raw: true })
-      
+
         Alert.forEach((t) => {
-            AlertMap[t.transaction_id + t.alert_rule_transaction_id + t.type + "_" + (t.work_order_id || 'null') + "_" + (t.work_order_sequence_number || "null")]=t
+            AlertMap[t.transaction_id + t.alert_rule_transaction_id + t.type + "_" + (t.work_order_id || 'null') + "_" + (t.work_order_sequence_number || "null")] = t
         })
-       
+
         const SaveAlertruleTransaction = async (fromEventObj, toEventObj, a, t, amber, red) => {
 
             var work_order_id = toEventObj?.work_order_id || fromEventObj?.work_order_id || null
@@ -89,7 +69,7 @@ class SendAlarmEmail extends Subscription {
 
                 alert_rule_transaction_id = h.id
             } else {
-               var transaction_event_id_from = fromEventObj?.id || null
+                var transaction_event_id_from = fromEventObj?.id || null
                 var transaction_event_id_to = toEventObj?.id || null
                 var ta = { ...a, transaction_id: t.id, amber, red, work_order_id, work_order_sequence_number, transaction_event_id_from, transaction_event_id_to }
 
@@ -108,14 +88,11 @@ class SendAlarmEmail extends Subscription {
 
 
 
-
-
-      
         const alertDo = async (a, t, flowMap, type, alert_rule_transaction_id, trueTime, fromEventObj, toEventObj) => {
 
-           var work_order_id = toEventObj?.work_order_id || fromEventObj?.work_order_id || null
-           var work_order_sequence_number = toEventObj?.work_order_sequence_number || fromEventObj?.work_order_sequence_number || null
-            var ak = t.id + alert_rule_transaction_id + type + "_" + (work_order_id || 'null')+ "_" + (work_order_sequence_number || "null")
+            var work_order_id = toEventObj?.work_order_id || fromEventObj?.work_order_id || null
+            var work_order_sequence_number = toEventObj?.work_order_sequence_number || fromEventObj?.work_order_sequence_number || null
+            var ak = t.id + alert_rule_transaction_id + type + "_" + (work_order_id || 'null') + "_" + (work_order_sequence_number || "null")
             var oh = AlertMap[ak]
 
             if (!oh) {
@@ -124,9 +101,6 @@ class SendAlarmEmail extends Subscription {
             }
 
             var h = oh
-
-
-
 
             if (h) {
                 return
@@ -156,52 +130,14 @@ class SendAlarmEmail extends Subscription {
                 alert.alert_id = ba.alert_id
             }
 
-
-
-            if (a.email) {
-                try {
-                    var emailArr = a.email.split(";")
-                    var sendEmail = []
-
-
-
-
-
-                    emailArr.forEach((c) => {
-                        var v = c.split(',')
-                        if (v.some((f) => {
-                            return f == (type == 0 ? 'a' : 'r')
-
-                        })) {
-                            sendEmail.push(v[0])
-                        }
-
-
-                    })
-                    if (sendEmail.length > 0) {
-
-
-
-
-                       await service.tool.sendMail(sendEmail.join(","), createTitle(alert, a, t, flowMap), createContent(alert, a, t, flowMap))
-                    }
-
-
-                } catch (e) {
-
-                }
-
-
-
-
-            }
-
+               
+            await service.tool.sendMailDo(a, alert, t, flowMap, "New")
 
 
         }
-       
+        //Update or delete alert information
         const clearAlert = async (flowMap, ar, transaction, ar_amber_time, ar_red_time, trueTime, fromEventObj, toEventObj) => {
-           
+
             var work_order_id = toEventObj?.work_order_id || fromEventObj?.work_order_id || null
             var work_order_sequence_number = toEventObj?.work_order_sequence_number || fromEventObj?.work_order_sequence_number || null
             var artk = transaction.id + ar.id + "_" + (work_order_id || 'null') + "_" + (work_order_sequence_number || "null")
@@ -210,9 +146,9 @@ class SendAlarmEmail extends Subscription {
             var ak = transaction.id + alert_rule_transaction_id + 0 + "_" + (work_order_id || 'null') + "_" + (work_order_sequence_number || "null")
             var oa = AlertMap[ak]
 
-           
 
-           
+
+
 
             var modart = { ...ar }
 
@@ -231,37 +167,37 @@ class SendAlarmEmail extends Subscription {
 
             ) {
 
-                
-                
+
+
                 isUpdateAr = true
             }
             if (oa) {
 
-               var isDeleteAlert = false
-                
-              
+                var isDeleteAlert = false
+
+
                 if (art.flow_id != ar.flow_id || art.flow_id_to != ar.flow_id_to) {
                     isDeleteAlert = true
                     isUpdateAr = true
                 }
-                 
-               
+
+
                 if (ar_amber_time > 0 && trueTime > ar_amber_time) {
-                   
-                    if (oa.total_duration != trueTime && (trueTime - oa.total_duration > 3600 || oa.total_duration - trueTime > 3600) ){
-                       isUpdateAr=true
+
+                    if (oa.total_duration != trueTime && (trueTime - oa.total_duration > 3600 || oa.total_duration - trueTime > 3600)) {
+                        isUpdateAr = true
                     }
-                   
+
                     if (isUpdateAr) {
-                       
+
                         await service.tool.sendMailDo(ar, oa, transaction, flowMap, "Update")
-                      
-                        await ctx.model.Alert.update({ total_duration: trueTime}, { where: { id: oa.id } })
-                        
+
+                        await ctx.model.Alert.update({ total_duration: trueTime }, { where: { id: oa.id } })
+
                     }
 
 
-                    
+
 
                 } else {
 
@@ -270,11 +206,11 @@ class SendAlarmEmail extends Subscription {
 
 
                 }
-               
 
-               
+
+
                 if (isDeleteAlert) {
-                   
+
                     modart.amber = null
                     await service.tool.sendMailDo(ar, oa, transaction, flowMap, "Clear")
 
@@ -286,7 +222,7 @@ class SendAlarmEmail extends Subscription {
                 }
 
 
-              
+
 
 
             }
@@ -303,7 +239,7 @@ class SendAlarmEmail extends Subscription {
 
                 var isDeleteAlert = false
 
-              
+
                 if (art.flow_id != ar.flow_id || art.flow_id_to != ar.flow_id_to) {
                     isDeleteAlert = true
                     isUpdateAr = true
@@ -311,20 +247,20 @@ class SendAlarmEmail extends Subscription {
 
 
                 if (ar_red_time > 0 && trueTime > ar_red_time) {
- 
+
                     if (oa.total_duration != trueTime && (trueTime - oa.total_duration > 3600 || oa.total_duration - trueTime > 3600)) {
-                            isUpdateAr=true
-                          }
-                   
+                        isUpdateAr = true
+                    }
+
                     if (isUpdateAr) {
-                        
-                            await service.tool.sendMailDo(ar, oa, transaction, flowMap, "Update")
-                           
-                            await ctx.model.Alert.update({ total_duration: trueTime }, { where: { id: oa.id}})
+
+                        await service.tool.sendMailDo(ar, oa, transaction, flowMap, "Update")
+
+                        await ctx.model.Alert.update({ total_duration: trueTime }, { where: { id: oa.id } })
 
 
-                        }
-                    
+                    }
+
 
 
                 } else {
@@ -334,10 +270,10 @@ class SendAlarmEmail extends Subscription {
 
 
                 }
-               
 
 
-              
+
+
 
 
                 if (isDeleteAlert) {
@@ -346,7 +282,7 @@ class SendAlarmEmail extends Subscription {
                     await service.tool.sendMailDo(ar, oa, transaction, flowMap, "Clear")
 
 
-                   
+
 
                     await ctx.model.Alert.destroy({
                         where: {
@@ -356,23 +292,23 @@ class SendAlarmEmail extends Subscription {
                 }
 
 
-                
+
 
 
             }
 
-           
+
             if (isUpdateAr) {
-               
 
-                    modart.transaction_event_id_from=fromEventObj?.id || null
 
-                    modart.transaction_event_id_to = toEventObj?.id || null
-               
-                   AlertruleTransactionMap[artk] = await AlertruleTransactionMap[artk].update(modart)
-                   
-              
-                
+                modart.transaction_event_id_from = fromEventObj?.id || null
+
+                modart.transaction_event_id_to = toEventObj?.id || null
+
+                AlertruleTransactionMap[artk] = await AlertruleTransactionMap[artk].update(modart)
+
+
+
             }
 
         }
@@ -380,7 +316,7 @@ class SendAlarmEmail extends Subscription {
 
 
 
-
+        //Compare if an alarm has been generated
         const compareDo = async (flowMap, ar, transaction, ar_amber_time, ar_red_time, trueTime, fromEventObj, toEventObj) => {
 
             try {
@@ -388,12 +324,12 @@ class SendAlarmEmail extends Subscription {
             } catch (e) {
 
             }
-            
-            await SaveAlertruleTransaction(fromEventObj, toEventObj,ar, transaction)
+
+            await SaveAlertruleTransaction(fromEventObj, toEventObj, ar, transaction)
             var alert_rule_transaction_id = await SaveAlertruleTransaction(fromEventObj, toEventObj, ar, transaction)
-           
+
             if (ar_amber_time > 0 && trueTime > ar_amber_time) {
-               
+
                 var alert_rule_transaction_id = await SaveAlertruleTransaction(fromEventObj, toEventObj, ar, transaction, 1, null)
 
                 await alertDo(ar, transaction, flowMap, 0, alert_rule_transaction_id, trueTime, fromEventObj, toEventObj)
@@ -453,12 +389,7 @@ class SendAlarmEmail extends Subscription {
         })
         var transactionList = await ctx.model.Transaction.findAll({ where: { status: 0 }, raw: true })
 
-       // var transactionList = await ctx.model.Transaction.findAll({ raw: true })
-
         var transactionList = transactionList.map((t) => {
-
-            //t.terminal_name = terminalMap[t.terminal_id]?.name || ""
-            //t.jetty_name = jettyMap[t.jetty_id]?.name || t.jetty_name
             return t
         })
         var ids = transactionList.map((t) => {
@@ -489,7 +420,7 @@ class SendAlarmEmail extends Subscription {
             eventList.forEach((a, index) => {
 
                 if (a.work_order_id && a.work_order_sequence_number) {
-                    eventMap[a.flow_id +"_"+ (a.work_order_id || 'null') +"_"+ (a.work_order_sequence_number || 'null')] = a
+                    eventMap[a.flow_id + "_" + (a.work_order_id || 'null') + "_" + (a.work_order_sequence_number || 'null')] = a
                 } else {
                     eventMap[a.flow_id] = a
                 }
@@ -516,7 +447,7 @@ class SendAlarmEmail extends Subscription {
         var step = 0;
         var step1 = 0;
         async function oneDo() {
-            
+
             var nowTime = (new Date()).getTime()
 
             if (nowTime - subscribeStartTime > 55000) {
@@ -527,9 +458,9 @@ class SendAlarmEmail extends Subscription {
             if (step1 == alertruleList.length) {
                 step1 = 0;
                 step++
-               
+
             }
-           
+
             if (step == transactionList.length) {
                 return
             }
@@ -538,24 +469,7 @@ class SendAlarmEmail extends Subscription {
             var transaction = transactionList[step]
 
 
-            
-
-           // var work_order_items=[]
-
-          //   work_order_items= transaction.work_order_items_check?.split(",") || []
-
             var ar = alertruleList[step1]
-
-
-
-
-           /* if (transaction && transaction.eos_id != 90) {
-                step1++
-                await oneDo()
-               
-                return
-
-            }*/
 
             if (ar.company_id != transaction.trader_id && ar.company_id != transaction.terminal_id) {
                 step1++
@@ -573,7 +487,7 @@ class SendAlarmEmail extends Subscription {
             }
 
             var t2 = false
-            if (ar.product_quantity_from == null && ar.product_quantity_to == null ) {
+            if (ar.product_quantity_from == null && ar.product_quantity_to == null) {
 
                 t2 = true
             } else {
@@ -582,12 +496,12 @@ class SendAlarmEmail extends Subscription {
                     t2 = true
 
                 }
-            } 
-           
+            }
+
             if (t1 && t2) {
 
                 var transactioneventList = null
-               
+
                 if (!m[transaction.id]) {
                     step1++
                     await oneDo()
@@ -595,7 +509,7 @@ class SendAlarmEmail extends Subscription {
                 }
                 var transactioneventProcessMap = {}
 
-               
+
 
                 transactioneventList = m[transaction.id].eventList
 
@@ -605,12 +519,12 @@ class SendAlarmEmail extends Subscription {
                     }
                     transactioneventProcessMap[tel.flow_pid].push(tel)
                 })
-              
-
-                var transactioneeventMap = m[transaction.id].eventMap
 
 
-                var info=service.tool.getDurationInfo(transactioneventList,flowMap)
+               
+
+
+                var info = service.tool.getDurationInfo(transactioneventList, flowMap)
                 var lastEvent = info.ee
 
                 var oneEvent = info.se
@@ -626,7 +540,7 @@ class SendAlarmEmail extends Subscription {
                     }
 
                 }
-               
+
                 var ar_red_time = 0
                 if (ar.red_hours || ar.red_mins) {
 
@@ -638,49 +552,42 @@ class SendAlarmEmail extends Subscription {
                     }
 
                 }
-                
+                //Single Process
                 if (ar.type == 0) {
-                    //第一种情况，事件还不完整，用当前时间去减第一个时间
-                   
+                    
 
                     var lastEvent = transactioneventList[transactioneventList.length - 1]
                     var lastEventFlow = flowMap[lastEvent.flow_pid]
-                   
+
                     var processEventList = transactioneventProcessMap[ar.flow_id]
                     if (!processEventList || processEventList.length == 0) {
                         step1++
                         await oneDo()
                         return
                     }
-                   
+
                     var isEnd = false
                     var processCode = flowMap[ar.flow_id]
 
                     if (processCode.sort < lastEventFlow.sort) {
-                       
-                       
-                            
-                         isEnd=true
-                        
+
+                        isEnd = true
 
                     }
 
+                    var trueTime = 0
 
-                   
-
-                    var trueTime=0
-                    
                     if (isEnd) {
-                         trueTime = (new Date(processEventList[processEventList.length - 1].event_time)).getTime() / 1000 - (new Date(processEventList[0].event_time)).getTime() / 1000
+                        trueTime = (new Date(processEventList[processEventList.length - 1].event_time)).getTime() / 1000 - (new Date(processEventList[0].event_time)).getTime() / 1000
                     } else {
-                         trueTime = (new Date()).getTime() / 1000 - (new Date(processEventList[0].event_time)).getTime() / 1000
+                        trueTime = (new Date()).getTime() / 1000 - (new Date(processEventList[0].event_time)).getTime() / 1000
                     }
-                   
+
                     await compareDo(flowMap, ar, transaction, ar_amber_time, ar_red_time, trueTime)
 
 
-                }else if (ar.type == 1) {
-                   
+                } else if (ar.type == 1) {//Between Two Events
+
                     if (!transactioneventList || transactioneventList.length == 0) {
                         step1++
                         await oneDo()
@@ -691,27 +598,22 @@ class SendAlarmEmail extends Subscription {
                         return tel.flow_id == ar.flow_id
 
                     })
-                   
+
 
                     var toEvent = transactioneventList.filter((tel) => {
                         return tel.flow_id == ar.flow_id_to
                     })
-                    var step2=0
+                    var step2 = 0
                     async function Do2() {
                         if (step2 >= fromEvent.length) {
                             return
                         }
                         var fromEventObj = fromEvent[step2]
                         if (fromEventObj) {
-                            
 
-                            var toEventArr= toEvent.filter((te2) => {
+
+                            var toEventArr = toEvent.filter((te2) => {
                                 if (!fromEventObj.work_order_id && !fromEventObj.work_order_sequence_number) {
-
-
-                                    
-
-
 
                                     return true
                                 } else if (fromEventObj.work_order_id && !fromEventObj.work_order_sequence_number) {
@@ -721,33 +623,33 @@ class SendAlarmEmail extends Subscription {
                                         if (te2.work_order_id == fromEventObj.work_order_id) {
                                             return true
                                         }
-                                    } 
+                                    }
                                 } else if (fromEventObj.work_order_id && fromEventObj.work_order_sequence_number) {
-                                    
+
                                     if (!te2.work_order_id && !te2.work_order_sequence_number) {
 
-                                        
+
                                         return true
-                                    }else if (te2.work_order_id && !te2.work_order_sequence_number) {
+                                    } else if (te2.work_order_id && !te2.work_order_sequence_number) {
                                         if (te2.work_order_id == fromEventObj.work_order_id) {
 
-                                            
+
                                             return true
                                         }
                                     } else if (te2.work_order_id && te2.work_order_sequence_number) {
                                         if (te2.work_order_id == fromEventObj.work_order_id && te2.work_order_sequence_number == fromEventObj.work_order_sequence_number) {
 
-                                          
+
                                             return true
                                         }
                                     }
-                                   
+
                                 }
                                 return false
                             })
 
                             if (toEventArr.length > 0) {
-                               
+
                                 var step3 = 0
                                 async function Do3() {
                                     if (step3 >= toEventArr.length) {
@@ -757,12 +659,7 @@ class SendAlarmEmail extends Subscription {
                                     var toEventObj = toEventArr[step3]
                                     var trueTime = (new Date(toEventObj.event_time)).getTime() / 1000 - (new Date(fromEventObj.event_time)).getTime() / 1000
 
-                                    
-
-                                    
                                     await compareDo(flowMap, ar, transaction, ar_amber_time, ar_red_time, trueTime, fromEventObj, toEventObj)
-
-
 
                                     step3++
                                     await Do3()
@@ -772,13 +669,13 @@ class SendAlarmEmail extends Subscription {
 
                             } else {
 
-                                
+
                                 var trueTime = (new Date()).getTime() / 1000 - (new Date(fromEventObj.event_time)).getTime() / 1000
-                               
+
                                 await compareDo(flowMap, ar, transaction, ar_amber_time, ar_red_time, trueTime, fromEventObj)
 
                             }
-                           
+
                         }
                         step2++
                         await Do2()
@@ -788,17 +685,17 @@ class SendAlarmEmail extends Subscription {
 
 
 
-                } else if (ar.type == 2) {
-                   
+                } else if (ar.type == 2) {//Entire Transaction
+
                     if (!transactioneventList || transactioneventList.length == 0) {
                         step1++
                         await oneDo()
                         return
                     }
-                    var trueTime=0
+                    var trueTime = 0
                     if (transaction.status == 0) {
                         var trueTime = (new Date()).getTime() / 1000 - (new Date(oneEvent.event_time)).getTime() / 1000
-                        
+
                     } else {
                         var trueTime = (new Date(lastEvent.event_time)).getTime() / 1000 - (new Date(oneEvent.event_time)).getTime() / 1000
                     }
@@ -827,7 +724,7 @@ class SendAlarmEmail extends Subscription {
 
 
 
-        //
+        
 
     }
 }
