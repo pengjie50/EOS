@@ -172,7 +172,7 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
         name="max_displacement"
         label={intl.formatMessage({
           id: 'pages.jetty.maxDisplacement',
-          defaultMessage: 'Max. Displacement (MT)D',
+          defaultMessage: 'Max. Displacement (MT)',
         })}
         width="lg"
       />
