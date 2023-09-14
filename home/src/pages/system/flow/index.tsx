@@ -174,7 +174,7 @@ const TableList: React.FC = () => {
     <div style={{ fontSize: 24 }}>
       <Space style={{ '--gap': '16px' }}>
         <SearchOutlined onClick={e => { setShowMPSearch(!showMPSearch) }} />
-        <Popover onOpenChange={(v) => { setMoreOpen(v) }} open={moreOpen} placement="bottom" title={""} content={<div>
+        {/*<Popover onOpenChange={(v) => { setMoreOpen(v) }} open={moreOpen} placement="bottom" title={""} content={<div>
 
 
           <Button type="primary" style={{ width: "100%" }} key="print"
@@ -192,7 +192,7 @@ const TableList: React.FC = () => {
           <EllipsisOutlined />
 
 
-        </Popover>
+        </Popover>*/}
 
 
         {isLock ? <Iconfy onClick={() => {
@@ -491,7 +491,7 @@ const TableList: React.FC = () => {
             }}
           >
             <PlusOutlined /> <FormattedMessage id="pages.searchTable.xxx" defaultMessage="Create New Transaction Flow" />
-          </Button>, <Button type="primary" key="print"
+          </Button>/*, <Button type="primary" key="print"
             onClick={() => {
               if (selectedRowsState.length == 0) {
                 message.error(<FormattedMessage
@@ -506,7 +506,7 @@ const TableList: React.FC = () => {
           </Button>, <Button type="primary" key="out"
             onClick={() => exportCSV(selectedRowsState, columns, "Transaction Flow")}
           ><FileExcelOutlined /> <FormattedMessage id="pages.CSV" defaultMessage="CSV" />
-          </Button>
+          </Button>*/
 
         ]
       }}>

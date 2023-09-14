@@ -185,6 +185,12 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
         width="lg"
 
       />
+      <ProFormTextArea
+        name="remarks"
+        label="Remarks"
+        width="lg"
+
+      />
       {/*
       <ProFormSelect
         name="depth_alongside"

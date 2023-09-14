@@ -438,7 +438,7 @@ const Detail: React.FC<any> = (props) => {
     },
     {
       title: <FormattedMessage id="pages.transaction.xxx" defaultMessage="Berthing Rilotage ID" />,
-      dataIndex: 'BerthingRilotageID',
+      dataIndex: 'BerthingPilotageID',
 
     },
     
@@ -771,12 +771,12 @@ const Detail: React.FC<any> = (props) => {
               "VesselSize": "vessel_size_dwt",
               "ArrivalStatus": "arrival_id_status",
               "IMONumber": "imo_number",
-              "BerthingRilotageID": "BerthingRilotageID",
+              "BerthingPilotageID": "BerthingPilotageID",
 
               "PilotageLocationFrom1": "PilotageLocationFrom1",
               "PilotageLocationTo1": "PilotageLocationTo1",
 
-              "UnberthingPilotagel": "UnberthingPilotagel",
+              "UnberthingPilotageID": "UnberthingPilotageID",
               "PilotageLocationFrom2": "PilotageLocationFrom2",
               "PilotageLocationTo2": "PilotageLocationTo2"
 

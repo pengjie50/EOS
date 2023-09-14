@@ -626,7 +626,7 @@ const TableList: React.FC = () => {
 
     }
 
-    ,
+/*,
     {
       title: <FormattedMessage id="pages.searchTable.titleOption" defaultMessage="Operating" />,
       dataIndex: 'option',
@@ -634,7 +634,7 @@ const TableList: React.FC = () => {
       valueType: 'option',
       hideInTable: !access.canInterfacedataMod(),
       render: (_, record) => [
-       /* <Access accessible={access.canInterfacedataMod()} fallback={<div></div>}>
+        <Access accessible={access.canInterfacedataMod()} fallback={<div></div>}>
         <a
           key="config"
           onClick={() => {
@@ -645,7 +645,7 @@ const TableList: React.FC = () => {
         >
           <FormOutlined style={{ fontSize: '20px' }} /> 
           </a>
-        </Access>,*/
+        </Access>,
         <Access accessible={access.canInterfacedataDel()} fallback={<div></div>}>
           <a
             title={formatMessage({ id: "pages.delete", defaultMessage: "Delete" })}
@@ -670,7 +670,7 @@ const TableList: React.FC = () => {
           </a>
         </Access>
       ],
-    },
+    },*/
   ];
   const customizeRenderEmpty = () => {
     var o = formRef.current?.getFieldsValue()

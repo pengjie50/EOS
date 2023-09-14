@@ -154,7 +154,12 @@ const UpdateForm: React.FC<UpdateFormProps> = (props) => {
         width="md"
 
       />
+      <ProFormTextArea
+        name="remarks"
+        label="Remarks"
+        width="lg"
 
+      />
       {currentUser?.role_type != 'Terminal' && <ProFormSelect
         name="terminal_id"
         label={intl.formatMessage({

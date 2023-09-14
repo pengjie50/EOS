@@ -431,8 +431,7 @@ const TableList: React.FC = () => {
       hideInSearch: true,
     },
     {
-      title: <FormattedMessage id="pages.jetty.maxDisplacement" defaultMessage="Max. Displacement (MT)D
-" />,
+      title: <FormattedMessage id="pages.jetty.maxDisplacement" defaultMessage="Max. Displacement (MT)" />,
       dataIndex: 'max_displacement',
       width: 200,
       valueType: 'text',
@@ -448,7 +447,14 @@ const TableList: React.FC = () => {
       sorter: true,
       hideInSearch: true,
     },
-
+    {
+      title: <FormattedMessage id="pages.jetty.xxx" defaultMessage="Remarks" />,
+      width: 320,
+      dataIndex: 'Remarks',
+      valueType: 'text',
+      sorter: true,
+      hideInSearch: true,
+    },
     {
       title: <FormattedMessage id="pages.searchTable.titleOption" defaultMessage="Operating" />,
       dataIndex: 'option',

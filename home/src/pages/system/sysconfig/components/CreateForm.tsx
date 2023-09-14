@@ -65,8 +65,8 @@ const UpdateForm: React.FC<CreateFormProps> = (props) => {
         },
       }}
       title={intl.formatMessage({
-        id: 'pages.sysconfig.add',
-        defaultMessage: 'New system config',
+        id: 'pages.sysconfig.xxx',
+        defaultMessage: 'New System Configuration',
       })}
     >
       <ProFormText
