@@ -32,7 +32,7 @@
   },
   "scripts": {
     "start": "egg-scripts start --port=2001 --daemon --title=eos-server",
-    "stop": "egg-scripts stop --title=egg-server-server",
+    "stop": "egg-scripts stop --title=eos-server",
     "dev": "egg-bin dev",
     "https": "egg-bin dev  --port=443  --https.key=C:/EOS/public/ssl/eosuat.southeastasia.cloudapp.azure.com.key --https.cert=C:/EOS/public/ssl/eosuat.southeastasia.cloudapp.azure.com_bundle.crt",
     "debug": "egg-bin debug",
