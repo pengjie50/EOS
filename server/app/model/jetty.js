@@ -50,8 +50,11 @@ module.exports = app => {
         terminal_id: {
             type: UUID
 
-        }
+        },
+         remarks: {
+            type: TEXT
 
+        }
     }, {
         indexes: [
             {

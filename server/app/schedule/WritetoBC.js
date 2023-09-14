@@ -124,8 +124,7 @@ class WritetoBC extends Subscription {
                 "PilotageLocationTo2": UnberthingPilotage.location_to || null
 
             }
-
-
+           
           
 
            

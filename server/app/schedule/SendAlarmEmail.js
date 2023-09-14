@@ -387,7 +387,23 @@ class SendAlarmEmail extends Subscription {
             return f
 
         })
-        var transactionList = await ctx.model.Transaction.findAll({ where: { status: 0 }, raw: true })
+
+        
+        var transactionList = await ctx.model.Transaction.findAll({
+            where: {
+                [app.Sequelize.Op.or]: [
+
+                    {
+                         status: 0
+                    },
+                    {
+                        status: 1,
+                        updated_at: { [app.Sequelize.Op.gt]: new Date((new Date()).getTime() - 3600*24 * 1000) },
+                       
+                    }
+                ] }, raw: true })
+
+
 
         var transactionList = transactionList.map((t) => {
             return t
