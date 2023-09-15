@@ -37,7 +37,7 @@ class ToolService extends Service {
         var str = '<div>'
 
         var str = '<div>'
-        str += '<div><a href="https://eosuat.southeastasia.cloudapp.azure.com/#/user/login?redirect=/transactions?eos_id=' + transaction.eos_id + '"> E' + transaction.eos_id + '</a></div>'
+        str += '<div><a href="' + this.ctx.header.origin + '/#/user/login?redirect=/transactions?eos_id=' + transaction.eos_id + '"> E' + transaction.eos_id + '</a></div>'
        
         str += '<br/>'
         str += '<div> ' + (alert.type == 0 ? 'Amber' : 'Red') + ' Alert for ' + pstr + ' is triggered.</div>'
@@ -68,7 +68,7 @@ class ToolService extends Service {
         str += '</table>'
         str += '<br/>'
         str += '<br/>'
-        str += '<div><a href="https://eosuat.southeastasia.cloudapp.azure.com/#/user/login?redirect=/threshold/alert?alert_id=' + alert.alert_id + '"> Please Login to EOS system for more details.</a></div>'
+        str += '<div><a href="' + this.ctx.header.origin + '/#/user/login?redirect=/threshold/alert?alert_id=' + alert.alert_id + '"> Please Login to EOS system for more details.</a></div>'
         str += '<br/>'
         str += '<div>I am an auto-generated email alert from the EOS system. Please do not reply to me.</div>'
         str += '<br/>'
@@ -106,7 +106,7 @@ class ToolService extends Service {
 
         var str = '<div>'
 
-        str += '<div><a href="https://eosuat.southeastasia.cloudapp.azure.com/#/user/login?redirect=/transactions?eos_id=' + transaction.eos_id + '"> E' + transaction.eos_id + '</a></div>'
+        str += '<div><a href="' + this.ctx.header.origin + '/#/user/login?redirect=/transactions?eos_id=' + transaction.eos_id + '"> E' + transaction.eos_id + '</a></div>'
 
         str += '<br/>'
         str += '<div> ' + (alert.type == 0 ? 'Amber' : 'Red') + ' Alert for ' + pstr + ' is triggered.</div>'
@@ -137,7 +137,7 @@ class ToolService extends Service {
         str += '</table>'
         str += '<br/>'
         str += '<br/>'
-        str += '<div><a href="https://eosuat.southeastasia.cloudapp.azure.com/#/user/login?redirect=/threshold/alert?alert_id=' + alert.alert_id + '"> Please Login to EOS system for more details.</a></div>'
+        str += '<div><a href="' + this.ctx.header.origin + '/#/user/login?redirect=/threshold/alert?alert_id=' + alert.alert_id + '"> Please Login to EOS system for more details.</a></div>'
         str += '<br/>'
         str += '<div>I am an auto-generated email alert from the EOS system. Please do not reply to me.</div>'
         str += '<br/>'
@@ -162,7 +162,7 @@ class ToolService extends Service {
         }
         var str = '<div>'
 
-        str += '<div><a href="https://eosuat.southeastasia.cloudapp.azure.com/#/user/login?redirect=/transactions?eos_id=' + transaction.eos_id + '"> E' + transaction.eos_id + '</a></div>'
+        str += '<div><a href="' + this.ctx.header.origin + '/#/user/login?redirect=/transactions?eos_id=' + transaction.eos_id + '"> E' + transaction.eos_id + '</a></div>'
 
         str += '<br/>'
         str += '<div> ' + (alert.type == 0 ? 'Amber' : 'Red') + ' Alert for ' + pstr + ' is no longer valid due to an update in Transaction Information. This alert has been removed.</div>'
@@ -193,7 +193,7 @@ class ToolService extends Service {
         str += '</table>'
         str += '<br/>'
         str += '<br/>'
-        str += '<div><a href="https://eosuat.southeastasia.cloudapp.azure.com/#/user/login?redirect=/threshold/alert?alert_id=' + alert.alert_id + '"> Please Login to EOS system for more details.</a></div>'
+        str += '<div><a href="' + this.ctx.header.origin + '/#/user/login?redirect=/threshold/alert?alert_id=' + alert.alert_id + '"> Please Login to EOS system for more details.</a></div>'
         str += '<br/>'
         str += '<div>I am an auto-generated email alert from the EOS system. Please do not reply to me.</div>'
         str += '<br/>'

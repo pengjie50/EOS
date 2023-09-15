@@ -364,7 +364,7 @@ const Login: React.FC = () => {
     <div className={containerClassName}>
 
       <div style={{ position: 'fixed', top: 0, width: '100%', height: '100%', zIndex: -1 }}>
-        <img style={{ width: '100%', height: '100%' }} src="https://eosuat.southeastasia.cloudapp.azure.com/upload/login_bg.png" />
+        <img style={{ width: '100%', height: '100%' }} src={ window.location.origin + "/upload/login_bg.png" } />
 
       </div>
       <div className={titleClassName}>

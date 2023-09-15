@@ -450,7 +450,7 @@ const TableList: React.FC = () => {
     {
       title: <FormattedMessage id="pages.jetty.xxx" defaultMessage="Remarks" />,
       width: 320,
-      dataIndex: 'Remarks',
+      dataIndex: 'remarks',
       valueType: 'text',
       sorter: true,
       hideInSearch: true,
@@ -560,7 +560,7 @@ const TableList: React.FC = () => {
           actionRef={actionRef}
           rowKey="id"
           pagination={{ size: "default" }}
-          scroll={{ y: resizeObj.tableScrollHeight }}
+          scroll={{ x: 2000, y: resizeObj.tableScrollHeight }}
           search={!access.jetty_list_tab() ? {
             labelWidth: 130,
             span: resizeObj.searchSpan,
@@ -753,7 +753,9 @@ const TableList: React.FC = () => {
         >
           {currentRow?.name && (
             <ProDescriptions<JettyListItem>
-              column={isMP ? 1 : 2}
+
+              layout="vertical"
+              column={isMP ? 1 : 1}
               title={currentRow?.name}
               request={async () => ({
                 data: currentRow || {},

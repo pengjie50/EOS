@@ -5,8 +5,8 @@ WORKDIR /eos
 COPY package.json .
 COPY yarn.lock .
 
-RUN yarn install --production
+RUN yarn install
 
 COPY . .
 
-CMD npm run start
+CMD npm run dev

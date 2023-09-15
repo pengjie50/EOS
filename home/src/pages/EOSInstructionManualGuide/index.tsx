@@ -15,12 +15,12 @@ const EOSInstructionManualGuide: React.FC = () => {
   const access = useAccess();
   var url = ""
   if (access.canAdmin) {
-    url = "https://eosuat.southeastasia.cloudapp.azure.com/EOSInstructionManualGuide/EOSInstructionManualGuideforSuperuser.htm"
-  } else if (currentUser?.company_type =="Terminal") {
+    url = window.location.origin + "/EOSInstructionManualGuide/EOSInstructionManualGuideforSuperuser.htm"
+  } else if (currentUser?.company_type == "Terminal") { 
 
-    url = "https://eosuat.southeastasia.cloudapp.azure.com/EOSInstructionManualGuide/EOSInstructionManualGuideforTerminal.htm"
+    url = window.location.origin +"/EOSInstructionManualGuide/EOSInstructionManualGuideforTerminal.htm"
   } else {
-    url = "https://eosuat.southeastasia.cloudapp.azure.com/EOSInstructionManualGuide/EOSInstructionManualGuideforTrader.htm"
+    url = window.location.origin +"/EOSInstructionManualGuide/EOSInstructionManualGuideforTrader.htm"
   }
 
   

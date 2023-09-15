@@ -18,8 +18,8 @@ module.exports = appInfo => {
             delegate: 'model', // Load all models into app. Model and ctx. Model
             baseDir: 'model', // Model directory to load `app/model/*.js`
             dialect: 'mssql', // support: mysql, mariadb, postgres, mssql
-            database: 'eos_development1',
-            host: 'woke.qinqinwater.cn',
+            database: 'eos_development',
+            host: 'dbeosuat.database.windows.net',
             port: 1433,
             timezone: '+08:00',// Save as local time zone
             define: {
@@ -40,8 +40,8 @@ module.exports = appInfo => {
 
             dialectOptions: {
                 options: {
-                    encrypt: false,
-                    enableArithAbort: false
+                    encrypt: true,
+                    enableArithAbort: true
                 },
                 decimalNumbers: true,
 
@@ -57,8 +57,8 @@ module.exports = appInfo => {
                 }
             },
 
-            username: 'dms',
-            password: 'zsdmsdmm@123456'
+            username: 'azeossa',
+            password: '1Torch.light'
         }]
 
     };
@@ -101,7 +101,7 @@ module.exports = appInfo => {
     // add your user config here
     const userConfig = {
 
-        EOSURL: "https://eosuat.southeastasia.cloudapp.azure.com",
+        
 
         WritetoBC: "http://165.22.55.213:3002/eos/WritetoBC",
         ValidateBC: "http://165.22.55.213:3002/eos/ValidateBC",
@@ -109,7 +109,6 @@ module.exports = appInfo => {
         WriteHeaderBC: "http://165.22.55.213:3002/eos/WriteHeaderBC",
         ValidateHeaderBC: "http://165.22.55.213:3002/eos/ValidateHeaderBC",
         QueryHeaderBC: "http://165.22.55.213:3002/eos/QueryHeaderBC",
-
 
         user_email: "504475705@qq.com",
         auth_code: "xgfelmexsnrjbhgh"

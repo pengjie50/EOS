@@ -513,7 +513,7 @@ class UserService extends Service {
                 str += '<br/>'
                 str += '<br/>'
 
-                str += '<div><a href="' + app.config.EOSURL + '/#/user/login?check=' + params.password.replace("&","@") +'">Accept invitation</a></div>'
+                str += '<div><a href="' + ctx.header.origin + '/#/user/login?check=' + params.password.replace("&", "@") + '">Accept invitation</a></div>'
 
                 str += '<br/>'
                 str += '<br/>'
