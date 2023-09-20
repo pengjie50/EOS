@@ -1610,7 +1610,7 @@ const TableList: React.FC = () => {
                 if (diff) {
                   for (var m in diff) {
                     if (m != 'created_at' && m != 'updated_at' && m != 'id' && m != 'event_duration'
-                      && m != 'threshold_alert' && m != "blockchain_hex_key" && m != 'transactioneventlogList' && m != 'alertList' && m != "eos_id" && m.indexOf("t.") == -1) {
+                      && m != 'threshold_alert' && m != "event_sub_stage" && m != "blockchain_hex_key" && m != 'transactioneventlogList' && m != 'alertList' && m != "eos_id" && m.indexOf("t.") == -1) {
                       var obj = {
                         TypeOfData: keyNameMap[m],
                         PreviousValue: newList[index + 1][m],

@@ -109,7 +109,16 @@ module.exports = app => {
         blockchain_hex_key: {
             type: STRING(200)
 
+        },
+        blockchain_hex_key: {
+            type: STRING(200)
+
+        },
+        event_sub_stage: {
+            type: INTEGER
+
         }
+        
 
     }, {
         indexes: [
@@ -122,6 +131,9 @@ module.exports = app => {
             },
             {
                 fields: ['event_time']
+            },
+            {
+                fields: ['event_sub_stage']
             }
         ],
 

@@ -2394,7 +2394,7 @@ const Detail: React.FC<any> = (props) => {
 
                                     if (diff) {
                                       for (var m in diff) {
-                                        if (m != 'created_at' && m != 'updated_at' && m != 'id' && m != 'event_duration'  && m != "blockchain_hex_key") {
+                                        if (m != 'created_at' && m != 'updated_at' && m != 'id' && m != 'event_duration' && m != "event_sub_stage"  && m != "blockchain_hex_key") {
                                           var obj = {
                                             TypeOfData: keyNameMap[m],
                                             PreviousValue: newList[index + 1][m],

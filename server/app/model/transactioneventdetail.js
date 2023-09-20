@@ -44,6 +44,10 @@ module.exports = app => {
         blockchain_hex_key: {
             type: STRING(200)
 
+        },
+        event_sub_stage: {
+            type: INTEGER
+
         }
 
     }, {

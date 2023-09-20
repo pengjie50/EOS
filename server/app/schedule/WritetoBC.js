@@ -9,7 +9,7 @@ class WritetoBC extends Subscription {
 
     static get schedule() {
         return {
-            interval: '60s',
+            interval: '900s',
             type: 'worker',
         };
     }
@@ -48,7 +48,160 @@ class WritetoBC extends Subscription {
 
         }
 
+      
+        var transactionSendList = await ctx.model.Transaction.findAll({ where: { status: 1, blockchain_hex_key: { [app.Sequelize.Op['eq']]: 'send' } } });
+        
+        var step0 = 0
+        async function Do0() {
+
+            var nowTime = (new Date()).getTime()
+
+            if (nowTime - subscribeStartTime > 800) {
+                return
+            }
+            if (step0 >= transactionSendList.length) {
+                return
+            }
+            var transaction = transactionSendList[step0]
+
+
+            var result = await ctx.curl(app.config.QueryHeaderBC, {
+                timeout: 30000,
+                method: 'POST',
+                contentType: 'json',
+                data: { "EOSID": transaction.eos_id },
+                dataType: 'json',
+            });
+
+            if (result.status == 201) {
+                if (result.data[0]) {
+                    await transaction.update({ blockchain_hex_key: result.data[0].HashID })
+                    
+                } else {
+                    await transaction.update({ blockchain_hex_key: null })
+                }
+
+
+            }
+
+
+
+            step0++
+            await Do0()
+        }
+        try {
+            await Do0()
+        } catch (e) {
+
+        }
+
+
+        var transactionSendEventList = await ctx.model.Transactionevent.findAll({
+           raw:true,
+            include: [{
+                as: 't',
+                attributes: [],
+                model: ctx.model.Transaction,
+                where: { status: 1 }
+
+            }], where: { blockchain_hex_key: { [app.Sequelize.Op['eq']]: 'send' } } })
+
+
+        var transactionSendEventListMap = {}
+        var transactionSendEventListArr = []
+        transactionSendEventList.forEach((tset) => {
+            if (!transactionSendEventListMap[tset['t.eos_id']]) {
+                transactionSendEventListMap[tset['t.eos_id']] =[]
+            }
+            transactionSendEventListMap[tset['t.eos_id']].push(tset)
+        })
+
+        for (var i in transactionSendEventListMap) {
+            transactionSendEventListArr.push(transactionSendEventListMap[i])
+        }
+
+
+
+        var step9 = 0
+        async function Do9() {
+
+            
+            if (step9 >= transactionSendEventListArr.length) {
+                return
+            }
+            var transactionSendEventArrOne = transactionSendEventListArr[step9]
+
+
+            var result = await ctx.curl(app.config.BC, {
+                timeout: 30000,
+                method: 'POST',
+                contentType: 'json',
+                data: { "EOSID": transactionSendEventArrOne[0]['t.eos_id'] },
+                dataType: 'json',
+            });
+           
+            if (result.status == 201) {
+               
+
+                var stepa = 0
+                async function Doa() {
+
+
+                    if (stepa >= transactionSendEventArrOne.length) {
+                        return
+                    }
+                    var transactionSendEventOne = transactionSendEventArrOne[stepa]
+
+                    var findOne=result.data.find((k) => {
+                        return k.EventSubStage == transactionSendEventOne.event_sub_stage
+                    })
+
+                    if (findOne) {
+                        await ctx.model.transactionEvent.update({ blockchain_hex_key: findOne.HashID }, { where: { id: transactionSendEventOne.id}})
+                        
+                    } else {
+                        await ctx.model.transactionEvent.update({ blockchain_hex_key: null }, { where: { id: transactionSendEventOne.id } })
+                    }
+
+
+
+
+
+                    stepa++
+                    await Doa()
+                }
+                try {
+                    await Doa()
+                } catch (e) {
+
+                }
+
+            }
+
+           
+
+
+
+
+
+
+
+
+            step9++
+            await Do9()
+        }
+        try {
+            await Do9()
+        } catch (e) {
+
+        }
+
+
+
+
+
         var transactionList = await ctx.model.Transaction.findAll({ where: { status: 1, blockchain_hex_key: { [app.Sequelize.Op['eq']]: null } } });
+
 
         var company_id = []
         var transaction_id = []
@@ -69,11 +222,7 @@ class WritetoBC extends Subscription {
         var step2 = 0
         async function Do2() {
 
-            var nowTime = (new Date()).getTime()
-
-            if (nowTime - subscribeStartTime > 55000) {
-                return
-            }
+           
             if (step2 >= transactionList.length) {
                 return
             }
@@ -142,7 +291,7 @@ class WritetoBC extends Subscription {
             await addAPILog({ data: head_data, result: result.data, status: result.status == 201 ? 0 : 1, errorCode: result.status == 201 ? 0 : result.status, url: app.config.WriteHeaderBC })
             if (result.status == 201) {
                 if (result.data[0].Stored == "True" || result.data[0].Store=="True") {
-                    await transaction.update({ blockchain_hex_key: result.data[0].HashID })
+                    await transaction.update({ blockchain_hex_key: "send" })
                 }
 
             }
@@ -300,7 +449,7 @@ class WritetoBC extends Subscription {
                         var BCback = result.data[step4]
                         if (BCback.Stored == "True") {
                            
-                            await transactionEvent[step4].update({ blockchain_hex_key: BCback.HashID })
+                            await transactionEvent[step4].update({ blockchain_hex_key: "send", event_sub_stage: BCback.EventSubStage })
                         }
                        
                         step4++

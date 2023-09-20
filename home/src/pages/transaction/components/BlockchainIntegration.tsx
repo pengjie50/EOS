@@ -197,7 +197,7 @@ const Detail: React.FC<any> = (props) => {
       dataIndex: 'validation_status',
       render: (dom, entity) => {
 
-        if (currentRow?.blockchain_hex_key) {
+        if (currentRow?.blockchain_hex_key && currentRow?.blockchain_hex_key!='send') {
           if (dom === 1) {
             return <span><CheckOutlined style={{ color: 'green' }} /></span>
           } else {
@@ -579,7 +579,7 @@ const Detail: React.FC<any> = (props) => {
       render: (dom, entity) => {
 
 
-        if (currentRow?.blockchain_hex_key) {
+        if (currentRow?.blockchain_hex_key && currentRow?.blockchain_hex_key!='send') {
           if (validateData[entity.code] === 'True') {
             return <span><CheckOutlined style={{ color: validateData[entity.code] === 'True' ? 'green' : 'red' }} />&nbsp;&nbsp;&nbsp;&nbsp;<InfoCircleOutlined style={{ color: validateData[entity.code] === 'True' ? 'green' : 'red' }} onClick={() => {
               eventRowClick(entity)
